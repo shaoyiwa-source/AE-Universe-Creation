@@ -19,3 +19,6 @@ To publish v236:
 3. Drag `index.html` and the whole `assets` folder.
 4. Commit to `main`.
 5. Connect this repo to the existing Vercel project so the same URL updates automatically.
+
+
+Prototype: `/today` — 看畫 → 抽一次 → 帶走畫和一句今日句.
