@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AE · Dream Giver · 12 張希望牌</title>
+<style>
+  :root{
+    --bg:#0b0d12;
+    --panel:#141821;
+    --line:#2a3140;
+    --gold:#e8d5a3;
+    --gold2:#c9a86a;
+    --text:#f3efe6;
+    --muted:#9aa3b2;
+    --accent:#7fd1c4;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif;
+    background:radial-gradient(1200px 800px at 50% 0%, #1a1f2b 0%, var(--bg) 60%);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .wrap{width:min(560px,100%);text-align:center}
+  .brand{letter-spacing:.35em;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+  h1{font-size:30px;margin:0 0 6px;font-weight:500;letter-spacing:.08em}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 26px;line-height:1.7}
+  .stage{position:relative;min-height:430px;display:flex;align-items:center;justify-content:center}
+  .deck{position:relative;width:220px;height:330px}
+  .card{
+    position:absolute;inset:0;
+    border-radius:18px;
+    background:linear-gradient(160deg,#1c2230,#0f131b);
+    border:1px solid var(--line);
+    box-shadow:0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.03);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:26px 20px;
+    transition:transform .5s ease, opacity .5s ease, filter .5s ease;
+    cursor:pointer;
+    user-select:none;
+  }
+  .card .ring{width:54px;height:54px;border-radius:50%;border:1px solid var(--gold2);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:20px;margin-bottom:16px}
+  .card .name{font-size:26px;letter-spacing:.12em;color:var(--gold)}
+  .card .line{margin-top:12px;color:var(--text);font-size:15px;line-height:1.7;opacity:.92}
+  .card .hint{margin-top:18px;font-size:12px;color:var(--muted);letter-spacing:.2em}
+  .card.back .name,.card.back .line,.card.back .hint{display:none}
+  .card.back .ring{border-color:var(--line);color:var(--line)}
+  .card.drawn{transform:translateY(-18px) scale(1.02);border-color:var(--gold2);box-shadow:0 26px 70px rgba(201,168,106,.25)}
+  .btn{
+    margin-top:24px;
+    background:transparent;
+    color:var(--gold);
+    border:1px solid var(--gold2);
+    padding:12px 22px;
+    border-radius:40px;
+    font-family:inherit;
+    font-size:15px;
+    letter-spacing:.18em;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .btn:hover{background:rgba(201,168,106,.12)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .result{display:none;margin-top:8px}
+  .result .tag{color:var(--accent);letter-spacing:.2em;font-size:12px;margin-bottom:8px}
+  .result .action{font-size:18px;line-height:1.8;color:var(--text)}
+  .result .note{margin-top:14px;color:var(--muted);font-size:13px;line-height:1.7}
+  .foot{margin-top:28px;color:var(--muted);font-size:12px;letter-spacing:.15em}
+  @media (max-width:480px){.card{width:200px;height:300px}.card .name{font-size:23px}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">AE Universe Creation</div>
+    <h1>希望牌</h1>
+    <p class="sub">抽不是中獎，也不是算命。<br>抽到的是「這一層」的希望。</p>
+
+    <div class="stage">
+      <div class="deck" id="deck">
+        <div class="card back" id="card">
+          <div class="ring">∞</div>
+          <div class="name" id="name"></div>
+          <div class="line" id="line"></div>
+          <div class="hint">點擊抽一張</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" id="drawBtn">抽一張</button>
+    <button class="btn" id="againBtn" style="display:none">再抽一次</button>
+
+    <div class="result" id="result">
+      <div class="tag">今天的小事</div>
+      <div class="action" id="action"></div>
+      <div class="note" id="note"></div>
+    </div>
+
+    <div class="foot">Action Creates Infinity · 一個人就能走完整一輪</div>
+  </div>
+
+<script>
+const cards = [
+  {name:"靠近", line:"先停一下，讓光進來。", action:"今天停一次，看一眼窗外或天空。", note:"靠近不需要大動作，先让自己在。"},
+  {name:"一小步", line:"夢不用一次走完。", action:"選一件今天做得到的小事，做完。", note:"小到能做，才算真的走出。"},
+  {name:"留白", line:"空著的地方，才容得下新的。", action:"今天留十分鐘什麼都不做。", note:"留白也是一种完成。"},
+  {name:"光", line:"陰暗角落也有光。", action:"今天對一個人說一句溫暖的話。", note:"光有時候是輕的。"},
+  {name:"手", line:"由心而生，由手而行。", action:"今天用手做一件小東西。", note:"手做到的，心才真的在。"},
+  {name:"聽", line:"先聽，再回答。", action:"今天安靜聽三分鐘。", note:"聽到的，可能就是答案。"},
+  {name:"種", line:"種下的，會自己長。", action:"今天種一題種子或一點善意。", note:"不要看到結果，才種。"},
+  {name:"回望", line:"回頭，是為了再走。", action:"今天寫下一句你還記得的話。", note:"回望不是停留，是充電。"},
+  {name:"縫", line:"裡開的地方，可以縫。", action:"今天修一件小東西或關係。", note:"縫不完全，也算走過。"},
+  {name:"燃", line:"小火也能照亮。", action:"今天點一支燃燧或一燈燈。", note:"燃的不一定大，但要真。"},
+  {name:"渡", line:"過河的人，也是橋。", action:"今天幫一個人一點忙。", note:"渡過之後，自己也成為橋。"},
+  {name:"再", line:"下一層，還在等你。", action:"今天再靠近一次。", note:"無限來自下一次行動，不是收集全套。"}
+];
+
+const cardEl=document.getElementById('card');
+const nameEl=document.getElementById('name');
+const lineEl=document.getElementById('line');
+const drawBtn=document.getElementById('drawBtn');
+const againBtn=document.getElementById('againBtn');
+const result=document.getElementById('result');
+const actionEl=document.getElementById('action');
+const noteEl=document.getElementById('note');
+
+function draw(){
+  const c=cards[Math.floor(Math.random()*cards.length)];
+  cardEl.classList.remove('back');
+  cardEl.classList.add('drawn');
+  nameEl.textContent=c.name;
+  lineEl.textContent=c.line;
+  actionEl.textContent=c.action;
+  noteEl.textContent=c.note;
+  result.style.display='block';
+  drawBtn.style.display='none';
+  againBtn.style.display='inline-block';
+  // simple local log for later measurement
+  try{
+    const log=JSON.parse(localStorage.getItem('ae_dream_giver_log')||'[]');
+    log.push({t:Date.now(),card:c.name,action:c.action});
+    localStorage.setItem('ae_dream_giver_log',JSON.stringify(log));
+  }catch(e){}
+}
+
+drawBtn.addEventListener('click',draw);
+againBtn.addEventListener('click',()=>{
+  cardEl.classList.add('back');
+  cardEl.classList.remove('drawn');
+  result.style.display='none';
+  drawBtn.style.display='inline-block';
+  againBtn.style.display='none';
+  setTimeout(draw,350);
+});
+</script>
+</body>
+</html>
