@@ -1,10 +1,12 @@
-# Ko-fi listing · 9 Phone Wallpapers · paste-ready
+# 9 phone 桌布
+
+Staff notes below. The line above is the shop title.
 
 Grok cannot open Ko-fi backend. Owner or GPT creates a NEW shop item. Do not edit the old 9-pack images.
 
 ## Shop item
 Name:
-9 Phone Wallpapers · 九張手機桌布
+9 phone 桌布
 
 Price (draft until Owner confirms): US$14
 
@@ -45,7 +47,7 @@ Download after payment.
 ## Short post · X / Buffer (Owner must see full copy before send)
 
 This one is for a phone screen.
-Infinite Love · hand-painted wallpaper
+Infinite Love · hand-painted 桌布
 [new Ko-fi URL]
 
 這張是給手機螢幕的。
