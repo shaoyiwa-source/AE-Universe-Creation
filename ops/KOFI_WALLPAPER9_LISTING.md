@@ -20,6 +20,7 @@ Nine fragments from larger hand-painted works. A flower in the night. A branch o
 Made for the phone screen — close enough to live with every day.
 
 High-resolution JPG. Personal use as wallpaper.
+Set as wallpaper. On iPhone, Extend keeps the top clear for the clock.
 
 This collection includes:
 1.  Night Bloom（夜之藍花）
@@ -45,6 +46,7 @@ AE色彩宇宙｜九個片段
 留在手機螢幕上，夠近，也夠日常。
 
 高解析度 JPG。供個人設為桌布。
+設成桌布即可。iPhone 可開延伸，上方會留給時間。
 
 本組包含：
 1.  Night Bloom（夜之藍花）
