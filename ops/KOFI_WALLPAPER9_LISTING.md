@@ -25,14 +25,14 @@ Each piece is a moment of pigment, made to live on a phone screen.
 High-resolution JPG. Personal use as wallpaper.
 
 This collection includes:
-1.  Black Ground Blue Flower（黑底藍花）
-2.  Black Ground Gold Branch（黑底金枝）
-3.  Black Ground Orange Branch（黑底橙枝）
-4.  Black Ground Blue Burst（黑底藍爆花）
+1.  Night Bloom（夜之藍花）
+2.  Golden Bough（暗金之枝）
+3.  Ember Branch（焰枝）
+4.  Azure Burst（藍焰綻放）
 5.  Infinite Love（無限之愛）
-6.  Teal Heart Arc（青藍心弧）
-7.  Green Loops（綠圈）
-8.  Gold Glitter Dots（金粉粉點）
+6.  Teal Arc（青心之弧）
+7.  Green Orbit（綠之旋）
+8.  Gold Dust（金粉之園）
 9.  Eternal Core（永恆之核）
 
 Set one for the day. Or keep all nine and let the screen change with you.
@@ -50,14 +50,14 @@ AE色彩宇宙｜九個片段
 高解析度 JPG。供個人設為桌布。
 
 本組包含：
-1.  Black Ground Blue Flower（黑底藍花）
-2.  Black Ground Gold Branch（黑底金枝）
-3.  Black Ground Orange Branch（黑底橙枝）
-4.  Black Ground Blue Burst（黑底藍爆花）
+1.  Night Bloom（夜之藍花）
+2.  Golden Bough（暗金之枝）
+3.  Ember Branch（焰枝）
+4.  Azure Burst（藍焰綻放）
 5.  Infinite Love（無限之愛）
-6.  Teal Heart Arc（青藍心弧）
-7.  Green Loops（綠圈）
-8.  Gold Glitter Dots（金粉粉點）
+6.  Teal Arc（青心之弧）
+7.  Green Orbit（綠之旋）
+8.  Gold Dust（金粉之園）
 9.  Eternal Core（永恆之核）
 
 一天一張。或九張都留著，讓螢幕跟著你換。
