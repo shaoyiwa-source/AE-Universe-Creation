@@ -1,0 +1,144 @@
+{
+  "status": "CURATOR_GATED_27",
+  "site_version": "v2393",
+  "visual_baseline": "v2391",
+  "vi_basis": "AE VI v1.0 working visual system",
+  "count": 27,
+  "works": [
+    {
+      "order": 1,
+      "title": "Eternal Sun",
+      "asset": "assets/4e0991885a9649ea.webp"
+    },
+    {
+      "order": 2,
+      "title": "Infinity Core",
+      "asset": "assets/b46ca2328e93f1f4.webp"
+    },
+    {
+      "order": 3,
+      "title": "Universe Heart Bloom",
+      "asset": "assets/bb5c9cf38f67af5b.webp"
+    },
+    {
+      "order": 4,
+      "title": "Infinite Love",
+      "asset": "assets/2ee9aa3b017652d9.webp"
+    },
+    {
+      "order": 5,
+      "title": "Life Energy Field",
+      "asset": "assets/52116e7d3550cdf1.webp"
+    },
+    {
+      "order": 6,
+      "title": "Life Bloom",
+      "asset": "assets/6c165bd1deb30988.webp"
+    },
+    {
+      "order": 7,
+      "title": "Joyful World",
+      "asset": "assets/85b757c169e7afd6.webp"
+    },
+    {
+      "order": 8,
+      "title": "Universe Abundance",
+      "asset": "assets/cfda3a3a0f7fa43d.webp"
+    },
+    {
+      "order": 9,
+      "title": "Heart Fly",
+      "asset": "assets/selected-works-v2/heart-fly.webp"
+    },
+    {
+      "order": 10,
+      "title": "Heart Recovery",
+      "asset": "assets/selected-works-v2/heart-recovery.webp"
+    },
+    {
+      "order": 11,
+      "title": "Love Embrace",
+      "asset": "assets/selected-works-v2/love-embrace.webp"
+    },
+    {
+      "order": 12,
+      "title": "Love Energy Field",
+      "asset": "assets/selected-works-v2/love-energy-field.webp"
+    },
+    {
+      "order": 13,
+      "title": "Colorful Flow",
+      "asset": "assets/selected-works-v2/colorful-flow.webp"
+    },
+    {
+      "order": 14,
+      "title": "Nature’s Strength",
+      "asset": "assets/selected-works-v2/natures-strength.webp"
+    },
+    {
+      "order": 15,
+      "title": "Fun Universe",
+      "asset": "assets/selected-works-v2/fun-universe.webp"
+    },
+    {
+      "order": 16,
+      "title": "Marvellous Energy World",
+      "asset": "assets/selected-works-v2/marvellous-energy-world.webp"
+    },
+    {
+      "order": 17,
+      "title": null,
+      "asset": "assets/selected-works-v2/selected-17.webp"
+    },
+    {
+      "order": 18,
+      "title": "Expansion",
+      "asset": "assets/selected-works-v2/expansion.webp"
+    },
+    {
+      "order": 19,
+      "title": "Heart Rebuild",
+      "asset": "assets/selected-works-v2/heart-rebuild.webp"
+    },
+    {
+      "order": 20,
+      "title": "Flower Heart Bloom",
+      "asset": "assets/selected-works-v2/flower-heart-bloom.webp"
+    },
+    {
+      "order": 21,
+      "title": "Heart Energy",
+      "asset": "assets/selected-works-v2/heart-energy.webp"
+    },
+    {
+      "order": 22,
+      "title": "Infinite Love Strength",
+      "asset": "assets/selected-works-v2/infinite-love-strength.webp"
+    },
+    {
+      "order": 23,
+      "title": null,
+      "asset": "assets/selected-works-v2/selected-23.webp"
+    },
+    {
+      "order": 24,
+      "title": null,
+      "asset": "assets/selected-works-v2/selected-24.webp"
+    },
+    {
+      "order": 25,
+      "title": null,
+      "asset": "assets/selected-works-v2/selected-25.webp"
+    },
+    {
+      "order": 26,
+      "title": null,
+      "asset": "assets/selected-works-v2/selected-26.webp"
+    },
+    {
+      "order": 27,
+      "title": null,
+      "asset": "assets/selected-works-v2/selected-27.webp"
+    }
+  ]
+}
