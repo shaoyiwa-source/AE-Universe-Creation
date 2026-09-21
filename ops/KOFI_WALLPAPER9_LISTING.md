@@ -44,12 +44,12 @@ Gold glitter ground, pink dots, an orange frame.
 金粉底、粉點、橙色框。
 
 ## 9 · Eternal Core
-A bright core with colour rays going out. Not Eternal Sun.
-亮核心，色線往外射。不是 Eternal Sun。
+A bright core with colour rays going out.
+亮核心，色線往外射。
 
 ## Short post · ask before send
 This one is for a phone screen.
-Infinite Love · hand-painted 桌布
+Infinite Love · hand-painted wallpaper
 [new Ko-fi URL]
 
 這張是給手機螢幕的。
