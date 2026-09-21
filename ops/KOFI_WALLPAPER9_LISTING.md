@@ -1,10 +1,7 @@
-# 9-Piece Phone Wallpaper Collection / 九件組手機桌布收藏
+# AE Color Universe | 9 Fragments / AE色彩宇宙｜九個片段
 
-Format copied from the live item:
-AE Heart Universe | 9-Piece Wallpaper Collection / AE心宇宙｜九件組數位桌布收藏
-https://ko-fi.com/s/9b9703d58b
-
-This new pack is not Heart Universe and does not include Eternal Sun.
+Piece = full work (心宇宙九件組).
+Fragment = crop from a larger painting (這一包).
 
 Price (draft until confirmed): US$14
 Cover: IMG_5051_grade_v1.jpg · Infinite Love（無限之愛）
@@ -14,12 +11,13 @@ Do not upload Eternal Sun, IMG_5050, HEIC, or lock-screen mockups.
 
 ## Title · paste into Ko-fi
 
-9-Piece Phone Wallpaper Collection / 九件組手機桌布收藏
+AE Color Universe | 9 Fragments / AE色彩宇宙｜九個片段
 
 ## Description · paste into Ko-fi
 
-9-Piece Phone Wallpaper Collection
-Nine original hand-painted works for phone screens.
+AE Color Universe | 9 Fragments
+Nine hand-painted fragments for phone screens.
+Each image is a detail cut from a larger original.
 High-resolution digital files. Personal use as wallpaper.
 This collection includes:
 1.  Black Ground Blue Flower（黑底藍花）
@@ -35,8 +33,9 @@ Designed as high-resolution digital wallpapers for phone.
 Action Creates Infinity ♾️
 AE Universe Creation
 
-九件組手機桌布收藏
-九張原作手繪作品，給手機螢幕。
+AE色彩宇宙｜九個片段
+九張手繪局部，給手機螢幕。
+每張都是從較大原作切下來的一塊。
 高解析度數位檔案。供個人設為桌布。
 本組包含：
 1.  Black Ground Blue Flower（黑底藍花）
