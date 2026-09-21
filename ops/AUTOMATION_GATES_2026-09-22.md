@@ -1,16 +1,10 @@
 # AUTOMATION GATES · 2026-09-22
 
-Hourly GPT↔Grok notes: internal.
-If Owner needed: OWNER GATE + one sentence.
-Image/copy review: email when Owner gives a dedicated inbox. Until then: this chat.
+Hourly notes: internal.
+Owner needed: OWNER GATE + one sentence.
+Image/copy review: email when dedicated inbox exists; until then this chat.
 Inbox: not set yet.
-
-## Pipeline
-1. Asset in → Owner PASS image (email later)
-2. Copy → Owner PASS copy (email later)
-3. Agents execute
-4. Log in GitHub ops
-5. Weekly market numbers → Owner
+Photo quality: if a frame is wrong, tell Owner which file and what is wrong. Owner reshoots. Do not keep grading a bad capture.
 
 ## Now (Pack A)
 Image PASS. Copy PASS.
