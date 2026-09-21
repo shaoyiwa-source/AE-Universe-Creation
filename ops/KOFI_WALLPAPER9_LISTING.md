@@ -1,51 +1,53 @@
 # 9 phone 桌布
 
-Staff notes below. The line above is the shop title.
+Price (draft until confirmed): US$14
+Cover: IMG_5051_grade_v1.jpg · Infinite Love · 無限之愛
+Files: grade v1 JPG only, folder https://drive.google.com/drive/folders/18wrTY1yWUT44bg0zSJoEY80cE4z1Pfvj
+Do not upload Eternal Sun, IMG_5050, HEIC, or lock-screen mockups.
 
-Grok cannot open Ko-fi backend. Owner or GPT creates a NEW shop item. Do not edit the old 9-pack images.
+## Pack line · Ko-fi
 
-## Shop item
-Name:
-9 phone 桌布
+Nine original hand-painted works for your phone screen. Vertical JPG. Personal use as wallpaper. Eternal Sun is not in this pack.
 
-Price (draft until Owner confirms): US$14
+九張原作局部，直向手機桌布。付款後下載 JPG。供個人螢幕使用。本包不含 Eternal Sun。
 
-Cover image:
-IMG_5051_grade_v1.jpg (Infinite Love · 無限之愛).
-Do not use the lock-screen mock as the shop cover.
+## 1
+Black ground, blue flowers, green leaves, a pink burst at the base.
+黑底、藍花、綠葉，下方一朵粉色轵射。
 
-Files to attach (grade v1 only, this order):
-1. IMG_5046_grade_v1.jpg
-2. IMG_5047_grade_v1.jpg
-3. IMG_5048_grade_v1.jpg
-4. IMG_5049_grade_v1.jpg
-5. IMG_5051_grade_v1.jpg
-6. IMG_5052_grade_v1.jpg
-7. IMG_5053_grade_v1.jpg
-8. IMG_5055_grade_v1.jpg
-9. IMG_5054_grade_v1.jpg
+## 2
+Black ground, gold branches, blue swirl, neon pink and green.
+黑底、金色枝條、藍色渡渡，粉綠螢光。
 
-Folder:
-https://drive.google.com/drive/folders/18wrTY1yWUT44bg0zSJoEY80cE4z1Pfvj
+## 3
+Black ground, a large orange-gold branch, purple lines, small marks to the right.
+黑底、橙金大枝、紫線，右邊細點。
 
-Do not attach Eternal Sun. Do not attach IMG_5050. Do not attach HEIC originals. Do not attach mockup images.
+## 4
+Black ground, a blue-pink-orange bloom opening at the bottom.
+黑底，下方一朵藍粉橙的花。
 
-## Description · paste into Ko-fi
+## 5 · Infinite Love · 無限之愛
+A pink heart in a green ring, with a green and pink burst below.
+粉紅心在綠圈裡，下方綠粉轵射。
 
-Nine original hand-painted works for your phone screen.
+## 6
+A teal-blue curve, like part of a heart, with pink and yellow at the side.
+青藍大弧，像心的一邊，旁邊粉黃。
 
-Vertical JPG. Personal use as wallpaper.
-Includes Infinite Love and Eternal Core, plus seven other original details.
-Eternal Sun is not in this pack.
+## 7
+Green and yellow loops on a light ground.
+淺底上的綠黃圈。
 
-Set one. Or keep all nine and change with your day.
+## 8
+Gold glitter ground, pink dots, an orange frame.
+金粉底、粉點、橙色框。
 
-Download after payment.
+## 9 · Eternal Core
+A bright core with colour rays going out. Not Eternal Sun.
+亮核心，色線往外射。不是 Eternal Sun。
 
-九張原作局部，直向手機桌布。付款後下載 JPG。供個人螢幕使用。含「無限之愛 Infinite Love」與「Eternal Core」。本包不含 Eternal Sun。
-
-## Short post · X / Buffer (Owner must see full copy before send)
-
+## Short post · ask before send
 This one is for a phone screen.
 Infinite Love · hand-painted 桌布
 [new Ko-fi URL]
@@ -53,5 +55,3 @@ Infinite Love · hand-painted 桌布
 這張是給手機螢幕的。
 無限之愛 · 手繪桌布
 [新 Ko-fi 連結]
-
-Image: IMG_5051_grade_v1.jpg only. Not the old 9-pack. Not Eternal Sun. Not the clock mock.
