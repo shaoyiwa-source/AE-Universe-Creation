@@ -1,4 +1,4 @@
-# xAI / 產品死角追蹤
+# xAI 支援追蹤
 
 每週一台北 10:00 自動核對。Automation：Weekly xAI support ticket check（task 0bc1f44e-d8f2-4425-99d7-d22f362852ec）。
 下一次：2026-09-28 10:00 Asia/Taipei。
