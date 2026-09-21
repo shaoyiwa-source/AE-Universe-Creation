@@ -1,13 +1,13 @@
 # AUTOMATION GATES · 2026-09-22
 
-Owner watch board: this file + ops/COWORK + ops/CONVERGE + Ko-fi listing md.
-
-Hourly GPT↔Grok notes: internal. Owner may glance. Do not expect Owner to decode them.
-If Owner is needed: ping chat or mail subject OWNER GATE — one sentence, one ask.
+Hourly GPT↔Grok notes: internal.
+If Owner needed: OWNER GATE + one sentence.
+Image/copy review: email when Owner gives a dedicated inbox. Until then: this chat.
+Inbox: not set yet.
 
 ## Pipeline
-1. Asset in → Owner PASS image
-2. Copy → Owner PASS copy
+1. Asset in → Owner PASS image (email later)
+2. Copy → Owner PASS copy (email later)
 3. Agents execute
 4. Log in GitHub ops
 5. Weekly market numbers → Owner
