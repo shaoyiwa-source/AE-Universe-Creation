@@ -1,0 +1,17 @@
+{
+  "manifest_id": "ES-ETERNAL-SUN-BUYER-PACK-V1",
+  "storage": "vercel_blob_private",
+  "assets": [
+    {"sku":"ES-ORIGINAL","source_filename":"IMG_3497.heic","blob_path":"ae-private/eternal-sun/original.heic","sha256":"2d9ed50275218ddfac57788510fc6d99b2905d7ae9674b99c40fc1bd7340d09e","size":4579084},
+    {"sku":"ES-GALLERY","source_filename":"IMG_3497 3.heic","blob_path":"ae-private/eternal-sun/gallery.heic","sha256":"ee5e4c8bd1e0131831e231f19e9bc29ef464a8c5b8abd43cea5f114b4e5120d2","size":2029109},
+    {"sku":"ES-PHONE","source_filename":"IMG_3497 4.heic","blob_path":"ae-private/eternal-sun/phone.heic","sha256":"bd4bef3d724754fd9ebf4128eac6e796a46bf09e3cb6807dc75fee94f7d70e49","size":1836236},
+    {"sku":"ES-SQUARE","source_filename":"IMG_3497 2.heic","blob_path":"ae-private/eternal-sun/square.heic","sha256":"04ff2a0b1cf4998915fff1ed80c69a714b45abef1d8c2540eedaf6340f2b0de7","size":2018837}
+  ],
+  "rules": [
+    "private access only",
+    "preserve original HEIC bytes",
+    "verify SHA256 after upload",
+    "exclude __MACOSX",
+    "do not expose permanent public/static URLs"
+  ]
+}
