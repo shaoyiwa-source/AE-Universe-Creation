@@ -1,16 +1,8 @@
 {
   "rewrites": [
-    {
-      "source": "/shop",
-      "destination": "/shop.html"
-    },
-    {
-      "source": "/today",
-      "destination": "/today.html"
-    },
-    {
-      "source": "/experience",
-      "destination": "/experience.html"
-    }
+    {"source": "/shop", "destination": "/shop.html"},
+    {"source": "/today", "destination": "/today.html"},
+    {"source": "/experience", "destination": "/experience.html"},
+    {"source": "/checkout-stage", "destination": "/checkout-stage.html"}
   ]
 }
