@@ -54,8 +54,9 @@ module.exports = async function handler(req, res) {
       token_expires_at: result.data.TokenExpireDate || null,
       order_token: orderToken,
       order: { id: order.order_id, sku: order.sku, amount: order.amount, currency: order.currency },
-      fulfillment_enabled: false,
-      fulfillment_reason: 'ASSET_MANIFEST_UNRESOLVED',
+      fulfillment_enabled: Boolean(record.asset_manifest_id),
+      fulfillment_reason: record.asset_manifest_id ? 'BUYER_PACKAGE_MAPPED_PRIVATE_STORAGE_REQUIRED' : 'ASSET_MANIFEST_UNRESOLVED',
+      asset_manifest_id: record.asset_manifest_id,
     });
   } catch (error) {
     console.error('Stage checkout token error', error && error.message);

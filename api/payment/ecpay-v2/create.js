@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
       three_d_url: d.ThreeDURL || null,
       union_pay_url: d.UnionPayURL || null,
       payment_type: d.PaymentType || null,
-      fulfillment_enabled: false,
+      fulfillment_enabled: Boolean(order.sku),
     });
   } catch (error) {
     console.error('ECPay CreatePayment error', error && error.message);
