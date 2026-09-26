@@ -23,6 +23,40 @@ const SKU_NAMES = {
   'ES-SQUARE': 'Eternal Sun · Square Edition',
 };
 
+const ASSET_MANIFEST_ID = 'ES-ETERNAL-SUN-BUYER-PACK-V1';
+const ASSET_MANIFEST = {
+  'ES-ORIGINAL': {
+    filename: 'IMG_3497.heic',
+    sha256: '2d9ed50275218ddfac57788510fc6d99b2905d7ae9674b99c40fc1bd7340d09e',
+    size: 4579084,
+    blob_path: 'ae-private/eternal-sun/original.heic',
+  },
+  'ES-GALLERY': {
+    filename: 'IMG_3497 3.heic',
+    sha256: 'ee5e4c8bd1e0131831e231f19e9bc29ef464a8c5b8abd43cea5f114b4e5120d2',
+    size: 2029109,
+    width: 2413,
+    height: 1817,
+    blob_path: 'ae-private/eternal-sun/gallery.heic',
+  },
+  'ES-PHONE': {
+    filename: 'IMG_3497 4.heic',
+    sha256: 'bd4bef3d724754fd9ebf4128eac6e796a46bf09e3cb6807dc75fee94f7d70e49',
+    size: 1836236,
+    width: 1356,
+    height: 2934,
+    blob_path: 'ae-private/eternal-sun/phone.heic',
+  },
+  'ES-SQUARE': {
+    filename: 'IMG_3497 2.heic',
+    sha256: '04ff2a0b1cf4998915fff1ed80c69a714b45abef1d8c2540eedaf6340f2b0de7',
+    size: 2018837,
+    width: 2098,
+    height: 2098,
+    blob_path: 'ae-private/eternal-sun/square.heic',
+  },
+};
+
 function requireStageMode() {
   const mode = String(process.env.ECPAY_MODE || 'stage').toLowerCase();
   if (mode !== 'stage') {
@@ -55,15 +89,23 @@ function stageAmountForSku(sku) {
 function getSkuRecord(sku) {
   const clean = String(sku || '').toUpperCase();
   if (!SKU_CODE[clean]) return null;
+  const asset = ASSET_MANIFEST[clean];
   return {
     sku: clean,
     public_name: SKU_NAMES[clean],
     currency: 'TWD',
     amount: stageAmountForSku(clean),
-    asset_manifest_id: null,
+    asset_manifest_id: ASSET_MANIFEST_ID,
+    asset,
     active: true,
-    fulfillment_enabled: false,
+    fulfillment_enabled: Boolean(asset),
   };
+}
+
+function getAssetRecord(sku) {
+  const clean = String(sku || '').toUpperCase();
+  const asset = ASSET_MANIFEST[clean];
+  return asset ? { sku: clean, asset_manifest_id: ASSET_MANIFEST_ID, ...asset } : null;
 }
 
 function urlEncodeJson(value) {
@@ -236,6 +278,118 @@ function validateQueryData(queryData, expected) {
   return { paidVerified: true, reason: 'QUERY_CONFIRMED' };
 }
 
+
+function privateBlobReady() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID));
+}
+
+async function blobSdk() {
+  return import('@vercel/blob');
+}
+
+function orderStatePath(merchantTradeNo) {
+  if (!/^[A-Z0-9]{1,20}$/.test(String(merchantTradeNo || ''))) throw new Error('Invalid merchant trade number.');
+  return `ae-private/orders/${merchantTradeNo}.json`;
+}
+
+async function writeOrderState(state) {
+  if (!privateBlobReady()) {
+    const err = new Error('Private Blob store is not configured.');
+    err.code = 'PRIVATE_STORAGE_NOT_READY';
+    throw err;
+  }
+  const { put } = await blobSdk();
+  const pathname = orderStatePath(state.merchantTradeNo);
+  const body = JSON.stringify(state);
+  await put(pathname, body, {
+    access: 'private',
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: 'application/json',
+  });
+  return pathname;
+}
+
+async function readPrivateBlobText(pathname) {
+  if (!privateBlobReady()) {
+    const err = new Error('Private Blob store is not configured.');
+    err.code = 'PRIVATE_STORAGE_NOT_READY';
+    throw err;
+  }
+  const { get } = await blobSdk();
+  const result = await get(pathname, { access: 'private', useCache: false });
+  if (!result || result.statusCode !== 200) return null;
+  return new Response(result.stream).text();
+}
+
+async function readOrderState(merchantTradeNo) {
+  const text = await readPrivateBlobText(orderStatePath(merchantTradeNo));
+  return text ? JSON.parse(text) : null;
+}
+
+async function headPrivateAsset(sku) {
+  if (!privateBlobReady()) {
+    const err = new Error('Private Blob store is not configured.');
+    err.code = 'PRIVATE_STORAGE_NOT_READY';
+    throw err;
+  }
+  const asset = getAssetRecord(sku);
+  if (!asset) return null;
+  const { head } = await blobSdk();
+  const meta = await head(asset.blob_path);
+  return { asset, meta };
+}
+
+async function getPrivateAsset(sku) {
+  if (!privateBlobReady()) {
+    const err = new Error('Private Blob store is not configured.');
+    err.code = 'PRIVATE_STORAGE_NOT_READY';
+    throw err;
+  }
+  const asset = getAssetRecord(sku);
+  if (!asset) return null;
+  const { get } = await blobSdk();
+  const result = await get(asset.blob_path, { access: 'private', useCache: false });
+  if (!result || result.statusCode !== 200) return null;
+  return { asset, result };
+}
+
+function signDownloadToken(payload) {
+  const now = Date.now();
+  const body = {
+    v: 1,
+    order_id: String(payload.order_id || ''),
+    sku: String(payload.sku || ''),
+    asset_manifest_id: ASSET_MANIFEST_ID,
+    filename: String(payload.filename || ''),
+    sha256: String(payload.sha256 || ''),
+    nonce: crypto.randomBytes(12).toString('base64url'),
+    issued: now,
+    expires: now + 5 * 60 * 1000,
+  };
+  const encoded = Buffer.from(JSON.stringify(body), 'utf8').toString('base64url');
+  const sig = crypto.createHmac('sha256', hmacSecret()).update(encoded).digest('base64url');
+  return `${encoded}.${sig}`;
+}
+
+function verifyDownloadToken(token) {
+  const [payload, sig] = String(token || '').split('.');
+  if (!payload || !sig) throw new Error('Invalid download token.');
+  const expected = crypto.createHmac('sha256', hmacSecret()).update(payload).digest('base64url');
+  const a = Buffer.from(sig); const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) throw new Error('Invalid download token signature.');
+  const value = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+  if (!value.expires || Date.now() > value.expires) throw new Error('Download token expired.');
+  const asset = getAssetRecord(value.sku);
+  if (!asset ||
+      value.asset_manifest_id !== ASSET_MANIFEST_ID ||
+      value.filename !== asset.filename ||
+      value.sha256 !== asset.sha256) {
+    throw new Error('Download token asset mismatch.');
+  }
+  return value;
+}
+
 module.exports = {
   PROVIDER,
   STAGE_HOST,
@@ -260,4 +414,15 @@ module.exports = {
   queryOrder,
   validateCallbackData,
   validateQueryData,
+  ASSET_MANIFEST_ID,
+  ASSET_MANIFEST,
+  getAssetRecord,
+  privateBlobReady,
+  orderStatePath,
+  writeOrderState,
+  readOrderState,
+  headPrivateAsset,
+  getPrivateAsset,
+  signDownloadToken,
+  verifyDownloadToken,
 };
