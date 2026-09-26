@@ -1,6 +1,16 @@
 {
   "rewrites": [
-    { "source": "/shop", "destination": "/shop.html" },
-    { "source": "/today", "destination": "/today.html" }
+    {
+      "source": "/shop",
+      "destination": "/shop.html"
+    },
+    {
+      "source": "/today",
+      "destination": "/today.html"
+    },
+    {
+      "source": "/experience",
+      "destination": "/experience.html"
+    }
   ]
 }
