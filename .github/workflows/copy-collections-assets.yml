@@ -1,0 +1,51 @@
+name: Copy collections assets into public/assets
+on:
+  workflow_dispatch:
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: new9-public-media
+      - name: Copy referenced webps into public/assets
+        run: |
+          set -euo pipefail
+          needed=(
+            eff1f49dd5d2ba0e.webp
+            e4e318e48fb936ea.webp
+            d9416a6d494ad899.webp
+            1e93d5cbab71795e.webp
+            1bcfd3552e13287b.webp
+            5ce439fc589e42ed.webp
+            9170b9cef25ad59f.webp
+            8e7b4e97db3ba342.webp
+            14e11ff3ee5ffb77.webp
+            15de1afabe39d6c8.webp
+            cb8b6fcb8b44310b.webp
+            0528593287b6eff1.webp
+            7cfe4578cfe7bd25.webp
+            6536b7c54b932379.webp
+          )
+          mkdir -p public/assets
+          for f in "${needed[@]}"; do
+            if [ ! -f "public/assets/$f" ]; then
+              cp -v "assets/$f" "public/assets/$f"
+            else
+              echo "already present: $f"
+            fi
+          done
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          git config user.name "AE Universe Creation Agent"
+          git config user.email "ae-agent@ae-universe-creation.local"
+          git add public/assets/*.webp
+          if git diff --cached --quiet; then
+            echo "No asset changes to commit"
+            exit 0
+          fi
+          git commit -m "Preview: copy collections page webps into public/assets"
+          git push origin HEAD:new9-public-media

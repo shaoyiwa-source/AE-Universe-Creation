@@ -1,1 +1,1 @@
-collections-assets-probe
+trigger-copy-assets
