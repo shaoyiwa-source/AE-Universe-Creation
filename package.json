@@ -1,0 +1,8 @@
+{
+  "name": "ae-universe-creation-preview",
+  "private": true,
+  "version": "0.0.0-preview",
+  "dependencies": {
+    "@vercel/blob": "latest"
+  }
+}

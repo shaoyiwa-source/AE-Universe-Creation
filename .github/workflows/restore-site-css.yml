@@ -1,0 +1,36 @@
+name: restore-site-css
+on:
+  workflow_dispatch:
+  push:
+    branches: [new9-public-media]
+    paths:
+      - '_qa/restore/css.zlib.b64'
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: new9-public-media
+      - name: Decode zlib+b64 into site.css
+        run: |
+          python3 - <<'PY'
+          import base64, zlib, pathlib, hashlib
+          raw = pathlib.Path('_qa/restore/css.zlib.b64').read_text().strip()
+          css = zlib.decompress(base64.b64decode(raw))
+          assert b'opacity:.92' in css and b'ae-hero-light-drift 9s' in css
+          assert b'PLACEHOLDER' not in css
+          pathlib.Path('site.css').write_bytes(css)
+          pathlib.Path('public/site.css').write_bytes(css)
+          print('restored', len(css), hashlib.sha1(b'blob %d\0'%len(css)+css).hexdigest())
+          PY
+      - name: Commit restored CSS
+        run: |
+          git config user.name "AE Universe Creation"
+          git config user.email "shaoyiwa@gmail.com"
+          git add site.css public/site.css
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          git commit -m "Preview: restore medium Eternal Sun hero light drift (fix PLACEHOLDER)"
+          git push origin HEAD:new9-public-media
