@@ -116,3 +116,19 @@ html[data-theme=dark] .world-intro.world-intro-wash{
 @media(max-width:700px){
   .intro-grid h2.intro-lead-title{font-size:clamp(40px,9vw,52px)}
 }
+
+/* v2398 — soft multicolor gradient on DIGITAL COLLECTIONS lead title */
+.intro-grid h2.intro-lead-title{
+  background:linear-gradient(118deg,#5a3d4a 0%,#8b5a3c 28%,#3d5c4a 58%,#4a5568 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+}
+html[data-theme=dark] .intro-grid h2.intro-lead-title{
+  background:linear-gradient(118deg,#e8c4b8 0%,#f0d4a8 32%,#b8d4c4 62%,#c8d0e0 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+}
