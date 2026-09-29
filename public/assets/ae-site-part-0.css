@@ -1,0 +1,3 @@
+/*v2403*/
+:root{--bg:#fcfcfa;--paper:#f1f2ee;--ink:#202622;--muted:#626b65;--line:#d5dad4;--accent:#244d3d;--on-accent:#fff;--header:rgba(252,252,250,.97);color-scheme:light}
+html[data-theme=dark]{--bg:#141c18;--paper:#202c25;--ink:#f4f4ed;--muted:#bbc6bd;--line:#435148;--accent:#d6e4d9;--on-accent:#15221a;--header:rgba(20,28,24,.97);color-scheme:dark}
