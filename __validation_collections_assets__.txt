@@ -1,1 +1,1 @@
-trigger-copy-assets
+cleanup
