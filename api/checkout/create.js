@@ -1,6 +1,6 @@
 const {
   PROVIDER, GET_TOKEN_URL, getCredentials, getSkuRecord, makeOrderEnvelope,
-  formatTaipeiDate, getBaseUrl, parseJsonBody, postEncrypted,
+  formatTaipeiDate, getBaseUrl, parseJsonBody, postEncrypted, FORMAL_LIST_PRICE_TWD,
 } = require('../payment/ecpay-v2/_lib');
 
 module.exports = async function handler(req, res) {
@@ -12,13 +12,26 @@ module.exports = async function handler(req, res) {
     const body = parseJsonBody(req);
     const record = getSkuRecord(body.sku);
     if (!record || !record.active) return res.status(400).json({ error: 'UNKNOWN_SKU' });
-    const email = String(body.email || '').trim();
-    if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'VALID_EMAIL_REQUIRED' });
+
+    let order;
+    let orderToken;
+    try {
+      ({ order, orderToken } = makeOrderEnvelope(record.sku, {
+        name: body.name,
+        email: body.email,
+        phone: body.phone,
+      }));
+    } catch (buyerError) {
+      const code = buyerError && buyerError.code;
+      if (code === 'VALID_NAME_REQUIRED' || code === 'VALID_EMAIL_REQUIRED' || code === 'VALID_PHONE_REQUIRED') {
+        return res.status(400).json({ error: code });
+      }
+      throw buyerError;
+    }
 
     const baseUrl = getBaseUrl(req);
     if (!baseUrl.startsWith('https://')) return res.status(500).json({ error: 'HTTPS_REQUIRED' });
     const { merchantID } = getCredentials();
-    const { order, orderToken } = makeOrderEnvelope(record.sku);
     const payload = {
       PlatformID: '',
       MerchantID: merchantID,
@@ -30,14 +43,21 @@ module.exports = async function handler(req, res) {
         MerchantTradeDate: formatTaipeiDate(),
         TotalAmount: order.amount,
         ReturnURL: `${baseUrl}/api/payment/ecpay-v2/return`,
-        TradeDesc: 'AE Eternal Sun Stage Checkout',
+        TradeDesc: 'AE Universe Creation · Eternal Sun',
         ItemName: record.public_name,
       },
       CardInfo: {
         OrderResultURL: `${baseUrl}/api/payment/ecpay-v2/order-result`,
         CreditInstallment: '',
       },
-      ConsumerInfo: { Email: email },
+      ConsumerInfo: {
+        MerchantMemberID: '',
+        Email: order.buyer.email,
+        Phone: order.buyer.phone,
+        Name: order.buyer.name,
+        CountryCode: '158',
+        Address: '',
+      },
     };
 
     const result = await postEncrypted(GET_TOKEN_URL, payload);
@@ -53,7 +73,14 @@ module.exports = async function handler(req, res) {
       token: result.data.Token,
       token_expires_at: result.data.TokenExpireDate || null,
       order_token: orderToken,
-      order: { id: order.order_id, sku: order.sku, amount: order.amount, currency: order.currency },
+      order: {
+        id: order.order_id,
+        sku: order.sku,
+        amount: order.amount,
+        currency: order.currency,
+        list_price: FORMAL_LIST_PRICE_TWD,
+        buyer: order.buyer,
+      },
       fulfillment_enabled: Boolean(record.asset_manifest_id),
       fulfillment_reason: record.asset_manifest_id ? 'BUYER_PACKAGE_MAPPED_PRIVATE_STORAGE_REQUIRED' : 'ASSET_MANIFEST_UNRESOLVED',
       asset_manifest_id: record.asset_manifest_id,

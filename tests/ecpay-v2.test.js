@@ -16,9 +16,11 @@ assert.strictEqual(cipher, 'o4TJSHkQBM1bogbn5BNFRofCVTfsQjoqv/TX8DKn757fe5AoYzoa
 assert.deepStrictEqual(lib.decryptData(cipher, 'pwFHCqoQZGmho4w6', 'EkRm7iFT261dpevs'), {Name:'Test',ID:'A123456789'});
 
 for (const sku of Object.keys(expectedAssets)) {
-  const {order, orderToken, skuRecord} = lib.makeOrderEnvelope(sku);
+  const {order, orderToken, skuRecord} = lib.makeOrderEnvelope(sku, {name:'王義軒',email:'buyer@example.com',phone:'0912345678'});
   assert.strictEqual(lib.skuFromMerchantTradeNo(order.merchant_trade_no), sku);
   assert.strictEqual(lib.verifyOrderToken(orderToken).sku, sku);
+  assert.strictEqual(lib.verifyOrderToken(orderToken).buyer.email, 'buyer@example.com');
+  assert.strictEqual(lib.verifyOrderToken(orderToken).list_price, 444);
   assert.strictEqual(skuRecord.asset_manifest_id, 'ES-ETERNAL-SUN-BUYER-PACK-V1');
   assert.strictEqual(skuRecord.fulfillment_enabled, true);
   assert.deepStrictEqual(
@@ -53,7 +55,7 @@ for (const sku of Object.keys(expectedAssets)) {
   assert.strictEqual(decoded.sha256, asset.sha256);
 }
 
-const {order:o} = lib.makeOrderEnvelope('ES-PHONE');
+const {order:o} = lib.makeOrderEnvelope('ES-PHONE', {name:'王義軒',email:'buyer@example.com',phone:'0912345678'});
 assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:1,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:1,TradeStatus:'1'}}).paidVerified,false);
 assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:999,TradeStatus:'1'}}).reason,'AMOUNT_MISMATCH');
 assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:o.amount,TradeStatus:'0'}}).reason,'CALLBACK_NOT_PAID');
@@ -65,5 +67,11 @@ const body = JSON.parse(Buffer.from(payload,'base64url').toString('utf8'));
 body.sku='ES-SQUARE';
 const tampered = Buffer.from(JSON.stringify(body),'utf8').toString('base64url')+'.'+sig;
 assert.throws(()=>lib.verifyDownloadToken(tampered));
+
+
+assert.throws(() => lib.makeOrderEnvelope('ES-PHONE', {name:'',email:'a@b.co',phone:'0912345678'}));
+assert.throws(() => lib.makeOrderEnvelope('ES-PHONE', {name:'AE',email:'bad',phone:'0912345678'}));
+assert.throws(() => lib.makeOrderEnvelope('ES-PHONE', {name:'AE',email:'a@b.co',phone:'123'}));
+assert.strictEqual(lib.FORMAL_LIST_PRICE_TWD, 444);
 
 console.log('PASS ECPay Embedded Checkout 2.0 Stage + buyer-manifest unit gates');

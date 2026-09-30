@@ -23,6 +23,7 @@ const SKU_NAMES = {
   'ES-SQUARE': 'Eternal Sun · Square Edition',
 };
 
+const FORMAL_LIST_PRICE_TWD = 444;
 const ASSET_MANIFEST_ID = 'ES-ETERNAL-SUN-BUYER-PACK-V1';
 const ASSET_MANIFEST = {
   'ES-ORIGINAL': {
@@ -227,19 +228,54 @@ function verifyOrderToken(token) {
   return order;
 }
 
-function makeOrderEnvelope(sku) {
+function normalizeBuyer(input) {
+  const name = String((input && input.name) || '').trim();
+  const email = String((input && input.email) || '').trim();
+  const phone = String((input && input.phone) || '').replace(/[\s-]/g, '').trim();
+  return { name, email, phone };
+}
+
+function validateBuyer(input) {
+  const buyer = normalizeBuyer(input);
+  if (!buyer.name || buyer.name.length < 2 || buyer.name.length > 80) {
+    const err = new Error('VALID_NAME_REQUIRED');
+    err.code = 'VALID_NAME_REQUIRED';
+    throw err;
+  }
+  if (!/^\S+@\S+\.\S+$/.test(buyer.email) || buyer.email.length > 120) {
+    const err = new Error('VALID_EMAIL_REQUIRED');
+    err.code = 'VALID_EMAIL_REQUIRED';
+    throw err;
+  }
+  // Taiwan-first phone: 09xxxxxxxx, +8869..., or 8–15 digits international
+  if (!/^(\+?886-?9\d{8}|09\d{8}|\+?[0-9]{8,15})$/.test(buyer.phone)) {
+    const err = new Error('VALID_PHONE_REQUIRED');
+    err.code = 'VALID_PHONE_REQUIRED';
+    throw err;
+  }
+  return buyer;
+}
+
+function makeOrderEnvelope(sku, buyerInput) {
   const record = getSkuRecord(sku);
   if (!record) throw new Error('Unknown SKU');
+  const buyer = validateBuyer(buyerInput || {});
   const merchantTradeNo = makeMerchantTradeNo(record.sku);
   const now = Date.now();
   const order = {
-    v: 1,
+    v: 2,
     provider: PROVIDER,
     order_id: merchantTradeNo,
     merchant_trade_no: merchantTradeNo,
     sku: record.sku,
     amount: record.amount,
     currency: record.currency,
+    list_price: FORMAL_LIST_PRICE_TWD,
+    buyer: {
+      name: buyer.name,
+      email: buyer.email,
+      phone: buyer.phone,
+    },
     status: 'CREATED',
     issued: now,
     expires: now + 30 * 60 * 1000,
@@ -412,6 +448,9 @@ module.exports = {
   signOrder,
   verifyOrderToken,
   makeOrderEnvelope,
+  normalizeBuyer,
+  validateBuyer,
+  FORMAL_LIST_PRICE_TWD,
   queryOrder,
   validateCallbackData,
   validateQueryData,

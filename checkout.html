@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="ae-version" content="v2427-checkout-draft">
+<title>結帳 Checkout · 朝軒宇宙創造 / AE Universe Creation</title>
+<meta name="description" content="Eternal Sun digital edition checkout draft — AE Universe Creation. NT$444.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css?v=2427-checkout-draft">
+<link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
+<style>
+.checkout-main{padding:56px 0 88px}
+.checkout-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:8%;align-items:start}
+.checkout-card,.summary-card{background:var(--paper);border:1px solid var(--line);padding:32px 28px}
+.checkout-card h1,.summary-card h2{font-size:clamp(32px,4vw,48px);margin:10px 0 18px}
+.checkout-lead{color:var(--muted);max-width:42ch;margin:0 0 28px;line-height:1.8}
+.field{margin:0 0 18px}
+.field label{display:block;font-size:13px;letter-spacing:.04em;margin:0 0 8px}
+.field label span{color:var(--muted);font-size:12px;margin-left:8px}
+.field input,.field select{width:100%;padding:14px 14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;box-sizing:border-box}
+.field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:2px}
+.price-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:8px 0 20px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.price-row strong{font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;font-weight:500}
+.price-row span{color:var(--muted);font-size:14px}
+.summary-list{list-style:none;padding:0;margin:0 0 22px}
+.summary-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--muted)}
+.summary-list li b{color:var(--ink);font-weight:500}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.actions .button{min-width:160px}
+.actions .button.secondary{background:transparent;color:var(--ink);border-color:var(--line)}
+.actions .button[disabled]{opacity:.45;cursor:not-allowed}
+.soft-note{margin-top:22px;font-size:13px;color:var(--muted);line-height:1.75}
+.status-box{margin-top:22px;padding:14px 16px;background:var(--bg);border:1px solid var(--line);white-space:pre-wrap;font-size:12px;line-height:1.6;min-height:64px;color:var(--muted)}
+#ECPayPayment{margin-top:18px}
+.brand-zh{font-size:13px;letter-spacing:.08em;color:var(--muted);margin:0}
+@media(max-width:860px){.checkout-grid{grid-template-columns:1fr;gap:28px}.checkout-main{padding:36px 0 64px}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content · 跳至內容</a>
+<header class="site-header"><div class="header-inner">
+  <div class="header-left"><a class="text-link" href="eternal-sun.html">← Eternal Sun</a></div>
+  <a class="wordmark" href="index.html" aria-label="AE Universe Creation — Home">
+    <img class="brand-mark" src="assets/ae-three-rings-transparent.webp" alt="" width="74" height="45">
+    <span class="brand-name">AE Universe<span>CREATION</span></span>
+  </a>
+  <div class="header-actions"><span class="brand-zh">朝軒宇宙創造</span></div>
+</div></header>
+
+<main id="main" class="checkout-main"><div class="wrap checkout-grid">
+  <section class="checkout-card" aria-labelledby="checkout-title">
+    <p class="eyebrow">CHECKOUT · 結帳草稿</p>
+    <h1 id="checkout-title">Eternal Sun</h1>
+    <p class="checkout-lead">請填寫購買人資料後繼續付款。數位收藏檔將依完成付款後的訂單交付。<br>Please enter buyer details, then continue to payment.</p>
+
+    <div class="field">
+      <label for="sku">版本 Edition</label>
+      <select id="sku">
+        <option value="ES-ORIGINAL">Original Painting Edition · 原作完整版</option>
+        <option value="ES-GALLERY">Gallery Edition · 展示版</option>
+        <option value="ES-PHONE">Phone Wallpaper Edition · 手機桌布</option>
+        <option value="ES-SQUARE">Square Edition · 方版</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="name">姓名 Name <span>必填 required</span></label>
+      <input id="name" name="name" type="text" autocomplete="name" required maxlength="80" placeholder="王小明">
+    </div>
+    <div class="field">
+      <label for="email">Email <span>必填 required</span></label>
+      <input id="email" name="email" type="email" autocomplete="email" required maxlength="120" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label for="phone">手機 Phone <span>必填 required</span></label>
+      <input id="phone" name="phone" type="tel" autocomplete="tel" required inputmode="tel" placeholder="0912345678">
+    </div>
+
+    <div class="actions">
+      <button type="button" class="button" id="prepare">準備結帳 · Continue</button>
+      <button type="button" class="button secondary" id="pay" disabled>前往付款 · Pay</button>
+    </div>
+    <div id="ECPayPayment"></div>
+    <div class="actions" style="margin-top:16px">
+      <button type="button" class="button secondary" id="verify">確認付款狀態</button>
+      <button type="button" class="button secondary" id="download" disabled>取得下載</button>
+    </div>
+    <pre id="status" class="status-box" aria-live="polite">Ready.</pre>
+    <p class="soft-note">付款閘道目前仍走 ECPay Stage（沙箱），直到自家 Production 金鑰就緒。頁面標示售價為正式草稿價 NT$444；沙箱實際扣款可能為 Stage 測試金額。正式商店 CTA 暫仍保留 Ko-fi。</p>
+  </section>
+
+  <aside class="summary-card" aria-labelledby="summary-title">
+    <p class="eyebrow">ORDER SUMMARY</p>
+    <h2 id="summary-title">盛明數位收藏</h2>
+    <div class="price-row">
+      <strong>NT$444</strong>
+      <span>TWD · 含稅前標示價</span>
+    </div>
+    <ul class="summary-list">
+      <li><span>品牌 Brand</span><b>朝軒宇宙創造 / AE Universe Creation</b></li>
+      <li><span>作品</span><b>Eternal Sun · 盛明</b></li>
+      <li><span>交付</span><b>數位檔（付款確認後）</b></li>
+      <li><span>買家欄位</span><b>姓名 · Email · 手機</b></li>
+    </ul>
+    <p class="soft-note">此頁為 Preview 正式結帳 UI 草稿，供 Owner 審視欄位與售價。未升 Production。</p>
+  </aside>
+</div></main>
+
+<footer class="site-footer"><div class="footer-top">
+  <div class="footer-brand"><img src="assets/ae-three-rings-transparent.webp" alt="" width="110" height="67">AE Universe Creation · 朝軒宇宙創造</div>
+</div>
+<p class="copyright">© AE Universe Creation · Aurelia & Elion</p>
+<p class="ae-version-mark" aria-hidden="true">AE · checkout draft</p>
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"></script>
+<script>
+(() => {
+  const LIST_PRICE = 444;
+  let orderToken = sessionStorage.getItem('ae_formal_order_token') || null;
+  const status = document.getElementById('status');
+  const pay = document.getElementById('pay');
+  const verify = document.getElementById('verify');
+  const download = document.getElementById('download');
+
+  function msg(x) {
+    status.textContent = typeof x === 'string' ? x : JSON.stringify(x, null, 2);
+  }
+
+  function buyerPayload() {
+    return {
+      sku: document.getElementById('sku').value,
+      name: document.getElementById('name').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+    };
+  }
+
+  async function postJson(url, body) {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    let j = {};
+    try { j = await r.json(); } catch (_) { j = { error: 'NON_JSON_RESPONSE' }; }
+    if (!r.ok) {
+      const e = new Error(j.error || ('HTTP ' + r.status));
+      e.payload = j;
+      throw e;
+    }
+    return j;
+  }
+
+  if (typeof ECPay !== 'undefined') {
+    ECPay.initialize(ECPay.ServerType.Stage, 1, function (err) {
+      if (err) msg('SDK init: ' + err);
+    });
+  } else {
+    msg('ECPay SDK unavailable on this host.');
+  }
+
+  document.getElementById('prepare').onclick = async () => {
+    try {
+      pay.disabled = true;
+      download.disabled = true;
+      const buyer = buyerPayload();
+      if (!buyer.name || !buyer.email || !buyer.phone) {
+        msg('請完整填寫姓名、Email、手機。');
+        return;
+      }
+      msg('Preparing…');
+      const j = await postJson('/api/checkout/create', buyer);
+      orderToken = j.order_token;
+      sessionStorage.setItem('ae_formal_order_token', orderToken);
+      if (j.order && j.order.buyer) {
+        sessionStorage.setItem('ae_formal_buyer', JSON.stringify(j.order.buyer));
+      }
+      ECPay.createPayment(j.token, ECPay.Language.zhTW, function (err) {
+        if (err) msg('createPayment UI: ' + err);
+      }, 'V2');
+      pay.disabled = false;
+      msg({
+        list_price_twd: LIST_PRICE,
+        stage_charge: j.order && j.order.amount,
+        currency: j.order && j.order.currency,
+        buyer: j.order && j.order.buyer,
+        order_id: j.order && j.order.id,
+        sku: j.order && j.order.sku,
+        fulfillment: j.fulfillment_reason,
+        environment: j.environment,
+      });
+    } catch (e) {
+      msg(e.payload || e.message);
+    }
+  };
+
+  pay.onclick = () => {
+    pay.disabled = true;
+    ECPay.getPayToken(async function (info, err) {
+      try {
+        if (err) throw new Error(err);
+        const j = await postJson('/api/payment/ecpay-v2/create', {
+          pay_token: info.PayToken,
+          order_token: orderToken,
+        });
+        msg(j);
+        if (j.three_d_url) location.href = j.three_d_url;
+        else if (j.union_pay_url) location.href = j.union_pay_url;
+        else pay.disabled = false;
+      } catch (e) {
+        msg(e.payload || e.message);
+        pay.disabled = false;
+      }
+    });
+  };
+
+  verify.onclick = async () => {
+    try {
+      if (!orderToken) throw new Error('請先準備結帳。');
+      const j = await postJson('/api/order/status', { order_token: orderToken });
+      download.disabled = !j.paid_verified;
+      msg(j);
+    } catch (e) {
+      download.disabled = true;
+      msg(e.payload || e.message);
+    }
+  };
+
+  download.onclick = async () => {
+    try {
+      if (!orderToken) throw new Error('Missing order token.');
+      const j = await postJson('/api/order/download-token', { order_token: orderToken });
+      msg(j);
+      if (j.download_url) location.href = j.download_url;
+    } catch (e) {
+      msg(e.payload || e.message);
+    }
+  };
+
+  if (orderToken) {
+    msg('Restored previous order token. You can verify payment status when ready.');
+  }
+})();
+</script>
+</body>
+</html>
