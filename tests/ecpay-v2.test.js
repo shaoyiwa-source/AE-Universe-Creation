@@ -56,7 +56,7 @@ for (const sku of Object.keys(expectedAssets)) {
 const {order:o} = lib.makeOrderEnvelope('ES-PHONE');
 assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:1,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:1,TradeStatus:'1'}}).paidVerified,false);
 assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:999,TradeStatus:'1'}}).reason,'AMOUNT_MISMATCH');
-assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:1,TradeStatus:'0'}}).reason,'CALLBACK_NOT_PAID');
+assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:o.amount,TradeStatus:'0'}}).reason,'CALLBACK_NOT_PAID');
 
 const phone = lib.getAssetRecord('ES-PHONE');
 let crossToken = lib.signDownloadToken({order_id:'X',sku:'ES-PHONE',filename:phone.filename,sha256:phone.sha256});

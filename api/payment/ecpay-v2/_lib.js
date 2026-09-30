@@ -78,7 +78,8 @@ function getCredentials() {
 function stageAmountForSku(sku) {
   if (!SKU_CODE[sku]) return null;
   const specific = process.env[`ECPAY_STAGE_AMOUNT_${sku.replace(/-/g, '_')}`];
-  const raw = specific || process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '1';
+  // ECPay Stage GetToken rejects TotalAmount below NT$2 (provider_code 5100070).
+  const raw = specific || process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '2';
   const amount = Number.parseInt(raw, 10);
   if (!Number.isInteger(amount) || amount < 1 || amount > 1000000) {
     throw new Error(`Invalid Stage amount for ${sku}`);

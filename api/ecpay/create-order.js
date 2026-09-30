@@ -23,7 +23,8 @@ module.exports = async function handler(req, res) {
   if (productId !== 'pack-a-color-universe-9') return res.status(400).send('Unknown product.');
 
   // Stage fixture only. Final production price must be explicitly configured later.
-  const amount = Number.parseInt(process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '1', 10);
+  // ECPay Stage minimum is NT$2; TotalAmount 1 returns provider_code 5100070.
+  const amount = Number.parseInt(process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '2', 10);
   if (!Number.isInteger(amount) || amount < 1) return res.status(500).send('Invalid stage test amount.');
 
   const merchantID = process.env.ECPAY_MERCHANT_ID || '2000132';
