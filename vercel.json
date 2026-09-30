@@ -15,6 +15,26 @@
     {
       "source": "/checkout-stage",
       "destination": "/checkout-stage.html"
+    },
+    {
+      "source": "/collections",
+      "destination": "/collections.html"
+    },
+    {
+      "source": "/works",
+      "destination": "/works.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/about.html"
+    },
+    {
+      "source": "/eternal-sun",
+      "destination": "/eternal-sun.html"
+    },
+    {
+      "source": "/index",
+      "destination": "/index.html"
     }
   ]
 }
