@@ -18,3 +18,6 @@ Public product copy: short positive what-it-is + price — avoid “不是…／
 - Multi-SKU ECPay cart amounts: not implemented this pass — display + clear pricing copy only.
 
 Do not invent typo product names. Use the locked names above.
+
+## Ko-fi deep links
+See `ops/KOFI_PRODUCT_URLS_2026-09-30.md` for per-SKU buy URLs (hub only where no product page).
