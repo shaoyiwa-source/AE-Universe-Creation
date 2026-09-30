@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<meta name="ae-version" content="v2427-checkout-draft">
+<meta name="ae-version" content="v2428-phone-optional">
 <title>結帳 Checkout · 朝軒宇宙創造 / AE Universe Creation</title>
-<meta name="description" content="Eternal Sun digital edition checkout draft — AE Universe Creation. NT$444.">
+<meta name="description" content="Eternal Sun digital edition checkout — AE Universe Creation. NT$444. Phone optional.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2427-checkout-draft">
+<link rel="stylesheet" href="site.css?v=2428-phone-optional">
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
 .checkout-main{padding:56px 0 88px}
@@ -75,8 +75,8 @@
       <input id="email" name="email" type="email" autocomplete="email" required maxlength="120" placeholder="you@example.com">
     </div>
     <div class="field">
-      <label for="phone">手機 Phone <span>必填 required</span></label>
-      <input id="phone" name="phone" type="tel" autocomplete="tel" required inputmode="tel" placeholder="0912345678">
+      <label for="phone">手機 Phone <span>選填 optional</span></label>
+      <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="0912345678（選填）">
     </div>
 
     <div class="actions">
@@ -103,7 +103,7 @@
       <li><span>品牌 Brand</span><b>朝軒宇宙創造 / AE Universe Creation</b></li>
       <li><span>作品</span><b>Eternal Sun · 盛明</b></li>
       <li><span>交付</span><b>數位檔（付款確認後）</b></li>
-      <li><span>買家欄位</span><b>姓名 · Email · 手機</b></li>
+      <li><span>買家欄位</span><b>姓名 · Email 必填 · 手機選填</b></li>
     </ul>
     <p class="soft-note">此頁為 Preview 正式結帳 UI 草稿，供 Owner 審視欄位與售價。未升 Production。</p>
   </aside>
@@ -113,7 +113,7 @@
   <div class="footer-brand"><img src="assets/ae-three-rings-transparent.webp" alt="" width="110" height="67">AE Universe Creation · 朝軒宇宙創造</div>
 </div>
 <p class="copyright">© AE Universe Creation · Aurelia & Elion</p>
-<p class="ae-version-mark" aria-hidden="true">AE · checkout draft</p>
+<p class="ae-version-mark" aria-hidden="true">AE · checkout phone-optional</p>
 </footer>
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -169,8 +169,8 @@
       pay.disabled = true;
       download.disabled = true;
       const buyer = buyerPayload();
-      if (!buyer.name || !buyer.email || !buyer.phone) {
-        msg('請完整填寫姓名、Email、手機。');
+      if (!buyer.name || !buyer.email) {
+        msg('請填寫姓名與 Email（手機選填）。');
         return;
       }
       msg('Preparing…');

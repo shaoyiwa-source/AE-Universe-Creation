@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
       }));
     } catch (buyerError) {
       const code = buyerError && buyerError.code;
-      if (code === 'VALID_NAME_REQUIRED' || code === 'VALID_EMAIL_REQUIRED' || code === 'VALID_PHONE_REQUIRED') {
+      if (code === 'VALID_NAME_REQUIRED' || code === 'VALID_EMAIL_REQUIRED' || code === 'VALID_PHONE_REQUIRED' || code === 'VALID_PHONE_INVALID') {
         return res.status(400).json({ error: code });
       }
       throw buyerError;

@@ -247,11 +247,13 @@ function validateBuyer(input) {
     err.code = 'VALID_EMAIL_REQUIRED';
     throw err;
   }
-  // Taiwan-first phone: 09xxxxxxxx, +8869..., or 8–15 digits international
-  if (!/^(\+?886-?9\d{8}|09\d{8}|\+?[0-9]{8,15})$/.test(buyer.phone)) {
-    const err = new Error('VALID_PHONE_REQUIRED');
-    err.code = 'VALID_PHONE_REQUIRED';
-    throw err;
+  // Phone optional for digital goods. If provided, Taiwan-first / international format.
+  if (buyer.phone) {
+    if (!/^(\+?886-?9\d{8}|09\d{8}|\+?[0-9]{8,15})$/.test(buyer.phone)) {
+      const err = new Error('VALID_PHONE_INVALID');
+      err.code = 'VALID_PHONE_INVALID';
+      throw err;
+    }
   }
   return buyer;
 }
