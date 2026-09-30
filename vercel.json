@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/favicon.ico",
-      "destination": "/assets/ae-three-rings-transparent.webp"
-    },
-    {
       "source": "/shop",
       "destination": "/shop.html"
     },
