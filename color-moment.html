@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2436">
+<meta name="ae-version" content="v2437">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -353,7 +353,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2436 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2437 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1323,8 +1323,8 @@
     cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
     if (cardSrc) {
       cardSrc.textContent = L === 'zh'
-        ? '文句出自《盛明》試寫／觀看筆記'
-        : 'Lines from 《盛明》 draft / viewing notes';
+        ? '摘自《盛明》筆記'
+        : 'From the 《盛明》 notes';
     }
 
     readingEl.innerHTML = '';
@@ -1626,7 +1626,7 @@
     const moodMain = isZh ? activeMood.zh : activeMood.en;
     const moodSub = isZh ? activeMood.en : activeMood.zh;
     const eyebrow = isZh ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · ETERNAL SUN';
-    const srcLine = isZh ? '文句出自《盛明》試寫／觀看筆記' : 'Lines from 《盛明》 draft / viewing notes';
+    const srcLine = isZh ? '摘自《盛明》筆記' : 'From the 《盛明》 notes';
     const ritualLabelText = isZh ? '今夜的柔邀' : 'TONIGHT’S SOFT INVITATION';
 
     // Measure content height first — never clip ritual/reading to a fixed DOM height.
