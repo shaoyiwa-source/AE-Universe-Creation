@@ -9,7 +9,7 @@ Public product copy: short positive what-it-is + price — avoid “不是…／
 | Eternal Sun 4-pack · 盛明四張組 | NT$444 | The full Eternal Sun four-pack. |
 | 九張組 | normal NT$555 / promo NT$444 | Nine hand-painted wallpapers. |
 | 花花世界心宇宙（九宮格） | NT$555 | Nine-grid cosmos pack — flower & heart. |
-| 暗夜繽紛美宇宙（九宮格） | NT$555 | Nine-grid cosmos pack — night bloom. |
+| 暗夜繽紛美宇宙（九宮格） | NT$555 | Nine-grid cosmos pack — night bloom. Ko-fi: https://ko-fi.com/s/f68079f3cc (AE Color Universe | 9 Fragments). |
 | Bundle | 三件合購再九折 | Eternal Sun 4-pack + 花花世界心宇宙 + 暗夜繽紛美宇宙. |
 
 ## Amount definitions (for later multi-SKU)
