@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2442">
+<meta name="ae-version" content="v2443">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2442">
-<script src="site.js?v=2442" defer></script>
+<link rel="stylesheet" href="site.css?v=2443">
+<script src="site.js?v=2443" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -42,38 +42,87 @@
     border-radius:18px;overflow:hidden;
     aspect-ratio:4/3;min-height:320px;
     touch-action:none;cursor:crosshair;
+    overscroll-behavior:none;-webkit-user-select:none;user-select:none;
   }
-  .cm-shell canvas{display:block;width:100%;height:100%}
+  .cm-shell canvas{
+    display:block;width:100%;height:100%;
+    touch-action:none;pointer-events:auto;
+  }
+  .cm-mist{
+    position:absolute;inset:0;pointer-events:none;z-index:2;
+    opacity:0;transition:opacity .45s ease;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 48%, rgba(255,252,248,.0), rgba(232,226,216,.0) 62%),
+      linear-gradient(180deg, rgba(255,252,248,.0), rgba(236,230,222,.0));
+    mix-blend-mode:soft-light;
+  }
+  .cm-mist.is-soft{
+    opacity:.55;
+    background:
+      radial-gradient(ellipse 80% 65% at 50% 45%, rgba(255,252,248,.28), rgba(232,226,216,.08) 70%),
+      linear-gradient(165deg, rgba(245,240,232,.18), rgba(220,228,232,.12));
+  }
+  .cm-mist.is-rich{
+    opacity:.88;
+    background:
+      radial-gradient(ellipse 95% 80% at 50% 48%, rgba(255,252,248,.42), rgba(210,222,228,.22) 58%, rgba(200,210,218,.1) 100%),
+      linear-gradient(150deg, rgba(236,242,245,.28), rgba(232,226,216,.16));
+  }
+  :root[data-theme="dark"] .cm-mist.is-soft{
+    background:
+      radial-gradient(ellipse 80% 65% at 50% 45%, rgba(90,110,120,.22), rgba(40,36,32,.08) 70%),
+      linear-gradient(165deg, rgba(70,85,95,.2), rgba(40,36,32,.1));
+  }
+  :root[data-theme="dark"] .cm-mist.is-rich{
+    background:
+      radial-gradient(ellipse 95% 80% at 50% 48%, rgba(110,140,155,.38), rgba(60,70,78,.2) 58%, rgba(30,28,26,.12) 100%),
+      linear-gradient(150deg, rgba(80,100,110,.28), rgba(40,36,32,.16));
+  }
   .cm-hint{
     position:absolute;inset:0;display:grid;place-items:center;
     pointer-events:none;text-align:center;padding:24px;
-    transition:opacity .6s ease;
+    transition:opacity .6s ease;z-index:3;
   }
   .cm-hint span{
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:clamp(22px,3.2vw,34px);letter-spacing:.04em;
+    font-size:clamp(20px,3vw,32px);letter-spacing:.04em;
     color:var(--muted);opacity:.85;
   }
   .cm-hint.is-hidden{opacity:0}
   .cm-seal-bar{
-    width:min(920px,100%);margin:14px auto 0;padding:0 8px;
-    display:flex;flex-direction:column;align-items:center;gap:10px;
+    width:min(920px,100%);margin:14px auto 0;padding:12px 14px;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
     text-align:center;
+    position:sticky;bottom:max(10px, env(safe-area-inset-bottom));
+    z-index:46;
+    background:rgba(255,252,248,.92);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 10px 28px rgba(20,17,15,.12);
+  }
+  :root[data-theme="dark"] .cm-seal-bar{
+    background:rgba(28,24,20,.92);
   }
   .cm-seal-bar[hidden]{display:none!important}
   .cm-lp-hint{
-    margin:0;max-width:38ch;font-size:13px;line-height:1.55;color:var(--muted);
+    margin:0;max-width:38ch;font-size:12px;line-height:1.5;color:var(--muted);
   }
   .cm-seal{
     appearance:none;cursor:pointer;border:1px solid var(--ink);
     color:var(--paper);background:var(--ink);border-radius:999px;
-    min-height:44px;padding:10px 22px;font:inherit;font-size:15px;
-    letter-spacing:.06em;
+    min-height:52px;min-width:min(220px,70vw);padding:12px 28px;font:inherit;font-size:17px;
+    letter-spacing:.08em;font-weight:500;
     transition:transform .18s ease,opacity .2s,border-color .2s;
-    -webkit-tap-highlight-color:transparent;
+    -webkit-tap-highlight-color:transparent;touch-action:none;
   }
   .cm-seal:hover,.cm-seal:focus-visible{transform:translateY(-1px);outline:none}
   .cm-seal:active{transform:scale(.97)}
+  html.cm-draw-lock,html.cm-draw-lock body{overflow:hidden!important;overscroll-behavior:none;touch-action:none}
+  body.cm-blooming .page-heading{padding:18px 0 10px}
+  body.cm-blooming .page-heading h1{font-size:clamp(28px,7vw,44px);margin:0 0 8px}
+  body.cm-blooming .page-heading > p,
+  body.cm-blooming .cm-intro{display:none}
+  body.cm-blooming .cm-stage{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
   .cm-memorial{
     margin:14px auto 4px;width:min(100%,300px);
     border-radius:14px;overflow:hidden;
@@ -221,9 +270,23 @@
   }
   .cm-soft{font-size:13px;color:var(--muted);text-align:center;margin:22px auto 0;max-width:42ch}
   @media(max-width:700px){
-    .cm-shell{aspect-ratio:3/4;min-height:380px;border-radius:14px}
-    .cm-stage{padding:18px 0 56px}
+    .cm-shell{
+      width:100%;aspect-ratio:3/4;
+      min-height:min(52dvh, 400px);
+      max-height:calc(100dvh - 240px);
+      border-radius:14px;
+    }
+    .cm-stage{padding:12px 0 72px}
+    body.cm-blooming .cm-stage{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
     .cm-panel,.cm-card{padding:22px 16px 18px;border-radius:14px}
+    .cm-seal-bar{
+      position:fixed;left:12px;right:12px;bottom:max(10px, env(safe-area-inset-bottom));
+      width:auto;margin:0;z-index:46;
+      padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+    }
+    .cm-lp-hint{font-size:11px;max-width:34ch}
+    .cm-seal{min-height:54px;font-size:18px;width:100%;max-width:320px}
+    .cm-hint span{font-size:clamp(18px,5.2vw,26px);padding:0 8px}
   }
 
   /* iOS save sheet — long-press image is the reliable Photos path */
@@ -389,14 +452,15 @@
       <div class="cm-bloom-wrap" id="cmBloomWrap" hidden>
         <div class="cm-shell" id="cmShell" role="img" aria-label="Interactive colour canvas — tap or click to bloom">
           <canvas id="cmCanvas" width="920" height="690"></canvas>
-          <div class="cm-hint" id="cmHint"><span data-en="Tap to bloom your colour" data-zh="點一下，讓你的顏色綻開">Tap to bloom your colour</span></div>
+          <div class="cm-mist" id="cmMist" aria-hidden="true"></div>
+          <div class="cm-hint" id="cmHint"><span data-en="Touch to leave your light" data-zh="觸碰留下你的光">Touch to leave your light</span></div>
         </div>
 
         <div class="cm-seal-bar" id="cmSealBar" hidden>
-          <p class="cm-lp-hint" id="cmLpHint" data-en="Your touch leaves light that only you made. When it feels ready, hold 收光 — light gathers; release early and nothing is lost." data-zh="你的觸碰會留下只屬於你的光。感覺夠了，就按住「收光」——光會慢慢聚攏；提早放開也沒關係，不是失敗。">Your touch leaves light that only you made. When it feels ready, hold 收光 — light gathers; release early and nothing is lost.</p>
-          <button type="button" class="cm-seal" id="cmSeal" data-en="Seal this light" data-zh="收光" aria-describedby="cmSealHoldHint">
+          <p class="cm-lp-hint" id="cmLpHint" data-en="Hold 收光 when ready — release early to cancel. More fingers welcome — the paper grows mistier." data-zh="感覺夠了就按住「收光」——提早放開即取消。也可多指一起觸碰，紙面會更霧。">Hold 收光 when ready — release early to cancel. More fingers welcome — the paper grows mistier.</p>
+          <button type="button" class="cm-seal" id="cmSeal" data-en="收光 · Seal" data-zh="收光" aria-label="收光" aria-describedby="cmSealHoldHint">
             <span class="cm-seal-ring" id="cmSealRing" aria-hidden="true"></span>
-            <span class="cm-seal-label" id="cmSealLabel">Seal this light</span>
+            <span class="cm-seal-label" id="cmSealLabel">收光 · Seal</span>
           </button>
           <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold gently — release to cancel" data-zh="輕輕按住——放開即取消">Hold gently — release to cancel</p>
         </div>
@@ -461,7 +525,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2442 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2443 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1284,6 +1348,7 @@
   const canvas = document.getElementById('cmCanvas');
   const shell = document.getElementById('cmShell');
   const hint = document.getElementById('cmHint');
+  const mistEl = document.getElementById('cmMist');
   const sealBar = document.getElementById('cmSealBar');
   const lpHint = document.getElementById('cmLpHint');
   const sealBtn = document.getElementById('cmSeal');
@@ -1348,6 +1413,8 @@
   let activePointers = Object.create(null);
   let lastPathSample = Object.create(null);
   let currentPointerId = 0;
+  let drawScrollLocked = false;
+  let mistLevel = 0; // 0 none, 1 soft single, 2 rich multi
   const LP_ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   const LP_STORAGE_KEY = 'ae_lightprint';
   const LP_RESIDUE_KEY = 'ae_lightprint_residue';
@@ -1498,12 +1565,13 @@
   function syncLpHintCopy() {
     if (!lpHint) return;
     const L = lang();
-    const zh = '你的觸碰會留下只屬於你的光。感覺夠了，就按住「收光」——光會慢慢聚攏；提早放開也沒關係，不是失敗。';
-    const en = 'Your touch leaves light that only you made. When it feels ready, hold to seal — light gathers; release early and nothing is lost.';
+    const zh = '感覺夠了就按住「收光」——提早放開即取消。也可多指一起觸碰，紙面會更霧。';
+    const en = 'Hold 收光 when ready — release early to cancel. More fingers welcome — the paper grows mistier.';
     lpHint.textContent = L === 'zh' ? zh : en;
-    const label = L === 'zh' ? '收光' : 'Seal this light';
+    const label = L === 'zh' ? '收光' : '收光 · Seal';
     if (sealLabel) sealLabel.textContent = label;
     else if (sealBtn) sealBtn.textContent = label;
+    if (sealBtn) sealBtn.setAttribute('aria-label', '收光');
     if (sealHoldHint) {
       sealHoldHint.textContent = L === 'zh' ? '輕輕按住——放開即取消' : 'Hold gently — release to cancel';
     }
@@ -1549,8 +1617,8 @@
       const rad = (16 + Math.random() * 42) * (0.55 + s * 0.45);
       const color = palette[i % palette.length];
       const g = memorialLayerCtx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      g.addColorStop(0, hexAlpha(color, 0.22 * s));
-      g.addColorStop(0.55, hexAlpha(color, 0.1 * s));
+      g.addColorStop(0, hexAlpha(color, 0.32 * s));
+      g.addColorStop(0.5, hexAlpha(color, 0.15 * s));
       g.addColorStop(1, hexAlpha(color, 0));
       memorialLayerCtx.fillStyle = g;
       memorialLayerCtx.beginPath();
@@ -1835,21 +1903,90 @@
     }
   }
 
+  function setBloomingUI(on) {
+    try {
+      document.body.classList.toggle('cm-blooming', !!on);
+    } catch (err) { /* ignore */ }
+  }
+
+  function lockDrawScroll() {
+    if (drawScrollLocked) return;
+    drawScrollLocked = true;
+    try {
+      document.documentElement.classList.add('cm-draw-lock');
+      document.body.style.overflow = 'hidden';
+    } catch (err) { /* ignore */ }
+  }
+
+  function unlockDrawScroll() {
+    if (!drawScrollLocked) return;
+    if (Object.keys(activePointers).length) return;
+    drawScrollLocked = false;
+    try {
+      document.documentElement.classList.remove('cm-draw-lock');
+      document.body.style.overflow = '';
+    } catch (err) { /* ignore */ }
+  }
+
+  function activeFingerCount() {
+    return Object.keys(activePointers).length;
+  }
+
+  function syncMistVeil() {
+    if (!mistEl) return;
+    const n = activeFingerCount();
+    mistEl.classList.remove('is-soft', 'is-rich');
+    if (n >= 2) {
+      mistLevel = 2;
+      mistEl.classList.add('is-rich');
+    } else if (n === 1 && started) {
+      mistLevel = 1;
+      mistEl.classList.add('is-soft');
+    } else {
+      mistLevel = 0;
+    }
+  }
+
+  function paintMistVeilToMemorial(strength) {
+    if (!activeMood || !memorialLayerCtx) return;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    ensureMemorialLayer(r.width, r.height);
+    const dark = document.documentElement.dataset.theme === 'dark';
+    const s = Math.max(0.04, Math.min(0.35, strength || 0.12));
+    const cx = r.width * 0.5;
+    const cy = r.height * 0.48;
+    const rad = Math.max(r.width, r.height) * 0.72;
+    const g = memorialLayerCtx.createRadialGradient(cx, cy, rad * 0.12, cx, cy, rad);
+    const tint = (activeMood.palette && activeMood.palette[0]) || '#c9a66b';
+    g.addColorStop(0, hexAlpha(tint, s * 0.35));
+    g.addColorStop(0.55, hexAlpha(tint, s * 0.12));
+    g.addColorStop(1, dark ? 'rgba(20,17,15,0)' : 'rgba(255,252,248,0)');
+    memorialLayerCtx.fillStyle = g;
+    memorialLayerCtx.fillRect(0, 0, r.width, r.height);
+  }
+
   function coalesceBloomPull() {
     if (!activeMood) return;
     const r = shell.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    const cx = r.width * 0.5;
-    const cy = r.height * 0.48;
-    // Soft pull: stamp along residual path + center gather — no timer text.
+    // Soft whole-trail coalesce into card — NO hard mid press-spot / center bloom.
     const pts = lightTouches.length ? lightTouches : [{ nx: 0.5, ny: 0.48 }];
-    const step = Math.max(1, Math.floor(pts.length / 12));
+    const step = Math.max(1, Math.floor(pts.length / 28));
     for (let i = 0; i < pts.length; i += step) {
       const p = pts[i];
-      stampMemorialAt(p.nx * r.width, p.ny * r.height, 0.55);
+      stampMemorialAt(p.nx * r.width, p.ny * r.height, 0.34);
     }
-    bloomAt(cx, cy, true);
-    stampMemorialAt(cx, cy, 1.15);
+    // Optional very faint gather that dissolves into the path (path-tied, not a hotspot).
+    if (pts.length > 2) {
+      const mid = pts[Math.floor(pts.length * 0.5)];
+      stampMemorialAt(mid.nx * r.width, mid.ny * r.height, 0.16);
+      const gx = (mid.nx * 0.7 + 0.5 * 0.3) * r.width;
+      const gy = (mid.ny * 0.7 + 0.48 * 0.3) * r.height;
+      stampMemorialAt(gx, gy, 0.1);
+    }
+    // Bake a soft residual mist veil into memorial (no hard stamp).
+    paintMistVeilToMemorial(Object.keys(activePointers).length >= 2 ? 0.22 : 0.12);
   }
 
   function beginCoalesceAndSeal() {
@@ -1972,6 +2109,11 @@
   function sealLight() {
     if (lightSealed || !bloomReady || !activeMood) return;
     cancelSealHold(true);
+    activePointers = Object.create(null);
+    lastPathSample = Object.create(null);
+    unlockDrawScroll();
+    if (mistEl) mistEl.classList.remove('is-soft', 'is-rich');
+    mistLevel = 0;
     if (!lightTouches.length) {
       recordLightPoint(0.5, 0.48, 0, 'seal');
     }
@@ -1987,6 +2129,8 @@
       : ('Light sealed · how you existed in this moment'));
   }
 
+  // Follow-up (not this deploy): dual-card after 收光 —
+  // (A) meaning card mood/line/art; (B) Lightprint trail memorial with trail hero + soft frame + corner LP.
   function renderCard() {
     if (!activeMood) return;
     const L = lang();
@@ -2070,6 +2214,9 @@
         bloomReady = true;
         started = false;
         resetLightSession();
+        setBloomingUI(true);
+        if (mistEl) mistEl.classList.remove('is-soft', 'is-rich');
+        mistLevel = 0;
         hint.classList.remove('is-hidden');
         cardEl.hidden = true;
         cardEl.classList.remove('is-on');
@@ -2115,25 +2262,28 @@
     if ((!bloomReady && !pathReplayBusy) || !activeMood) return;
     const r = shell.getBoundingClientRect();
     const palette = activeMood.palette;
-    const count = 12 + Math.floor(Math.random() * 8);
+    const multi = Object.keys(activePointers).length >= 2;
+    const count = (multi ? 16 : 14) + Math.floor(Math.random() * (multi ? 10 : 8));
+    const spread = multi ? 0.38 : 0.32;
     for (let i = 0; i < count; i++) {
       const ang = Math.random() * Math.PI * 2;
-      const dist = 18 + Math.random() * Math.min(r.width, r.height) * 0.3;
+      const dist = 20 + Math.random() * Math.min(r.width, r.height) * spread;
       blooms.push({
         x, y,
         tx: x + Math.cos(ang) * dist,
         ty: y + Math.sin(ang) * dist,
-        r: 18 + Math.random() * 54,
+        r: (multi ? 22 : 20) + Math.random() * (multi ? 64 : 58),
         color: palette[i % palette.length],
         life: 0,
-        max: 1.15 + Math.random() * 0.7,
-        delay: Math.random() * 0.12
+        max: 1.2 + Math.random() * 0.75,
+        delay: Math.random() * 0.1
       });
     }
+    // Drawing stamps stay path-tied; coalesce no longer adds a hard center press-spot.
     if (!fromAuto) {
-      stampMemorialAt(x, y, 1);
+      stampMemorialAt(x, y, multi ? 1.15 : 1.05);
     } else {
-      stampMemorialAt(x, y, 0.72);
+      stampMemorialAt(x, y, 0.7);
     }
     if (!started) {
       started = true;
@@ -2158,7 +2308,7 @@
       const alpha = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8;
       const rad = b.r * (0.35 + ease * 0.9);
       const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      g.addColorStop(0, hexAlpha(b.color, Math.max(0, Math.min(0.55, alpha * 0.55))));
+      g.addColorStop(0, hexAlpha(b.color, Math.max(0, Math.min(0.68, alpha * 0.68))));
       g.addColorStop(1, hexAlpha(b.color, 0));
       ctx.fillStyle = g;
       ctx.beginPath();
@@ -2184,10 +2334,12 @@
 
   shell.addEventListener('pointerdown', (e) => {
     if (pathReplayBusy || sealCoalescing) return;
-    e.preventDefault();
+    try { e.preventDefault(); } catch (err) { /* ignore */ }
     currentPointerId = e.pointerId || 0;
     activePointers[currentPointerId] = true;
     lastPathSample[currentPointerId] = performance.now();
+    lockDrawScroll();
+    syncMistVeil();
     try { shell.setPointerCapture(e.pointerId); } catch (err) { /* optional */ }
     const r = shell.getBoundingClientRect();
     const p = pointFromEvent(e);
@@ -2195,28 +2347,38 @@
       recordLightPoint(p.x / r.width, p.y / r.height, currentPointerId, 'down');
     }
     bloomAt(p.x, p.y, false);
+    // Soft ambient mist for single finger; richer when several contacts.
+    if (activeFingerCount() === 1) paintMistVeilToMemorial(0.06);
+    else if (activeFingerCount() >= 2) paintMistVeilToMemorial(0.1);
   });
 
   shell.addEventListener('pointermove', (e) => {
     if (lightSealed || !bloomReady || !started) return;
     const pid = e.pointerId || 0;
     if (!activePointers[pid]) return;
+    try { e.preventDefault(); } catch (err) { /* ignore */ }
     const now = performance.now();
     const last = lastPathSample[pid] || 0;
-    if (now - last < 36) return;
+    const multi = activeFingerCount() >= 2;
+    if (now - last < (multi ? 28 : 32)) return;
     lastPathSample[pid] = now;
     const r = shell.getBoundingClientRect();
     if (!r.width || !r.height) return;
     const p = pointFromEvent(e);
     recordLightPoint(p.x / r.width, p.y / r.height, pid, 'move');
-    stampMemorialAt(p.x, p.y, 0.28);
-  });
+    // Single finger: clearer trail; multi: denser path marks + living paper mist.
+    stampMemorialAt(p.x, p.y, multi ? 0.42 : 0.4);
+    if (multi && Math.random() < 0.22) paintMistVeilToMemorial(0.045);
+    else if (!multi && Math.random() < 0.08) paintMistVeilToMemorial(0.025);
+  }, { passive: false });
 
   function endPointerPath(e) {
     const pid = e.pointerId || 0;
     if (!activePointers[pid]) return;
     delete activePointers[pid];
     delete lastPathSample[pid];
+    syncMistVeil();
+    unlockDrawScroll();
     if (lightSealed || !bloomReady) return;
     const r = shell.getBoundingClientRect();
     if (!r.width || !r.height) return;
@@ -2226,6 +2388,37 @@
 
   shell.addEventListener('pointerup', endPointerPath);
   shell.addEventListener('pointercancel', endPointerPath);
+  // iOS Safari: block page scroll while finger is on the canvas.
+  shell.addEventListener('touchmove', (e) => {
+    if (!bloomReady || lightSealed) return;
+    if (Object.keys(activePointers).length || (e.touches && e.touches.length)) {
+      try { e.preventDefault(); } catch (err) { /* ignore */ }
+    }
+  }, { passive: false });
+  shell.addEventListener('touchstart', (e) => {
+    if (!bloomReady || pathReplayBusy || sealCoalescing) return;
+    // Ensure multi-touch contacts register even if pointer events are limited.
+    if (e.touches && e.touches.length > 1) {
+      try { e.preventDefault(); } catch (err) { /* ignore */ }
+      lockDrawScroll();
+      const r = shell.getBoundingClientRect();
+      if (!r.width || !r.height || !activeMood) return;
+      for (let i = 0; i < e.touches.length; i++) {
+        const t = e.touches[i];
+        const id = (t.identifier != null ? t.identifier : i) + 1000;
+        if (!activePointers[id]) {
+          activePointers[id] = true;
+          lastPathSample[id] = performance.now();
+          const x = t.clientX - r.left;
+          const y = t.clientY - r.top;
+          if (!lightSealed) recordLightPoint(x / r.width, y / r.height, id, 'down');
+          bloomAt(x, y, false);
+        }
+      }
+      syncMistVeil();
+      paintMistVeilToMemorial(0.1);
+    }
+  }, { passive: false });
 
   function showToast(message) {
     if (!toast) return;
@@ -2954,6 +3147,10 @@
     started = false;
     bloomReady = false;
     resetLightSession();
+    setBloomingUI(false);
+    unlockDrawScroll();
+    if (mistEl) mistEl.classList.remove('is-soft', 'is-rich');
+    mistLevel = 0;
     warmBlobToken += 1;
     clearWarmBlob();
     closeSaveSheet();

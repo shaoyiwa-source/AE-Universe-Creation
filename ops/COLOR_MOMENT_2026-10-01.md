@@ -54,3 +54,14 @@ Mysterious, soft. 朝軒宇宙創造 / 盛明. Collecting optional. No quiz jarg
 - Pulse / Together: skipped this slice.
 - Preview only on `new9-public-media`. Production untouched.
 
+## v2443 — iPhone Safari playable UX (2026-10-01)
+Preview only on `new9-public-media`. Production untouched.
+
+### Fixes
+- **No scroll-while-drawing:** `touch-action:none`, non-passive `touchmove` preventDefault, body overflow lock while fingers on canvas.
+- **Visible 「收光」:** sticky/fixed primary hold control on mobile (safe-area), bilingual `收光` / `收光 · Seal`, hold ~1.3s, early release = cancel, no seconds text.
+- **Layout:** compact heading while blooming; canvas full-width on iPhone; seal dock always findable without scrolling away from canvas.
+- **Soft coalesce:** whole-trail soft re-stamp only — **no hard mid press-spot / center bloom blob**.
+- **Mist / multi-touch (optional, not mandated):** single finger gets clearer trail + light ambient mist; several contacts deepen a soft full-paper fog. Soft discoverability hint only.
+- Dual-card (meaning + Lightprint trail memorial): **noted for follow-up**, not shipped this deploy.
+
