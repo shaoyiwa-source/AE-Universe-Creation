@@ -9,13 +9,13 @@ Public product copy: short positive what-it-is + price — avoid “不是…／
 
 | Product | Price | What it is | Ko-fi |
 |---|---|---|---|
-| Eternal Sun 4-pack · 盛明四張組 | NT$444 | The full Eternal Sun four-pack. | https://ko-fi.com/s/e3991964e5 |
+| Eternal Sun｜盛明四張組 | NT$444 | The full Eternal Sun four-pack. | https://ko-fi.com/s/e3991964e5 |
 | 花花世界心宇宙（九宮格） | NT$555 | Nine-grid cosmos pack — flower & heart. | https://ko-fi.com/s/9b9703d58b (AE Heart Universe | 9-Piece) |
 | 暗夜繽紛美宇宙（九宮格） | NT$555 | Nine-grid cosmos pack — night bloom. | https://ko-fi.com/s/f68079f3cc (AE Color Universe | 9 Fragments) |
-| Bundle | 三件合購再九折 | Eternal Sun 4-pack + 花花世界心宇宙 + 暗夜繽紛美宇宙. | *(hub until bundle page)* |
+| Bundle | 三件合購再九折 | Eternal Sun｜盛明四張組 + 花花世界心宇宙 + 暗夜繽紛美宇宙. | *(hub until bundle page)* |
 
 ## Amount definitions (for later multi-SKU)
-- Formal display / ES checkout list price: `FORMAL_LIST_PRICE_TWD = 444` in `api/payment/ecpay-v2/_lib.js` (and `LIST_PRICE = 444` in `checkout.html`) = ES 4-pack.
+- Formal display / ES checkout list price: `FORMAL_LIST_PRICE_TWD = 444` in `api/payment/ecpay-v2/_lib.js` (and `LIST_PRICE = 444` in `checkout.html`) = Eternal Sun｜盛明四張組.
 - Stage sandbox amounts: `stageAmountForSku()` / `ECPAY_STAGE_AMOUNT_*` env — Stage test amounts, not multi-SKU cart.
 - Multi-SKU ECPay cart amounts: not implemented this pass — display + clear pricing copy only.
 

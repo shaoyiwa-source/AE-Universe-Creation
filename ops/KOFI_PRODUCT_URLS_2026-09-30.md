@@ -11,7 +11,7 @@ Do **not** invent product URLs. Hub only where no `/s/…` page exists.
 
 | Site SKU | Price | Ko-fi URL | Notes |
 |---|---|---|---|
-| Eternal Sun 4-pack · 盛明四張組 | NT$444 | https://ko-fi.com/s/e3991964e5 | “Eternal Sun - Digital Collection…” |
+| Eternal Sun｜盛明四張組 | NT$444 | https://ko-fi.com/s/e3991964e5 | “Eternal Sun - Digital Collection…” |
 | **花花世界心宇宙** | NT$555 | **https://ko-fi.com/s/9b9703d58b** | **Owner lock:** Ko-fi “AE Heart Universe | 9-Piece Wallpaper…” = site 花花世界心宇宙. |
 | **暗夜繽紛美宇宙** | NT$555 | **https://ko-fi.com/s/f68079f3cc** | **Owner lock:** Ko-fi “AE Color Universe | 9 Fragments / AE色彩宇宙｜九個片段” = site 暗夜繽紛美宇宙. |
 | Bundle 三件合購再九折 | 九折 | *(none)* | No bundle product page. CTA → shop hub. |
