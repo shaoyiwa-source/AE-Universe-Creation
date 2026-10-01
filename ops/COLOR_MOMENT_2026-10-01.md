@@ -84,3 +84,18 @@ Preview only on `new9-public-media`. Production untouched.
 ### D) Question pool
 - +4 soft body/senses/closeness questions (ZH+EN); shuffle draw 3–4 unchanged
 
+## v2445 — ruthless Solo progressive disclosure (2026-10-01)
+Preview only on `new9-public-media`. Production untouched. One Preview deploy.
+
+### Problem
+Owner (iPhone Safari): still hard to operate / doesn’t know what to do — too many competing cues (intro, mist tip, hold hint, residue, shop links, early 收光).
+
+### Simplify (one step at a time)
+1. **Ask** — only question + 1-line coach `輕輕選一個` / `Pick one that fits`. Long Lightprint intro gone. Residue banner off. Progress shortened to `1 / 3`.
+2. **Touch** — only canvas + coach/hint `自由觸碰` / `Touch freely`. 「收光」 hidden. Shop/Experience links hidden.
+3. **Seal** — after a short real touch (≈4 path points, or ~1.4s after first paint): big sticky 「收光」 + 1-line `按住「收光」` / `Hold 收光`. Mist multi-finger tip removed from UI (mist still works). Hold-hint line visually hidden (aria kept).
+4. **Done** — card + memorial copy unchanged; after-links return.
+
+### Kept
+- No scroll-on-draw, soft coalesce (no press-spot), multi-touch optional mist, unique memorial copy, hold-to-seal / early release = cancel.
+

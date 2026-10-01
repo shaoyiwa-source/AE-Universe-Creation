@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2444">
+<meta name="ae-version" content="v2445">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2443">
-<script src="site.js?v=2443" defer></script>
+<link rel="stylesheet" href="site.css?v=2445">
+<script src="site.js?v=2445" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -120,9 +120,38 @@
   html.cm-draw-lock,html.cm-draw-lock body{overflow:hidden!important;overscroll-behavior:none;touch-action:none}
   body.cm-blooming .page-heading{padding:18px 0 10px}
   body.cm-blooming .page-heading h1{font-size:clamp(28px,7vw,44px);margin:0 0 8px}
-  body.cm-blooming .page-heading > p,
-  body.cm-blooming .cm-intro{display:none}
+  body.cm-blooming .page-heading > p{display:none}
   body.cm-blooming .cm-stage{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  /* v2445 progressive Solo: one step visible at a time */
+  .cm-coach{
+    margin:0 auto;max-width:28ch;text-align:center;
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:clamp(17px,2.6vw,22px);line-height:1.4;letter-spacing:.03em;
+    color:var(--muted);
+  }
+  .cm-coach[hidden]{display:none!important}
+  body.cm-phase-ask .cm-residue,
+  body.cm-phase-touch .cm-residue,
+  body.cm-phase-seal .cm-residue{display:none!important}
+  body.cm-phase-touch .cm-after,
+  body.cm-phase-seal .cm-after{display:none!important}
+  body.cm-phase-seal .cm-coach{display:none!important}
+  body.cm-phase-done .cm-coach{display:none!important}
+  body.cm-phase-ask .cm-progress{opacity:.7}
+  .cm-seal-bar .cm-lp-hint{
+    font-size:14px;letter-spacing:.04em;max-width:22ch;
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    color:inherit;opacity:.9;
+  }
+  .cm-seal-hold-hint{display:none!important} /* aria stays on button; one line only in bar */
+  .cm-seal-bar.is-arrive{
+    animation:cm-seal-arrive .42s cubic-bezier(.22,.61,.36,1);
+  }
+  @keyframes cm-seal-arrive{
+    from{opacity:0;transform:translateY(14px)}
+    to{opacity:1;transform:none}
+  }
+  .cm-seal{min-height:56px;min-width:min(260px,78vw);font-size:18px;letter-spacing:.12em}
   .cm-memorial{
     margin:14px auto 4px;width:min(100%,300px);
     border-radius:14px;overflow:hidden;
@@ -284,6 +313,8 @@
     }
     .cm-stage{padding:12px 0 72px}
     body.cm-blooming .cm-stage{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+    body.cm-phase-seal .cm-stage{padding-bottom:calc(128px + env(safe-area-inset-bottom))}
+    .cm-seal{min-height:58px;font-size:19px}
     .cm-panel,.cm-card{padding:22px 16px 18px;border-radius:14px}
     .cm-seal-bar{
       position:fixed;left:12px;right:12px;bottom:max(10px, env(safe-area-inset-bottom));
@@ -432,13 +463,13 @@
   <div class="wrap page-heading page-heading-wash">
     <p class="eyebrow" data-en="AE COLOR MOMENT" data-zh="AE 色彩瞬間">AE COLOR MOMENT</p>
     <h1 data-en="Color Moment" data-zh="色彩瞬間">Color Moment</h1>
-    <p data-en="Not a quiz — colour stays with you. Your touch leaves the light of this moment." data-zh="輕輕回答。再讓顏色，找到這一刻的形狀。">Not a quiz — colour stays with you. Your touch leaves the light of this moment.</p>
+    <p data-en="One soft moment." data-zh="一個柔和的片刻。">One soft moment.</p>
   </div>
 
   <section class="cm-stage">
     <div class="wrap">
       <div class="cm-intro" id="cmIntro">
-        <p data-en="Lightprint saves how you existed in that moment — not your answers. Touch freely; when ready, hold to seal." data-zh="光紋記住的是你如何存在於那一刻——不是測驗答案。自由觸碰；準備好了，就按住收光。">Lightprint saves how you existed in that moment — not your answers. Touch freely; when ready, hold to seal.</p>
+        <p class="cm-coach" id="cmCoach" data-en="Pick one that fits" data-zh="輕輕選一個">Pick one that fits</p>
       </div>
 
       <div class="cm-residue" id="cmResidue" hidden>
@@ -459,16 +490,16 @@
         <div class="cm-shell" id="cmShell" role="img" aria-label="Interactive colour canvas — tap or click to bloom">
           <canvas id="cmCanvas" width="920" height="690"></canvas>
           <div class="cm-mist" id="cmMist" aria-hidden="true"></div>
-          <div class="cm-hint" id="cmHint"><span data-en="Touch to leave your light" data-zh="觸碰留下你的光">Touch to leave your light</span></div>
+          <div class="cm-hint" id="cmHint"><span data-en="Touch freely" data-zh="自由觸碰">Touch freely</span></div>
         </div>
 
         <div class="cm-seal-bar" id="cmSealBar" hidden>
-          <p class="cm-lp-hint" id="cmLpHint" data-en="Hold 收光 when ready — release early to cancel. More fingers welcome — the paper grows mistier." data-zh="感覺夠了就按住「收光」——提早放開即取消。也可多指一起觸碰，紙面會更霧。">Hold 收光 when ready — release early to cancel. More fingers welcome — the paper grows mistier.</p>
+          <p class="cm-lp-hint" id="cmLpHint" data-en="Hold 收光" data-zh="按住「收光」">Hold 收光</p>
           <button type="button" class="cm-seal" id="cmSeal" data-en="收光 · Seal" data-zh="收光" aria-label="收光" aria-describedby="cmSealHoldHint">
             <span class="cm-seal-ring" id="cmSealRing" aria-hidden="true"></span>
             <span class="cm-seal-label" id="cmSealLabel">收光 · Seal</span>
           </button>
-          <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold gently — release to cancel" data-zh="輕輕按住——放開即取消">Hold gently — release to cancel</p>
+          <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold — release to cancel" data-zh="按住——放開即取消">Hold — release to cancel</p>
         </div>
 
         <article class="cm-card" id="cmCard" hidden aria-live="polite">
@@ -532,7 +563,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2444 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2445 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1403,6 +1434,7 @@
   const sealRing = document.getElementById('cmSealRing');
   const sealLabel = document.getElementById('cmSealLabel');
   const sealHoldHint = document.getElementById('cmSealHoldHint');
+  const coachEl = document.getElementById('cmCoach');
   const residueEl = document.getElementById('cmResidue');
   const residueText = document.getElementById('cmResidueText');
   const residueReplayBtn = document.getElementById('cmResidueReplay');
@@ -1459,6 +1491,11 @@
   let currentPointerId = 0;
   let drawScrollLocked = false;
   let mistLevel = 0; // 0 none, 1 soft single, 2 rich multi
+  let userPainted = false;
+  let soloPhase = 'ask';
+  let sealRevealTimer = 0;
+  const SEAL_READY_TOUCHES = 4; // short drag / a couple taps = "touched a bit"
+  const SEAL_FALLBACK_MS = 1400; // single tap still unlocks 收光 after a beat
   const LP_ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   const LP_STORAGE_KEY = 'ae_lightprint';
   const LP_RESIDUE_KEY = 'ae_lightprint_residue';
@@ -1545,9 +1582,11 @@
     const L = lang();
     const q = sessionQs[qIndex];
     const total = sessionQs.length;
+    if (soloPhase !== 'ask') setSoloPhase('ask');
+    else updateCoach();
     progressEl.textContent = L === 'zh'
-      ? `感覺 ${qIndex + 1} / ${total}`
-      : `Feeling ${qIndex + 1} / ${total}`;
+      ? `${qIndex + 1} / ${total}`
+      : `${qIndex + 1} / ${total}`;
     questionEl.textContent = L === 'zh' ? q.zh : q.en;
     choicesEl.innerHTML = '';
     q.choices.forEach(c => {
@@ -1579,7 +1618,9 @@
   function resetLightSession() {
     cancelSealHold(true);
     stopPathReplay();
+    clearSealRevealTimer();
     lightTouches = [];
+    userPainted = false;
     lightSealed = false;
     lightprintCode = null;
     lightSessionT0 = 0;
@@ -1593,7 +1634,10 @@
     }
     memorialW = 0;
     memorialH = 0;
-    if (sealBar) sealBar.hidden = true;
+    if (sealBar) {
+      sealBar.hidden = true;
+      sealBar.classList.remove('is-arrive');
+    }
     if (lightprintEl) {
       lightprintEl.hidden = true;
       lightprintEl.textContent = '';
@@ -1607,20 +1651,85 @@
   }
 
   function syncLpHintCopy() {
-    if (!lpHint) return;
     const L = lang();
-    const zh = '感覺夠了就按住「收光」——提早放開即取消。也可多指一起觸碰，紙面會更霧。';
-    const en = 'Hold 收光 when ready — release early to cancel. More fingers welcome — the paper grows mistier.';
-    lpHint.textContent = L === 'zh' ? zh : en;
+    if (lpHint) {
+      lpHint.textContent = L === 'zh' ? '按住「收光」' : 'Hold 收光';
+    }
     const label = L === 'zh' ? '收光' : '收光 · Seal';
     if (sealLabel) sealLabel.textContent = label;
     else if (sealBtn) sealBtn.textContent = label;
     if (sealBtn) sealBtn.setAttribute('aria-label', '收光');
     if (sealHoldHint) {
-      sealHoldHint.textContent = L === 'zh' ? '輕輕按住——放開即取消' : 'Hold gently — release to cancel';
+      sealHoldHint.textContent = L === 'zh' ? '按住——放開即取消' : 'Hold — release to cancel';
     }
     if (pathReplayBtn) {
       pathReplayBtn.textContent = L === 'zh' ? '看光再走一次' : 'Watch the light again';
+    }
+  }
+
+  function coachCopy(phase) {
+    const L = lang();
+    const map = {
+      ask: { zh: '輕輕選一個', en: 'Pick one that fits' },
+      touch: { zh: '自由觸碰畫面', en: 'Touch freely' },
+      seal: { zh: '按住「收光」', en: 'Hold 收光' },
+      done: { zh: '這一刻是你的', en: 'This moment is yours' }
+    };
+    const row = map[phase] || map.ask;
+    return L === 'zh' ? row.zh : row.en;
+  }
+
+  function updateCoach() {
+    if (!coachEl) return;
+    // Seal / done: one action only — seal bar or card carries the cue.
+    if (soloPhase === 'seal' || soloPhase === 'done') {
+      coachEl.hidden = true;
+      return;
+    }
+    coachEl.hidden = false;
+    coachEl.textContent = coachCopy(soloPhase);
+  }
+
+  function setSoloPhase(phase) {
+    soloPhase = phase || 'ask';
+    try {
+      document.body.classList.remove('cm-phase-ask', 'cm-phase-touch', 'cm-phase-seal', 'cm-phase-done');
+      document.body.classList.add('cm-phase-' + soloPhase);
+    } catch (err) { /* ignore */ }
+    updateCoach();
+    // Residue fights first-time Solo attention — hide until ask idle is rare; keep off during active steps.
+    if (residueEl && soloPhase !== 'ask') residueEl.hidden = true;
+  }
+
+  function clearSealRevealTimer() {
+    if (sealRevealTimer) {
+      clearTimeout(sealRevealTimer);
+      sealRevealTimer = 0;
+    }
+  }
+
+  function revealSealNow() {
+    if (lightSealed || !bloomReady || !sealBar) return;
+    if (sealBar.hidden === false) return;
+    clearSealRevealTimer();
+    showSealBar();
+    setSoloPhase('seal');
+  }
+
+  function maybeRevealSeal() {
+    if (lightSealed || !bloomReady || !userPainted || !sealBar) return;
+    if (sealBar.hidden === false) return;
+    if (lightTouches.length >= SEAL_READY_TOUCHES) {
+      revealSealNow();
+      return;
+    }
+    // Soft fallback: after first real touch, 收光 arrives on its own beat
+    // so a single tap still teaches the next step without fighting early attention.
+    if (!sealRevealTimer) {
+      sealRevealTimer = window.setTimeout(() => {
+        sealRevealTimer = 0;
+        if (!lightSealed && userPainted && bloomReady) revealSealNow();
+      }, SEAL_FALLBACK_MS);
     }
   }
 
@@ -1758,6 +1867,10 @@
     if (!sealBar || lightSealed) return;
     syncLpHintCopy();
     sealBar.hidden = false;
+    sealBar.classList.remove('is-arrive');
+    // retrigger arrive animation
+    void sealBar.offsetWidth;
+    sealBar.classList.add('is-arrive');
   }
 
   function recordLightPoint(nx, ny, pointerId, kind) {
@@ -1771,6 +1884,7 @@
       id: pointerId == null ? 0 : pointerId,
       kind: kind || 'tap'
     });
+    if (userPainted) maybeRevealSeal();
   }
 
   function hashToLightprint(payload) {
@@ -1861,24 +1975,9 @@
 
   function syncResidueBanner() {
     if (!residueEl) return;
-    const data = loadResidue();
-    if (!data || lightSealed) {
-      residueEl.hidden = true;
-      return;
-    }
-    // Show only on ask stage (before / between sessions).
-    if (askEl.hidden) {
-      residueEl.hidden = true;
-      return;
-    }
-    const L = lang();
-    const when = data.sealedAt ? String(data.sealedAt).slice(0, 10) : '';
-    residueText.textContent = L === 'zh'
-      ? ('還有一束你留下的光' + (when ? '（' + when + '）' : '') + '——可以看它再走一次，或留下今天的新光。')
-      : ('A light you left is still here' + (when ? ' (' + when + ')' : '') + ' — watch it again, or leave today’s new light.');
-    if (residueReplayBtn) residueReplayBtn.textContent = L === 'zh' ? '看光再走一次' : 'Watch the light again';
-    if (residueDismissBtn) residueDismissBtn.textContent = L === 'zh' ? '先靜靜收著' : 'Keep it quiet';
-    residueEl.hidden = false;
+    // v2445 ruthless Solo: residue banner fights first-time attention.
+    // Path Replay stays on the result card; banner stays off.
+    residueEl.hidden = true;
   }
 
   function setSealHoldProgress(p) {
@@ -2165,7 +2264,12 @@
     lightprintCode = encodeLightprint(lightTouches, activeMood.id);
     persistLightprint(lightprintCode);
     try { captureMemorialImage(); } catch (err) { memorialDataUrl = null; }
-    if (sealBar) sealBar.hidden = true;
+    if (sealBar) {
+      sealBar.hidden = true;
+      sealBar.classList.remove('is-arrive');
+    }
+    afterEl.hidden = false;
+    setSoloPhase('done');
     renderCard();
     const L = lang();
     showToast(L === 'zh'
@@ -2280,7 +2384,7 @@
         activeArt = pickFrom(arts);
         askEl.hidden = true;
         bloomWrap.hidden = false;
-        afterEl.hidden = false;
+        afterEl.hidden = true; // no shop/experience clutter until sealed
         bloomReady = true;
         started = false;
         resetLightSession();
@@ -2288,11 +2392,18 @@
         if (mistEl) mistEl.classList.remove('is-soft', 'is-rich');
         mistLevel = 0;
         hint.classList.remove('is-hidden');
+        // Refresh canvas coach to ultra-short touch cue
+        try {
+          const hs = hint.querySelector('span');
+          if (hs) hs.textContent = lang() === 'zh' ? '自由觸碰' : 'Touch freely';
+        } catch (err) { /* ignore */ }
         cardEl.hidden = true;
         cardEl.classList.remove('is-on');
+        setSoloPhase('touch');
         resize();
         window.setTimeout(() => {
-          if (!started && bloomReady) {
+          // Soft ambient wake — does NOT unlock 收光 or count as user paint.
+          if (!started && bloomReady && !userPainted) {
             const r = shell.getBoundingClientRect();
             bloomAt(r.width * 0.5, r.height * 0.48, true);
           }
@@ -2355,11 +2466,14 @@
     } else {
       stampMemorialAt(x, y, 0.7);
     }
-    if (!started) {
-      started = true;
-      hint.classList.add('is-hidden');
-      // Lightprint v1.1: free-form bloom; seal locks keepsake memorial + ID.
-      showSealBar();
+    if (!fromAuto) {
+      userPainted = true;
+      if (!started) {
+        started = true;
+        hint.classList.add('is-hidden');
+        if (soloPhase === 'touch') updateCoach();
+      }
+      maybeRevealSeal();
     }
     if (!raf) raf = requestAnimationFrame(tick);
   }
@@ -3260,6 +3374,7 @@
     cardEl.classList.remove('is-on');
     if (cardBg) cardBg.style.backgroundImage = '';
     runWash(false);
+    setSoloPhase('ask');
     showQuestion();
     syncResidueBanner();
   }
@@ -3302,7 +3417,12 @@
 
   function refreshLangUI() {
     if (!askEl.hidden) showQuestion();
+    updateCoach();
     if (sealBar && !sealBar.hidden) syncLpHintCopy();
+    if (hint && !hint.classList.contains('is-hidden')) {
+      const hs = hint.querySelector('span');
+      if (hs) hs.textContent = lang() === 'zh' ? '自由觸碰' : 'Touch freely';
+    }
     if (activeMood && !bloomWrap.hidden && !cardEl.hidden) {
       renderCard();
     }
@@ -3322,6 +3442,7 @@
   });
 
   sessionQs = drawSession();
+  setSoloPhase('ask');
   showQuestion();
   syncResidueBanner();
 })();
