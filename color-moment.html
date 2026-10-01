@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2435">
+<meta name="ae-version" content="v2436">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -207,13 +207,20 @@
   .cm-save-frame{
     margin:0 auto;width:100%;max-height:min(58vh,520px);border-radius:14px;overflow:hidden;
     background:rgba(0,0,0,.04);border:1px solid var(--line);
-    display:flex;align-items:center;justify-content:center;
+    display:flex;align-items:center;justify-content:center;position:relative;
     -webkit-touch-callout:default;touch-action:manipulation;
   }
+  .cm-save-frame.is-loading{min-height:min(42vh,320px)}
+  .cm-save-loading{
+    display:none;padding:40px 18px;font-size:13px;line-height:1.55;color:var(--muted);text-align:center;
+  }
+  .cm-save-frame.is-loading .cm-save-loading{display:block}
+  .cm-save-frame.is-loading img{display:none}
   .cm-save-frame img{
     display:block;width:100%;height:auto;max-height:min(58vh,520px);
     object-fit:contain;-webkit-touch-callout:default;user-select:none;-webkit-user-select:none;
   }
+  .cm-save-actions .cm-save-share:disabled{opacity:.55;cursor:wait}
   .cm-save-actions{
     display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:16px 0 4px;
   }
@@ -346,14 +353,15 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2435 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2436 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
   <div class="cm-save-panel" role="dialog" aria-modal="true" aria-labelledby="cmSaveTitle">
     <p class="cm-save-title" id="cmSaveTitle" data-en="This moment" data-zh="這一瞬">This moment</p>
     <p class="cm-save-hint" id="cmSaveHint" data-en="Long-press the image → Add to Photos / Save Image" data-zh="長按圖片，選擇『加入照片』或『儲存影像』">Long-press the image → Add to Photos / Save Image</p>
-    <div class="cm-save-frame">
+    <div class="cm-save-frame" id="cmSaveFrame">
+      <p class="cm-save-loading" id="cmSaveLoading" data-en="Developing this moment…" data-zh="正在沖出這一瞬…">Developing this moment…</p>
       <img id="cmSaveImg" alt="Color Moment card" draggable="false">
     </div>
     <div class="cm-save-actions">
@@ -1199,11 +1207,16 @@
   let warmBlob = null;
   let warmBlobUrl = null;
   let warmBlobToken = 0;
+  let warmBlobPromise = null;
   let saveSheetBlob = null;
   let saveSheetUrl = null;
   let saveSheetFilename = '';
+  let saveSheetFile = null;
+  let captureBusy = false;
 
   const saveSheet = document.getElementById('cmSaveSheet');
+  const saveFrame = document.getElementById('cmSaveFrame');
+  const saveLoading = document.getElementById('cmSaveLoading');
   const saveImg = document.getElementById('cmSaveImg');
   const saveShareBtn = document.getElementById('cmSaveShare');
   const saveCloseBtn = document.getElementById('cmSaveClose');
@@ -1742,6 +1755,7 @@
 
   function clearWarmBlob() {
     warmBlob = null;
+    warmBlobPromise = null;
     if (warmBlobUrl) {
       try { URL.revokeObjectURL(warmBlobUrl); } catch {}
       warmBlobUrl = null;
@@ -1754,7 +1768,16 @@
       saveSheetUrl = null;
     }
     saveSheetBlob = null;
+    saveSheetFile = null;
     saveSheetFilename = '';
+  }
+
+  function makeShareFile(blob, filename) {
+    try {
+      return new File([blob], filename, { type: 'image/png' });
+    } catch {
+      return null;
+    }
   }
 
   function syncSaveSheetCopy() {
@@ -1762,16 +1785,43 @@
     if (saveTitle) saveTitle.textContent = L === 'zh' ? '這一瞬' : 'This moment';
     if (saveHint) {
       saveHint.textContent = L === 'zh'
-        ? '長按圖片，選擇『加入照片』或『儲存影像』'
-        : 'Long-press the image → Add to Photos / Save Image';
+        ? '長按下方圖片 → 選『加入照片』或『儲存影像』'
+        : 'Long-press the image below → Add to Photos / Save Image';
     }
     if (saveNote) {
       saveNote.textContent = L === 'zh'
-        ? '輕輕收好就好——照片會在你的相簿裡等你。'
-        : 'Keep it soft — the picture is waiting in your Photos.';
+        ? '輕輕收好就好——照片會在你的相簿裡等你。也可點『分享』。'
+        : 'Keep it soft — Photos will hold it. Or tap Share.';
+    }
+    if (saveLoading) {
+      saveLoading.textContent = L === 'zh' ? '正在沖出這一瞬…' : 'Developing this moment…';
     }
     if (saveShareBtn) saveShareBtn.textContent = L === 'zh' ? '分享' : 'Share';
     if (saveCloseBtn) saveCloseBtn.textContent = L === 'zh' ? '關閉' : 'Close';
+  }
+
+  function setSaveSheetLoading(on) {
+    if (saveFrame) saveFrame.classList.toggle('is-loading', !!on);
+  }
+
+  function updateShareButtonVisibility(blob, filename) {
+    if (!saveShareBtn) return;
+    const canShareFiles = !!(navigator.share && navigator.canShare);
+    let showShare = false;
+    saveSheetFile = null;
+    if (blob && canShareFiles) {
+      const file = makeShareFile(blob, filename);
+      if (file) {
+        try {
+          showShare = navigator.canShare({ files: [file] });
+          if (showShare) saveSheetFile = file;
+        } catch {
+          showShare = false;
+        }
+      }
+    }
+    saveShareBtn.hidden = !showShare;
+    saveShareBtn.disabled = !showShare || !blob;
   }
 
   function closeSaveSheet() {
@@ -1782,35 +1832,34 @@
       if (saveSheet && !saveSheet.classList.contains('is-open')) {
         saveSheet.hidden = true;
         if (saveImg) saveImg.removeAttribute('src');
+        setSaveSheetLoading(false);
         clearSaveSheetUrl();
       }
     }, 320);
   }
 
+  /** Open sheet immediately. Pass blob=null to show loading, then call fillSaveSheetImage. */
   function openSaveSheet(blob, filename) {
     if (!saveSheet || !saveImg) return false;
     clearSaveSheetUrl();
-    saveSheetBlob = blob;
-    saveSheetFilename = filename;
-    saveSheetUrl = URL.createObjectURL(blob);
+    saveSheetFilename = filename || `ae-color-moment-${Date.now()}.png`;
     syncSaveSheetCopy();
-    saveImg.src = saveSheetUrl;
     saveImg.alt = lang() === 'zh'
       ? `色彩瞬間 · ${activeMood ? activeMood.zh : ''}`
       : `Color Moment · ${activeMood ? activeMood.en : ''}`;
-    const canShareFiles = !!(navigator.share && navigator.canShare);
-    if (saveShareBtn) {
-      let showShare = false;
-      if (canShareFiles) {
-        try {
-          const file = new File([blob], filename, { type: 'image/png' });
-          showShare = navigator.canShare({ files: [file] });
-        } catch {
-          showShare = false;
-        }
-      }
-      saveShareBtn.hidden = !showShare;
+
+    if (blob) {
+      saveSheetBlob = blob;
+      saveSheetUrl = URL.createObjectURL(blob);
+      saveImg.src = saveSheetUrl;
+      setSaveSheetLoading(false);
+      updateShareButtonVisibility(blob, saveSheetFilename);
+    } else {
+      saveImg.removeAttribute('src');
+      setSaveSheetLoading(true);
+      updateShareButtonVisibility(null, saveSheetFilename);
     }
+
     saveSheet.hidden = false;
     saveSheet.setAttribute('aria-hidden', 'false');
     requestAnimationFrame(() => {
@@ -1819,20 +1868,45 @@
     return true;
   }
 
+  function fillSaveSheetImage(blob, filename) {
+    if (!saveSheet || !saveImg || !blob) return false;
+    if (saveSheetUrl) {
+      try { URL.revokeObjectURL(saveSheetUrl); } catch {}
+      saveSheetUrl = null;
+    }
+    saveSheetBlob = blob;
+    if (filename) saveSheetFilename = filename;
+    saveSheetUrl = URL.createObjectURL(blob);
+    saveImg.src = saveSheetUrl;
+    setSaveSheetLoading(false);
+    updateShareButtonVisibility(blob, saveSheetFilename);
+    return true;
+  }
+
   async function warmCaptureInBackground() {
-    if (!activeMood) return;
+    if (!activeMood) return null;
     const token = ++warmBlobToken;
     clearWarmBlob();
-    try {
-      const source = await buildCardImage();
-      if (token !== warmBlobToken) return;
-      const blob = await canvasToBlob(source);
-      if (token !== warmBlobToken) return;
-      warmBlob = blob;
-      warmBlobUrl = URL.createObjectURL(blob);
-    } catch (err) {
-      if (token === warmBlobToken) clearWarmBlob();
-    }
+    const run = (async () => {
+      try {
+        const source = await buildCardImage();
+        if (token !== warmBlobToken) return null;
+        const blob = await canvasToBlob(source);
+        if (token !== warmBlobToken) return null;
+        warmBlob = blob;
+        warmBlobUrl = URL.createObjectURL(blob);
+        return blob;
+      } catch (err) {
+        if (token === warmBlobToken) clearWarmBlob();
+        return null;
+      } finally {
+        if (token === warmBlobToken && warmBlobPromise === run) {
+          /* keep resolved promise until next warm clears */
+        }
+      }
+    })();
+    warmBlobPromise = run;
+    return run;
   }
 
   async function saveBlobImage(blob, filename) {
@@ -1849,7 +1923,10 @@
 
   async function tryShareImageFile(blob, filename) {
     if (!navigator.share || !navigator.canShare) return false;
-    const file = new File([blob], filename, { type: 'image/png' });
+    const file = saveSheetFile && saveSheetBlob === blob
+      ? saveSheetFile
+      : makeShareFile(blob, filename);
+    if (!file) return false;
     const payload = { files: [file] };
     if (!navigator.canShare(payload)) return false;
     try {
@@ -1868,6 +1945,14 @@
 
   async function ensureCaptureBlob() {
     if (warmBlob) return warmBlob;
+    // Reuse in-flight warm — never block the UI waiting on a duplicate build.
+    if (warmBlobPromise) {
+      try {
+        const warmed = await warmBlobPromise;
+        if (warmBlob) return warmBlob;
+        if (warmed) return warmed;
+      } catch (err) { /* fall through to fresh build */ }
+    }
     let source;
     try {
       source = await buildCardImage();
@@ -1888,7 +1973,8 @@
     if (cardEl.hidden) {
       renderCard();
     }
-    if (snap?.disabled) return;
+    if (captureBusy) return;
+    captureBusy = true;
     if (snap) snap.disabled = true;
     cardEl.classList.remove('cm-card-flash');
     void cardEl.offsetWidth;
@@ -1896,32 +1982,43 @@
     const filename = `ae-color-moment-${Date.now()}.png`;
     const L = lang();
     try {
-      const blob = await ensureCaptureBlob();
       if (isAppleTouch()) {
-        // Primary iOS path: long-press save sheet (gesture-safe). Share is a fresh tap.
-        const opened = openSaveSheet(blob, filename);
-        if (opened) {
-          showToast(L === 'zh'
-            ? '長按圖片，收進相簿。'
-            : 'Long-press the image to keep it in Photos.');
-        } else {
+        // First tap MUST open the sheet immediately — warm must not block.
+        const ready = warmBlob || null;
+        const opened = openSaveSheet(ready, filename);
+        if (!opened) {
           showToast(L === 'zh'
             ? '這一瞬未能打開預覽，請試著截圖。'
             : 'Preview could not open — a screenshot will keep it.');
+          return;
+        }
+        if (ready) {
+          showToast(L === 'zh'
+            ? '長按下方圖片，收進相簿。'
+            : 'Long-press the image below to keep it in Photos.');
+        } else {
+          showToast(L === 'zh' ? '正在沖出這一瞬…' : 'Developing this moment…');
+          const blob = await ensureCaptureBlob();
+          fillSaveSheetImage(blob, filename);
+          showToast(L === 'zh'
+            ? '長按下方圖片，收進相簿。'
+            : 'Long-press the image below to keep it in Photos.');
         }
         return;
       }
+      const blob = await ensureCaptureBlob();
       await saveBlobImage(blob, filename);
       showToast(L === 'zh' ? '這一瞬，已輕輕收好。' : 'This moment is softly kept.');
     } catch (error) {
       try {
         const blob = await canvasToBlob(canvas);
         if (isAppleTouch()) {
-          if (openSaveSheet(blob, filename)) {
-            showToast(L === 'zh' ? '先把光拍下來了——長按圖片收好。' : 'The light is ready — long-press to save.');
-          } else {
-            showToast(L === 'zh' ? '這一瞬未能保存，請試著截圖。' : 'The moment could not be saved — a screenshot will keep it.');
+          if (saveSheet && !saveSheet.hidden && saveSheet.classList.contains('is-open')) {
+            fillSaveSheetImage(blob, filename);
+          } else if (openSaveSheet(blob, filename)) {
+            /* opened with fallback bloom canvas */
           }
+          showToast(L === 'zh' ? '先把光拍下來了——長按圖片收好。' : 'The light is ready — long-press to save.');
         } else {
           await saveBlobImage(blob, filename);
           showToast(L === 'zh' ? '先把光拍下來了。' : 'The light has been captured.');
@@ -1930,7 +2027,8 @@
         showToast(L === 'zh' ? '這一瞬未能保存，請試著截圖。' : 'The moment could not be saved — a screenshot will keep it.');
       }
     } finally {
-      window.setTimeout(() => { if (snap) snap.disabled = false; }, 600);
+      captureBusy = false;
+      window.setTimeout(() => { if (snap) snap.disabled = false; }, 420);
     }
   }
 
@@ -1944,7 +2042,7 @@
     }
     const filename = saveSheetFilename || `ae-color-moment-${Date.now()}.png`;
     const L = lang();
-    // Fresh user gesture from this button — safe for Web Share on iOS.
+    // Fresh user gesture from this button — File pre-warmed when possible.
     const shared = await tryShareImageFile(saveSheetBlob, filename);
     if (shared === true) {
       showToast(L === 'zh' ? '把這一瞬交給你想念的人。' : 'This moment is ready to travel.');
@@ -1981,16 +2079,22 @@
     const L = lang();
     const filename = `ae-color-moment-${Date.now()}.png`;
     try {
-      const blob = await ensureCaptureBlob();
       if (isAppleTouch()) {
-        // On iOS, open the same long-press sheet so share is a fresh tap.
-        if (openSaveSheet(blob, filename)) {
+        // Same as shutter: open sheet on first tap; fill when warm/build ready.
+        const ready = warmBlob || null;
+        if (openSaveSheet(ready, filename)) {
+          if (!ready) {
+            showToast(L === 'zh' ? '正在沖出這一瞬…' : 'Developing this moment…');
+            const blob = await ensureCaptureBlob();
+            fillSaveSheetImage(blob, filename);
+          }
           showToast(L === 'zh'
             ? '可長按收進相簿，或點分享。'
             : 'Long-press to save, or tap Share.');
           return;
         }
       }
+      const blob = await ensureCaptureBlob();
       const shared = await tryShareImageFile(blob, filename);
       if (shared === true) {
         showToast(L === 'zh' ? '把這一瞬交給你想念的人。' : 'This moment is ready to travel.');
