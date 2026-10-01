@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2445">
+<meta name="ae-version" content="v2446">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2445">
-<script src="site.js?v=2445" defer></script>
+<link rel="stylesheet" href="site.css?v=2446">
+<script src="site.js?v=2446" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -25,7 +25,8 @@
   .cm-progress{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
   .cm-q{
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:clamp(22px,3.2vw,30px);line-height:1.4;margin:0 0 22px;
+    font-size:clamp(20px,2.8vw,26px);line-height:1.45;margin:0 0 18px;
+    font-weight:500;
   }
   .cm-choices{display:flex;flex-direction:column;gap:10px}
   .cm-choice{
@@ -57,13 +58,13 @@
     mix-blend-mode:soft-light;
   }
   .cm-mist.is-soft{
-    opacity:.72;
+    opacity:.48;
     background:
       radial-gradient(ellipse 82% 68% at 50% 45%, rgba(255,252,248,.36), rgba(232,226,216,.12) 68%),
       linear-gradient(165deg, rgba(245,240,232,.24), rgba(220,228,232,.16));
   }
   .cm-mist.is-rich{
-    opacity:.93;
+    opacity:.68;
     background:
       radial-gradient(ellipse 98% 85% at 50% 48%, rgba(255,252,248,.48), rgba(210,222,228,.28) 55%, rgba(200,210,218,.14) 100%),
       linear-gradient(150deg, rgba(236,242,245,.34), rgba(232,226,216,.2));
@@ -85,8 +86,8 @@
   }
   .cm-hint span{
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:clamp(20px,3vw,32px);letter-spacing:.04em;
-    color:var(--muted);opacity:.85;
+    font-size:clamp(16px,2.5vw,22px);letter-spacing:.04em;
+    color:var(--muted);opacity:.72;
   }
   .cm-hint.is-hidden{opacity:0}
   .cm-seal-bar{
@@ -110,10 +111,15 @@
   .cm-seal{
     appearance:none;cursor:pointer;border:1px solid var(--ink);
     color:var(--paper);background:var(--ink);border-radius:999px;
-    min-height:52px;min-width:min(220px,70vw);padding:12px 28px;font:inherit;font-size:17px;
-    letter-spacing:.08em;font-weight:500;
+    min-height:50px;min-width:min(200px,68vw);padding:11px 24px;font:inherit;font-size:16px;
+    letter-spacing:.06em;font-weight:500;
     transition:transform .18s ease,opacity .2s,border-color .2s;
     -webkit-tap-highlight-color:transparent;touch-action:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  .cm-seal-label{
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+    pointer-events:none;
   }
   .cm-seal:hover,.cm-seal:focus-visible{transform:translateY(-1px);outline:none}
   .cm-seal:active{transform:scale(.97)}
@@ -122,13 +128,18 @@
   body.cm-blooming .page-heading h1{font-size:clamp(28px,7vw,44px);margin:0 0 8px}
   body.cm-blooming .page-heading > p{display:none}
   body.cm-blooming .cm-stage{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
-  /* v2445 progressive Solo: one step visible at a time */
+  /* v2446 progressive Solo — soft coach, not giant */
   .cm-coach{
-    margin:0 auto;max-width:28ch;text-align:center;
-    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:clamp(17px,2.6vw,22px);line-height:1.4;letter-spacing:.03em;
-    color:var(--muted);
+    margin:0 auto 6px;max-width:34ch;text-align:center;
+    font-family:inherit;
+    font-size:clamp(12px,1.8vw,14px);line-height:1.5;letter-spacing:.04em;
+    color:var(--muted);opacity:.88;
   }
+  .cm-intro-soft{
+    margin:0 auto;max-width:36ch;text-align:center;
+    font-size:12px;line-height:1.5;color:var(--muted);opacity:.78;
+  }
+  .cm-intro-soft[hidden]{display:none!important}
   .cm-coach[hidden]{display:none!important}
   body.cm-phase-ask .cm-residue,
   body.cm-phase-touch .cm-residue,
@@ -139,9 +150,9 @@
   body.cm-phase-done .cm-coach{display:none!important}
   body.cm-phase-ask .cm-progress{opacity:.7}
   .cm-seal-bar .cm-lp-hint{
-    font-size:14px;letter-spacing:.04em;max-width:22ch;
-    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    color:inherit;opacity:.9;
+    font-size:12px;letter-spacing:.04em;max-width:24ch;
+    font-family:inherit;
+    color:var(--muted);opacity:.85;
   }
   .cm-seal-hold-hint{display:none!important} /* aria stays on button; one line only in bar */
   .cm-seal-bar.is-arrive{
@@ -151,7 +162,7 @@
     from{opacity:0;transform:translateY(14px)}
     to{opacity:1;transform:none}
   }
-  .cm-seal{min-height:56px;min-width:min(260px,78vw);font-size:18px;letter-spacing:.12em}
+  .cm-seal{min-height:52px;min-width:min(220px,72vw);font-size:16px;letter-spacing:.08em}
   .cm-memorial{
     margin:14px auto 4px;width:min(100%,300px);
     border-radius:14px;overflow:hidden;
@@ -166,8 +177,8 @@
     filter:saturate(1.06) contrast(1.02) brightness(1.02);
   }
   .cm-memorial-cap{
-    margin:8px 0 0;font-size:11px;letter-spacing:.1em;
-    color:var(--muted);opacity:.88;text-align:center;
+    margin:6px 0 0;font-size:10px;letter-spacing:.12em;
+    color:var(--muted);opacity:.72;text-align:center;
   }
   .cm-memorial-cap[hidden]{display:none!important}
   .cm-lightprint{
@@ -219,7 +230,8 @@
   }
   .cm-card-title{
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:clamp(26px,3.6vw,36px);line-height:1.25;margin:0;
+    font-size:clamp(24px,3.2vw,32px);line-height:1.28;margin:0;
+    font-weight:500;
   }
   .cm-card-en{
     margin:6px 0 0;font-size:14px;letter-spacing:.06em;
@@ -243,10 +255,10 @@
   .cm-reading p:last-child{margin-bottom:0}
   /* hue dots removed v2435 — Owner: 色點拿掉 */
   .cm-ritual{
-    margin:22px auto 0;max-width:36ch;
-    padding-top:16px;border-top:1px solid var(--line);
+    margin:18px auto 0;max-width:36ch;
+    padding-top:14px;border-top:1px solid var(--line);
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:clamp(17px,2.4vw,20px);line-height:1.5;
+    font-size:clamp(15px,2.2vw,18px);line-height:1.55;
   }
   .cm-ritual-label{
     display:block;font-family:inherit;font-size:11px;font-style:normal;
@@ -314,7 +326,7 @@
     .cm-stage{padding:12px 0 72px}
     body.cm-blooming .cm-stage{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
     body.cm-phase-seal .cm-stage{padding-bottom:calc(128px + env(safe-area-inset-bottom))}
-    .cm-seal{min-height:58px;font-size:19px}
+    .cm-seal{min-height:52px;font-size:16px}
     .cm-panel,.cm-card{padding:22px 16px 18px;border-radius:14px}
     .cm-seal-bar{
       position:fixed;left:12px;right:12px;bottom:max(10px, env(safe-area-inset-bottom));
@@ -322,8 +334,8 @@
       padding:12px 12px calc(12px + env(safe-area-inset-bottom));
     }
     .cm-lp-hint{font-size:11px;max-width:34ch}
-    .cm-seal{min-height:54px;font-size:18px;width:100%;max-width:320px}
-    .cm-hint span{font-size:clamp(18px,5.2vw,26px);padding:0 8px}
+    .cm-seal{min-height:50px;font-size:16px;width:100%;max-width:300px}
+    .cm-hint span{font-size:clamp(15px,4.2vw,20px);padding:0 8px}
   }
 
   /* iOS save sheet — long-press image is the reliable Photos path */
@@ -470,6 +482,7 @@
     <div class="wrap">
       <div class="cm-intro" id="cmIntro">
         <p class="cm-coach" id="cmCoach" data-en="Pick one that fits" data-zh="輕輕選一個">Pick one that fits</p>
+        <p class="cm-intro-soft" id="cmIntroSoft" data-en="Each visit draws a new handful of questions." data-zh="每一次來，問題都會重新抽出幾題。">Each visit draws a new handful of questions.</p>
       </div>
 
       <div class="cm-residue" id="cmResidue" hidden>
@@ -563,7 +576,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2445 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2446 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1523,19 +1536,30 @@
     try { return localStorage.getItem('ae-language') === 'zh' ? 'zh' : 'en'; } catch { return 'en'; }
   }
 
+  function randUnit() {
+    try {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      return buf[0] / 4294967296;
+    } catch {
+      return Math.random();
+    }
+  }
+
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
+      const j = Math.floor(randUnit() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
     }
     return a;
   }
 
   function drawSession() {
-    const n = SESSION_MIN + Math.floor(Math.random() * (SESSION_MAX - SESSION_MIN + 1));
+    // Fresh random draw every play / replay — never a fixed sequence.
+    const n = SESSION_MIN + Math.floor(randUnit() * (SESSION_MAX - SESSION_MIN + 1));
     return shuffle(QUESTION_POOL).slice(0, n).map(q => {
-      const copy = { zh: q.zh, en: q.en, choices: shuffle(q.choices) };
+      const copy = { zh: q.zh, en: q.en, choices: shuffle(q.choices || []) };
       return copy;
     });
   }
@@ -1697,6 +1721,8 @@
       document.body.classList.add('cm-phase-' + soloPhase);
     } catch (err) { /* ignore */ }
     updateCoach();
+    const introSoft = document.getElementById('cmIntroSoft');
+    if (introSoft) introSoft.hidden = soloPhase !== 'ask';
     // Residue fights first-time Solo attention — hide until ask idle is rare; keep off during active steps.
     if (residueEl && soloPhase !== 'ask') residueEl.hidden = true;
   }
@@ -1850,8 +1876,8 @@
       if (memorialCap) {
         memorialCap.hidden = false;
         memorialCap.textContent = L === 'zh'
-          ? '獨一無二紀念 · 光紋記住你如何存在於這一刻'
-          : 'One-of-a-kind memorial · Lightprint keeps how you existed here';
+          ? '獨一無二紀念'
+          : 'One-of-a-kind memorial';
       }
     } else {
       if (memorialEl) memorialEl.hidden = true;
@@ -1975,7 +2001,7 @@
 
   function syncResidueBanner() {
     if (!residueEl) return;
-    // v2445 ruthless Solo: residue banner fights first-time attention.
+    // v2446 ruthless Solo: residue banner fights first-time attention.
     // Path Replay stays on the result card; banner stays off.
     residueEl.hidden = true;
   }
@@ -2273,8 +2299,8 @@
     renderCard();
     const L = lang();
     showToast(L === 'zh'
-      ? ('光已收好 · 獨一無二紀念')
-      : ('Light sealed · a one-of-a-kind memorial'));
+      ? ('光已收好')
+      : ('Light sealed'));
   }
 
 
@@ -2309,15 +2335,10 @@
         ? '摘自《盛明》筆記'
         : 'From the 《盛明》 notes';
     }
+    // Slim card: memorial image yes; no answer-echo pile; quiet LP corner.
     if (echoEl) {
-      const echo = buildAnswerEcho();
-      if (echo) {
-        echoEl.hidden = false;
-        echoEl.textContent = echo;
-      } else {
-        echoEl.hidden = true;
-        echoEl.textContent = '';
-      }
+      echoEl.hidden = true;
+      echoEl.textContent = '';
     }
     syncMemorialUI();
     if (lightprintEl) {
@@ -2342,16 +2363,10 @@
     ritualLabel.textContent = L === 'zh' ? '今夜的柔邀' : 'Tonight’s soft invitation';
     ritualText.textContent = L === 'zh' ? activeRitual.zh : activeRitual.en;
 
-    // Lightprint is unique to this person/card moment — no shop-binding copy.
-    if (lightprintCode) {
-      discoverEl.innerHTML = L === 'zh'
-        ? '這是獨一無二紀念——光紋記住你如何存在於這一刻。若想再多一點光，可去 <a href="/experience">互動體驗</a>。'
-        : 'This is a one-of-a-kind memorial — Lightprint keeps how you existed here. For a little more light, visit the <a href="/experience">Experience</a>.';
-    } else {
-      discoverEl.innerHTML = L === 'zh'
-        ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
-        : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.';
-    }
+    // One soft line — memorial speaks via the image, not more copy.
+    discoverEl.innerHTML = L === 'zh'
+      ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
+      : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.';
 
     cardEl.hidden = false;
     cardEl.classList.remove('is-on');
@@ -2444,20 +2459,21 @@
     const r = shell.getBoundingClientRect();
     const palette = activeMood.palette;
     const multi = Object.keys(activePointers).length >= 2;
-    const count = (multi ? 16 : 17) + Math.floor(Math.random() * (multi ? 10 : 10));
-    const spread = multi ? 0.38 : 0.36;
+    // Restore pre-Lightprint bloom quality (softer count/radius/alpha feel).
+    const count = (multi ? 14 : 12) + Math.floor(Math.random() * (multi ? 8 : 8));
+    const spread = multi ? 0.32 : 0.3;
     for (let i = 0; i < count; i++) {
       const ang = Math.random() * Math.PI * 2;
-      const dist = 20 + Math.random() * Math.min(r.width, r.height) * spread;
+      const dist = 18 + Math.random() * Math.min(r.width, r.height) * spread;
       blooms.push({
         x, y,
         tx: x + Math.cos(ang) * dist,
         ty: y + Math.sin(ang) * dist,
-        r: (multi ? 22 : 24) + Math.random() * (multi ? 64 : 64),
+        r: (multi ? 20 : 18) + Math.random() * (multi ? 56 : 54),
         color: palette[i % palette.length],
         life: 0,
-        max: 1.2 + Math.random() * 0.75,
-        delay: Math.random() * 0.1
+        max: 1.15 + Math.random() * 0.7,
+        delay: Math.random() * 0.12
       });
     }
     // Drawing stamps stay path-tied; coalesce no longer adds a hard center press-spot.
@@ -2492,7 +2508,7 @@
       const alpha = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8;
       const rad = b.r * (0.35 + ease * 0.9);
       const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      g.addColorStop(0, hexAlpha(b.color, Math.max(0, Math.min(0.76, alpha * 0.76))));
+      g.addColorStop(0, hexAlpha(b.color, Math.max(0, Math.min(0.55, alpha * 0.55))));
       g.addColorStop(1, hexAlpha(b.color, 0));
       ctx.fillStyle = g;
       ctx.beginPath();
@@ -2746,7 +2762,7 @@
     const hasMemorial = !!memorialDataUrl;
     const memorialPanelH = hasMemorial ? Math.round(Math.min(210, w * 0.42)) : 0;
     const memorialGap = hasMemorial ? 18 : 0;
-    const memorialCapH = hasMemorial ? 34 : 0;
+    const memorialCapH = hasMemorial ? 20 : 0;
 
     // Measure content height first — never clip ritual/reading to a fixed DOM height.
     const measure = document.createElement('canvas').getContext('2d');
@@ -2855,38 +2871,9 @@
       imageContext.font = cardType(11, { cjk: true });
       imageContext.globalAlpha = 0.9;
       const memorialCaption = isZh
-        ? '獨一無二紀念 · 光紋記住你如何存在於這一刻'
-        : 'One-of-a-kind memorial · Lightprint keeps how you existed here';
-      // Soft wrap if needed so longer unique-memorial line stays on card.
-      const capLines = [];
-      {
-        const words = isZh ? memorialCaption.split('') : memorialCaption.split(' ');
-        let line = '';
-        const maxW = Math.min(w - 48, 300);
-        if (isZh) {
-          for (const ch of words) {
-            const test = line + ch;
-            if (imageContext.measureText(test).width > maxW && line) {
-              capLines.push(line);
-              line = ch;
-            } else line = test;
-          }
-          if (line) capLines.push(line);
-        } else {
-          for (const word of words) {
-            const test = line ? line + ' ' + word : word;
-            if (imageContext.measureText(test).width > maxW && line) {
-              capLines.push(line);
-              line = word;
-            } else line = test;
-          }
-          if (line) capLines.push(line);
-        }
-      }
-      let capY = py + ph + 14;
-      capLines.slice(0, 2).forEach((ln, i) => {
-        imageContext.fillText(ln, w / 2, capY + i * 14);
-      });
+        ? '獨一無二紀念'
+        : 'One-of-a-kind memorial';
+      imageContext.fillText(memorialCaption, w / 2, py + ph + 14);
       imageContext.globalAlpha = 1;
       y = py + ph + memorialGap + memorialCapH;
     }
@@ -3403,6 +3390,9 @@
     });
     // Prevent synthetic click after hold so we never double-seal.
     sealBtn.addEventListener('click', (e) => { e.preventDefault(); });
+    // iOS: long-press must not select 「收光」 text / show callout.
+    sealBtn.addEventListener('selectstart', (e) => { e.preventDefault(); });
+    sealBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); });
   }
   snap?.addEventListener('click', captureMoment);
   share?.addEventListener('click', shareMoment);

@@ -99,3 +99,27 @@ Owner (iPhone Safari): still hard to operate / doesn’t know what to do — too
 ### Kept
 - No scroll-on-draw, soft coalesce (no press-spot), multi-touch optional mist, unique memorial copy, hold-to-seal / early release = cancel.
 
+
+## v2446 — restore soft grade_v1 feel (Owner feedback) (2026-10-01)
+Preview only on `new9-public-media`. Production untouched. One Preview deploy.
+
+### Owner feedback (~v2445)
+Prefers feel BEFORE Lightprint/GPT TRIAD — better animation/quality. Current: text too big, feels cheap, cards more complex but not better. Questions may feel fixed; hold 收光 selects button text (iOS).
+
+### Restored
+- Softer bloom quality (pre-Lightprint count/radius/spread + tick alpha 0.55)
+- Softer typography (question/coach/hint/title/ritual; less giant coach)
+- Softer mist opacity
+- Slim result card: memorial image kept; answer-echo off; short memorial caption; one soft discover line (no memorial copy pile)
+- Random question pool hardened (crypto shuffle, copy-safe draw every play/replay) + soft intro line
+
+### Kept
+- Hold-to-coalesce 「收光」 (~1.3s ring; early release = cancel)
+- No scroll-while-drawing
+- Soft whole-trail coalesce (no hard mid press-spot)
+- Progressive Solo phases (ask → touch → seal → done)
+- Quiet LP corner mark; grade_v1 art pools
+
+### Fixed
+- 「收光」: `-webkit-user-select:none`, `user-select:none`, `-webkit-touch-callout:none` on button + label; prevent selectstart/contextmenu
+
