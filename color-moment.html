@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2434">
+<meta name="ae-version" content="v2435">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2434">
-<script src="site.js?v=2434" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css?v=2435">
+<script src="site.js?v=2435" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -78,8 +78,10 @@
     background:rgba(236,230,222,.88);
   }
   .cm-card-bg{
-    position:absolute;inset:0;background-size:cover;background-position:center;
-    filter:saturate(1.05) contrast(1.02);transform:scale(1.04);
+    position:absolute;inset:0;background-size:cover;background-position:center center;
+    filter:saturate(1.05) contrast(1.02);
+    /* Center-zoom so edge artwork titles/signatures stay out of UI text */
+    transform:scale(1.24);transform-origin:center center;
     z-index:0;
   }
   .cm-card-veil{
@@ -112,22 +114,9 @@
   }
   .cm-reading p{margin:0 0 .55em}
   .cm-reading p:last-child{margin-bottom:0}
-  .cm-hues{
-    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
-    margin:20px 0 0;padding:0;list-style:none;
-  }
-  .cm-hue{
-    display:flex;flex-direction:column;align-items:center;gap:6px;
-    min-width:64px;
-  }
-  .cm-hue i{
-    display:block;width:36px;height:36px;border-radius:50%;
-    border:1px solid var(--line);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
-  }
-  .cm-hue span{display:none}
-  /* hue names hidden per Owner 2026-10-01 */
+  /* hue dots removed v2435 — Owner: 色點拿掉 */
   .cm-ritual{
-    margin:20px auto 0;max-width:36ch;
+    margin:22px auto 0;max-width:36ch;
     padding-top:16px;border-top:1px solid var(--line);
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
     font-size:clamp(17px,2.4vw,20px);line-height:1.5;
@@ -312,7 +301,6 @@
             <p class="cm-card-en" id="cmCardEn"></p>
             <p class="cm-card-src" id="cmCardSrc"></p>
             <div class="cm-reading" id="cmReading"></div>
-            <ul class="cm-hues" id="cmHues" aria-label="Mood hues"></ul>
             <p class="cm-ritual" id="cmRitual">
               <span class="cm-ritual-label" id="cmRitualLabel"></span>
               <span id="cmRitualText"></span>
@@ -358,7 +346,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2434 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2435 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1187,7 +1175,6 @@
   const cardEn = document.getElementById('cmCardEn');
   const cardSrc = document.getElementById('cmCardSrc');
   const readingEl = document.getElementById('cmReading');
-  const huesEl = document.getElementById('cmHues');
   const ritualLabel = document.getElementById('cmRitualLabel');
   const ritualText = document.getElementById('cmRitualText');
   const discoverEl = document.getElementById('cmDiscover');
@@ -1333,18 +1320,6 @@
       const p = document.createElement('p');
       p.textContent = line;
       readingEl.appendChild(p);
-    });
-
-    huesEl.innerHTML = '';
-    (activeMood.hues || []).forEach(h => {
-      const li = document.createElement('li');
-      li.className = 'cm-hue';
-      li.title = L === 'zh' ? h.zh : h.en;
-      const sw = document.createElement('i');
-      sw.style.background = h.hex;
-      sw.setAttribute('aria-hidden', 'true');
-      li.appendChild(sw);
-      huesEl.appendChild(li);
     });
 
     ritualLabel.textContent = L === 'zh' ? '今夜的柔邀' : 'Tonight’s soft invitation';
@@ -1521,35 +1496,69 @@
     context.closePath();
   }
 
-  function drawWrapped(context, text, x, y, maxWidth, lineHeight, maxLines) {
+  /* Canvas typography: iPhone Safari fillText with Arial/Georgia drops CJK glyphs. */
+  const CARD_CJK = '"Noto Serif TC","PingFang TC","Hiragino Sans GB","Microsoft JhengHei",sans-serif';
+  const CARD_LAT = '"Cormorant Garamond",Georgia,"Noto Serif TC","PingFang TC","Hiragino Sans GB",serif';
+
+  function cardType(sizePx, opts) {
+    const o = opts || {};
+    const stack = o.cjk ? CARD_CJK : CARD_LAT;
+    const weight = o.weight ? o.weight + ' ' : '';
+    const italic = o.italic ? 'italic ' : '';
+    return italic + weight + sizePx + 'px ' + stack;
+  }
+
+  async function ensureCardFonts() {
+    if (!document.fonts || !document.fonts.load) return;
+    try {
+      await Promise.race([
+        Promise.all([
+          document.fonts.load('500 32px "Noto Serif TC"'),
+          document.fonts.load('18px "Noto Serif TC"'),
+          document.fonts.load('15px "Noto Serif TC"'),
+          document.fonts.load('11px "Noto Serif TC"'),
+          document.fonts.load('500 32px "Cormorant Garamond"'),
+          document.fonts.load('italic 14px "Cormorant Garamond"')
+        ]),
+        new Promise(resolve => window.setTimeout(resolve, 1600))
+      ]);
+    } catch (err) { /* system CJK stack still used */ }
+  }
+
+  function wrapLines(context, text, maxWidth) {
     const chars = Array.from(String(text || ''));
+    const out = [];
     let line = '';
-    let lines = 0;
     for (const char of chars) {
       if (char === '\n') {
-        context.fillText(line, x, y);
-        y += lineHeight;
+        out.push(line);
         line = '';
-        lines += 1;
-        if (lines >= maxLines) return y;
         continue;
       }
       const next = line + char;
       if (line && context.measureText(next).width > maxWidth) {
-        context.fillText(line.trimEnd(), x, y);
-        y += lineHeight;
+        out.push(line.trimEnd());
         line = char.trimStart();
-        lines += 1;
-        if (lines >= maxLines) return y;
       } else {
         line = next;
       }
     }
-    if (lines < maxLines && line) {
-      context.fillText(line.trimEnd(), x, y);
+    if (line) out.push(line.trimEnd());
+    return out.length ? out : [''];
+  }
+
+  function drawWrapped(context, text, x, y, maxWidth, lineHeight, maxLines) {
+    const lines = wrapLines(context, text, maxWidth);
+    const limit = (maxLines == null || maxLines <= 0) ? lines.length : Math.min(maxLines, lines.length);
+    for (let i = 0; i < limit; i++) {
+      context.fillText(lines[i], x, y);
       y += lineHeight;
     }
     return y;
+  }
+
+  function measureWrapped(context, text, maxWidth, lineHeight) {
+    return wrapLines(context, text, maxWidth).length * lineHeight;
   }
 
   function loadCardArt() {
@@ -1580,27 +1589,51 @@
     });
   }
 
-  function drawCover(context, image, w, h) {
-    const ratio = Math.max(w / image.naturalWidth, h / image.naturalHeight);
+  function drawCover(context, image, w, h, zoom) {
+    const z = zoom == null ? 1.24 : zoom;
+    const ratio = Math.max(w / image.naturalWidth, h / image.naturalHeight) * z;
     const iw = image.naturalWidth * ratio;
     const ih = image.naturalHeight * ratio;
     context.drawImage(image, (w - iw) / 2, (h - ih) / 2, iw, ih);
   }
 
   async function buildCardImage() {
+    await ensureCardFonts();
     const rect = cardEl.getBoundingClientRect();
     const w = Math.max(320, Math.round(rect.width) || 560);
-    const h = Math.max(420, Math.round(rect.height) || 640);
+    const L = lang();
+    const isZh = L === 'zh';
+    const dark = document.documentElement.dataset.theme === 'dark';
+    const paper = dark ? '#14110f' : '#f7f1e8';
+    const ink = dark ? '#f1e8dc' : '#2d2824';
+    const muted = dark ? '#c6b8aa' : '#766b61';
+    const textWidth = w - 48;
+    const readingLines = (isZh ? activeReading.zh : activeReading.en) || [];
+    const ritualBody = isZh ? activeRitual.zh : activeRitual.en;
+    const moodMain = isZh ? activeMood.zh : activeMood.en;
+    const moodSub = isZh ? activeMood.en : activeMood.zh;
+    const eyebrow = isZh ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · ETERNAL SUN';
+    const srcLine = isZh ? '文句出自《盛明》試寫／觀看筆記' : 'Lines from 《盛明》 draft / viewing notes';
+    const ritualLabelText = isZh ? '今夜的柔邀' : 'TONIGHT’S SOFT INVITATION';
+
+    // Measure content height first — never clip ritual/reading to a fixed DOM height.
+    const measure = document.createElement('canvas').getContext('2d');
+    let yCursor = 148;
+    measure.font = cardType(15, { cjk: true });
+    readingLines.forEach(line => {
+      yCursor += measureWrapped(measure, line, textWidth, 24) + 5;
+    });
+    const ritualY = yCursor + 28;
+    measure.font = cardType(18, { cjk: isZh });
+    const ritualBlock = 6 + 28 + measureWrapped(measure, ritualBody, textWidth, 25);
+    const h = Math.max(420, Math.ceil(ritualY + ritualBlock + 36));
+
     const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     const imageCanvas = document.createElement('canvas');
     imageCanvas.width = Math.round(w * scale);
     imageCanvas.height = Math.round(h * scale);
     const imageContext = imageCanvas.getContext('2d');
     imageContext.scale(scale, scale);
-    const dark = document.documentElement.dataset.theme === 'dark';
-    const paper = dark ? '#14110f' : '#f7f1e8';
-    const ink = dark ? '#f1e8dc' : '#2d2824';
-    const muted = dark ? '#c6b8aa' : '#766b61';
     const image = await loadCardArt();
 
     roundedPath(imageContext, w, h, 18);
@@ -1609,7 +1642,7 @@
     imageContext.fillStyle = paper;
     imageContext.fillRect(0, 0, w, h);
     if (image) {
-      try { drawCover(imageContext, image, w, h); }
+      try { drawCover(imageContext, image, w, h, 1.24); }
       catch (err) { /* tainted or decode issue — keep paper card */ }
     }
     const veil = imageContext.createLinearGradient(0, 0, 0, h);
@@ -1623,57 +1656,39 @@
     imageContext.save();
     imageContext.fillStyle = muted;
     imageContext.textAlign = 'center';
-    imageContext.font = '11px Arial, sans-serif';
-    const L = lang();
-    imageContext.fillText(L === 'zh' ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · ETERNAL SUN', w / 2, 30);
+    imageContext.font = cardType(11, { cjk: true });
+    imageContext.fillText(eyebrow, w / 2, 30);
     imageContext.fillStyle = ink;
-    imageContext.font = '500 32px Georgia, serif';
-    imageContext.fillText(L === 'zh' ? activeMood.zh : activeMood.en, w / 2, 70);
+    imageContext.font = cardType(32, { weight: '500', cjk: isZh });
+    imageContext.fillText(moodMain, w / 2, 70);
     imageContext.fillStyle = muted;
-    imageContext.font = 'italic 14px Georgia, serif';
-    imageContext.fillText(L === 'zh' ? activeMood.en : activeMood.zh, w / 2, 94);
-    imageContext.font = '11px Arial, sans-serif';
-    imageContext.fillText(L === 'zh' ? '文句出自《盛明》試寫／觀看筆記' : 'Lines from 《盛明》 draft / viewing notes', w / 2, 115);
+    imageContext.font = cardType(14, { italic: true, cjk: !isZh });
+    imageContext.fillText(moodSub, w / 2, 94);
+    imageContext.font = cardType(11, { cjk: true });
+    imageContext.fillText(srcLine, w / 2, 115);
 
     imageContext.fillStyle = ink;
-    imageContext.font = '15px Arial, sans-serif';
+    imageContext.font = cardType(15, { cjk: true });
     imageContext.textAlign = 'left';
     let y = 148;
-    const lines = L === 'zh' ? activeReading.zh : activeReading.en;
-    lines.forEach(line => {
-      y = drawWrapped(imageContext, line, 24, y, w - 48, 24, 3) + 5;
+    readingLines.forEach(line => {
+      y = drawWrapped(imageContext, line, 24, y, textWidth, 24, null) + 5;
     });
 
-    const hues = activeMood.hues || [];
-    const hueGap = 12;
-    const hueWidth = 58;
-    const huesWidth = hues.length * hueWidth + Math.max(0, hues.length - 1) * hueGap;
-    let hx = (w - huesWidth) / 2;
-    const hueY = y + 12;
-    imageContext.textAlign = 'center';
-    hues.forEach(hue => {
-      imageContext.fillStyle = hue.hex;
-      imageContext.beginPath();
-      imageContext.arc(hx + hueWidth / 2, hueY + 17, 17, 0, Math.PI * 2);
-      imageContext.fill();
-      imageContext.strokeStyle = dark ? 'rgba(255,255,255,.35)' : 'rgba(80,60,45,.25)';
-      imageContext.stroke();
-      hx += hueWidth + hueGap;
-    });
-
-    const ritualLabelText = L === 'zh' ? '今夜的柔邀' : 'TONIGHT’S SOFT INVITATION';
+    // Hue dots removed (v2435) — cleaner card, less competing with art/text.
     imageContext.strokeStyle = dark ? 'rgba(241,232,220,.28)' : 'rgba(118,107,97,.3)';
-    const ritualY = Math.min(h - 92, hueY + 78);
     imageContext.beginPath();
     imageContext.moveTo(24, ritualY - 14);
     imageContext.lineTo(w - 24, ritualY - 14);
     imageContext.stroke();
     imageContext.fillStyle = muted;
-    imageContext.font = '11px Arial, sans-serif';
+    imageContext.textAlign = 'center';
+    imageContext.font = cardType(11, { cjk: true });
     imageContext.fillText(ritualLabelText, w / 2, ritualY + 6);
     imageContext.fillStyle = ink;
-    imageContext.font = '18px Georgia, serif';
-    drawWrapped(imageContext, L === 'zh' ? activeRitual.zh : activeRitual.en, 24, ritualY + 34, w - 48, 25, 3);
+    imageContext.font = cardType(18, { cjk: isZh });
+    imageContext.textAlign = 'left';
+    drawWrapped(imageContext, ritualBody, 24, ritualY + 34, textWidth, 25, null);
     imageContext.restore();
     return imageCanvas;
   }

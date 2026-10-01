@@ -28,3 +28,10 @@ Primary tags + `TAG_AFFINITY` fuzzy bleed; near-tie soft random among top moods.
 
 ## Tone
 Mysterious, soft. 朝軒宇宙創造 / 盛明. Collecting optional. No quiz jargon on UI.
+
+
+## v2435 (2026-10-01)
+- Remove hue dots from on-screen card + exported PNG (Owner: 色點拿掉若視覺更好就拿掉).
+- Canvas export: CJK-capable font stack (`Noto Serif TC` / `PingFang TC` / …) + load Noto Serif TC; fixes iPhone Safari `Arial`/`Georgia` missing Chinese in saved PNG.
+- Dynamic canvas height from text layout (no `maxLines=3` / `ritualY` clip).
+- Center-zoom card art (~1.24) so artwork edge titles fight UI text less.
