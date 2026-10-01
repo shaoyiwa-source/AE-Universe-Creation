@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2429">
+<meta name="ae-version" content="v2430">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2429">
-<script src="site.js?v=2429" defer></script>
+<link rel="stylesheet" href="site.css?v=2430">
+<script src="site.js?v=2430" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -56,13 +56,27 @@
   }
   .cm-hint.is-hidden{opacity:0}
   .cm-card{
-    width:min(560px,100%);margin:22px auto 0;
-    border:1px solid var(--line);background:var(--paper);
-    border-radius:18px;padding:26px 22px 22px;text-align:center;
+    position:relative;width:min(560px,100%);margin:22px auto 0;
+    border:1px solid var(--line);border-radius:18px;
+    padding:26px 22px 22px;text-align:center;overflow:hidden;
+    background:var(--paper);
     opacity:0;transform:translateY(10px);
     transition:opacity .75s ease, transform .75s ease;
   }
   .cm-card.is-on{opacity:1;transform:none}
+  .cm-card-bg{
+    position:absolute;inset:0;background-size:cover;background-position:center;
+    filter:saturate(1.05) contrast(1.02);transform:scale(1.04);
+    z-index:0;
+  }
+  .cm-card-veil{
+    position:absolute;inset:0;z-index:1;
+    background:linear-gradient(180deg,rgba(247,241,232,.88) 0%,rgba(247,241,232,.78) 45%,rgba(247,241,232,.9) 100%);
+  }
+  :root[data-theme="dark"] .cm-card-veil{
+    background:linear-gradient(180deg,rgba(20,17,15,.82) 0%,rgba(20,17,15,.72) 45%,rgba(20,17,15,.88) 100%);
+  }
+  .cm-card-body{position:relative;z-index:2}
   .cm-card-eyebrow{
     font-size:11px;letter-spacing:.16em;text-transform:uppercase;
     color:var(--muted);margin:0 0 10px;
@@ -74,6 +88,10 @@
   .cm-card-en{
     margin:6px 0 0;font-size:14px;letter-spacing:.06em;
     color:var(--muted);font-style:italic;
+  }
+  .cm-card-src{
+    margin:8px 0 0;font-size:11px;letter-spacing:.08em;
+    color:var(--muted);opacity:.85;
   }
   .cm-reading{
     margin:18px auto 0;max-width:38ch;
@@ -187,16 +205,21 @@
         </div>
 
         <article class="cm-card" id="cmCard" hidden aria-live="polite">
-          <p class="cm-card-eyebrow" id="cmCardEyebrow"></p>
-          <h2 class="cm-card-title" id="cmCardTitle"></h2>
-          <p class="cm-card-en" id="cmCardEn"></p>
-          <div class="cm-reading" id="cmReading"></div>
-          <ul class="cm-hues" id="cmHues" aria-label="Mood hues"></ul>
-          <p class="cm-ritual" id="cmRitual">
-            <span class="cm-ritual-label" id="cmRitualLabel"></span>
-            <span id="cmRitualText"></span>
-          </p>
-          <p class="cm-discover" id="cmDiscover"></p>
+          <div class="cm-card-bg" id="cmCardBg" aria-hidden="true"></div>
+          <div class="cm-card-veil" aria-hidden="true"></div>
+          <div class="cm-card-body">
+            <p class="cm-card-eyebrow" id="cmCardEyebrow"></p>
+            <h2 class="cm-card-title" id="cmCardTitle"></h2>
+            <p class="cm-card-en" id="cmCardEn"></p>
+            <p class="cm-card-src" id="cmCardSrc"></p>
+            <div class="cm-reading" id="cmReading"></div>
+            <ul class="cm-hues" id="cmHues" aria-label="Mood hues"></ul>
+            <p class="cm-ritual" id="cmRitual">
+              <span class="cm-ritual-label" id="cmRitualLabel"></span>
+              <span id="cmRitualText"></span>
+            </p>
+            <p class="cm-discover" id="cmDiscover"></p>
+          </div>
         </article>
       </div>
 
@@ -229,7 +252,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2429 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2430 · color-moment</p>
 </footer>
 
 <script>
@@ -624,6 +647,171 @@
     }
   };
 
+
+  /* Owner art pools for card backgrounds (Preview). */
+  /* Website_Selected 8 webp + extra selected-works for variety. */
+  /* grade_v1 JPG (IMG_5046–5055 skip 5050) + RAW_333 HEIC: deferred this ship — Drive binary pull unavailable in-agent. */
+  const ART_BY_MOOD = {
+    gold: [
+      'assets/selected-works-v2/love-energy-field.webp',
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/infinite-love-strength.webp'
+    ],
+    indigo: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/expansion.webp'
+    ],
+    rose: [
+      'assets/selected-works-v2/heart-fly.webp',
+      'assets/selected-works-v2/love-embrace.webp',
+      'assets/selected-works-v2/flower-heart-bloom.webp'
+    ],
+    mist: [
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/heart-recovery.webp',
+      'assets/selected-works-v2/selected-24.webp'
+    ],
+    cool: [
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/heart-rebuild.webp',
+      'assets/selected-works-v2/selected-26.webp'
+    ],
+    spark: [
+      'assets/selected-works-v2/fun-universe.webp',
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/selected-25.webp'
+    ],
+    still: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/selected-17.webp'
+    ],
+    warm: [
+      'assets/selected-works-v2/love-embrace.webp',
+      'assets/selected-works-v2/love-energy-field.webp',
+      'assets/selected-works-v2/heart-energy.webp'
+    ],
+    soft: [
+      'assets/selected-works-v2/heart-recovery.webp',
+      'assets/selected-works-v2/heart-fly.webp',
+      'assets/selected-works-v2/selected-23.webp'
+    ],
+    deep: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/infinite-love-strength.webp',
+      'assets/selected-works-v2/expansion.webp'
+    ]
+  };
+
+  /* 《盛明》精裝版試寫稿 / 觀看筆記 — primary card text (優先). */
+  const SHENG_BY_MOOD = {
+    gold: [
+      { zh: ['Present 既可以是當下，也可以是禮物。', '豐盛不一定是增加。', '有時候，豐盛只是終於看見。'],
+        en: ['Present is both this moment and a gift.', 'Abundance is not always addition.', 'Sometimes it is finally seeing.'] },
+      { zh: ['當下即永恆。', '每一個 moment，都無可取代。'],
+        en: ['The present is already eternal.', 'Every moment is irreplaceable.'] }
+    ],
+    indigo: [
+      { zh: ['遠看是一個宇宙，近看又是另外一個宇宙。', '宇宙之中，還有宇宙。'],
+        en: ['From afar, one universe; up close, another.', 'Within the cosmos, still more cosmos.'] },
+      { zh: ['光一直都在。', '太陽一直都在。有時候只是被雲遮住。'],
+        en: ['The light has always been here.', 'The sun remains — sometimes only veiled by cloud.'] }
+    ],
+    rose: [
+      { zh: ['每一種狀態，都有它自己的畫。', '當下即永恆。'],
+        en: ['Every state has its own painting.', 'The present is already eternal.'] },
+      { zh: ['這幅畫在誕生時，它就已經進入永恆了。', '每一個 moment，都無可取代。'],
+        en: ['At birth, the painting already entered eternity.', 'Every moment is irreplaceable.'] }
+    ],
+    mist: [
+      { zh: ['豐盛不一定是增加。有時候，豐盛只是終於看見。', '可以停，但不要放棄。'],
+        en: ['Abundance is not always more — sometimes only seeing.', 'You may pause, but do not give up.'] },
+      { zh: ['光一直都在。', '有時候只是被雲遮住。'],
+        en: ['The light has always been here.', 'Sometimes only clouded over.'] }
+    ],
+    cool: [
+      { zh: ['遠看是一個宇宙，近看又是另外一個宇宙。', '起源不變，形態持續演化。'],
+        en: ['One universe from afar; another up close.', 'Origin unchanged; form keeps evolving.'] },
+      { zh: ['可以停，但不要放棄。', '每一個 moment，都無可取代。'],
+        en: ['You may pause, but do not give up.', 'Every moment is irreplaceable.'] }
+    ],
+    spark: [
+      { zh: ['Action creates infinity.', '行動本身，就在創造新的無限。'],
+        en: ['Action creates infinity.', 'The act itself is already making new infinity.'] },
+      { zh: ['這幅畫在誕生時，它就已經進入永恆了。', '當下即永恆。'],
+        en: ['At birth, the painting already entered eternity.', 'The present is already eternal.'] }
+    ],
+    still: [
+      { zh: ['可以停，但不要放棄。', '豐盛不一定是增加。有時候，豐盛只是終於看見。'],
+        en: ['You may pause, but do not give up.', 'Abundance is not always addition — sometimes only seeing.'] },
+      { zh: ['當下即永恆。', '每一個 moment，都無可取代。'],
+        en: ['The present is already eternal.', 'Every moment is irreplaceable.'] }
+    ],
+    warm: [
+      { zh: ['Present 既可以是當下，也可以是禮物。', '光一直都在。太陽一直都在。'],
+        en: ['Present is both this moment and a gift.', 'Light remains. The sun remains.'] },
+      { zh: ['豐盛不一定是增加。有時候，豐盛只是終於看見。'],
+        en: ['Abundance is not always more. Sometimes it is finally seeing.'] }
+    ],
+    soft: [
+      { zh: ['每一種狀態，都有它自己的畫。', '可以停，但不要放棄。'],
+        en: ['Every state has its own painting.', 'You may pause, but do not give up.'] },
+      { zh: ['Present 既可以是當下，也可以是禮物。', '每一個 moment，都無可取代。'],
+        en: ['Present is both this moment and a gift.', 'Every moment is irreplaceable.'] }
+    ],
+    deep: [
+      { zh: ['遠看是一個宇宙，近看又是另外一個宇宙。', '宇宙之中，還有宇宙。'],
+        en: ['From afar, one universe; up close, another.', 'Within the cosmos, still more cosmos.'] },
+      { zh: ['起源不變，形態持續演化。', '這幅畫在誕生時，它就已經進入永恆了。'],
+        en: ['Origin unchanged; form keeps evolving.', 'At birth, the painting already entered eternity.'] }
+    ]
+  };
+
+  const SHENG_RITUALS = {
+    gold: [
+      { zh: '把這一刻當成一份 Present——當下，也是禮物。', en: 'Receive this moment as a Present — now, and gift.' },
+      { zh: '輕輕說：豐盛，有時只是終於看見。', en: 'Whisper: abundance is sometimes only seeing.' }
+    ],
+    indigo: [
+      { zh: '遠看一眼夜色，再近看自己——兩個宇宙都在。', en: 'Glance far into night, then close — two universes both here.' },
+      { zh: '雲遮不住的那一點光，留給胸口。', en: 'Leave for the heart the light cloud cannot cover.' }
+    ],
+    rose: [
+      { zh: '記住：每一種狀態，都有它自己的畫。', en: 'Remember: every state has its own painting.' },
+      { zh: '誕生的同時，已經進入永恆。', en: 'In being born, it has already entered eternity.' }
+    ],
+    mist: [
+      { zh: '可以停。停下來，也是一種看見。', en: 'You may pause. Pausing is also a way of seeing.' },
+      { zh: '雲後面，太陽一直都在。', en: 'Behind the cloud, the sun has always been.' }
+    ],
+    cool: [
+      { zh: '起源不變。形態，可以慢慢演化。', en: 'Origin unchanged. Form may evolve slowly.' },
+      { zh: '停一下也可以——只要不放棄。', en: 'A pause is allowed — only do not give up.' }
+    ],
+    spark: [
+      { zh: '先動。行動本身，就在創造新的無限。', en: 'Move first. Action itself creates new infinity.' },
+      { zh: 'Action creates infinity —— 今夜從一小步開始。', en: 'Action creates infinity — begin with one small step tonight.' }
+    ],
+    still: [
+      { zh: '可以停，但不要放棄。把安靜留給當下。', en: 'Pause if you need — do not give up. Leave quiet for now.' },
+      { zh: '終於看見，就是一種豐盛。', en: 'Finally seeing is already a kind of abundance.' }
+    ],
+    warm: [
+      { zh: '當下即永恆。把溫熱當成禮物收下。', en: 'The present is eternal. Receive warmth as gift.' },
+      { zh: '太陽一直都在——先感受這一點熱。', en: 'The sun remains — feel this little heat first.' }
+    ],
+    soft: [
+      { zh: '這一狀態，也有它自己的畫。輕輕就好。', en: 'This state too has its painting. Soft is enough.' },
+      { zh: '每一個 moment，都無可取代。', en: 'Every moment is irreplaceable.' }
+    ],
+    deep: [
+      { zh: '宇宙之中，還有宇宙。往裡走一點。', en: 'Within cosmos, more cosmos. Step a little inward.' },
+      { zh: '起源不變——形態會找到你。', en: 'Origin unchanged — form will find you.' }
+    ]
+  };
+
+
   const SESSION_MIN = 3;
   const SESSION_MAX = 4;
 
@@ -637,9 +825,11 @@
   const shell = document.getElementById('cmShell');
   const hint = document.getElementById('cmHint');
   const cardEl = document.getElementById('cmCard');
+  const cardBg = document.getElementById('cmCardBg');
   const cardEyebrow = document.getElementById('cmCardEyebrow');
   const cardTitle = document.getElementById('cmCardTitle');
   const cardEn = document.getElementById('cmCardEn');
+  const cardSrc = document.getElementById('cmCardSrc');
   const readingEl = document.getElementById('cmReading');
   const huesEl = document.getElementById('cmHues');
   const ritualLabel = document.getElementById('cmRitualLabel');
@@ -654,6 +844,7 @@
   let activeMood = null;
   let activeReading = null;
   let activeRitual = null;
+  let activeArt = null;
   let blooms = [];
   let raf = 0;
   let started = false;
@@ -750,9 +941,17 @@
   function renderCard() {
     if (!activeMood) return;
     const L = lang();
-    cardEyebrow.textContent = L === 'zh' ? '此刻色調' : 'This moment’s hue';
+    if (activeArt && cardBg) {
+      cardBg.style.backgroundImage = `url("${activeArt}")`;
+    }
+    cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Eternal Sun';
     cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
     cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
+    if (cardSrc) {
+      cardSrc.textContent = L === 'zh'
+        ? '文句出自《盛明》試寫／觀看筆記'
+        : 'Lines from 《盛明》 draft / viewing notes';
+    }
 
     readingEl.innerHTML = '';
     const lines = L === 'zh' ? activeReading.zh : activeReading.en;
@@ -790,8 +989,11 @@
 
   function enterBloom() {
     activeMood = pickMood();
-    activeReading = pickFrom(activeMood.readings);
-    activeRitual = pickFrom(activeMood.rituals);
+    const shengPool = SHENG_BY_MOOD[activeMood.id] || SHENG_BY_MOOD.gold;
+    activeReading = pickFrom(shengPool);
+    activeRitual = pickFrom(SHENG_RITUALS[activeMood.id] || SHENG_RITUALS.gold);
+    const arts = ART_BY_MOOD[activeMood.id] || ART_BY_MOOD.gold;
+    activeArt = pickFrom(arts);
     askEl.hidden = true;
     bloomWrap.hidden = false;
     afterEl.hidden = false;
@@ -912,6 +1114,7 @@
     activeMood = null;
     activeReading = null;
     activeRitual = null;
+    activeArt = null;
     blooms = [];
     started = false;
     bloomReady = false;
@@ -921,6 +1124,7 @@
     afterEl.hidden = true;
     cardEl.hidden = true;
     cardEl.classList.remove('is-on');
+    if (cardBg) cardBg.style.backgroundImage = '';
     showQuestion();
   }
 

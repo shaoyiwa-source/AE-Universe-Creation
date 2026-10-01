@@ -3,28 +3,28 @@
 Route: `/color-moment` → `color-moment.html` (also `public/color-moment.html`).
 Preview only on `new9-public-media`. Soft interactive bloom — not hard-sell.
 
-## Flow (v2429)
-1. Each session **draws 3–4 questions** from a **12-question pool** (shuffled order + shuffled choices). Replay redraws a new subset.
-2. Answers add soft tag weights + **affinity bleed** (related tags reinforce each other) → mood/palette.
-3. Canvas blooms in that palette; richer result card fades in after first bloom.
-4. **Feel again** resets and redraws questions; soft links to Experience / Shop.
+## Flow (v2430)
+1. Each session **draws 3–4 questions** from a **12-question pool** (shuffled). Replay redraws.
+2. Soft tag weights + affinity bleed → mood/palette.
+3. Canvas blooms; richer **art-backed result card** fades in.
+4. Card text prioritizes **《盛明》**試寫／觀看筆記 lines (not 宇宙進化 / AI男友).
+5. Soft links to Experience / Shop.
 
-## Result card (richer)
+## Result card
+- Owner artwork background (mood-mapped from Website_Selected + selected-works webp pool)
 - Poetic mood title (ZH + soft EN)
-- Short personal reading (2–3 lines)
-- Named hue chips for the mood
-- “Tonight’s soft invitation” / tiny ritual line
-- Soft discover line to Experience / Shop (no hard sell)
+- 《盛明》 short reading (2–3 lines)
+- Named hue chips
+- Tonight’s soft invitation (盛明-toned)
+- Soft discover line
 
-## Scoring (under the hood — not shown on UI)
-- Primary tags from each choice (+1)
-- `TAG_AFFINITY` partial weights for related moods (fuzzy, not brittle exact-only)
-- Near-tie soft random among top moods
+## Art pools
+- **Ready now:** 8 Website_Selected webp + extra `assets/selected-works-v2/*` mapped by mood
+- **Deferred:** grade_v1 JPG (IMG_5046–5055 skip 5050) — Drive binary download unavailable in-agent this pass
+- **Deferred:** RAW_333 / Pictures_upload HEIC convert (~333) — too heavy for this Preview ship
 
-## Files
-- `color-moment.html` / `public/color-moment.html` — `QUESTION_POOL`, `TAG_AFFINITY`, `MOODS`, bloom + card UI
-- `vercel.json` — `/color-moment` rewrite
-- `experience.html` — soft discovery link back to Color Moment
+## Scoring (under the hood)
+Primary tags + `TAG_AFFINITY` fuzzy bleed; near-tie soft random among top moods.
 
 ## Tone
-Mysterious, soft. 朝軒宇宙創造. Collecting is optional. Not quiz-game jargon on the UI.
+Mysterious, soft. 朝軒宇宙創造 / 盛明. Collecting optional. No quiz jargon on UI.
