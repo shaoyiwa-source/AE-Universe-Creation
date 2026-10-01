@@ -130,11 +130,50 @@
     margin:16px 0 0;font-size:13px;color:var(--muted);
   }
   .cm-discover a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+  .cm-card-actions{
+    position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:10px 12px;
+    justify-content:center;align-items:center;margin:24px 0 0;padding-top:18px;
+    border-top:1px solid var(--line);
+  }
+  .cm-capture-note{
+    position:relative;z-index:2;margin:20px auto 0;max-width:32ch;
+    font-size:13px;line-height:1.5;color:var(--muted);
+  }
+  .cm-shutter,.cm-card-action{
+    appearance:none;cursor:pointer;border:1px solid var(--line);
+    color:inherit;background:rgba(255,255,255,.16);border-radius:999px;
+    min-height:44px;padding:10px 16px;font:inherit;font-size:14px;
+    transition:transform .18s ease,border-color .2s,background .2s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cm-shutter{
+    display:inline-flex;align-items:center;gap:9px;border-color:var(--ink);
+    background:var(--ink);color:var(--paper);padding-inline:18px;
+  }
+  .cm-shutter::before{
+    content:"";display:block;width:14px;height:14px;border:2px solid currentColor;
+    border-radius:50%;box-shadow:inset 0 0 0 3px transparent;
+  }
+  .cm-shutter:hover,.cm-shutter:focus-visible,.cm-card-action:hover,.cm-card-action:focus-visible{
+    transform:translateY(-1px);outline:none;border-color:var(--ink);
+  }
+  .cm-shutter:active,.cm-card-action:active{transform:scale(.97)}
+  .cm-shutter:disabled{cursor:wait;opacity:.7}
+  .cm-card-action{background:transparent;color:inherit}
+  .cm-card-flash::after{
+    content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:inherit;
+    background:#fff;opacity:0;animation:cm-shutter-flash .45s ease-out;
+  }
+  @keyframes cm-shutter-flash{0%{opacity:.78}100%{opacity:0}}
+  .cm-toast{
+    min-height:1.4em;margin:12px auto 0;font-size:12px;color:var(--muted);
+    text-align:center;opacity:0;transition:opacity .25s ease;
+  }
+  .cm-toast.is-visible{opacity:1}
   .cm-actions{
     display:flex;flex-wrap:wrap;gap:16px 22px;justify-content:center;
     margin-top:28px;align-items:center;
   }
-  .cm-actions .button{min-width:140px}
   .cm-soft{font-size:13px;color:var(--muted);text-align:center;margin:22px auto 0;max-width:42ch}
   @media(max-width:700px){
     .cm-shell{aspect-ratio:3/4;min-height:380px;border-radius:14px}
@@ -219,17 +258,23 @@
               <span id="cmRitualText"></span>
             </p>
             <p class="cm-discover" id="cmDiscover"></p>
+            <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
+            <div class="cm-card-actions" aria-label="Moment actions">
+              <button type="button" class="cm-shutter" id="cmSnap" data-en="Take this moment" data-zh="拍下這一瞬">Take this moment</button>
+              <button type="button" class="cm-card-action" id="cmShare" data-en="Share this card" data-zh="分享這張卡">Share this card</button>
+              <button type="button" class="cm-card-action" id="cmReplay" data-en="Feel again" data-zh="再感覺一次">Feel again</button>
+            </div>
+            <p class="cm-toast" id="cmToast" role="status" aria-live="polite"></p>
           </div>
         </article>
       </div>
 
       <div class="cm-after" id="cmAfter" hidden>
         <div class="cm-actions">
-          <button type="button" class="button" id="cmReplay" data-en="Feel again" data-zh="再感覺一次">Feel again</button>
           <a class="text-link" href="/experience" data-en="Continue to Experience →" data-zh="前往互動體驗 →">Continue to Experience →</a>
           <a class="text-link" href="shop.html" data-en="Browse the Shop →" data-zh="看看商店 →">Browse the Shop →</a>
         </div>
-        <p class="cm-soft" data-en="A quiet moment first. Collecting is optional." data-zh="先留下這一刻就好。收藏，是之後才想的事。">A quiet moment first. Collecting is optional.</p>
+        <p class="cm-soft" data-en="A quiet moment first. Nothing more is needed." data-zh="先留下這一刻就好。不需要更多。">A quiet moment first. Nothing more is needed.</p>
       </div>
     </div>
   </section>
@@ -944,6 +989,9 @@
   const ritualText = document.getElementById('cmRitualText');
   const discoverEl = document.getElementById('cmDiscover');
   const replay = document.getElementById('cmReplay');
+  const snap = document.getElementById('cmSnap');
+  const share = document.getElementById('cmShare');
+  const toast = document.getElementById('cmToast');
   const ctx = canvas.getContext('2d');
 
   let sessionQs = [];
@@ -1216,6 +1264,258 @@
     bloomAt(p.x, p.y, false);
   });
 
+  function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('is-visible');
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove('is-visible'), 3600);
+  }
+
+  function roundedPath(context, w, h, radius) {
+    const r = Math.min(radius, w / 2, h / 2);
+    context.beginPath();
+    context.moveTo(r, 0);
+    context.arcTo(w, 0, w, h, r);
+    context.arcTo(w, h, 0, h, r);
+    context.arcTo(0, h, 0, 0, r);
+    context.arcTo(0, 0, w, 0, r);
+    context.closePath();
+  }
+
+  function drawWrapped(context, text, x, y, maxWidth, lineHeight, maxLines) {
+    const chars = Array.from(String(text || ''));
+    let line = '';
+    let lines = 0;
+    for (const char of chars) {
+      if (char === '\n') {
+        context.fillText(line, x, y);
+        y += lineHeight;
+        line = '';
+        lines += 1;
+        if (lines >= maxLines) return y;
+        continue;
+      }
+      const next = line + char;
+      if (line && context.measureText(next).width > maxWidth) {
+        context.fillText(line.trimEnd(), x, y);
+        y += lineHeight;
+        line = char.trimStart();
+        lines += 1;
+        if (lines >= maxLines) return y;
+      } else {
+        line = next;
+      }
+    }
+    if (lines < maxLines && line) {
+      context.fillText(line.trimEnd(), x, y);
+      y += lineHeight;
+    }
+    return y;
+  }
+
+  function loadCardArt() {
+    return new Promise(resolve => {
+      if (!activeArt) {
+        resolve(null);
+        return;
+      }
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => resolve(null);
+      image.src = activeArt;
+    });
+  }
+
+  function drawCover(context, image, w, h) {
+    const ratio = Math.max(w / image.naturalWidth, h / image.naturalHeight);
+    const iw = image.naturalWidth * ratio;
+    const ih = image.naturalHeight * ratio;
+    context.drawImage(image, (w - iw) / 2, (h - ih) / 2, iw, ih);
+  }
+
+  async function buildCardImage() {
+    const rect = cardEl.getBoundingClientRect();
+    const w = Math.max(1, Math.round(rect.width));
+    const h = Math.max(1, Math.round(rect.height));
+    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const imageCanvas = document.createElement('canvas');
+    imageCanvas.width = Math.round(w * scale);
+    imageCanvas.height = Math.round(h * scale);
+    const imageContext = imageCanvas.getContext('2d');
+    imageContext.scale(scale, scale);
+    const dark = document.documentElement.dataset.theme === 'dark';
+    const paper = dark ? '#14110f' : '#f7f1e8';
+    const ink = dark ? '#f1e8dc' : '#2d2824';
+    const muted = dark ? '#c6b8aa' : '#766b61';
+    const image = await loadCardArt();
+
+    roundedPath(imageContext, w, h, 18);
+    imageContext.save();
+    imageContext.clip();
+    imageContext.fillStyle = paper;
+    imageContext.fillRect(0, 0, w, h);
+    if (image) drawCover(imageContext, image, w, h);
+    const veil = imageContext.createLinearGradient(0, 0, 0, h);
+    veil.addColorStop(0, dark ? 'rgba(20,17,15,.84)' : 'rgba(247,241,232,.88)');
+    veil.addColorStop(.45, dark ? 'rgba(20,17,15,.74)' : 'rgba(247,241,232,.78)');
+    veil.addColorStop(1, dark ? 'rgba(20,17,15,.9)' : 'rgba(247,241,232,.92)');
+    imageContext.fillStyle = veil;
+    imageContext.fillRect(0, 0, w, h);
+    imageContext.restore();
+
+    imageContext.save();
+    imageContext.fillStyle = muted;
+    imageContext.textAlign = 'center';
+    imageContext.font = '11px Arial, sans-serif';
+    imageContext.letterSpacing = '1px';
+    const L = lang();
+    imageContext.fillText(L === 'zh' ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · ETERNAL SUN', w / 2, 30);
+    imageContext.fillStyle = ink;
+    imageContext.font = '500 32px Georgia, serif';
+    imageContext.fillText(L === 'zh' ? activeMood.zh : activeMood.en, w / 2, 70);
+    imageContext.fillStyle = muted;
+    imageContext.font = 'italic 14px Georgia, serif';
+    imageContext.fillText(L === 'zh' ? activeMood.en : activeMood.zh, w / 2, 94);
+    imageContext.font = '11px Arial, sans-serif';
+    imageContext.fillText(L === 'zh' ? '文句出自《盛明》試寫／觀看筆記' : 'Lines from 《盛明》 draft / viewing notes', w / 2, 115);
+
+    imageContext.fillStyle = ink;
+    imageContext.font = '15px Arial, sans-serif';
+    imageContext.textAlign = 'left';
+    let y = 148;
+    const lines = L === 'zh' ? activeReading.zh : activeReading.en;
+    lines.forEach(line => {
+      y = drawWrapped(imageContext, line, 24, y, w - 48, 24, 3) + 5;
+    });
+
+    const hues = activeMood.hues || [];
+    const hueGap = 12;
+    const hueWidth = 58;
+    const huesWidth = hues.length * hueWidth + Math.max(0, hues.length - 1) * hueGap;
+    let hx = (w - huesWidth) / 2;
+    const hueY = y + 12;
+    imageContext.textAlign = 'center';
+    hues.forEach(hue => {
+      imageContext.fillStyle = hue.hex;
+      imageContext.beginPath();
+      imageContext.arc(hx + hueWidth / 2, hueY + 17, 17, 0, Math.PI * 2);
+      imageContext.fill();
+      imageContext.strokeStyle = dark ? 'rgba(255,255,255,.35)' : 'rgba(80,60,45,.25)';
+      imageContext.stroke();
+      imageContext.fillStyle = muted;
+      imageContext.font = '10px Arial, sans-serif';
+      imageContext.fillText(L === 'zh' ? hue.zh : hue.en, hx + hueWidth / 2, hueY + 48);
+      hx += hueWidth + hueGap;
+    });
+
+    const ritualLabel = L === 'zh' ? '今夜的柔邀' : 'TONIGHT’S SOFT INVITATION';
+    imageContext.strokeStyle = dark ? 'rgba(241,232,220,.28)' : 'rgba(118,107,97,.3)';
+    const ritualY = Math.min(h - 92, hueY + 78);
+    imageContext.beginPath();
+    imageContext.moveTo(24, ritualY - 14);
+    imageContext.lineTo(w - 24, ritualY - 14);
+    imageContext.stroke();
+    imageContext.fillStyle = muted;
+    imageContext.font = '11px Arial, sans-serif';
+    imageContext.fillText(ritualLabel, w / 2, ritualY + 6);
+    imageContext.fillStyle = ink;
+    imageContext.font = '18px Georgia, serif';
+    drawWrapped(imageContext, L === 'zh' ? activeRitual.zh : activeRitual.en, 24, ritualY + 34, w - 48, 25, 3);
+    imageContext.restore();
+    return imageCanvas;
+  }
+
+  function saveCanvasImage(source, filename) {
+    return new Promise(resolve => {
+      const download = url => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        if (url.startsWith('blob:')) setTimeout(() => URL.revokeObjectURL(url), 1000);
+        resolve(true);
+      };
+      if (source.toBlob) {
+        source.toBlob(blob => {
+          if (blob) {
+            download(URL.createObjectURL(blob));
+          } else {
+            download(source.toDataURL('image/png'));
+          }
+        }, 'image/png');
+      } else {
+        download(source.toDataURL('image/png'));
+      }
+    });
+  }
+
+  async function captureMoment() {
+    if (!activeMood || cardEl.hidden || snap?.disabled) return;
+    if (snap) snap.disabled = true;
+    cardEl.classList.remove('cm-card-flash');
+    void cardEl.offsetWidth;
+    cardEl.classList.add('cm-card-flash');
+    try {
+      const image = await buildCardImage();
+      await saveCanvasImage(image, `ae-color-moment-${Date.now()}.png`);
+      showToast(lang() === 'zh' ? '這一瞬，已輕輕收好。' : 'This moment is softly kept.');
+    } catch (error) {
+      try {
+        await saveCanvasImage(canvas, `ae-color-moment-${Date.now()}.png`);
+        showToast(lang() === 'zh' ? '先把光拍下來了。' : 'The light has been captured.');
+      } catch (fallbackError) {
+        showToast(lang() === 'zh' ? '這一瞬未能保存，請試著截圖。' : 'The moment could not be saved — a screenshot will keep it.');
+      }
+    } finally {
+      setTimeout(() => { if (snap) snap.disabled = false; }, 500);
+    }
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    const copied = document.execCommand('copy');
+    area.remove();
+    return copied;
+  }
+
+  async function shareMoment() {
+    if (!activeMood) return;
+    const L = lang();
+    const title = L === 'zh' ? `色彩瞬間 · ${activeMood.zh}` : `Color Moment · ${activeMood.en}`;
+    const reading = (L === 'zh' ? activeReading.zh : activeReading.en)[0];
+    const text = L === 'zh' ? `${activeMood.zh}\n${reading}` : `${activeMood.en}\n${reading}`;
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+        showToast(L === 'zh' ? '把這一瞬交給你想念的人。' : 'This moment is ready to travel.');
+      } else {
+        throw new Error('Web Share unavailable');
+      }
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      try {
+        await copyText(url);
+        showToast(L === 'zh' ? '連結已放進剪貼簿。' : 'The link is resting in your clipboard.');
+      } catch (copyError) {
+        showToast(L === 'zh' ? '可用瀏覽器的分享功能帶走這一瞬。' : 'Use your browser’s share option to carry this moment.');
+      }
+    }
+  }
+
   function resetAll() {
     qIndex = 0;
     tagScores = Object.create(null);
@@ -1237,6 +1537,8 @@
   }
 
   replay.addEventListener('click', resetAll);
+  snap?.addEventListener('click', captureMoment);
+  share?.addEventListener('click', shareMoment);
 
   function refreshLangUI() {
     if (!askEl.hidden) showQuestion();
