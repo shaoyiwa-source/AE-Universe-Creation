@@ -3,24 +3,28 @@
 Route: `/color-moment` → `color-moment.html` (also `public/color-moment.html`).
 Preview only on `new9-public-media`. Soft interactive bloom — not hard-sell.
 
-## Flow (v2428)
-1. Answer **4 soft feeling questions** (tap choices; mobile-friendly).
-2. Answers score tags → **personalized mood** (palette + tip family).
-3. Canvas blooms in that palette; poetic tip from the mood pool.
-4. **Feel again** resets questions; soft links to Experience / Shop.
+## Flow (v2429)
+1. Each session **draws 3–4 questions** from a **12-question pool** (shuffled order + shuffled choices). Replay redraws a new subset.
+2. Answers add soft tag weights + **affinity bleed** (related tags reinforce each other) → mood/palette.
+3. Canvas blooms in that palette; richer result card fades in after first bloom.
+4. **Feel again** resets and redraws questions; soft links to Experience / Shop.
 
-## Sample question flow
-1. 此刻身體更靠近…… → 溫熱的陽光 / 清涼的霧氣 / 靜靜的水面
-2. 若顏色先開口，它會是…… → 柔金 / 深靛 / 花瓣粉
-3. 你想留給什麼一點空間？ → 一口安靜的呼吸 / 一點小小火花 / 慢慢展開的感覺
-4. 今夜的光更像…… → 燭火 / 月光 / 黎明  
-→ e.g. warm+gold+spark+gold → **柔金之息 Soft gold breath** + matching tip.
+## Result card (richer)
+- Poetic mood title (ZH + soft EN)
+- Short personal reading (2–3 lines)
+- Named hue chips for the mood
+- “Tonight’s soft invitation” / tiny ritual line
+- Soft discover line to Experience / Shop (no hard sell)
 
-## Files for hourly refinements
-- `color-moment.html` / `public/color-moment.html` — `QUESTIONS`, `MOODS` (palettes + tips), bloom physics, flow UI
+## Scoring (under the hood — not shown on UI)
+- Primary tags from each choice (+1)
+- `TAG_AFFINITY` partial weights for related moods (fuzzy, not brittle exact-only)
+- Near-tie soft random among top moods
+
+## Files
+- `color-moment.html` / `public/color-moment.html` — `QUESTION_POOL`, `TAG_AFFINITY`, `MOODS`, bloom + card UI
 - `vercel.json` — `/color-moment` rewrite
-- `experience.html` / `public/experience.html` — soft discovery link
-- `site.css` / `site.js` — shared chrome; bump `?v=` if caching needed
+- `experience.html` — soft discovery link back to Color Moment
 
 ## Tone
-Mysterious, soft. Experience-like ZH. Collecting is optional. Not random-only — answers drive hue.
+Mysterious, soft. 朝軒宇宙創造. Collecting is optional. Not quiz-game jargon on the UI.

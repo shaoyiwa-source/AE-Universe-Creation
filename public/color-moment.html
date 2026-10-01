@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2428">
+<meta name="ae-version" content="v2429">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2428">
-<script src="site.js?v=2428" defer></script>
+<link rel="stylesheet" href="site.css?v=2429">
+<script src="site.js?v=2429" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -21,7 +21,7 @@
     border:1px solid var(--line);background:var(--paper);
     border-radius:18px;padding:28px 24px 24px;text-align:center;
   }
-  .cm-panel[hidden],.cm-bloom-wrap[hidden],.cm-after[hidden]{display:none!important}
+  .cm-panel[hidden],.cm-bloom-wrap[hidden],.cm-after[hidden],.cm-card[hidden]{display:none!important}
   .cm-progress{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
   .cm-q{
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
@@ -55,23 +55,63 @@
     color:var(--muted);opacity:.85;
   }
   .cm-hint.is-hidden{opacity:0}
-  .cm-mood-label{
-    text-align:center;margin:18px auto 0;max-width:42ch;
-    font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  .cm-card{
+    width:min(560px,100%);margin:22px auto 0;
+    border:1px solid var(--line);background:var(--paper);
+    border-radius:18px;padding:26px 22px 22px;text-align:center;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .75s ease, transform .75s ease;
   }
-  .cm-tip{
-    max-width:560px;margin:22px auto 0;text-align:center;
-    min-height:4.5em;
+  .cm-card.is-on{opacity:1;transform:none}
+  .cm-card-eyebrow{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 10px;
   }
-  .cm-tip .cm-tip-line{
+  .cm-card-title{
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:clamp(22px,3vw,32px);line-height:1.45;margin:0;
-    opacity:0;transform:translateY(8px);
-    transition:opacity .7s ease, transform .7s ease;
+    font-size:clamp(26px,3.6vw,36px);line-height:1.25;margin:0;
   }
-  .cm-tip .cm-tip-line.is-on{opacity:1;transform:none}
-  .cm-tip .cm-tip-sub{color:var(--muted);font-size:14px;margin:12px 0 0;opacity:0;transition:opacity .7s ease .15s}
-  .cm-tip .cm-tip-sub.is-on{opacity:1}
+  .cm-card-en{
+    margin:6px 0 0;font-size:14px;letter-spacing:.06em;
+    color:var(--muted);font-style:italic;
+  }
+  .cm-reading{
+    margin:18px auto 0;max-width:38ch;
+    font-size:15px;line-height:1.65;color:inherit;
+  }
+  .cm-reading p{margin:0 0 .55em}
+  .cm-reading p:last-child{margin-bottom:0}
+  .cm-hues{
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+    margin:20px 0 0;padding:0;list-style:none;
+  }
+  .cm-hue{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    min-width:64px;
+  }
+  .cm-hue i{
+    display:block;width:36px;height:36px;border-radius:50%;
+    border:1px solid var(--line);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .cm-hue span{
+    font-size:11px;letter-spacing:.04em;color:var(--muted);max-width:72px;
+    line-height:1.25;
+  }
+  .cm-ritual{
+    margin:20px auto 0;max-width:36ch;
+    padding-top:16px;border-top:1px solid var(--line);
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:clamp(17px,2.4vw,20px);line-height:1.5;
+  }
+  .cm-ritual-label{
+    display:block;font-family:inherit;font-size:11px;font-style:normal;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    margin-bottom:8px;
+  }
+  .cm-discover{
+    margin:16px 0 0;font-size:13px;color:var(--muted);
+  }
+  .cm-discover a{color:inherit;text-decoration:underline;text-underline-offset:3px}
   .cm-actions{
     display:flex;flex-wrap:wrap;gap:16px 22px;justify-content:center;
     margin-top:28px;align-items:center;
@@ -81,7 +121,7 @@
   @media(max-width:700px){
     .cm-shell{aspect-ratio:3/4;min-height:380px;border-radius:14px}
     .cm-stage{padding:18px 0 56px}
-    .cm-panel{padding:22px 16px 18px;border-radius:14px}
+    .cm-panel,.cm-card{padding:22px 16px 18px;border-radius:14px}
   }
 </style>
 </head>
@@ -131,7 +171,7 @@
   <section class="cm-stage">
     <div class="wrap">
       <div class="cm-intro" id="cmIntro">
-        <p data-en="No score. No right answer — only a feeling that becomes light." data-zh="沒有分數，也沒有標準答案——只有感覺，慢慢變成光。">No score. No right answer — only a feeling that becomes light.</p>
+        <p data-en="No right answer — only a feeling that becomes light. Each visit draws a new handful of questions." data-zh="沒有標準答案——只有感覺，慢慢變成光。每一次來，問題都會重新抽出幾題。">No right answer — only a feeling that becomes light. Each visit draws a new handful of questions.</p>
       </div>
 
       <div class="cm-panel" id="cmAsk" aria-live="polite">
@@ -145,11 +185,19 @@
           <canvas id="cmCanvas" width="920" height="690"></canvas>
           <div class="cm-hint" id="cmHint"><span data-en="Tap to bloom your colour" data-zh="點一下，讓你的顏色綻開">Tap to bloom your colour</span></div>
         </div>
-        <p class="cm-mood-label" id="cmMoodLabel"></p>
-        <div class="cm-tip" id="cmTip" aria-live="polite">
-          <p class="cm-tip-line" id="cmTipLine"></p>
-          <p class="cm-tip-sub" id="cmTipSub"></p>
-        </div>
+
+        <article class="cm-card" id="cmCard" hidden aria-live="polite">
+          <p class="cm-card-eyebrow" id="cmCardEyebrow"></p>
+          <h2 class="cm-card-title" id="cmCardTitle"></h2>
+          <p class="cm-card-en" id="cmCardEn"></p>
+          <div class="cm-reading" id="cmReading"></div>
+          <ul class="cm-hues" id="cmHues" aria-label="Mood hues"></ul>
+          <p class="cm-ritual" id="cmRitual">
+            <span class="cm-ritual-label" id="cmRitualLabel"></span>
+            <span id="cmRitualText"></span>
+          </p>
+          <p class="cm-discover" id="cmDiscover"></p>
+        </article>
       </div>
 
       <div class="cm-after" id="cmAfter" hidden>
@@ -181,12 +229,13 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2428 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2429 · color-moment</p>
 </footer>
 
 <script>
 (() => {
-  const QUESTIONS = [
+  /* Larger pool — each session draws 3–4, shuffled. Scoring stays under the hood. */
+  const QUESTION_POOL = [
     {
       zh: '此刻身體更靠近……',
       en: 'Right now your body feels closer to…',
@@ -222,121 +271,361 @@
         { zh: '月光', en: 'Moonlight', tags: ['indigo', 'cool'] },
         { zh: '黎明', en: 'Dawn', tags: ['spark', 'mist'] }
       ]
+    },
+    {
+      zh: '如果你的心有溫度，它現在是……',
+      en: 'If your heart had a temperature, it would be…',
+      choices: [
+        { zh: '微微暖著', en: 'Softly warm', tags: ['warm', 'soft'] },
+        { zh: '清涼安靜', en: 'Cool and quiet', tags: ['cool', 'still'] },
+        { zh: '帶一點火', en: 'A touch of fire', tags: ['spark', 'gold'] }
+      ]
+    },
+    {
+      zh: '窗外的天空對你說……',
+      en: 'The sky outside seems to say…',
+      choices: [
+        { zh: '慢慢來就好', en: 'Take it slow', tags: ['mist', 'soft'] },
+        { zh: '有什麼在甦醒', en: 'Something is waking', tags: ['spark', 'rose'] },
+        { zh: '深處有光', en: 'Light in the deep', tags: ['deep', 'indigo'] }
+      ]
+    },
+    {
+      zh: '你更想被什麼包圍？',
+      en: 'What would you rather be wrapped in?',
+      choices: [
+        { zh: '柔軟的布料', en: 'Soft fabric', tags: ['soft', 'rose'] },
+        { zh: '清透的空氣', en: 'Clear air', tags: ['cool', 'mist'] },
+        { zh: '金線般的餘暉', en: 'Golden afterglow', tags: ['gold', 'warm'] }
+      ]
+    },
+    {
+      zh: '記憶裡的氣味更接近……',
+      en: 'A scent from memory feels closer to…',
+      choices: [
+        { zh: '雨後草木', en: 'Rain-washed leaves', tags: ['mist', 'still'] },
+        { zh: '烘過的茶香', en: 'Warmed tea', tags: ['warm', 'gold'] },
+        { zh: '夜間的花', en: 'Night-blooming flower', tags: ['indigo', 'rose'] }
+      ]
+    },
+    {
+      zh: '你想讓時間……',
+      en: 'You want time to…',
+      choices: [
+        { zh: '停一下', en: 'Pause a little', tags: ['still', 'deep'] },
+        { zh: '輕輕往前', en: 'Drift forward', tags: ['soft', 'cool'] },
+        { zh: '亮起來', en: 'Brighten', tags: ['spark', 'warm'] }
+      ]
+    },
+    {
+      zh: '若這一刻是一幅畫，筆觸會是……',
+      en: 'If this moment were a painting, the stroke would be…',
+      choices: [
+        { zh: '薄薄一層霧', en: 'A thin veil of mist', tags: ['mist', 'cool'] },
+        { zh: '濃一點的色塊', en: 'A denser field of colour', tags: ['deep', 'indigo'] },
+        { zh: '柔邊的暈染', en: 'Soft-edged bloom', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '手心想像握住的是……',
+      en: 'In your palm you imagine holding…',
+      choices: [
+        { zh: '一顆溫熱的石', en: 'A warm stone', tags: ['warm', 'still'] },
+        { zh: '一滴冷涼的水', en: 'A cool drop of water', tags: ['cool', 'mist'] },
+        { zh: '一截細細的金線', en: 'A thin gold thread', tags: ['gold', 'spark'] }
+      ]
+    },
+    {
+      zh: '你想對今晚輕輕說……',
+      en: 'You want to whisper to tonight…',
+      choices: [
+        { zh: '陪我安靜一下', en: 'Stay quiet with me', tags: ['still', 'indigo'] },
+        { zh: '給我一點暖', en: 'Give me a little warmth', tags: ['warm', 'gold'] },
+        { zh: '讓我慢慢開', en: 'Let me open slowly', tags: ['rose', 'soft'] }
+      ]
     }
   ];
+
+  /* Soft affinities: related tags gently reinforce each other (fuzzy, not exact-only). */
+  const TAG_AFFINITY = {
+    warm:  { gold: 0.45, spark: 0.3, soft: 0.15, rose: 0.1 },
+    cool:  { mist: 0.45, indigo: 0.3, still: 0.25, soft: 0.1 },
+    spark: { gold: 0.35, warm: 0.3, mist: 0.15 },
+    calm:  { still: 0.5, mist: 0.35, soft: 0.25, cool: 0.2 },
+    gold:  { warm: 0.45, spark: 0.25, soft: 0.1 },
+    indigo:{ deep: 0.4, cool: 0.3, still: 0.2 },
+    rose:  { soft: 0.45, warm: 0.15, spark: 0.1 },
+    mist:  { cool: 0.4, still: 0.25, soft: 0.2 },
+    still: { deep: 0.35, mist: 0.3, cool: 0.2, soft: 0.15 },
+    soft:  { rose: 0.35, mist: 0.2, warm: 0.15 },
+    deep:  { indigo: 0.4, still: 0.3, cool: 0.15 }
+  };
 
   const MOODS = {
     gold: {
       id: 'gold',
       zh: '柔金之息',
-      en: 'Soft gold breath',
+      en: 'Soft Gold Breath',
       palette: ['#c9a46a', '#e8d5b0', '#8b5a2b', '#f4efe6'],
-      tips: [
-        { zh: '這一點金，先停在你心口。', en: 'A little gold rests near the heart.' },
-        { zh: '溫熱不必很大聲，也能被看見。', en: 'Warmth need not be loud to be seen.' },
-        { zh: '把呼吸留給這一縷柔光。', en: 'Leave a breath for this soft gleam.' }
+      hues: [
+        { hex: '#c9a46a', zh: '柔金', en: 'Soft gold' },
+        { hex: '#e8d5b0', zh: '蜜米', en: 'Honey cream' },
+        { hex: '#8b5a2b', zh: '暖褐', en: 'Warm umber' },
+        { hex: '#f4efe6', zh: '絹白', en: 'Silk ivory' }
+      ],
+      readings: [
+        {
+          zh: ['這一點金，先停在你心口。', '溫熱不必很大聲，也能被看見。', '把呼吸留給這一縷柔光。'],
+          en: ['A little gold rests near the heart.', 'Warmth need not be loud to be seen.', 'Leave a breath for this soft gleam.']
+        },
+        {
+          zh: ['今夜的顏色偏溫。', '像燭火貼近掌心，不催、不散。', '你只要接住——就夠了。'],
+          en: ['Tonight’s colour leans warm.', 'Like candlelight near the palm — unhurried.', 'Receiving is enough.']
+        }
+      ],
+      rituals: [
+        { zh: '閉眼數三息，想像心口有一點柔金慢慢亮起。', en: 'Three soft breaths. Imagine a gold mote blooming at the heart.' },
+        { zh: '把手放在胸口片刻，感受那一點溫熱就夠。', en: 'Palm to chest for a moment — just notice the warmth.' }
       ]
     },
     indigo: {
       id: 'indigo',
       zh: '深靛之夜',
-      en: 'Deep indigo night',
+      en: 'Deep Indigo Night',
       palette: ['#7a6bb0', '#cbb8ef', '#3d2f66', '#f0ebf8'],
-      tips: [
-        { zh: '暗裡也有溫柔的亮。', en: 'Even in the dark, a gentle brightness.' },
-        { zh: '深一點，反而更靠近自己。', en: 'Going deeper can bring you closer.' },
-        { zh: '這一刻不急著變成答案。', en: 'This moment need not become an answer.' }
+      hues: [
+        { hex: '#7a6bb0', zh: '深靛', en: 'Deep indigo' },
+        { hex: '#cbb8ef', zh: '霧紫', en: 'Mist violet' },
+        { hex: '#3d2f66', zh: '夜墨', en: 'Night ink' },
+        { hex: '#f0ebf8', zh: '薄霞', en: 'Pale dusk' }
+      ],
+      readings: [
+        {
+          zh: ['暗裡也有溫柔的亮。', '深一點，反而更靠近自己。', '這一刻不急著變成答案。'],
+          en: ['Even in the dark, a gentle brightness.', 'Going deeper can bring you closer.', 'This moment need not become an answer.']
+        },
+        {
+          zh: ['夜色沒有要你變聰明。', '它只想陪你安靜一會兒。', '深度不怕慢。'],
+          en: ['Night does not ask you to be clever.', 'It only wants a quiet while with you.', 'Depth is never afraid of slow.']
+        }
+      ],
+      rituals: [
+        { zh: '看向最暗的角落兩秒，再讓視線慢慢回到光邊。', en: 'Glance into the darkest corner, then let your eyes drift back to the edge of light.' },
+        { zh: '把一盞燈調暗一點，讓夜色多留一寸。', en: 'Dim one light a little — leave night an inch more room.' }
       ]
     },
     rose: {
       id: 'rose',
       zh: '花瓣之柔',
-      en: 'Petal softness',
+      en: 'Petal Softness',
       palette: ['#c46b7a', '#efc1c9', '#6b2f3a', '#f8ecee'],
-      tips: [
-        { zh: '一點點綻開，就夠了。', en: 'A soft bloom is enough.' },
-        { zh: '顏色自己來了，你只要接住。', en: 'Colour arrives on its own — you only receive.' },
-        { zh: '柔軟，也是一種力量。', en: 'Softness is a kind of strength.' }
+      hues: [
+        { hex: '#c46b7a', zh: '花瓣', en: 'Petal' },
+        { hex: '#efc1c9', zh: '粉霧', en: 'Rose mist' },
+        { hex: '#6b2f3a', zh: '茜影', en: 'Madder shade' },
+        { hex: '#f8ecee', zh: '腮白', en: 'Blush ivory' }
+      ],
+      readings: [
+        {
+          zh: ['一點點綻開，就夠了。', '顏色自己來了，你只要接住。', '柔軟，也是一種力量。'],
+          en: ['A soft bloom is enough.', 'Colour arrives on its own — you only receive.', 'Softness is a kind of strength.']
+        },
+        {
+          zh: ['這一刻可以很輕。', '不必用力證明什麼。', '花瓣一樣的感覺，已經到了。'],
+          en: ['This moment is allowed to be light.', 'Nothing needs proving.', 'A petal-feeling has already arrived.']
+        }
+      ],
+      rituals: [
+        { zh: '對鏡子或窗玻璃，輕聲說一句「慢慢開就好」。', en: 'To a mirror or window, whisper: “Slow opening is enough.”' },
+        { zh: '把手指輕輕按在心口，想像一瓣顏色慢慢展開。', en: 'Fingertips at the heart — imagine one petal of colour unfolding.' }
       ]
     },
     mist: {
       id: 'mist',
       zh: '霧青之息',
-      en: 'Mist-green breath',
+      en: 'Mist-Green Breath',
       palette: ['#6b8f71', '#b7d2bc', '#2f4a38', '#e8f0ea'],
-      tips: [
-        { zh: '光走得很慢，剛好讓你看見。', en: 'Light moves slowly — just enough to be seen.' },
-        { zh: '清涼裡，也藏著溫柔。', en: 'Even coolness holds a quiet kindness.' },
-        { zh: '不必想清楚，感覺會帶路。', en: 'You need not decide. Feeling will lead.' }
+      hues: [
+        { hex: '#6b8f71', zh: '霧青', en: 'Mist green' },
+        { hex: '#b7d2bc', zh: '露綠', en: 'Dew green' },
+        { hex: '#2f4a38', zh: '苔影', en: 'Moss shade' },
+        { hex: '#e8f0ea', zh: '晨氛', en: 'Morning air' }
+      ],
+      readings: [
+        {
+          zh: ['光走得很慢，剛好讓你看見。', '清涼裡，也藏著溫柔。', '不必想清楚，感覺會帶路。'],
+          en: ['Light moves slowly — just enough to be seen.', 'Even coolness holds a quiet kindness.', 'You need not decide. Feeling will lead.']
+        },
+        {
+          zh: ['霧不是阻擋——是緩衝。', '給自己一層柔軟的距離。', '呼吸可以比念頭更先到。'],
+          en: ['Mist is not a wall — it is a cushion.', 'Give yourself a soft distance.', 'Breath can arrive before thought.']
+        }
+      ],
+      rituals: [
+        { zh: '打開一扇縫，感受空氣換了一下。', en: 'Crack a window — notice the air change once.' },
+        { zh: '喝一小口水，想像清涼從喉嚨走到胸口。', en: 'A sip of water — coolness from throat to chest.' }
       ]
     },
     cool: {
       id: 'cool',
       zh: '月藍之靜',
-      en: 'Moon-blue quiet',
+      en: 'Moon-Blue Quiet',
       palette: ['#5b7f9a', '#b7d0e2', '#24384a', '#eaf2f7'],
-      tips: [
-        { zh: '靜一點，顏色會自己靠近。', en: 'Be still — colour will come closer.' },
-        { zh: '月光不催促任何人。', en: 'Moonlight does not hurry anyone.' },
-        { zh: '把這一刻留給安靜。', en: 'Leave this moment for quiet.' }
+      hues: [
+        { hex: '#5b7f9a', zh: '月藍', en: 'Moon blue' },
+        { hex: '#b7d0e2', zh: '薄雲', en: 'Thin cloud' },
+        { hex: '#24384a', zh: '夜湖', en: 'Night lake' },
+        { hex: '#eaf2f7', zh: '銀霧', en: 'Silver mist' }
+      ],
+      readings: [
+        {
+          zh: ['靜一點，顏色會自己靠近。', '月光不催促任何人。', '把這一刻留給安靜。'],
+          en: ['Be still — colour will come closer.', 'Moonlight does not hurry anyone.', 'Leave this moment for quiet.']
+        },
+        {
+          zh: ['清涼不是疏遠。', '它是一種很乾淨的靠近。', '你可以什麼都不追。'],
+          en: ['Coolness is not distance.', 'It is a clean kind of nearness.', 'You may chase nothing.']
+        }
+      ],
+      rituals: [
+        { zh: '看向窗外最淡的那一抹藍，數到四。', en: 'Find the softest blue outside — count to four.' },
+        { zh: '讓肩膀鬆一下，像月光落在衣領。', en: 'Drop the shoulders — as if moonlight rested on the collar.' }
       ]
     },
     spark: {
       id: 'spark',
       zh: '黎明微火',
-      en: 'Dawn spark',
+      en: 'Dawn Spark',
       palette: ['#d4a017', '#f0d78c', '#6b4e12', '#faf3df'],
-      tips: [
-        { zh: '小小火花，也能點亮整片夜。', en: 'A small spark can light a whole night.' },
-        { zh: '開始，不必很大——有光就夠。', en: 'Beginnings need not be large — light is enough.' },
-        { zh: '黎明先來找你，再慢慢醒。', en: 'Dawn finds you first; waking can wait.' }
+      hues: [
+        { hex: '#d4a017', zh: '微火', en: 'Ember gold' },
+        { hex: '#f0d78c', zh: '晨暈', en: 'Dawn haze' },
+        { hex: '#6b4e12', zh: '琥珀', en: 'Amber' },
+        { hex: '#faf3df', zh: '曦白', en: 'First light' }
+      ],
+      readings: [
+        {
+          zh: ['小小火花，也能點亮整片夜。', '開始，不必很大——有光就夠。', '黎明先來找你，再慢慢醒。'],
+          en: ['A small spark can light a whole night.', 'Beginnings need not be large — light is enough.', 'Dawn finds you first; waking can wait.']
+        },
+        {
+          zh: ['有什麼在你裡面輕輕點燃。', '不用急著變成火焰。', '微光也算來到了。'],
+          en: ['Something kindles softly inside.', 'No rush to become flame.', 'A mote of light still counts as arriving.']
+        }
+      ],
+      rituals: [
+        { zh: '在黑暗裡劃亮一點什麼——燈、螢幕、或想像的火。', en: 'Kindle one small light — lamp, screen, or imagined spark.' },
+        { zh: '對即將到來的早晨，輕聲說「我在」。', en: 'To the coming morning, whisper: “I am here.”' }
       ]
     },
     still: {
       id: 'still',
       zh: '靜水深流',
-      en: 'Still deep water',
+      en: 'Still Deep Water',
       palette: ['#4a6b78', '#a8c4ce', '#1e323a', '#e8f1f4'],
-      tips: [
-        { zh: '水面很靜，底下卻有光在動。', en: 'The surface is still; light moves beneath.' },
-        { zh: '安靜，不是空白——是空間。', en: 'Quiet is not empty — it is space.' },
-        { zh: '這一刻，先什麼都不追。', en: 'For this moment, chase nothing.' }
+      hues: [
+        { hex: '#4a6b78', zh: '深水', en: 'Deep water' },
+        { hex: '#a8c4ce', zh: '淺灣', en: 'Shallow bay' },
+        { hex: '#1e323a', zh: '淵影', en: 'Abyss shade' },
+        { hex: '#e8f1f4', zh: '水霧', en: 'Water mist' }
+      ],
+      readings: [
+        {
+          zh: ['水面很靜，底下卻有光在動。', '安靜，不是空白——是空間。', '這一刻，先什麼都不追。'],
+          en: ['The surface is still; light moves beneath.', 'Quiet is not empty — it is space.', 'For this moment, chase nothing.']
+        },
+        {
+          zh: ['你不需要填滿這一刻。', '空一點，顏色反而更清楚。', '靜，是在聽。'],
+          en: ['You need not fill this moment.', 'A little emptiness makes colour clearer.', 'Stillness is a way of listening.']
+        }
+      ],
+      rituals: [
+        { zh: '想像胸口是一湖靜水，投一顆想像的石，看漣漪散開。', en: 'Imagine a still lake at the chest — drop one imagined stone, watch the ripple.' },
+        { zh: '暫停十秒，什麼都不做，只聽最遠的聲音。', en: 'Ten seconds of nothing — listen only for the farthest sound.' }
       ]
     },
     warm: {
       id: 'warm',
       zh: '暖陽之懷',
-      en: 'Warm sun hold',
+      en: 'Warm Sun Hold',
       palette: ['#c98a4a', '#efd0a8', '#7a4a22', '#faf0e4'],
-      tips: [
-        { zh: '溫熱靠近了，你只要接住。', en: 'Warmth draws near — you only receive.' },
-        { zh: '心口那一點熱，剛好夠。', en: 'That little heat at the heart is enough.' },
-        { zh: '不必趕路，陽光會陪著。', en: 'No need to rush; the sun stays with you.' }
+      hues: [
+        { hex: '#c98a4a', zh: '暖陽', en: 'Warm sun' },
+        { hex: '#efd0a8', zh: '杏膚', en: 'Apricot skin' },
+        { hex: '#7a4a22', zh: '陶褐', en: 'Clay brown' },
+        { hex: '#faf0e4', zh: '陽光白', en: 'Sun ivory' }
+      ],
+      readings: [
+        {
+          zh: ['溫熱靠近了，你只要接住。', '心口那一點熱，剛好夠。', '不必趕路，陽光會陪著。'],
+          en: ['Warmth draws near — you only receive.', 'That little heat at the heart is enough.', 'No need to rush; the sun stays with you.']
+        },
+        {
+          zh: ['像被陽光輕輕抱住。', '這不是炫耀——是陪伴。', '讓身體記得這一點暖。'],
+          en: ['As if sunlight held you lightly.', 'Not display — companionship.', 'Let the body remember this warmth.']
+        }
+      ],
+      rituals: [
+        { zh: '面向最暖的光源站一會兒，讓臉頰感覺到熱。', en: 'Face the warmest light a moment — let the cheek feel heat.' },
+        { zh: '雙手互握十秒，把掌心的熱留給自己。', en: 'Hold your own hands ten seconds — keep the palm-warmth.' }
       ]
     },
     soft: {
       id: 'soft',
       zh: '輕柔之色',
-      en: 'Gentle hue',
+      en: 'Gentle Hue',
       palette: ['#b89a9e', '#e8d6d8', '#5a3f44', '#f6eeee'],
-      tips: [
-        { zh: '輕輕的，也算來到了。', en: 'Even gently counts as arriving.' },
-        { zh: '把力氣留給感覺，就好。', en: 'Save your strength for feeling.' },
-        { zh: '這一刻可以很輕。', en: 'This moment is allowed to be light.' }
+      hues: [
+        { hex: '#b89a9e', zh: '灰粉', en: 'Dust rose' },
+        { hex: '#e8d6d8', zh: '輕霧', en: 'Soft fog' },
+        { hex: '#5a3f44', zh: '影褐', en: 'Shadow mauve' },
+        { hex: '#f6eeee', zh: '雲膚', en: 'Cloud skin' }
+      ],
+      readings: [
+        {
+          zh: ['輕輕的，也算來到了。', '把力氣留給感覺，就好。', '這一刻可以很輕。'],
+          en: ['Even gently counts as arriving.', 'Save your strength for feeling.', 'This moment is allowed to be light.']
+        },
+        {
+          zh: ['顏色不必用力。', '輕柔本身就是一種選擇。', '你已經夠了。'],
+          en: ['Colour need not strain.', 'Gentleness is already a choice.', 'You are already enough.']
+        }
+      ],
+      rituals: [
+        { zh: '用最輕的聲音說自己的名字一次。', en: 'Say your own name once, as softly as you can.' },
+        { zh: '撫平衣角或髮梢，像對顏色一樣溫柔。', en: 'Smooth a sleeve or strand of hair — as gently as colour.' }
       ]
     },
     deep: {
       id: 'deep',
       zh: '深色之境',
-      en: 'Deep colour realm',
+      en: 'Deep Colour Realm',
       palette: ['#5c4a6e', '#b9a8c9', '#2a1f38', '#efeaf4'],
-      tips: [
-        { zh: '往裡走一點，顏色會更真。', en: 'A step inward, and colour grows truer.' },
-        { zh: '深度不怕慢。', en: 'Depth is never afraid of slow.' },
-        { zh: '你看見的，已經夠深。', en: 'What you see is already deep enough.' }
+      hues: [
+        { hex: '#5c4a6e', zh: '深紫', en: 'Deep mauve' },
+        { hex: '#b9a8c9', zh: '薄煙', en: 'Thin smoke' },
+        { hex: '#2a1f38', zh: '淵靛', en: 'Abyss indigo' },
+        { hex: '#efeaf4', zh: '夜白', en: 'Night white' }
+      ],
+      readings: [
+        {
+          zh: ['往裡走一點，顏色會更真。', '深度不怕慢。', '你看見的，已經夠深。'],
+          en: ['A step inward, and colour grows truer.', 'Depth is never afraid of slow.', 'What you see is already deep enough.']
+        },
+        {
+          zh: ['不必浮上來解釋。', '深色裡，也有呼吸。', '這一層剛好是你的。'],
+          en: ['No need to surface and explain.', 'Even deep colour breathes.', 'This layer is yours.']
+        }
+      ],
+      rituals: [
+        { zh: '閉眼，想像往顏色的更深處走三步，再睜開。', en: 'Eyes closed — three steps deeper into colour, then open.' },
+        { zh: '把房間最暗處多看一眼，對它點頭。', en: 'Glance once at the darkest place in the room — nod to it.' }
       ]
     }
   };
+
+  const SESSION_MIN = 3;
+  const SESSION_MAX = 4;
 
   const askEl = document.getElementById('cmAsk');
   const progressEl = document.getElementById('cmProgress');
@@ -344,19 +633,27 @@
   const choicesEl = document.getElementById('cmChoices');
   const bloomWrap = document.getElementById('cmBloomWrap');
   const afterEl = document.getElementById('cmAfter');
-  const moodLabel = document.getElementById('cmMoodLabel');
   const canvas = document.getElementById('cmCanvas');
   const shell = document.getElementById('cmShell');
   const hint = document.getElementById('cmHint');
-  const tipLine = document.getElementById('cmTipLine');
-  const tipSub = document.getElementById('cmTipSub');
+  const cardEl = document.getElementById('cmCard');
+  const cardEyebrow = document.getElementById('cmCardEyebrow');
+  const cardTitle = document.getElementById('cmCardTitle');
+  const cardEn = document.getElementById('cmCardEn');
+  const readingEl = document.getElementById('cmReading');
+  const huesEl = document.getElementById('cmHues');
+  const ritualLabel = document.getElementById('cmRitualLabel');
+  const ritualText = document.getElementById('cmRitualText');
+  const discoverEl = document.getElementById('cmDiscover');
   const replay = document.getElementById('cmReplay');
   const ctx = canvas.getContext('2d');
 
+  let sessionQs = [];
   let qIndex = 0;
   let tagScores = Object.create(null);
   let activeMood = null;
-  let activeTip = null;
+  let activeReading = null;
+  let activeRitual = null;
   let blooms = [];
   let raf = 0;
   let started = false;
@@ -366,28 +663,71 @@
     try { return localStorage.getItem('ae-language') === 'zh' ? 'zh' : 'en'; } catch { return 'en'; }
   }
 
-  function pickMood() {
-    const entries = Object.entries(tagScores);
-    if (!entries.length) return MOODS.gold;
-    entries.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-    const top = entries[0][0];
-    return MOODS[top] || MOODS.gold;
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
   }
 
-  function pickTip(mood) {
-    const tips = mood.tips;
-    return tips[Math.floor(Math.random() * tips.length)];
+  function drawSession() {
+    const n = SESSION_MIN + Math.floor(Math.random() * (SESSION_MAX - SESSION_MIN + 1));
+    return shuffle(QUESTION_POOL).slice(0, n).map(q => {
+      const copy = { zh: q.zh, en: q.en, choices: shuffle(q.choices) };
+      return copy;
+    });
+  }
+
+  function addTag(tag, weight) {
+    tagScores[tag] = (tagScores[tag] || 0) + weight;
+  }
+
+  function applyChoiceTags(tags) {
+    tags.forEach(t => {
+      addTag(t, 1);
+      const aff = TAG_AFFINITY[t];
+      if (aff) {
+        Object.keys(aff).forEach(k => addTag(k, aff[k]));
+      }
+    });
+  }
+
+  function pickMood() {
+    const moodIds = Object.keys(MOODS);
+    const scored = moodIds.map(id => ({
+      id,
+      score: tagScores[id] || 0
+    }));
+    scored.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+    // Soft tie-break: if top two are close, slight random among near-tops
+    const top = scored[0].score;
+    const near = scored.filter(s => s.score >= top - 0.35 && s.score > 0);
+    if (near.length > 1) {
+      return MOODS[near[Math.floor(Math.random() * Math.min(near.length, 3))].id];
+    }
+    if (top <= 0) {
+      const fallback = ['gold', 'mist', 'soft', 'cool'];
+      return MOODS[fallback[Math.floor(Math.random() * fallback.length)]];
+    }
+    return MOODS[scored[0].id];
+  }
+
+  function pickFrom(list) {
+    return list[Math.floor(Math.random() * list.length)];
   }
 
   function showQuestion() {
     const L = lang();
-    const q = QUESTIONS[qIndex];
+    const q = sessionQs[qIndex];
+    const total = sessionQs.length;
     progressEl.textContent = L === 'zh'
-      ? `感覺 ${qIndex + 1} / ${QUESTIONS.length}`
-      : `Feeling ${qIndex + 1} / ${QUESTIONS.length}`;
+      ? `感覺 ${qIndex + 1} / ${total}`
+      : `Feeling ${qIndex + 1} / ${total}`;
     questionEl.textContent = L === 'zh' ? q.zh : q.en;
     choicesEl.innerHTML = '';
-    q.choices.forEach((c, i) => {
+    q.choices.forEach(c => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'cm-choice';
@@ -398,53 +738,75 @@
   }
 
   function onChoose(choice) {
-    choice.tags.forEach(t => { tagScores[t] = (tagScores[t] || 0) + 1; });
+    applyChoiceTags(choice.tags);
     qIndex += 1;
-    if (qIndex < QUESTIONS.length) {
+    if (qIndex < sessionQs.length) {
       showQuestion();
       return;
     }
     enterBloom();
   }
 
+  function renderCard() {
+    if (!activeMood) return;
+    const L = lang();
+    cardEyebrow.textContent = L === 'zh' ? '此刻色調' : 'This moment’s hue';
+    cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
+    cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
+
+    readingEl.innerHTML = '';
+    const lines = L === 'zh' ? activeReading.zh : activeReading.en;
+    lines.forEach(line => {
+      const p = document.createElement('p');
+      p.textContent = line;
+      readingEl.appendChild(p);
+    });
+
+    huesEl.innerHTML = '';
+    (activeMood.hues || []).forEach(h => {
+      const li = document.createElement('li');
+      li.className = 'cm-hue';
+      const sw = document.createElement('i');
+      sw.style.background = h.hex;
+      sw.setAttribute('aria-hidden', 'true');
+      const lab = document.createElement('span');
+      lab.textContent = L === 'zh' ? h.zh : h.en;
+      li.appendChild(sw);
+      li.appendChild(lab);
+      huesEl.appendChild(li);
+    });
+
+    ritualLabel.textContent = L === 'zh' ? '今夜的柔邀' : 'Tonight’s soft invitation';
+    ritualText.textContent = L === 'zh' ? activeRitual.zh : activeRitual.en;
+
+    discoverEl.innerHTML = L === 'zh'
+      ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
+      : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.';
+
+    cardEl.hidden = false;
+    cardEl.classList.remove('is-on');
+    requestAnimationFrame(() => cardEl.classList.add('is-on'));
+  }
+
   function enterBloom() {
     activeMood = pickMood();
-    activeTip = pickTip(activeMood);
+    activeReading = pickFrom(activeMood.readings);
+    activeRitual = pickFrom(activeMood.rituals);
     askEl.hidden = true;
     bloomWrap.hidden = false;
     afterEl.hidden = false;
     bloomReady = true;
     started = false;
     hint.classList.remove('is-hidden');
-    const L = lang();
-    moodLabel.textContent = L === 'zh'
-      ? `此刻色調 · ${activeMood.zh}`
-      : `This moment’s hue · ${activeMood.en}`;
-    tipLine.classList.remove('is-on');
-    tipSub.classList.remove('is-on');
-    tipLine.textContent = '';
-    tipSub.textContent = '';
+    cardEl.hidden = true;
+    cardEl.classList.remove('is-on');
     resize();
-    // Soft auto-bloom center after a breath, still invite tap
     setTimeout(() => {
       if (!started && bloomReady) {
         const r = shell.getBoundingClientRect();
         bloomAt(r.width * 0.5, r.height * 0.48, true);
       }
     }, 700);
-  }
-
-  function showTip() {
-    if (!activeTip) return;
-    const L = lang();
-    tipLine.textContent = L === 'zh' ? activeTip.zh : activeTip.en;
-    tipSub.textContent = L === 'zh' ? activeTip.en : activeTip.zh;
-    tipLine.classList.remove('is-on');
-    tipSub.classList.remove('is-on');
-    requestAnimationFrame(() => {
-      tipLine.classList.add('is-on');
-      tipSub.classList.add('is-on');
-    });
   }
 
   function resize() {
@@ -493,10 +855,9 @@
     if (!started) {
       started = true;
       hint.classList.add('is-hidden');
-      showTip();
+      renderCard();
     } else if (!fromAuto) {
-      // Extra taps keep same personalized tip, gentle refresh of presence
-      showTip();
+      renderCard();
     }
     if (!raf) raf = requestAnimationFrame(tick);
   }
@@ -549,34 +910,26 @@
     qIndex = 0;
     tagScores = Object.create(null);
     activeMood = null;
-    activeTip = null;
+    activeReading = null;
+    activeRitual = null;
     blooms = [];
     started = false;
     bloomReady = false;
+    sessionQs = drawSession();
     askEl.hidden = false;
     bloomWrap.hidden = true;
     afterEl.hidden = true;
-    tipLine.classList.remove('is-on');
-    tipSub.classList.remove('is-on');
-    tipLine.textContent = '';
-    tipSub.textContent = '';
-    moodLabel.textContent = '';
+    cardEl.hidden = true;
+    cardEl.classList.remove('is-on');
     showQuestion();
   }
 
   replay.addEventListener('click', resetAll);
 
   function refreshLangUI() {
-    const L = lang();
     if (!askEl.hidden) showQuestion();
-    if (activeMood && !bloomWrap.hidden) {
-      moodLabel.textContent = L === 'zh'
-        ? `此刻色調 · ${activeMood.zh}`
-        : `This moment’s hue · ${activeMood.en}`;
-      if (activeTip && tipLine.textContent) {
-        tipLine.textContent = L === 'zh' ? activeTip.zh : activeTip.en;
-        tipSub.textContent = L === 'zh' ? activeTip.en : activeTip.zh;
-      }
+    if (activeMood && !bloomWrap.hidden && !cardEl.hidden) {
+      renderCard();
     }
   }
 
@@ -591,6 +944,7 @@
     if (blooms.length && !raf) raf = requestAnimationFrame(tick);
   });
 
+  sessionQs = drawSession();
   showQuestion();
 })();
 </script>
