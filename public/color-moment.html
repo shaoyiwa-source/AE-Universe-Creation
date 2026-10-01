@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2439">
+<meta name="ae-version" content="v2440">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,6 +55,31 @@
     color:var(--muted);opacity:.85;
   }
   .cm-hint.is-hidden{opacity:0}
+  .cm-seal-bar{
+    width:min(920px,100%);margin:14px auto 0;padding:0 8px;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    text-align:center;
+  }
+  .cm-seal-bar[hidden]{display:none!important}
+  .cm-lp-hint{
+    margin:0;max-width:38ch;font-size:13px;line-height:1.55;color:var(--muted);
+  }
+  .cm-seal{
+    appearance:none;cursor:pointer;border:1px solid var(--ink);
+    color:var(--paper);background:var(--ink);border-radius:999px;
+    min-height:44px;padding:10px 22px;font:inherit;font-size:15px;
+    letter-spacing:.06em;
+    transition:transform .18s ease,opacity .2s,border-color .2s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cm-seal:hover,.cm-seal:focus-visible{transform:translateY(-1px);outline:none}
+  .cm-seal:active{transform:scale(.97)}
+  .cm-lightprint{
+    margin:10px 0 0;font-size:12px;letter-spacing:.14em;
+    color:var(--muted);opacity:.92;
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+  }
+  .cm-lightprint[hidden]{display:none!important}
   .cm-card{
     position:relative;width:min(560px,100%);margin:22px auto 0;
     border:1px solid var(--line);border-radius:18px;
@@ -299,6 +324,11 @@
           <div class="cm-hint" id="cmHint"><span data-en="Tap to bloom your colour" data-zh="點一下，讓你的顏色綻開">Tap to bloom your colour</span></div>
         </div>
 
+        <div class="cm-seal-bar" id="cmSealBar" hidden>
+          <p class="cm-lp-hint" id="cmLpHint" data-en="Your next touches become your lightcode. When it feels ready, seal this light." data-zh="接下來的觸碰，會成為你的光紋。感覺夠了，就輕輕收光。">Your next touches become your lightcode. When it feels ready, seal this light.</p>
+          <button type="button" class="cm-seal" id="cmSeal" data-en="Seal this light" data-zh="收光">Seal this light</button>
+        </div>
+
         <article class="cm-card" id="cmCard" hidden aria-live="polite">
           <div class="cm-card-bg" id="cmCardBg" aria-hidden="true"></div>
           <div class="cm-card-veil" aria-hidden="true"></div>
@@ -307,6 +337,7 @@
             <h2 class="cm-card-title" id="cmCardTitle"></h2>
             <p class="cm-card-en" id="cmCardEn"></p>
             <p class="cm-card-src" id="cmCardSrc"></p>
+            <p class="cm-lightprint" id="cmLightprint" hidden></p>
             <div class="cm-reading" id="cmReading"></div>
             <p class="cm-ritual" id="cmRitual">
               <span class="cm-ritual-label" id="cmRitualLabel"></span>
@@ -353,7 +384,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2439 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2440 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1176,6 +1207,10 @@
   const canvas = document.getElementById('cmCanvas');
   const shell = document.getElementById('cmShell');
   const hint = document.getElementById('cmHint');
+  const sealBar = document.getElementById('cmSealBar');
+  const lpHint = document.getElementById('cmLpHint');
+  const sealBtn = document.getElementById('cmSeal');
+  const lightprintEl = document.getElementById('cmLightprint');
   const cardEl = document.getElementById('cmCard');
   const cardBg = document.getElementById('cmCardBg');
   const cardEyebrow = document.getElementById('cmCardEyebrow');
@@ -1204,6 +1239,15 @@
   let raf = 0;
   let started = false;
   let bloomReady = false;
+  let lightTouches = [];
+  let lightSealed = false;
+  let lightprintCode = null;
+  let lightSessionT0 = 0;
+  let activePointers = Object.create(null);
+  let lastPathSample = Object.create(null);
+  let currentPointerId = 0;
+  const LP_ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const LP_STORAGE_KEY = 'ae_lightprint';
   let warmBlob = null;
   let warmBlobUrl = null;
   let warmBlobToken = 0;
@@ -1312,6 +1356,113 @@
     enterBloom();
   }
 
+  function resetLightSession() {
+    lightTouches = [];
+    lightSealed = false;
+    lightprintCode = null;
+    lightSessionT0 = 0;
+    activePointers = Object.create(null);
+    lastPathSample = Object.create(null);
+    currentPointerId = 0;
+    if (sealBar) sealBar.hidden = true;
+    if (lightprintEl) {
+      lightprintEl.hidden = true;
+      lightprintEl.textContent = '';
+    }
+  }
+
+  function syncLpHintCopy() {
+    if (!lpHint) return;
+    const L = lang();
+    const zh = '接下來的觸碰，會成為你的光紋。感覺夠了，就輕輕收光。';
+    const en = 'Your next touches become your lightcode. When it feels ready, seal this light.';
+    lpHint.textContent = L === 'zh' ? zh : en;
+    if (sealBtn) {
+      sealBtn.textContent = L === 'zh' ? '收光' : 'Seal this light';
+    }
+  }
+
+  function showSealBar() {
+    if (!sealBar || lightSealed) return;
+    syncLpHintCopy();
+    sealBar.hidden = false;
+  }
+
+  function recordLightPoint(nx, ny, pointerId, kind) {
+    if (lightSealed || !bloomReady) return;
+    const now = performance.now();
+    if (!lightSessionT0) lightSessionT0 = now;
+    lightTouches.push({
+      nx: Math.max(0, Math.min(1, Number(nx.toFixed(4)))),
+      ny: Math.max(0, Math.min(1, Number(ny.toFixed(4)))),
+      t: Math.round(now - lightSessionT0),
+      id: pointerId == null ? 0 : pointerId,
+      kind: kind || 'tap'
+    });
+  }
+
+  function hashToLightprint(payload) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < payload.length; i++) {
+      h ^= payload.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    let x = h >>> 0;
+    let out = '';
+    for (let i = 0; i < 8; i++) {
+      x ^= x >>> 16;
+      x = Math.imul(x, 0x7feb352d) >>> 0;
+      x ^= x >>> 15;
+      x = Math.imul(x, 0x846ca68b) >>> 0;
+      x ^= x >>> 16;
+      out += LP_ALPH[x % LP_ALPH.length];
+      x = (x + h + Math.imul(i + 1, 2654435761)) >>> 0;
+    }
+    return 'LP-' + out;
+  }
+
+  function encodeLightprint(touches, moodId) {
+    const payload = JSON.stringify({
+      m: moodId || '',
+      n: touches.length,
+      p: touches.map(t => [t.nx, t.ny, t.t, t.id, t.kind])
+    });
+    return hashToLightprint(payload);
+  }
+
+  function persistLightprint(code) {
+    const record = {
+      code,
+      label: 'AE · ' + code,
+      sealedAt: new Date().toISOString(),
+      touchCount: lightTouches.length,
+      mood: activeMood ? activeMood.id : null,
+      v: 1
+    };
+    try { localStorage.setItem(LP_STORAGE_KEY, JSON.stringify(record)); } catch (err) { /* private mode */ }
+    return record;
+  }
+
+  function lightprintLabel() {
+    return lightprintCode ? ('AE · ' + lightprintCode) : '';
+  }
+
+  function sealLight() {
+    if (lightSealed || !bloomReady || !activeMood) return;
+    if (!lightTouches.length) {
+      recordLightPoint(0.5, 0.48, 0, 'seal');
+    }
+    lightSealed = true;
+    lightprintCode = encodeLightprint(lightTouches, activeMood.id);
+    persistLightprint(lightprintCode);
+    if (sealBar) sealBar.hidden = true;
+    renderCard();
+    const L = lang();
+    showToast(L === 'zh'
+      ? ('光紋已收好 · ' + lightprintLabel())
+      : ('Light sealed · ' + lightprintLabel()));
+  }
+
   function renderCard() {
     if (!activeMood) return;
     const L = lang();
@@ -1325,6 +1476,16 @@
       cardSrc.textContent = L === 'zh'
         ? '摘自《盛明》筆記'
         : 'From the 《盛明》 notes';
+    }
+    if (lightprintEl) {
+      const label = lightprintLabel();
+      if (label) {
+        lightprintEl.hidden = false;
+        lightprintEl.textContent = label;
+      } else {
+        lightprintEl.hidden = true;
+        lightprintEl.textContent = '';
+      }
     }
 
     readingEl.innerHTML = '';
@@ -1376,6 +1537,7 @@
         afterEl.hidden = false;
         bloomReady = true;
         started = false;
+        resetLightSession();
         hint.classList.remove('is-hidden');
         cardEl.hidden = true;
         cardEl.classList.remove('is-on');
@@ -1439,9 +1601,8 @@
     if (!started) {
       started = true;
       hint.classList.add('is-hidden');
-      renderCard();
-    } else if (!fromAuto) {
-      renderCard();
+      // Lightprint v1: free-form bloom first; seal locks ID + reveals card.
+      showSealBar();
     }
     if (!raf) raf = requestAnimationFrame(tick);
   }
@@ -1486,9 +1647,46 @@
 
   shell.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    currentPointerId = e.pointerId || 0;
+    activePointers[currentPointerId] = true;
+    lastPathSample[currentPointerId] = performance.now();
+    try { shell.setPointerCapture(e.pointerId); } catch (err) { /* optional */ }
+    const r = shell.getBoundingClientRect();
     const p = pointFromEvent(e);
+    if (!lightSealed && bloomReady && r.width && r.height) {
+      recordLightPoint(p.x / r.width, p.y / r.height, currentPointerId, 'down');
+    }
     bloomAt(p.x, p.y, false);
   });
+
+  shell.addEventListener('pointermove', (e) => {
+    if (lightSealed || !bloomReady || !started) return;
+    const pid = e.pointerId || 0;
+    if (!activePointers[pid]) return;
+    const now = performance.now();
+    const last = lastPathSample[pid] || 0;
+    if (now - last < 36) return;
+    lastPathSample[pid] = now;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const p = pointFromEvent(e);
+    recordLightPoint(p.x / r.width, p.y / r.height, pid, 'move');
+  });
+
+  function endPointerPath(e) {
+    const pid = e.pointerId || 0;
+    if (!activePointers[pid]) return;
+    delete activePointers[pid];
+    delete lastPathSample[pid];
+    if (lightSealed || !bloomReady) return;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const p = pointFromEvent(e);
+    recordLightPoint(p.x / r.width, p.y / r.height, pid, 'up');
+  }
+
+  shell.addEventListener('pointerup', endPointerPath);
+  shell.addEventListener('pointercancel', endPointerPath);
 
   function showToast(message) {
     if (!toast) return;
@@ -1628,6 +1826,7 @@
     const eyebrow = isZh ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · ETERNAL SUN';
     const srcLine = isZh ? '摘自《盛明》筆記' : 'From the 《盛明》 notes';
     const ritualLabelText = isZh ? '今夜的柔邀' : 'TONIGHT’S SOFT INVITATION';
+    const lpLabel = lightprintLabel();
 
     // Measure content height first — never clip ritual/reading to a fixed DOM height.
     const measure = document.createElement('canvas').getContext('2d');
@@ -1639,7 +1838,8 @@
     const ritualY = yCursor + 28;
     measure.font = cardType(18, { cjk: isZh });
     const ritualBlock = 6 + 28 + measureWrapped(measure, ritualBody, textWidth, 25);
-    const h = Math.max(420, Math.ceil(ritualY + ritualBlock + 36));
+    const lpPad = lpLabel ? 30 : 0;
+    const h = Math.max(420, Math.ceil(ritualY + ritualBlock + 36 + lpPad));
 
     const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     const imageCanvas = document.createElement('canvas');
@@ -1702,6 +1902,16 @@
     imageContext.font = cardType(18, { cjk: isZh });
     imageContext.textAlign = 'left';
     drawWrapped(imageContext, ritualBody, 24, ritualY + 34, textWidth, 25, null);
+
+    // Soft Lightprint mark — readable, not cluttering the card.
+    if (lpLabel) {
+      imageContext.fillStyle = muted;
+      imageContext.globalAlpha = 0.88;
+      imageContext.textAlign = 'center';
+      imageContext.font = cardType(12, { cjk: false });
+      imageContext.fillText(lpLabel, w / 2, h - 16);
+      imageContext.globalAlpha = 1;
+    }
     imageContext.restore();
     return imageCanvas;
   }
@@ -2137,6 +2347,7 @@
     blooms = [];
     started = false;
     bloomReady = false;
+    resetLightSession();
     warmBlobToken += 1;
     clearWarmBlob();
     closeSaveSheet();
@@ -2152,6 +2363,7 @@
   }
 
   replay.addEventListener('click', resetAll);
+  sealBtn?.addEventListener('click', sealLight);
   snap?.addEventListener('click', captureMoment);
   share?.addEventListener('click', shareMoment);
   saveShareBtn?.addEventListener('click', shareFromSaveSheet);
@@ -2165,6 +2377,7 @@
 
   function refreshLangUI() {
     if (!askEl.hidden) showQuestion();
+    if (sealBar && !sealBar.hidden) syncLpHintCopy();
     if (activeMood && !bloomWrap.hidden && !cardEl.hidden) {
       renderCard();
     }
