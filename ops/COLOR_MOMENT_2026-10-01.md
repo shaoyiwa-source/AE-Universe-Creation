@@ -43,3 +43,14 @@ Mysterious, soft. 朝軒宇宙創造 / 盛明. Collecting optional. No quiz jarg
 - Exported PNG: memorial wash + soft panel; LP mark quieter.
 - No shop-binding copy for Lightprint (unique to this person/card moment).
 - Free-form touch + 收光/Seal CTA unchanged; 摘自《盛明》筆記 kept.
+
+## v2442 — Lightprint Solo Color Moment prototype (2026-10-01)
+- Hold-to-coalesce「收光」(~1.3s visual ring; **no seconds text**). Release early = cancel, not failure.
+- Touch trail = primary creation; memorial panel + unique memorial copy.
+- AE · LP-… secondary in corner (card + PNG).
+- localStorage residue (`ae_lightprint_residue`): path + palette + mood + answers + LP code.
+- Replay:「看光再走一次」re-animates the light path (card + residue banner).
+- Soft Revisit (overlay new light on same moment): **stubbed / later** — Replay + card shipped.
+- Pulse / Together: skipped this slice.
+- Preview only on `new9-public-media`. Production untouched.
+

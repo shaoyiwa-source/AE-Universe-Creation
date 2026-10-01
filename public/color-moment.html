@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2441">
+<meta name="ae-version" content="v2442">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2435">
-<script src="site.js?v=2435" defer></script>
+<link rel="stylesheet" href="site.css?v=2442">
+<script src="site.js?v=2442" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -279,6 +279,48 @@
   .cm-save-note{
     margin:8px auto 0;max-width:36ch;font-size:12px;line-height:1.5;color:var(--muted);text-align:center;
   }
+
+  .cm-seal{
+    position:relative;overflow:visible;
+  }
+  .cm-seal-ring{
+    position:absolute;inset:-6px;border-radius:999px;pointer-events:none;
+    background:conic-gradient(from -90deg, var(--ink) calc(var(--hold, 0) * 1%), transparent 0);
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+            mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+    opacity:0;transition:opacity .2s ease;
+  }
+  .cm-seal.is-holding .cm-seal-ring{opacity:1}
+  .cm-seal.is-holding{transform:scale(.98);box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+  .cm-seal.is-coalescing{
+    pointer-events:none;opacity:.88;
+    box-shadow:0 0 28px rgba(201,164,106,.35);
+  }
+  .cm-seal-hold-hint{
+    margin:0;font-size:12px;line-height:1.45;color:var(--muted);max-width:34ch;
+  }
+  .cm-residue{
+    width:min(920px,100%);margin:0 auto 14px;padding:12px 14px;
+    border:1px dashed var(--line);border-radius:14px;background:rgba(255,252,248,.35);
+    display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .cm-residue[hidden]{display:none!important}
+  .cm-residue p{margin:0;font-size:13px;line-height:1.5;color:var(--muted);max-width:42ch}
+  .cm-residue-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .cm-residue-actions button{
+    appearance:none;cursor:pointer;border:1px solid var(--line);border-radius:999px;
+    min-height:40px;padding:8px 14px;font:inherit;font-size:13px;color:inherit;background:transparent;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cm-residue-actions .cm-path-replay{
+    border-color:var(--ink);background:var(--ink);color:var(--paper);
+  }
+  .cm-lightprint{
+    position:absolute;right:14px;bottom:12px;left:auto;margin:0;
+    text-align:right;z-index:3;opacity:.58;letter-spacing:.14em;font-size:10px;
+  }
+  .cm-card-body{padding-bottom:8px}
 </style>
 </head>
 <body>
@@ -321,13 +363,21 @@
   <div class="wrap page-heading page-heading-wash">
     <p class="eyebrow" data-en="AE COLOR MOMENT" data-zh="AE 色彩瞬間">AE COLOR MOMENT</p>
     <h1 data-en="Color Moment" data-zh="色彩瞬間">Color Moment</h1>
-    <p data-en="Answer softly. Then let colour find the shape of this moment." data-zh="輕輕回答。再讓顏色，找到這一刻的形狀。">Answer softly. Then let colour find the shape of this moment.</p>
+    <p data-en="Not a quiz — colour stays with you. Your touch leaves the light of this moment." data-zh="輕輕回答。再讓顏色，找到這一刻的形狀。">Not a quiz — colour stays with you. Your touch leaves the light of this moment.</p>
   </div>
 
   <section class="cm-stage">
     <div class="wrap">
       <div class="cm-intro" id="cmIntro">
-        <p data-en="No right answer — only a feeling that becomes light. Each visit draws a new handful of questions." data-zh="沒有標準答案——只有感覺，慢慢變成光。每一次來，問題都會重新抽出幾題。">No right answer — only a feeling that becomes light. Each visit draws a new handful of questions.</p>
+        <p data-en="Lightprint saves how you existed in that moment — not your answers. Touch freely; when ready, hold to seal." data-zh="光紋記住的是你如何存在於那一刻——不是測驗答案。自由觸碰；準備好了，就按住收光。">Lightprint saves how you existed in that moment — not your answers. Touch freely; when ready, hold to seal.</p>
+      </div>
+
+      <div class="cm-residue" id="cmResidue" hidden>
+        <p id="cmResidueText"></p>
+        <div class="cm-residue-actions">
+          <button type="button" class="cm-path-replay" id="cmResidueReplay" data-en="Watch the light again" data-zh="看光再走一次">Watch the light again</button>
+          <button type="button" id="cmResidueDismiss" data-en="Keep it quiet" data-zh="先靜靜收著">Keep it quiet</button>
+        </div>
       </div>
 
       <div class="cm-panel" id="cmAsk" aria-live="polite">
@@ -343,8 +393,12 @@
         </div>
 
         <div class="cm-seal-bar" id="cmSealBar" hidden>
-          <p class="cm-lp-hint" id="cmLpHint" data-en="Your next touches become a one-of-a-kind keepsake. When it feels ready, seal this light — and keep this moment as only yours." data-zh="接下來的觸碰，會留下只屬於你的光痕。感覺夠了，就輕輕收光——這一刻成為獨一無二的紀念。">Your next touches become a one-of-a-kind keepsake. When it feels ready, seal this light — and keep this moment as only yours.</p>
-          <button type="button" class="cm-seal" id="cmSeal" data-en="Seal this light" data-zh="收光">Seal this light</button>
+          <p class="cm-lp-hint" id="cmLpHint" data-en="Your touch leaves light that only you made. When it feels ready, hold 收光 — light gathers; release early and nothing is lost." data-zh="你的觸碰會留下只屬於你的光。感覺夠了，就按住「收光」——光會慢慢聚攏；提早放開也沒關係，不是失敗。">Your touch leaves light that only you made. When it feels ready, hold 收光 — light gathers; release early and nothing is lost.</p>
+          <button type="button" class="cm-seal" id="cmSeal" data-en="Seal this light" data-zh="收光" aria-describedby="cmSealHoldHint">
+            <span class="cm-seal-ring" id="cmSealRing" aria-hidden="true"></span>
+            <span class="cm-seal-label" id="cmSealLabel">Seal this light</span>
+          </button>
+          <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold gently — release to cancel" data-zh="輕輕按住——放開即取消">Hold gently — release to cancel</p>
         </div>
 
         <article class="cm-card" id="cmCard" hidden aria-live="polite">
@@ -370,6 +424,7 @@
             <div class="cm-card-actions" aria-label="Moment actions">
               <button type="button" class="cm-shutter" id="cmSnap" data-en="Take this moment" data-zh="拍下這一瞬">Take this moment</button>
               <button type="button" class="cm-card-action" id="cmShare" data-en="Share this card" data-zh="分享這張卡">Share this card</button>
+              <button type="button" class="cm-card-action" id="cmPathReplay" data-en="Watch the light again" data-zh="看光再走一次">Watch the light again</button>
               <button type="button" class="cm-card-action" id="cmReplay" data-en="Feel again" data-zh="再感覺一次">Feel again</button>
             </div>
             <p class="cm-toast" id="cmToast" role="status" aria-live="polite"></p>
@@ -406,7 +461,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2441 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2442 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1236,6 +1291,14 @@
   const memorialEl = document.getElementById('cmMemorial');
   const memorialImg = document.getElementById('cmMemorialImg');
   const memorialCap = document.getElementById('cmMemorialCap');
+  const sealRing = document.getElementById('cmSealRing');
+  const sealLabel = document.getElementById('cmSealLabel');
+  const sealHoldHint = document.getElementById('cmSealHoldHint');
+  const residueEl = document.getElementById('cmResidue');
+  const residueText = document.getElementById('cmResidueText');
+  const residueReplayBtn = document.getElementById('cmResidueReplay');
+  const residueDismissBtn = document.getElementById('cmResidueDismiss');
+  const pathReplayBtn = document.getElementById('cmPathReplay');
   const cardEl = document.getElementById('cmCard');
   const cardBg = document.getElementById('cmCardBg');
   const cardEyebrow = document.getElementById('cmCardEyebrow');
@@ -1268,6 +1331,15 @@
   let lightSealed = false;
   let lightprintCode = null;
   let lightSessionT0 = 0;
+  let sessionAnswers = [];
+  let sealedResidue = null;
+  let sealHoldRaf = 0;
+  let sealHoldStart = 0;
+  let sealHolding = false;
+  let sealCoalescing = false;
+  let pathReplayBusy = false;
+  let pathReplayTimer = 0;
+  const SEAL_HOLD_MS = 1300;
   let memorialLayer = null;
   let memorialLayerCtx = null;
   let memorialDataUrl = null;
@@ -1278,6 +1350,7 @@
   let currentPointerId = 0;
   const LP_ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   const LP_STORAGE_KEY = 'ae_lightprint';
+  const LP_RESIDUE_KEY = 'ae_lightprint_residue';
   let warmBlob = null;
   let warmBlobUrl = null;
   let warmBlobToken = 0;
@@ -1378,6 +1451,12 @@
 
   function onChoose(choice) {
     applyChoiceTags(choice.tags);
+    sessionAnswers.push({
+      q: qIndex,
+      zh: choice.zh,
+      en: choice.en,
+      tags: (choice.tags || []).slice()
+    });
     qIndex += 1;
     if (qIndex < sessionQs.length) {
       showQuestion();
@@ -1387,10 +1466,13 @@
   }
 
   function resetLightSession() {
+    cancelSealHold(true);
+    stopPathReplay();
     lightTouches = [];
     lightSealed = false;
     lightprintCode = null;
     lightSessionT0 = 0;
+    sealedResidue = null;
     activePointers = Object.create(null);
     lastPathSample = Object.create(null);
     currentPointerId = 0;
@@ -1416,11 +1498,17 @@
   function syncLpHintCopy() {
     if (!lpHint) return;
     const L = lang();
-    const zh = '接下來的觸碰，會留下只屬於你的光痕。感覺夠了，就輕輕收光——這一刻成為獨一無二的紀念。';
-    const en = 'Your next touches become a one-of-a-kind keepsake. When it feels ready, seal this light — and keep this moment as only yours.';
+    const zh = '你的觸碰會留下只屬於你的光。感覺夠了，就按住「收光」——光會慢慢聚攏；提早放開也沒關係，不是失敗。';
+    const en = 'Your touch leaves light that only you made. When it feels ready, hold to seal — light gathers; release early and nothing is lost.';
     lpHint.textContent = L === 'zh' ? zh : en;
-    if (sealBtn) {
-      sealBtn.textContent = L === 'zh' ? '收光' : 'Seal this light';
+    const label = L === 'zh' ? '收光' : 'Seal this light';
+    if (sealLabel) sealLabel.textContent = label;
+    else if (sealBtn) sealBtn.textContent = label;
+    if (sealHoldHint) {
+      sealHoldHint.textContent = L === 'zh' ? '輕輕按住——放開即取消' : 'Hold gently — release to cancel';
+    }
+    if (pathReplayBtn) {
+      pathReplayBtn.textContent = L === 'zh' ? '看光再走一次' : 'Watch the light again';
     }
   }
 
@@ -1446,7 +1534,7 @@
   }
 
   function stampMemorialAt(x, y, strength) {
-    if (!activeMood || lightSealed) return;
+    if (!activeMood || (lightSealed && !pathReplayBusy && !sealCoalescing)) return;
     const r = shell.getBoundingClientRect();
     if (!r.width || !r.height) return;
     ensureMemorialLayer(r.width, r.height);
@@ -1536,13 +1624,13 @@
     const L = lang();
     if (memorialDataUrl && memorialEl && memorialImg) {
       memorialImg.src = memorialDataUrl;
-      memorialImg.alt = L === 'zh' ? '你的觸光紀念' : 'Your touch of light keepsake';
+      memorialImg.alt = L === 'zh' ? '只屬於你的光痕紀念' : 'Your one-of-a-kind light keepsake';
       memorialEl.hidden = false;
       if (memorialCap) {
         memorialCap.hidden = false;
         memorialCap.textContent = L === 'zh'
-          ? '你的觸光 · 這一瞬的姿態'
-          : 'Your touch of light · the gesture itself';
+          ? '光紋記住你如何存在於這一刻'
+          : 'Lightprint keeps how you existed here';
       }
     } else {
       if (memorialEl) memorialEl.hidden = true;
@@ -1602,17 +1690,279 @@
     return hashToLightprint(payload);
   }
 
-  function persistLightprint(code) {
-    const record = {
+  function buildResidue(code) {
+    const mood = activeMood || {};
+    return {
       code,
       label: 'AE · ' + code,
       sealedAt: new Date().toISOString(),
       touchCount: lightTouches.length,
-      mood: activeMood ? activeMood.id : null,
-      v: '1.1'
+      path: lightTouches.slice(0, 400),
+      palette: (mood.palette || []).slice(),
+      mood: mood.id || null,
+      moodZh: mood.zh || '',
+      moodEn: mood.en || '',
+      art: activeArt || null,
+      answers: sessionAnswers.slice(),
+      tags: Object.assign({}, tagScores),
+      reading: activeReading ? { zh: activeReading.zh, en: activeReading.en } : null,
+      ritual: activeRitual ? { zh: activeRitual.zh, en: activeRitual.en } : null,
+      v: '1.2'
     };
-    try { localStorage.setItem(LP_STORAGE_KEY, JSON.stringify(record)); } catch (err) { /* private mode */ }
+  }
+
+  function persistLightprint(code) {
+    const record = buildResidue(code);
+    sealedResidue = record;
+    try { localStorage.setItem(LP_STORAGE_KEY, JSON.stringify({
+      code: record.code,
+      label: record.label,
+      sealedAt: record.sealedAt,
+      touchCount: record.touchCount,
+      mood: record.mood,
+      v: record.v
+    })); } catch (err) { /* private mode */ }
+    try {
+      // Path + palette + answers for Replay; skip heavy memorial bitmap.
+      localStorage.setItem(LP_RESIDUE_KEY, JSON.stringify(record));
+    } catch (err) {
+      try {
+        const slim = Object.assign({}, record, { answers: record.answers.slice(0, 6) });
+        if (slim.path && slim.path.length > 180) slim.path = slim.path.filter((_, i) => i % 2 === 0).slice(0, 180);
+        localStorage.setItem(LP_RESIDUE_KEY, JSON.stringify(slim));
+      } catch (err2) { /* private / quota */ }
+    }
     return record;
+  }
+
+  function loadResidue() {
+    try {
+      const raw = localStorage.getItem(LP_RESIDUE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.path) || !data.path.length) return null;
+      return data;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function syncResidueBanner() {
+    if (!residueEl) return;
+    const data = loadResidue();
+    if (!data || lightSealed) {
+      residueEl.hidden = true;
+      return;
+    }
+    // Show only on ask stage (before / between sessions).
+    if (askEl.hidden) {
+      residueEl.hidden = true;
+      return;
+    }
+    const L = lang();
+    const when = data.sealedAt ? String(data.sealedAt).slice(0, 10) : '';
+    residueText.textContent = L === 'zh'
+      ? ('還有一束你留下的光' + (when ? '（' + when + '）' : '') + '——可以看它再走一次，或留下今天的新光。')
+      : ('A light you left is still here' + (when ? ' (' + when + ')' : '') + ' — watch it again, or leave today’s new light.');
+    if (residueReplayBtn) residueReplayBtn.textContent = L === 'zh' ? '看光再走一次' : 'Watch the light again';
+    if (residueDismissBtn) residueDismissBtn.textContent = L === 'zh' ? '先靜靜收著' : 'Keep it quiet';
+    residueEl.hidden = false;
+  }
+
+  function setSealHoldProgress(p) {
+    const v = Math.max(0, Math.min(1, p || 0));
+    if (sealBtn) sealBtn.style.setProperty('--hold', String(Math.round(v * 100)));
+  }
+
+  function cancelSealHold(silent) {
+    sealHolding = false;
+    sealHoldStart = 0;
+    if (sealHoldRaf) {
+      cancelAnimationFrame(sealHoldRaf);
+      sealHoldRaf = 0;
+    }
+    if (sealBtn) {
+      sealBtn.classList.remove('is-holding');
+      setSealHoldProgress(0);
+    }
+  }
+
+  function tickSealHold(now) {
+    if (!sealHolding || lightSealed || sealCoalescing) return;
+    const t0 = sealHoldStart || now;
+    const p = (now - t0) / SEAL_HOLD_MS;
+    setSealHoldProgress(p);
+    if (p >= 1) {
+      sealHolding = false;
+      sealHoldRaf = 0;
+      if (sealBtn) sealBtn.classList.remove('is-holding');
+      setSealHoldProgress(1);
+      beginCoalesceAndSeal();
+      return;
+    }
+    sealHoldRaf = requestAnimationFrame(tickSealHold);
+  }
+
+  function startSealHold(ev) {
+    if (lightSealed || !bloomReady || !activeMood || sealCoalescing || pathReplayBusy) return;
+    if (ev) {
+      try { ev.preventDefault(); } catch (err) { /* ignore */ }
+    }
+    // Require at least a touch of light — otherwise soft guide, not failure.
+    if (!lightTouches.length && !started) {
+      const L = lang();
+      showToast(L === 'zh' ? '先留下一點你的光，再收光。' : 'Leave a little of your light first, then seal.');
+      return;
+    }
+    sealHolding = true;
+    sealHoldStart = performance.now();
+    if (sealBtn) sealBtn.classList.add('is-holding');
+    setSealHoldProgress(0);
+    if (sealHoldRaf) cancelAnimationFrame(sealHoldRaf);
+    sealHoldRaf = requestAnimationFrame(tickSealHold);
+  }
+
+  function endSealHold(ev) {
+    if (!sealHolding) return;
+    if (ev) {
+      try { ev.preventDefault(); } catch (err) { /* ignore */ }
+    }
+    const elapsed = performance.now() - (sealHoldStart || performance.now());
+    cancelSealHold(true);
+    // Release before complete = cancel, not failure. No seconds / no fail toast.
+    if (elapsed < SEAL_HOLD_MS) {
+      setSealHoldProgress(0);
+    }
+  }
+
+  function coalesceBloomPull() {
+    if (!activeMood) return;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const cx = r.width * 0.5;
+    const cy = r.height * 0.48;
+    // Soft pull: stamp along residual path + center gather — no timer text.
+    const pts = lightTouches.length ? lightTouches : [{ nx: 0.5, ny: 0.48 }];
+    const step = Math.max(1, Math.floor(pts.length / 12));
+    for (let i = 0; i < pts.length; i += step) {
+      const p = pts[i];
+      stampMemorialAt(p.nx * r.width, p.ny * r.height, 0.55);
+    }
+    bloomAt(cx, cy, true);
+    stampMemorialAt(cx, cy, 1.15);
+  }
+
+  function beginCoalesceAndSeal() {
+    if (lightSealed || !bloomReady || !activeMood || sealCoalescing) return;
+    sealCoalescing = true;
+    if (sealBtn) sealBtn.classList.add('is-coalescing');
+    try { coalesceBloomPull(); } catch (err) { /* ignore */ }
+    window.setTimeout(() => {
+      sealCoalescing = false;
+      if (sealBtn) sealBtn.classList.remove('is-coalescing');
+      setSealHoldProgress(0);
+      sealLight();
+    }, 520);
+  }
+
+  function stopPathReplay() {
+    pathReplayBusy = false;
+    if (pathReplayTimer) {
+      clearTimeout(pathReplayTimer);
+      pathReplayTimer = 0;
+    }
+  }
+
+  function replayLightPath(residue) {
+    const data = residue || sealedResidue || loadResidue();
+    if (!data || !data.path || !data.path.length) {
+      const L = lang();
+      showToast(L === 'zh' ? '還沒有可回放的光痕。' : 'No light path to replay yet.');
+      return;
+    }
+    stopPathReplay();
+    // Bring bloom stage forward for replay.
+    askEl.hidden = true;
+    if (residueEl) residueEl.hidden = true;
+    bloomWrap.hidden = false;
+    afterEl.hidden = false;
+    cardEl.hidden = true;
+    cardEl.classList.remove('is-on');
+    bloomReady = true;
+    started = true;
+    hint.classList.add('is-hidden');
+    if (sealBar) sealBar.hidden = true;
+
+    // Restore mood palette context for bloom colors.
+    if (data.mood && MOODS[data.mood]) {
+      activeMood = MOODS[data.mood];
+    } else if (data.palette && data.palette.length) {
+      activeMood = {
+        id: data.mood || 'gold',
+        zh: data.moodZh || '',
+        en: data.moodEn || '',
+        palette: data.palette
+      };
+    }
+    if (data.art) activeArt = data.art;
+    if (data.reading) activeReading = data.reading;
+    if (data.ritual) activeRitual = data.ritual;
+    if (data.code) {
+      lightprintCode = data.code;
+      lightSealed = true;
+    }
+    lightTouches = data.path.map(p => ({
+      nx: p.nx, ny: p.ny, t: p.t || 0, id: p.id || 0, kind: p.kind || 'move'
+    }));
+    sealedResidue = data;
+    blooms = [];
+    resize();
+    // Clear memorial soft layer then restamp during replay.
+    if (memorialLayerCtx && memorialLayer) {
+      memorialLayerCtx.clearRect(0, 0, memorialLayer.width, memorialLayer.height);
+    }
+
+    pathReplayBusy = true;
+    const L = lang();
+    showToast(L === 'zh' ? '看——光正再次走過。' : 'Watch — light is walking again.');
+    const pts = lightTouches.slice();
+    const t0 = pts[0].t || 0;
+    const maxT = Math.max(600, (pts[pts.length - 1].t || 0) - t0);
+    // Cap replay duration ~2.8s while preserving relative rhythm.
+    const span = Math.min(2800, Math.max(900, maxT));
+    const scale = maxT > 0 ? span / maxT : 1;
+    let i = 0;
+    const r = () => shell.getBoundingClientRect();
+
+    function step() {
+      if (!pathReplayBusy) return;
+      if (i >= pts.length) {
+        pathReplayBusy = false;
+        try { captureMemorialImage(); } catch (err) { /* ignore */ }
+        // Restore card from residue context.
+        if (data.reading && data.ritual) {
+          renderCard();
+        } else if (activeMood) {
+          renderCard();
+        }
+        showToast(L === 'zh' ? '光又走過一次——這一刻仍是你的。' : 'The light walked again — this moment is still yours.');
+        return;
+      }
+      const p = pts[i];
+      const rect = r();
+      if (rect.width && rect.height) {
+        const x = p.nx * rect.width;
+        const y = p.ny * rect.height;
+        if (p.kind === 'down' || p.kind === 'tap' || i === 0) bloomAt(x, y, true);
+        else stampMemorialAt(x, y, 0.4);
+      }
+      const tNow = p.t || 0;
+      i += 1;
+      const tNext = i < pts.length ? (pts[i].t || tNow) : tNow;
+      const delay = Math.max(16, Math.min(120, ((tNext - tNow) * scale) || 28));
+      pathReplayTimer = window.setTimeout(step, delay);
+    }
+    pathReplayTimer = window.setTimeout(step, 80);
   }
 
   function lightprintLabel() {
@@ -1621,6 +1971,7 @@
 
   function sealLight() {
     if (lightSealed || !bloomReady || !activeMood) return;
+    cancelSealHold(true);
     if (!lightTouches.length) {
       recordLightPoint(0.5, 0.48, 0, 'seal');
     }
@@ -1632,8 +1983,8 @@
     renderCard();
     const L = lang();
     showToast(L === 'zh'
-      ? ('紀念已收好 · 只屬於你的光痕')
-      : ('Keepsake sealed · your one-of-a-kind light'));
+      ? ('光已收好 · 記住你如何存在於這一刻')
+      : ('Light sealed · how you existed in this moment'));
   }
 
   function renderCard() {
@@ -1676,8 +2027,8 @@
     // Lightprint is unique to this person/card moment — no shop-binding copy.
     if (lightprintCode) {
       discoverEl.innerHTML = L === 'zh'
-        ? '這一刻已是你的。若想再多一點光，可去 <a href="/experience">互動體驗</a>。'
-        : 'This moment is already yours. If you want a little more light, visit the <a href="/experience">Experience</a>.';
+        ? '光紋記住你如何存在於這一刻。若想再多一點光，可去 <a href="/experience">互動體驗</a>。'
+        : 'Lightprint keeps how you existed here. For a little more light, visit the <a href="/experience">Experience</a>.';
     } else {
       discoverEl.innerHTML = L === 'zh'
         ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
@@ -1761,7 +2112,7 @@
   }
 
   function bloomAt(x, y, fromAuto) {
-    if (!bloomReady || !activeMood) return;
+    if ((!bloomReady && !pathReplayBusy) || !activeMood) return;
     const r = shell.getBoundingClientRect();
     const palette = activeMood.palette;
     const count = 12 + Math.floor(Math.random() * 8);
@@ -1832,6 +2183,7 @@
   }
 
   shell.addEventListener('pointerdown', (e) => {
+    if (pathReplayBusy || sealCoalescing) return;
     e.preventDefault();
     currentPointerId = e.pointerId || 0;
     activePointers[currentPointerId] = true;
@@ -2126,7 +2478,7 @@
       imageContext.font = cardType(11, { cjk: true });
       imageContext.globalAlpha = 0.9;
       imageContext.fillText(
-        isZh ? '你的觸光 · 這一瞬的姿態' : 'Your touch of light · the gesture itself',
+        isZh ? '光紋記住你如何存在於這一刻' : 'Lightprint keeps how you existed here',
         w / 2,
         py + ph + 14
       );
@@ -2156,13 +2508,13 @@
     imageContext.textAlign = 'left';
     drawWrapped(imageContext, ritualBody, 24, ritualY + 34, textWidth, 25, null);
 
-    // Secondary Lightprint mark — keepsake first, code quiet.
+    // Secondary Lightprint mark — corner, quiet (gesture / memorial first).
     if (lpLabel) {
       imageContext.fillStyle = muted;
-      imageContext.globalAlpha = 0.62;
-      imageContext.textAlign = 'center';
-      imageContext.font = cardType(11, { cjk: false });
-      imageContext.fillText(lpLabel, w / 2, h - 14);
+      imageContext.globalAlpha = 0.55;
+      imageContext.textAlign = 'right';
+      imageContext.font = cardType(10, { cjk: false });
+      imageContext.fillText(lpLabel, w - 16, h - 12);
       imageContext.globalAlpha = 1;
     }
     imageContext.restore();
@@ -2593,6 +2945,7 @@
   function resetAll() {
     qIndex = 0;
     tagScores = Object.create(null);
+    sessionAnswers = [];
     activeMood = null;
     activeReading = null;
     activeRitual = null;
@@ -2613,10 +2966,34 @@
     if (cardBg) cardBg.style.backgroundImage = '';
     runWash(false);
     showQuestion();
+    syncResidueBanner();
   }
 
   replay.addEventListener('click', resetAll);
-  sealBtn?.addEventListener('click', sealLight);
+  pathReplayBtn?.addEventListener('click', () => replayLightPath(sealedResidue || loadResidue()));
+  residueReplayBtn?.addEventListener('click', () => replayLightPath(loadResidue()));
+  residueDismissBtn?.addEventListener('click', () => {
+    if (residueEl) residueEl.hidden = true;
+  });
+
+  // Hold-to-coalesce 收光: release early = cancel (not failure). No timer text.
+  if (sealBtn) {
+    sealBtn.addEventListener('pointerdown', startSealHold);
+    sealBtn.addEventListener('pointerup', endSealHold);
+    sealBtn.addEventListener('pointerleave', endSealHold);
+    sealBtn.addEventListener('pointercancel', endSealHold);
+    sealBtn.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        if (!sealHolding) startSealHold(e);
+      }
+    });
+    sealBtn.addEventListener('keyup', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') endSealHold(e);
+    });
+    // Prevent synthetic click after hold so we never double-seal.
+    sealBtn.addEventListener('click', (e) => { e.preventDefault(); });
+  }
   snap?.addEventListener('click', captureMoment);
   share?.addEventListener('click', shareMoment);
   saveShareBtn?.addEventListener('click', shareFromSaveSheet);
@@ -2635,6 +3012,7 @@
       renderCard();
     }
     if (saveSheet && !saveSheet.hidden) syncSaveSheetCopy();
+    syncResidueBanner();
   }
 
   document.querySelectorAll('[data-language]').forEach(btn => {
@@ -2650,6 +3028,7 @@
 
   sessionQs = drawSession();
   showQuestion();
+  syncResidueBanner();
 })();
 </script>
 </body>
