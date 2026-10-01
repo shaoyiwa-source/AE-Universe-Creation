@@ -1,6 +1,8 @@
+> Owner lock 2026-10-01: this listing copy is for Ko-fi https://ko-fi.com/s/f68079f3cc (AE Color Universe | 9 Fragments) = site product **暗夜繽紛美宇宙**. Only two nine-grid site products (花花 + 暗夜); no separate 「九張組」 card.
+
 # AE Color Universe | 9 Fragments / AE色彩宇宙｜九個片段
 
-Price (Owner lock 2026-09-30): 九張組 normal NT$555 / promo NT$444
+Price (Owner lock): 暗夜繽紛美宇宙 NT$555 · https://ko-fi.com/s/f68079f3cc
 Cover: IMG_5051_grade_v1.jpg · Infinite Love（無限之愛）
 Files: grade v1 JPG only
 https://drive.google.com/drive/folders/18wrTY1yWUT44bg0zSJoEY80cE4z1Pfvj
