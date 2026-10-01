@@ -111,10 +111,8 @@
     display:block;width:36px;height:36px;border-radius:50%;
     border:1px solid var(--line);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
   }
-  .cm-hue span{
-    font-size:11px;letter-spacing:.04em;color:var(--muted);max-width:72px;
-    line-height:1.25;
-  }
+  .cm-hue span{display:none}
+  /* hue names hidden per Owner 2026-10-01 */
   .cm-ritual{
     margin:20px auto 0;max-width:36ch;
     padding-top:16px;border-top:1px solid var(--line);
@@ -1121,13 +1119,11 @@
     (activeMood.hues || []).forEach(h => {
       const li = document.createElement('li');
       li.className = 'cm-hue';
+      li.title = L === 'zh' ? h.zh : h.en;
       const sw = document.createElement('i');
       sw.style.background = h.hex;
       sw.setAttribute('aria-hidden', 'true');
-      const lab = document.createElement('span');
-      lab.textContent = L === 'zh' ? h.zh : h.en;
       li.appendChild(sw);
-      li.appendChild(lab);
       huesEl.appendChild(li);
     });
 
