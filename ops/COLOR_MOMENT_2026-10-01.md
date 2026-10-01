@@ -35,3 +35,11 @@ Mysterious, soft. 朝軒宇宙創造 / 盛明. Collecting optional. No quiz jarg
 - Canvas export: CJK-capable font stack (`Noto Serif TC` / `PingFang TC` / …) + load Noto Serif TC; fixes iPhone Safari `Arial`/`Georgia` missing Chinese in saved PNG.
 - Dynamic canvas height from text layout (no `maxLines=3` / `ritualY` clip).
 - Center-zoom card art (~1.24) so artwork edge titles fight UI text less.
+
+## v2441 — Lightprint 光紋 v1.1 (2026-10-01)
+- Soft bloom UX: keepsake framing (one-of-a-kind), not a cold code.
+- On 收光: capture bloom/touch gesture as memorial image layer.
+- Result card: soft memorial panel + caption; AE · LP-XXXXXXXX secondary.
+- Exported PNG: memorial wash + soft panel; LP mark quieter.
+- No shop-binding copy for Lightprint (unique to this person/card moment).
+- Free-form touch + 收光/Seal CTA unchanged; 摘自《盛明》筆記 kept.
