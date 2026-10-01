@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2432">
+<meta name="ae-version" content="v2433">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2432">
-<script src="site.js?v=2432" defer></script>
+<link rel="stylesheet" href="site.css?v=2433">
+<script src="site.js?v=2433" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -60,10 +60,23 @@
     border:1px solid var(--line);border-radius:18px;
     padding:26px 22px 22px;text-align:center;overflow:hidden;
     background:var(--paper);
-    opacity:0;transform:translateY(10px);
-    transition:opacity .75s ease, transform .75s ease;
+    opacity:0;transform:translateY(18px);
+    transition:opacity 1.35s cubic-bezier(.22,.61,.36,1), transform 1.35s cubic-bezier(.22,.61,.36,1);
+    will-change:opacity,transform;
   }
-  .cm-card.is-on{opacity:1;transform:none}
+  .cm-card.is-on{opacity:1;transform:translateY(0)}
+  .cm-wash{
+    position:fixed;inset:0;z-index:40;pointer-events:none;
+    background:rgba(255,252,248,.0);
+    opacity:0;transition:opacity .7s ease, background .7s ease;
+  }
+  .cm-wash.is-on{
+    pointer-events:auto;
+    opacity:1;background:rgba(255,252,248,.92);
+  }
+  :root[data-theme="dark"] .cm-wash.is-on{
+    background:rgba(236,230,222,.88);
+  }
   .cm-card-bg{
     position:absolute;inset:0;background-size:cover;background-position:center;
     filter:saturate(1.05) contrast(1.02);transform:scale(1.04);
@@ -145,8 +158,10 @@
     -webkit-tap-highlight-color:transparent;
   }
   .cm-shutter{
+    position:relative;z-index:5;
     display:inline-flex;align-items:center;gap:9px;border-color:var(--ink);
     background:var(--ink);color:var(--paper);padding-inline:18px;
+    pointer-events:auto;
   }
   .cm-shutter::before{
     content:"";display:block;width:14px;height:14px;border:2px solid currentColor;
@@ -276,6 +291,7 @@
       </div>
     </div>
   </section>
+  <div class="cm-wash" id="cmWash" aria-hidden="true"></div>
 </main>
 
 <footer class="site-footer">
@@ -295,7 +311,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2432 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2433 · color-moment</p>
 </footer>
 
 <script>
@@ -1117,6 +1133,7 @@
   const snap = document.getElementById('cmSnap');
   const share = document.getElementById('cmShare');
   const toast = document.getElementById('cmToast');
+  const washEl = document.getElementById('cmWash');
   const ctx = canvas.getContext('2d');
 
   let sessionQs = [];
@@ -1263,31 +1280,52 @@
 
     cardEl.hidden = false;
     cardEl.classList.remove('is-on');
-    requestAnimationFrame(() => cardEl.classList.add('is-on'));
+    // Double rAF so the opacity/transform transition reliably plays after unhide.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => cardEl.classList.add('is-on'));
+    });
+  }
+
+  function runWash(on) {
+    if (!washEl) return;
+    if (on) {
+      washEl.classList.add('is-on');
+    } else {
+      washEl.classList.remove('is-on');
+    }
   }
 
   function enterBloom() {
-    activeMood = pickMood();
-    const shengPool = SHENG_BY_MOOD[activeMood.id] || SHENG_BY_MOOD.gold;
-    activeReading = pickFrom(shengPool);
-    activeRitual = pickFrom(SHENG_RITUALS[activeMood.id] || SHENG_RITUALS.gold);
-    const arts = ART_BY_MOOD[activeMood.id] || ART_BY_MOOD.gold;
-    activeArt = pickFrom(arts);
-    askEl.hidden = true;
-    bloomWrap.hidden = false;
-    afterEl.hidden = false;
-    bloomReady = true;
-    started = false;
-    hint.classList.remove('is-hidden');
-    cardEl.hidden = true;
-    cardEl.classList.remove('is-on');
-    resize();
-    setTimeout(() => {
-      if (!started && bloomReady) {
-        const r = shell.getBoundingClientRect();
-        bloomAt(r.width * 0.5, r.height * 0.48, true);
+    // Soft white wash, then bloom + slowly floating result card.
+    runWash(true);
+    window.setTimeout(() => {
+      try {
+        activeMood = pickMood();
+        const shengPool = SHENG_BY_MOOD[activeMood.id] || SHENG_BY_MOOD.gold;
+        activeReading = pickFrom(shengPool);
+        activeRitual = pickFrom(SHENG_RITUALS[activeMood.id] || SHENG_RITUALS.gold);
+        const arts = ART_BY_MOOD[activeMood.id] || ART_BY_MOOD.gold;
+        activeArt = pickFrom(arts);
+        askEl.hidden = true;
+        bloomWrap.hidden = false;
+        afterEl.hidden = false;
+        bloomReady = true;
+        started = false;
+        hint.classList.remove('is-hidden');
+        cardEl.hidden = true;
+        cardEl.classList.remove('is-on');
+        resize();
+        window.setTimeout(() => {
+          if (!started && bloomReady) {
+            const r = shell.getBoundingClientRect();
+            bloomAt(r.width * 0.5, r.height * 0.48, true);
+          }
+        }, 520);
+      } finally {
+        // Always dissolve the wash so clicks never stay blocked.
+        window.setTimeout(() => runWash(false), 160);
       }
-    }, 700);
+    }, 420);
   }
 
   function resize() {
@@ -1444,9 +1482,24 @@
         return;
       }
       const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => resolve(null);
+      // Same-origin arts: anonymous keeps canvas exportable if headers vary.
+      image.crossOrigin = 'anonymous';
+      let settled = false;
+      const done = value => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      image.onload = () => done(image);
+      image.onerror = () => {
+        // Retry without CORS flag if the first attempt failed.
+        const fallback = new Image();
+        fallback.onload = () => done(fallback);
+        fallback.onerror = () => done(null);
+        fallback.src = activeArt;
+      };
       image.src = activeArt;
+      window.setTimeout(() => done(null), 8000);
     });
   }
 
@@ -1459,8 +1512,8 @@
 
   async function buildCardImage() {
     const rect = cardEl.getBoundingClientRect();
-    const w = Math.max(1, Math.round(rect.width));
-    const h = Math.max(1, Math.round(rect.height));
+    const w = Math.max(320, Math.round(rect.width) || 560);
+    const h = Math.max(420, Math.round(rect.height) || 640);
     const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     const imageCanvas = document.createElement('canvas');
     imageCanvas.width = Math.round(w * scale);
@@ -1478,7 +1531,10 @@
     imageContext.clip();
     imageContext.fillStyle = paper;
     imageContext.fillRect(0, 0, w, h);
-    if (image) drawCover(imageContext, image, w, h);
+    if (image) {
+      try { drawCover(imageContext, image, w, h); }
+      catch (err) { /* tainted or decode issue — keep paper card */ }
+    }
     const veil = imageContext.createLinearGradient(0, 0, 0, h);
     veil.addColorStop(0, dark ? 'rgba(20,17,15,.84)' : 'rgba(247,241,232,.88)');
     veil.addColorStop(.45, dark ? 'rgba(20,17,15,.74)' : 'rgba(247,241,232,.78)');
@@ -1491,7 +1547,6 @@
     imageContext.fillStyle = muted;
     imageContext.textAlign = 'center';
     imageContext.font = '11px Arial, sans-serif';
-    imageContext.letterSpacing = '1px';
     const L = lang();
     imageContext.fillText(L === 'zh' ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · ETERNAL SUN', w / 2, 30);
     imageContext.fillStyle = ink;
@@ -1526,13 +1581,10 @@
       imageContext.fill();
       imageContext.strokeStyle = dark ? 'rgba(255,255,255,.35)' : 'rgba(80,60,45,.25)';
       imageContext.stroke();
-      imageContext.fillStyle = muted;
-      imageContext.font = '10px Arial, sans-serif';
-      imageContext.fillText(L === 'zh' ? hue.zh : hue.en, hx + hueWidth / 2, hueY + 48);
       hx += hueWidth + hueGap;
     });
 
-    const ritualLabel = L === 'zh' ? '今夜的柔邀' : 'TONIGHT’S SOFT INVITATION';
+    const ritualLabelText = L === 'zh' ? '今夜的柔邀' : 'TONIGHT’S SOFT INVITATION';
     imageContext.strokeStyle = dark ? 'rgba(241,232,220,.28)' : 'rgba(118,107,97,.3)';
     const ritualY = Math.min(h - 92, hueY + 78);
     imageContext.beginPath();
@@ -1541,7 +1593,7 @@
     imageContext.stroke();
     imageContext.fillStyle = muted;
     imageContext.font = '11px Arial, sans-serif';
-    imageContext.fillText(ritualLabel, w / 2, ritualY + 6);
+    imageContext.fillText(ritualLabelText, w / 2, ritualY + 6);
     imageContext.fillStyle = ink;
     imageContext.font = '18px Georgia, serif';
     drawWrapped(imageContext, L === 'zh' ? activeRitual.zh : activeRitual.en, 24, ritualY + 34, w - 48, 25, 3);
@@ -1549,51 +1601,139 @@
     return imageCanvas;
   }
 
-  function saveCanvasImage(source, filename) {
-    return new Promise(resolve => {
-      const download = url => {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        if (url.startsWith('blob:')) setTimeout(() => URL.revokeObjectURL(url), 1000);
-        resolve(true);
-      };
-      if (source.toBlob) {
-        source.toBlob(blob => {
-          if (blob) {
-            download(URL.createObjectURL(blob));
-          } else {
-            download(source.toDataURL('image/png'));
-          }
-        }, 'image/png');
-      } else {
-        download(source.toDataURL('image/png'));
+  function canvasToBlob(source) {
+    return new Promise((resolve, reject) => {
+      try {
+        if (source.toBlob) {
+          source.toBlob(blob => {
+            if (blob) resolve(blob);
+            else {
+              try {
+                const data = source.toDataURL('image/png');
+                const bin = atob(data.split(',')[1]);
+                const arr = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                resolve(new Blob([arr], { type: 'image/png' }));
+              } catch (err) {
+                reject(err);
+              }
+            }
+          }, 'image/png');
+        } else {
+          const data = source.toDataURL('image/png');
+          const bin = atob(data.split(',')[1]);
+          const arr = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+          resolve(new Blob([arr], { type: 'image/png' }));
+        }
+      } catch (err) {
+        reject(err);
       }
     });
   }
 
-  async function captureMoment() {
-    if (!activeMood || cardEl.hidden || snap?.disabled) return;
+  function triggerDownload(url, filename) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function isAppleTouch() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent || '')
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  async function saveBlobImage(blob, filename, { openFallback = false } = {}) {
+    const url = URL.createObjectURL(blob);
+    try {
+      triggerDownload(url, filename);
+      if (openFallback) {
+        window.setTimeout(() => {
+          try { window.open(url, '_blank', 'noopener'); } catch {}
+        }, 160);
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), openFallback ? 60000 : 4000);
+      return true;
+    } catch (err) {
+      URL.revokeObjectURL(url);
+      throw err;
+    }
+  }
+
+  async function tryShareImageFile(blob, filename) {
+    if (!navigator.share || !navigator.canShare) return false;
+    const file = new File([blob], filename, { type: 'image/png' });
+    const payload = { files: [file] };
+    if (!navigator.canShare(payload)) return false;
+    try {
+      const L = lang();
+      await navigator.share({
+        files: [file],
+        title: L === 'zh' ? `色彩瞬間 · ${activeMood.zh}` : `Color Moment · ${activeMood.en}`,
+        text: L === 'zh' ? '把這一瞬帶走。' : 'Carry this moment with you.'
+      });
+      return true;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return 'aborted';
+      return false;
+    }
+  }
+
+  async function captureMoment(ev) {
+    if (ev) {
+      try { ev.preventDefault(); } catch {}
+    }
+    if (!activeMood) {
+      showToast(lang() === 'zh' ? '先讓顏色綻開，再拍下這一瞬。' : 'Let the colour bloom first, then take this moment.');
+      return;
+    }
+    if (cardEl.hidden) {
+      // Card not revealed yet — force render then continue.
+      renderCard();
+    }
+    if (snap?.disabled) return;
     if (snap) snap.disabled = true;
     cardEl.classList.remove('cm-card-flash');
     void cardEl.offsetWidth;
     cardEl.classList.add('cm-card-flash');
+    const filename = `ae-color-moment-${Date.now()}.png`;
     try {
-      const image = await buildCardImage();
-      await saveCanvasImage(image, `ae-color-moment-${Date.now()}.png`);
+      let source;
+      try {
+        source = await buildCardImage();
+      } catch (buildErr) {
+        source = canvas;
+      }
+      const blob = await canvasToBlob(source);
+      // iOS often blocks silent <a download> after async work — use share sheet first there.
+      if (isAppleTouch()) {
+        const shared = await tryShareImageFile(blob, filename);
+        if (shared === true) {
+          showToast(lang() === 'zh' ? '這一瞬，已輕輕收好。' : 'This moment is softly kept.');
+          return;
+        }
+        if (shared === 'aborted') return;
+        await saveBlobImage(blob, filename, { openFallback: true });
+        showToast(lang() === 'zh' ? '可在新分頁長按圖片保存。' : 'Long-press the image in the new tab to save it.');
+        return;
+      }
+      await saveBlobImage(blob, filename);
       showToast(lang() === 'zh' ? '這一瞬，已輕輕收好。' : 'This moment is softly kept.');
     } catch (error) {
       try {
-        await saveCanvasImage(canvas, `ae-color-moment-${Date.now()}.png`);
+        const blob = await canvasToBlob(canvas);
+        await saveBlobImage(blob, filename, { openFallback: isAppleTouch() });
         showToast(lang() === 'zh' ? '先把光拍下來了。' : 'The light has been captured.');
       } catch (fallbackError) {
         showToast(lang() === 'zh' ? '這一瞬未能保存，請試著截圖。' : 'The moment could not be saved — a screenshot will keep it.');
       }
     } finally {
-      setTimeout(() => { if (snap) snap.disabled = false; }, 500);
+      window.setTimeout(() => { if (snap) snap.disabled = false; }, 600);
     }
   }
 
@@ -1614,27 +1754,45 @@
     return copied;
   }
 
-  async function shareMoment() {
+  async function shareMoment(ev) {
+    if (ev) {
+      try { ev.preventDefault(); } catch {}
+    }
     if (!activeMood) return;
     const L = lang();
-    const title = L === 'zh' ? `色彩瞬間 · ${activeMood.zh}` : `Color Moment · ${activeMood.en}`;
-    const reading = (L === 'zh' ? activeReading.zh : activeReading.en)[0];
-    const text = L === 'zh' ? `${activeMood.zh}\n${reading}` : `${activeMood.en}\n${reading}`;
-    const url = window.location.href;
+    const filename = `ae-color-moment-${Date.now()}.png`;
     try {
-      if (navigator.share) {
-        await navigator.share({ title, text, url });
+      const source = await buildCardImage();
+      const blob = await canvasToBlob(source);
+      const shared = await tryShareImageFile(blob, filename);
+      if (shared === true) {
         showToast(L === 'zh' ? '把這一瞬交給你想念的人。' : 'This moment is ready to travel.');
-      } else {
-        throw new Error('Web Share unavailable');
+        return;
       }
+      if (shared === 'aborted') return;
+      // Fall back to downloading the card image when share is unavailable/fails.
+      await saveBlobImage(blob, filename);
+      showToast(L === 'zh' ? '分享改為下載這一瞬。' : 'Shared as a saved card image instead.');
     } catch (error) {
-      if (error?.name === 'AbortError') return;
+      const title = L === 'zh' ? `色彩瞬間 · ${activeMood.zh}` : `Color Moment · ${activeMood.en}`;
+      const reading = (L === 'zh' ? activeReading.zh : activeReading.en)[0];
+      const text = L === 'zh' ? `${activeMood.zh}\n${reading}` : `${activeMood.en}\n${reading}`;
+      const url = window.location.href;
       try {
-        await copyText(url);
-        showToast(L === 'zh' ? '連結已放進剪貼簿。' : 'The link is resting in your clipboard.');
-      } catch (copyError) {
-        showToast(L === 'zh' ? '可用瀏覽器的分享功能帶走這一瞬。' : 'Use your browser’s share option to carry this moment.');
+        if (navigator.share) {
+          await navigator.share({ title, text, url });
+          showToast(L === 'zh' ? '把這一瞬交給你想念的人。' : 'This moment is ready to travel.');
+        } else {
+          throw new Error('Web Share unavailable');
+        }
+      } catch (shareErr) {
+        if (shareErr?.name === 'AbortError') return;
+        try {
+          await copyText(url);
+          showToast(L === 'zh' ? '連結已放進剪貼簿。' : 'The link is resting in your clipboard.');
+        } catch (copyError) {
+          showToast(L === 'zh' ? '可用瀏覽器的分享功能帶走這一瞬。' : 'Use your browser’s share option to carry this moment.');
+        }
       }
     }
   }
@@ -1656,6 +1814,7 @@
     cardEl.hidden = true;
     cardEl.classList.remove('is-on');
     if (cardBg) cardBg.style.backgroundImage = '';
+    runWash(false);
     showQuestion();
   }
 
