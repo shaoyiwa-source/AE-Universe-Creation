@@ -65,3 +65,22 @@ Preview only on `new9-public-media`. Production untouched.
 - **Mist / multi-touch (optional, not mandated):** single finger gets clearer trail + light ambient mist; several contacts deepen a soft full-paper fog. Soft discoverability hint only.
 - Dual-card (meaning + Lightprint trail memorial): **noted for follow-up**, not shipped this deploy.
 
+## v2444 — unique memorial + answer echo + stronger mist (2026-10-01)
+Preview only on `new9-public-media`. Production untouched.
+
+### A) Explicit unique memorial
+- Result card + PNG: `獨一無二紀念 · 光紋記住你如何存在於這一刻` / `One-of-a-kind memorial · Lightprint keeps how you existed here`
+- Memorial img alt ZH `獨一無二紀念光痕`; seal toast `光已收好 · 獨一無二紀念` / `Light sealed · a one-of-a-kind memorial`
+- Discover line soft-mentions unique memorial when Lightprint present (no shop-binding)
+
+### B) Answer echo
+- Soft on-card echo of up to 2 last choice phrases (`你剛才靠近的是——「…」` / `You leaned toward — “…"`)
+- PNG echo skipped this pass (height kept clean for longer memorial caption)
+
+### C) Stronger mist / bloom feel
+- `.cm-mist.is-soft` opacity ~.72 + richer soft gradients; `.is-rich` ~.93 full-paper fog
+- Single-finger bloom count/radius/alpha slightly stronger; 收光 coalesce still soft whole-trail (no hard mid press-spot)
+
+### D) Question pool
+- +4 soft body/senses/closeness questions (ZH+EN); shuffle draw 3–4 unchanged
+

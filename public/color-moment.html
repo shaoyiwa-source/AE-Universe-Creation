@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2443">
+<meta name="ae-version" content="v2444">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,26 +57,26 @@
     mix-blend-mode:soft-light;
   }
   .cm-mist.is-soft{
-    opacity:.55;
+    opacity:.72;
     background:
-      radial-gradient(ellipse 80% 65% at 50% 45%, rgba(255,252,248,.28), rgba(232,226,216,.08) 70%),
-      linear-gradient(165deg, rgba(245,240,232,.18), rgba(220,228,232,.12));
+      radial-gradient(ellipse 82% 68% at 50% 45%, rgba(255,252,248,.36), rgba(232,226,216,.12) 68%),
+      linear-gradient(165deg, rgba(245,240,232,.24), rgba(220,228,232,.16));
   }
   .cm-mist.is-rich{
-    opacity:.88;
+    opacity:.93;
     background:
-      radial-gradient(ellipse 95% 80% at 50% 48%, rgba(255,252,248,.42), rgba(210,222,228,.22) 58%, rgba(200,210,218,.1) 100%),
-      linear-gradient(150deg, rgba(236,242,245,.28), rgba(232,226,216,.16));
+      radial-gradient(ellipse 98% 85% at 50% 48%, rgba(255,252,248,.48), rgba(210,222,228,.28) 55%, rgba(200,210,218,.14) 100%),
+      linear-gradient(150deg, rgba(236,242,245,.34), rgba(232,226,216,.2));
   }
   :root[data-theme="dark"] .cm-mist.is-soft{
     background:
-      radial-gradient(ellipse 80% 65% at 50% 45%, rgba(90,110,120,.22), rgba(40,36,32,.08) 70%),
-      linear-gradient(165deg, rgba(70,85,95,.2), rgba(40,36,32,.1));
+      radial-gradient(ellipse 82% 68% at 50% 45%, rgba(90,110,120,.3), rgba(40,36,32,.12) 68%),
+      linear-gradient(165deg, rgba(70,85,95,.26), rgba(40,36,32,.14));
   }
   :root[data-theme="dark"] .cm-mist.is-rich{
     background:
-      radial-gradient(ellipse 95% 80% at 50% 48%, rgba(110,140,155,.38), rgba(60,70,78,.2) 58%, rgba(30,28,26,.12) 100%),
-      linear-gradient(150deg, rgba(80,100,110,.28), rgba(40,36,32,.16));
+      radial-gradient(ellipse 98% 85% at 50% 48%, rgba(110,140,155,.46), rgba(60,70,78,.26) 55%, rgba(30,28,26,.16) 100%),
+      linear-gradient(150deg, rgba(80,100,110,.34), rgba(40,36,32,.2));
   }
   .cm-hint{
     position:absolute;inset:0;display:grid;place-items:center;
@@ -200,6 +200,12 @@
     margin:8px 0 0;font-size:11px;letter-spacing:.08em;
     color:var(--muted);opacity:.85;
   }
+  .cm-echo{
+    margin:12px auto 0;max-width:36ch;
+    font-size:13px;line-height:1.55;color:var(--muted);
+    text-align:center;opacity:.92;
+  }
+  .cm-echo[hidden]{display:none!important}
   .cm-reading{
     margin:18px auto 0;max-width:38ch;
     font-size:15px;line-height:1.65;color:inherit;
@@ -472,6 +478,7 @@
             <p class="cm-card-eyebrow" id="cmCardEyebrow"></p>
             <h2 class="cm-card-title" id="cmCardTitle"></h2>
             <p class="cm-card-en" id="cmCardEn"></p>
+            <p class="cm-echo" id="cmEcho" hidden></p>
             <p class="cm-card-src" id="cmCardSrc"></p>
             <figure class="cm-memorial" id="cmMemorial" hidden>
               <img id="cmMemorialImg" alt="" draggable="false">
@@ -525,7 +532,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2443 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2444 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -870,6 +877,42 @@
         { zh: '把金色收進口袋', en: 'Slip a little gold into a pocket', tags: ['gold', 'warm'] },
         { zh: '把藍色放在枕邊', en: 'Leave blue beside the pillow', tags: ['indigo', 'still'] },
         { zh: '讓粉色慢慢散開', en: 'Let pink dissolve slowly', tags: ['rose', 'mist'] }
+      ]
+    },
+    {
+      zh: '皮膚更想被什麼輕輕碰觸？',
+      en: 'What does your skin want to be touched by?',
+      choices: [
+        { zh: '微微發熱的空氣', en: 'Air that is faintly warm', tags: ['warm', 'soft'] },
+        { zh: '帶霧的涼意', en: 'A coolness edged with mist', tags: ['cool', 'mist'] },
+        { zh: '像絲線的細光', en: 'A fine thread of light', tags: ['gold', 'spark'] }
+      ]
+    },
+    {
+      zh: '若靠近一個人的距離，你想停在……',
+      en: 'If closeness had a distance, you would stop at…',
+      choices: [
+        { zh: '能聽見呼吸的地方', en: 'Where breath can be heard', tags: ['soft', 'still'] },
+        { zh: '肩與肩之間的溫熱', en: 'The warmth between two shoulders', tags: ['warm', 'rose'] },
+        { zh: '還留一點霧的遠一點', en: 'A little farther, still in mist', tags: ['mist', 'indigo'] }
+      ]
+    },
+    {
+      zh: '舌頭記得的味道，更接近……',
+      en: 'A taste the tongue remembers feels closer to…',
+      choices: [
+        { zh: '剛泡開的暖茶', en: 'Warm tea just opened', tags: ['warm', 'gold'] },
+        { zh: '雨後泥土的清涼', en: 'Cool earth after rain', tags: ['cool', 'deep'] },
+        { zh: '夜間花蜜的淡甜', en: 'A faint night-nectar sweetness', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '胸口那一小塊空間，現在裝著……',
+      en: 'That small space in your chest is holding…',
+      choices: [
+        { zh: '尚未說出口的暖', en: 'Warmth not yet spoken', tags: ['warm', 'still'] },
+        { zh: '像深水一樣的安靜', en: 'A quiet like deep water', tags: ['deep', 'indigo'] },
+        { zh: '一點想靠近的火花', en: 'A spark that wants to draw near', tags: ['spark', 'rose'] }
       ]
     },
   ];
@@ -1356,6 +1399,7 @@
   const memorialEl = document.getElementById('cmMemorial');
   const memorialImg = document.getElementById('cmMemorialImg');
   const memorialCap = document.getElementById('cmMemorialCap');
+  const echoEl = document.getElementById('cmEcho');
   const sealRing = document.getElementById('cmSealRing');
   const sealLabel = document.getElementById('cmSealLabel');
   const sealHoldHint = document.getElementById('cmSealHoldHint');
@@ -1692,13 +1736,13 @@
     const L = lang();
     if (memorialDataUrl && memorialEl && memorialImg) {
       memorialImg.src = memorialDataUrl;
-      memorialImg.alt = L === 'zh' ? '只屬於你的光痕紀念' : 'Your one-of-a-kind light keepsake';
+      memorialImg.alt = L === 'zh' ? '獨一無二紀念光痕' : 'One-of-a-kind memorial light-trace';
       memorialEl.hidden = false;
       if (memorialCap) {
         memorialCap.hidden = false;
         memorialCap.textContent = L === 'zh'
-          ? '光紋記住你如何存在於這一刻'
-          : 'Lightprint keeps how you existed here';
+          ? '獨一無二紀念 · 光紋記住你如何存在於這一刻'
+          : 'One-of-a-kind memorial · Lightprint keeps how you existed here';
       }
     } else {
       if (memorialEl) memorialEl.hidden = true;
@@ -2125,8 +2169,24 @@
     renderCard();
     const L = lang();
     showToast(L === 'zh'
-      ? ('光已收好 · 記住你如何存在於這一刻')
-      : ('Light sealed · how you existed in this moment'));
+      ? ('光已收好 · 獨一無二紀念')
+      : ('Light sealed · a one-of-a-kind memorial'));
+  }
+
+
+  function buildAnswerEcho() {
+    if (!sessionAnswers || !sessionAnswers.length) return '';
+    const L = lang();
+    // Prefer last answers when many — up to 2 distinctive phrases.
+    const picked = sessionAnswers.slice(-2);
+    const phrases = picked.map(a => (L === 'zh' ? a.zh : a.en)).filter(Boolean);
+    if (!phrases.length) return '';
+    if (L === 'zh') {
+      if (phrases.length === 1) return `你剛才靠近的是——「${phrases[0]}」`;
+      return `你剛才靠近的是——「${phrases[0]}」與「${phrases[1]}」`;
+    }
+    if (phrases.length === 1) return `You leaned toward — “${phrases[0]}”`;
+    return `You leaned toward — “${phrases[0]}” and “${phrases[1]}”`;
   }
 
   // Follow-up (not this deploy): dual-card after 收光 —
@@ -2144,6 +2204,16 @@
       cardSrc.textContent = L === 'zh'
         ? '摘自《盛明》筆記'
         : 'From the 《盛明》 notes';
+    }
+    if (echoEl) {
+      const echo = buildAnswerEcho();
+      if (echo) {
+        echoEl.hidden = false;
+        echoEl.textContent = echo;
+      } else {
+        echoEl.hidden = true;
+        echoEl.textContent = '';
+      }
     }
     syncMemorialUI();
     if (lightprintEl) {
@@ -2171,8 +2241,8 @@
     // Lightprint is unique to this person/card moment — no shop-binding copy.
     if (lightprintCode) {
       discoverEl.innerHTML = L === 'zh'
-        ? '光紋記住你如何存在於這一刻。若想再多一點光，可去 <a href="/experience">互動體驗</a>。'
-        : 'Lightprint keeps how you existed here. For a little more light, visit the <a href="/experience">Experience</a>.';
+        ? '這是獨一無二紀念——光紋記住你如何存在於這一刻。若想再多一點光，可去 <a href="/experience">互動體驗</a>。'
+        : 'This is a one-of-a-kind memorial — Lightprint keeps how you existed here. For a little more light, visit the <a href="/experience">Experience</a>.';
     } else {
       discoverEl.innerHTML = L === 'zh'
         ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
@@ -2263,8 +2333,8 @@
     const r = shell.getBoundingClientRect();
     const palette = activeMood.palette;
     const multi = Object.keys(activePointers).length >= 2;
-    const count = (multi ? 16 : 14) + Math.floor(Math.random() * (multi ? 10 : 8));
-    const spread = multi ? 0.38 : 0.32;
+    const count = (multi ? 16 : 17) + Math.floor(Math.random() * (multi ? 10 : 10));
+    const spread = multi ? 0.38 : 0.36;
     for (let i = 0; i < count; i++) {
       const ang = Math.random() * Math.PI * 2;
       const dist = 20 + Math.random() * Math.min(r.width, r.height) * spread;
@@ -2272,7 +2342,7 @@
         x, y,
         tx: x + Math.cos(ang) * dist,
         ty: y + Math.sin(ang) * dist,
-        r: (multi ? 22 : 20) + Math.random() * (multi ? 64 : 58),
+        r: (multi ? 22 : 24) + Math.random() * (multi ? 64 : 64),
         color: palette[i % palette.length],
         life: 0,
         max: 1.2 + Math.random() * 0.75,
@@ -2281,7 +2351,7 @@
     }
     // Drawing stamps stay path-tied; coalesce no longer adds a hard center press-spot.
     if (!fromAuto) {
-      stampMemorialAt(x, y, multi ? 1.15 : 1.05);
+      stampMemorialAt(x, y, multi ? 1.15 : 1.12);
     } else {
       stampMemorialAt(x, y, 0.7);
     }
@@ -2308,7 +2378,7 @@
       const alpha = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8;
       const rad = b.r * (0.35 + ease * 0.9);
       const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      g.addColorStop(0, hexAlpha(b.color, Math.max(0, Math.min(0.68, alpha * 0.68))));
+      g.addColorStop(0, hexAlpha(b.color, Math.max(0, Math.min(0.76, alpha * 0.76))));
       g.addColorStop(1, hexAlpha(b.color, 0));
       ctx.fillStyle = g;
       ctx.beginPath();
@@ -2562,7 +2632,7 @@
     const hasMemorial = !!memorialDataUrl;
     const memorialPanelH = hasMemorial ? Math.round(Math.min(210, w * 0.42)) : 0;
     const memorialGap = hasMemorial ? 18 : 0;
-    const memorialCapH = hasMemorial ? 18 : 0;
+    const memorialCapH = hasMemorial ? 34 : 0;
 
     // Measure content height first — never clip ritual/reading to a fixed DOM height.
     const measure = document.createElement('canvas').getContext('2d');
@@ -2670,11 +2740,39 @@
       imageContext.textAlign = 'center';
       imageContext.font = cardType(11, { cjk: true });
       imageContext.globalAlpha = 0.9;
-      imageContext.fillText(
-        isZh ? '光紋記住你如何存在於這一刻' : 'Lightprint keeps how you existed here',
-        w / 2,
-        py + ph + 14
-      );
+      const memorialCaption = isZh
+        ? '獨一無二紀念 · 光紋記住你如何存在於這一刻'
+        : 'One-of-a-kind memorial · Lightprint keeps how you existed here';
+      // Soft wrap if needed so longer unique-memorial line stays on card.
+      const capLines = [];
+      {
+        const words = isZh ? memorialCaption.split('') : memorialCaption.split(' ');
+        let line = '';
+        const maxW = Math.min(w - 48, 300);
+        if (isZh) {
+          for (const ch of words) {
+            const test = line + ch;
+            if (imageContext.measureText(test).width > maxW && line) {
+              capLines.push(line);
+              line = ch;
+            } else line = test;
+          }
+          if (line) capLines.push(line);
+        } else {
+          for (const word of words) {
+            const test = line ? line + ' ' + word : word;
+            if (imageContext.measureText(test).width > maxW && line) {
+              capLines.push(line);
+              line = word;
+            } else line = test;
+          }
+          if (line) capLines.push(line);
+        }
+      }
+      let capY = py + ph + 14;
+      capLines.slice(0, 2).forEach((ln, i) => {
+        imageContext.fillText(ln, w / 2, capY + i * 14);
+      });
       imageContext.globalAlpha = 1;
       y = py + ph + memorialGap + memorialCapH;
     }
