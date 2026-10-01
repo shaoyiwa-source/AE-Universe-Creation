@@ -13,6 +13,10 @@
       "destination": "/experience.html"
     },
     {
+      "source": "/color-moment",
+      "destination": "/color-moment.html"
+    },
+    {
       "source": "/checkout-stage",
       "destination": "/checkout-stage.html"
     },
