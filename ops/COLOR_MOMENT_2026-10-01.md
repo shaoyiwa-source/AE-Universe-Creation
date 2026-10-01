@@ -123,3 +123,19 @@ Prefers feel BEFORE Lightprint/GPT TRIAD — better animation/quality. Current: 
 ### Fixed
 - 「收光」: `-webkit-user-select:none`, `user-select:none`, `-webkit-touch-callout:none` on button + label; prevent selectstart/contextmenu
 
+## v2447 — soft answer echo + mini-card tip (2026-10-01)
+Preview only on `new9-public-media`. Production untouched. One Preview deploy.
+
+### Soft answer echo (slim)
+- Re-enabled `#cmEcho` via `buildAnswerEcho` in `renderCard` when session answers exist.
+- Prefer last **1** distinctive phrase; allow **2** only if both short + distinct (not a copy pile).
+- Quieter CSS: ~12px, opacity ~.82, under title — does not compete with title/memorial.
+
+### Soft mini-card tip
+- Muted line after discover, before actions (no price / hard CTA / Shop SKU).
+- ZH: `想把這一瞬帶走時，數位小卡很快會在商店輕輕出現。`
+- EN: `When you want to carry this moment, digital mini-cards will soft-arrive in the Shop.`
+
+### Kept from v2446
+- Soft grade_v1 bloom/type/mist; progressive Solo ask→touch→seal→done; memorial image + short caption; quiet LP corner; no hue dots; no Production.
+

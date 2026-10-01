@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2446">
+<meta name="ae-version" content="v2447">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2446">
-<script src="site.js?v=2446" defer></script>
+<link rel="stylesheet" href="site.css?v=2447">
+<script src="site.js?v=2447" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -242,9 +242,9 @@
     color:var(--muted);opacity:.85;
   }
   .cm-echo{
-    margin:12px auto 0;max-width:36ch;
-    font-size:13px;line-height:1.55;color:var(--muted);
-    text-align:center;opacity:.92;
+    margin:10px auto 0;max-width:34ch;
+    font-size:12px;line-height:1.5;color:var(--muted);
+    text-align:center;opacity:.82;
   }
   .cm-echo[hidden]{display:none!important}
   .cm-reading{
@@ -269,6 +269,12 @@
     margin:16px 0 0;font-size:13px;color:var(--muted);
   }
   .cm-discover a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+  .cm-mini-tip{
+    margin:10px auto 0;max-width:36ch;
+    font-size:12px;line-height:1.5;color:var(--muted);
+    text-align:center;opacity:.78;
+  }
+  .cm-mini-tip[hidden]{display:none!important}
   .cm-card-actions{
     position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:10px 12px;
     justify-content:center;align-items:center;margin:24px 0 0;padding-top:18px;
@@ -535,6 +541,7 @@
               <span id="cmRitualText"></span>
             </p>
             <p class="cm-discover" id="cmDiscover"></p>
+            <p class="cm-mini-tip" id="cmMiniTip" hidden></p>
             <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
             <div class="cm-card-actions" aria-label="Moment actions">
               <button type="button" class="cm-shutter" id="cmSnap" data-en="Take this moment" data-zh="拍下這一瞬">Take this moment</button>
@@ -576,7 +583,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2446 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2447 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1463,6 +1470,7 @@
   const ritualLabel = document.getElementById('cmRitualLabel');
   const ritualText = document.getElementById('cmRitualText');
   const discoverEl = document.getElementById('cmDiscover');
+  const miniTipEl = document.getElementById('cmMiniTip');
   const replay = document.getElementById('cmReplay');
   const snap = document.getElementById('cmSnap');
   const share = document.getElementById('cmShare');
@@ -2307,16 +2315,24 @@
   function buildAnswerEcho() {
     if (!sessionAnswers || !sessionAnswers.length) return '';
     const L = lang();
-    // Prefer last answers when many — up to 2 distinctive phrases.
+    // Prefer last 1 distinctive phrase; allow 2 only if both short + distinct.
     const picked = sessionAnswers.slice(-2);
     const phrases = picked.map(a => (L === 'zh' ? a.zh : a.en)).filter(Boolean);
     if (!phrases.length) return '';
-    if (L === 'zh') {
-      if (phrases.length === 1) return `你剛才靠近的是——「${phrases[0]}」`;
-      return `你剛才靠近的是——「${phrases[0]}」與「${phrases[1]}」`;
+    let use = [phrases[phrases.length - 1]];
+    if (phrases.length === 2) {
+      const a = phrases[0], b = phrases[1];
+      const maxLen = L === 'zh' ? 12 : 28;
+      const short = (s) => String(s).length <= maxLen;
+      const distinct = a !== b && !String(a).includes(b) && !String(b).includes(a);
+      if (short(a) && short(b) && distinct) use = phrases;
     }
-    if (phrases.length === 1) return `You leaned toward — “${phrases[0]}”`;
-    return `You leaned toward — “${phrases[0]}” and “${phrases[1]}”`;
+    if (L === 'zh') {
+      if (use.length === 1) return `你剛才靠近的是——「${use[0]}」`;
+      return `你剛才靠近的是——「${use[0]}」與「${use[1]}」`;
+    }
+    if (use.length === 1) return `You leaned toward — “${use[0]}”`;
+    return `You leaned toward — “${use[0]}” and “${use[1]}”`;
   }
 
   // Follow-up (not this deploy): dual-card after 收光 —
@@ -2335,10 +2351,16 @@
         ? '摘自《盛明》筆記'
         : 'From the 《盛明》 notes';
     }
-    // Slim card: memorial image yes; no answer-echo pile; quiet LP corner.
+    // Slim card: quiet answer echo (1, max 2 short); memorial image; quiet LP corner.
     if (echoEl) {
-      echoEl.hidden = true;
-      echoEl.textContent = '';
+      const echo = buildAnswerEcho();
+      if (echo) {
+        echoEl.hidden = false;
+        echoEl.textContent = echo;
+      } else {
+        echoEl.hidden = true;
+        echoEl.textContent = '';
+      }
     }
     syncMemorialUI();
     if (lightprintEl) {
@@ -2367,6 +2389,14 @@
     discoverEl.innerHTML = L === 'zh'
       ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
       : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.';
+
+    // Soft mini-card tip only — no price / hard CTA / Shop SKU this pass.
+    if (miniTipEl) {
+      miniTipEl.hidden = false;
+      miniTipEl.textContent = L === 'zh'
+        ? '想把這一瞬帶走時，數位小卡很快會在商店輕輕出現。'
+        : 'When you want to carry this moment, digital mini-cards will soft-arrive in the Shop.';
+    }
 
     cardEl.hidden = false;
     cardEl.classList.remove('is-on');
