@@ -191,10 +191,13 @@
     color:var(--muted);opacity:.72;text-align:center;
   }
   .cm-memorial-cap[hidden]{display:none!important}
+  /* Quiet watermark corner (Owner lock) — pale, small, never compete with art */
   .cm-lightprint{
-    margin:14px 0 0;font-size:10px;letter-spacing:.16em;
-    color:var(--muted);opacity:.62;
+    position:absolute;right:12px;bottom:10px;left:auto;margin:0;
+    font-size:8.5px;letter-spacing:.12em;line-height:1.2;
+    color:var(--muted);opacity:.34;text-align:right;
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    pointer-events:none;z-index:4;user-select:none;-webkit-user-select:none;
   }
   .cm-lightprint[hidden]{display:none!important}
 
@@ -285,13 +288,26 @@
     transform:scale(1.24);transform-origin:center center;
     z-index:0;
   }
+  /* SHARED pale art lock (Owner v2453 correction): early === result */
+  :root{
+    --cm-pale-art-alpha-light: 0.22;
+    --cm-pale-art-alpha-dark: 0.16;
+    --cm-pale-veil-top: rgba(247,241,232,.58);
+    --cm-pale-veil-mid: rgba(247,241,232,.42);
+    --cm-pale-veil-bot: rgba(247,241,232,.62);
+    --cm-pale-veil-top-dark: rgba(20,17,15,.52);
+    --cm-pale-veil-mid-dark: rgba(20,17,15,.38);
+    --cm-pale-veil-bot-dark: rgba(20,17,15,.58);
+    --cm-pale-bg-filter: saturate(.74) contrast(.94) brightness(1.12);
+    --cm-pale-bg-opacity: .88;
+  }
   .cm-card-veil{
     position:absolute;inset:0;z-index:1;
-    /* Soft wash — painting remains readable as full background */
-    background:linear-gradient(180deg,rgba(247,241,232,.46) 0%,rgba(247,241,232,.28) 42%,rgba(247,241,232,.52) 100%);
+    /* SHARED pale — same as early touch wash */
+    background:linear-gradient(180deg,var(--cm-pale-veil-top) 0%,var(--cm-pale-veil-mid) 42%,var(--cm-pale-veil-bot) 100%);
   }
   :root[data-theme="dark"] .cm-card-veil{
-    background:linear-gradient(180deg,rgba(20,17,15,.48) 0%,rgba(20,17,15,.32) 42%,rgba(20,17,15,.55) 100%);
+    background:linear-gradient(180deg,var(--cm-pale-veil-top-dark) 0%,var(--cm-pale-veil-mid-dark) 42%,var(--cm-pale-veil-bot-dark) 100%);
   }
   /* Sparse memorial: Owner reference — soft painting bg + small frame + few lines */
   .cm-card.is-sparse{
@@ -300,15 +316,16 @@
     background:transparent;
   }
   .cm-card.is-sparse .cm-card-bg{
-    /* Soft painting wash — readable strokes, not loud */
-    filter:saturate(.78) contrast(.96) brightness(1.1);
+    /* SHARED pale — match early card (not louder) */
+    filter:var(--cm-pale-bg-filter);
     transform:scale(1.1);
+    opacity:var(--cm-pale-bg-opacity);
   }
   .cm-card.is-sparse .cm-card-veil{
-    background:linear-gradient(180deg,rgba(247,241,232,.55) 0%,rgba(247,241,232,.36) 40%,rgba(247,241,232,.58) 100%);
+    background:linear-gradient(180deg,var(--cm-pale-veil-top) 0%,var(--cm-pale-veil-mid) 40%,var(--cm-pale-veil-bot) 100%);
   }
   :root[data-theme="dark"] .cm-card.is-sparse .cm-card-veil{
-    background:linear-gradient(180deg,rgba(20,17,15,.5) 0%,rgba(20,17,15,.34) 40%,rgba(20,17,15,.55) 100%);
+    background:linear-gradient(180deg,var(--cm-pale-veil-top-dark) 0%,var(--cm-pale-veil-mid-dark) 40%,var(--cm-pale-veil-bot-dark) 100%);
   }
   .cm-card.is-sparse .cm-echo,
   .cm-card.is-sparse .cm-mem-label,
@@ -335,7 +352,8 @@
   }
   .cm-card.is-sparse .cm-ritual-label{margin-bottom:6px;opacity:.75}
   .cm-card.is-sparse .cm-lightprint{
-    margin:16px 0 0;text-align:right;opacity:.55;font-size:9.5px;
+    /* Keep watermark corner — even quieter on memorial */
+    margin:0;right:11px;bottom:9px;opacity:.32;font-size:8px;letter-spacing:.11em;
   }
   .cm-card.is-sparse .cm-card-actions{
     margin-top:18px;padding-top:14px;
@@ -521,19 +539,36 @@
   .cm-seal{
     position:relative;overflow:visible;
   }
+  /* Hold-to-seal SVG ring — idle track + gold fill (visible mid-hold) */
   .cm-seal-ring{
-    position:absolute;inset:-6px;border-radius:999px;pointer-events:none;
-    background:conic-gradient(from -90deg, var(--ink) calc(var(--hold, 0) * 1%), transparent 0);
-    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
-            mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
-    opacity:0;transition:opacity .2s ease;
+    position:absolute;inset:-12px;border-radius:999px;pointer-events:none;z-index:0;
+    opacity:.9;display:block;
+  }
+  .cm-seal-ring-svg{display:block;width:100%;height:100%;overflow:visible}
+  .cm-seal-ring-track{
+    stroke:rgba(201,164,106,.38);stroke-width:2.4;
+  }
+  .cm-seal-ring-prog{
+    stroke:#c9a46a;stroke-width:2.8;stroke-linecap:round;
+    stroke-dasharray:100; /* dashoffset set in JS via setSealHoldProgress */
+    transform:rotate(-90deg);transform-origin:18px 18px;
+    filter:drop-shadow(0 0 3px rgba(201,164,106,.45));
+    transition:stroke .15s ease;
   }
   .cm-seal.is-holding .cm-seal-ring{opacity:1}
-  .cm-seal.is-holding{transform:scale(.98);box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+  .cm-seal.is-holding .cm-seal-ring-track{stroke:rgba(201,164,106,.5)}
+  .cm-seal.is-holding .cm-seal-ring-prog{filter:drop-shadow(0 0 6px rgba(201,164,106,.7))}
+  .cm-seal.is-holding{transform:scale(.98);box-shadow:0 0 0 1px rgba(201,164,106,.35)}
+  .cm-seal.is-complete .cm-seal-ring-prog{
+    stroke:#d4b56e;stroke-dashoffset:0;
+    filter:drop-shadow(0 0 10px rgba(201,164,106,.85));
+  }
+  .cm-seal.is-complete{box-shadow:0 0 24px rgba(201,164,106,.5)}
   .cm-seal.is-coalescing{
     pointer-events:none;opacity:.88;
-    box-shadow:0 0 28px rgba(201,164,106,.35);
+    box-shadow:0 0 28px rgba(201,164,106,.45);
   }
+  .cm-seal-label{position:relative;z-index:1}
   .cm-seal-hold-hint{
     margin:0;font-size:12px;line-height:1.45;color:var(--muted);max-width:34ch;
   }
@@ -554,11 +589,7 @@
   .cm-residue-actions .cm-path-replay{
     border-color:var(--ink);background:var(--ink);color:var(--paper);
   }
-  .cm-lightprint{
-    position:absolute;right:14px;bottom:12px;left:auto;margin:0;
-    text-align:right;z-index:3;opacity:.58;letter-spacing:.14em;font-size:10px;
-  }
-  .cm-card-body{padding-bottom:8px}
+  .cm-card-body{padding-bottom:28px} /* room so watermark never collides with actions */
 </style>
 </head>
 <body>
@@ -639,9 +670,14 @@
 
         <div class="cm-seal-bar" id="cmSealBar" hidden>
           <p class="cm-lp-hint" id="cmLpHint" data-en="Hold 收光" data-zh="按住「收光」">Hold 收光</p>
-          <button type="button" class="cm-seal" id="cmSeal" data-en="收光 · Seal" data-zh="收光" aria-label="收光" aria-describedby="cmSealHoldHint">
-            <span class="cm-seal-ring" id="cmSealRing" aria-hidden="true"></span>
-            <span class="cm-seal-label" id="cmSealLabel">收光 · Seal</span>
+          <button type="button" class="cm-seal" id="cmSeal" aria-label="收光" aria-describedby="cmSealHoldHint">
+            <span class="cm-seal-ring" id="cmSealRing" aria-hidden="true">
+              <svg class="cm-seal-ring-svg" viewBox="0 0 36 36" width="100%" height="100%" aria-hidden="true">
+                <circle class="cm-seal-ring-track" pathLength="100" cx="18" cy="18" r="16" fill="none"></circle>
+                <circle class="cm-seal-ring-prog" pathLength="100" cx="18" cy="18" r="16" fill="none" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+              </svg>
+            </span>
+            <span class="cm-seal-label" id="cmSealLabel" data-en="收光 · Seal" data-zh="收光">收光 · Seal</span>
           </button>
           <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold — release to cancel" data-zh="按住——放開即取消">Hold — release to cancel</p>
           <button type="button" class="cm-seal-back" id="cmSealBack" data-en="Back to questions" data-zh="回到問題">Back to questions</button>
@@ -670,7 +706,6 @@
               <span class="cm-ritual-label" id="cmRitualLabel"></span>
               <span id="cmRitualText"></span>
             </p>
-            <p class="cm-lightprint" id="cmLightprint" hidden></p>
             <p class="cm-discover" id="cmDiscover"></p>
             <p class="cm-mini-tip" id="cmMiniTip" hidden></p>
             <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
@@ -682,6 +717,8 @@
             </div>
             <p class="cm-toast" id="cmToast" role="status" aria-live="polite"></p>
           </div>
+          <!-- Quiet watermark corner — Owner lock: pale, small, not competing with art -->
+          <p class="cm-lightprint" id="cmLightprint" hidden></p>
         </article>
       </div>
 
@@ -714,7 +751,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2452 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2453b · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1821,7 +1858,7 @@
     }
     const label = L === 'zh' ? '收光' : '收光 · Seal';
     if (sealLabel) sealLabel.textContent = label;
-    else if (sealBtn) sealBtn.textContent = label;
+    // Never sealBtn.textContent — that destroys the hold-progress ring DOM.
     if (sealBtn) sealBtn.setAttribute('aria-label', '收光');
     if (sealHoldHint) {
       sealHoldHint.textContent = L === 'zh' ? '按住——放開即取消' : 'Hold — release to cancel';
@@ -2426,19 +2463,31 @@
       x ^= x >>> 15;
       x = Math.imul(x, 0x846ca68b) >>> 0;
       x ^= x >>> 16;
-      out += LP_ALPH[x % LP_ALPH.length];
+      // >>> 0: JS % keeps negatives (LP_ALPH[-n] → "undefined" string bug)
+      out += LP_ALPH[(x >>> 0) % LP_ALPH.length];
       x = (x + h + Math.imul(i + 1, 2654435761)) >>> 0;
     }
     return 'LP-' + out;
   }
 
+  function isValidLightprintCode(code) {
+    return typeof code === 'string' && /^LP-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{8}$/.test(code);
+  }
+
   function encodeLightprint(touches, moodId) {
     const payload = JSON.stringify({
       m: moodId || '',
-      n: touches.length,
-      p: touches.map(t => [t.nx, t.ny, t.t, t.id, t.kind])
+      n: (touches && touches.length) || 0,
+      p: (touches || []).map(t => [
+        Number.isFinite(t.nx) ? t.nx : 0,
+        Number.isFinite(t.ny) ? t.ny : 0,
+        Number.isFinite(t.t) ? t.t : 0,
+        t.id == null ? 0 : t.id,
+        t.kind || 'tap'
+      ])
     });
-    return hashToLightprint(payload);
+    const code = hashToLightprint(payload);
+    return isValidLightprintCode(code) ? code : hashToLightprint(payload + '|safe');
   }
 
   function buildResidue(code) {
@@ -2507,7 +2556,16 @@
 
   function setSealHoldProgress(p) {
     const v = Math.max(0, Math.min(1, p || 0));
-    if (sealBtn) sealBtn.style.setProperty('--hold', String(Math.round(v * 100)));
+    const pct = Math.round(v * 100);
+    if (sealBtn) sealBtn.style.setProperty('--hold', String(pct));
+    // Direct SVG dash so hold ring is visible across browsers (pathLength=100)
+    const prog = sealRing && sealRing.querySelector
+      ? sealRing.querySelector('.cm-seal-ring-prog')
+      : document.querySelector('.cm-seal-ring-prog');
+    if (prog) {
+      prog.style.strokeDashoffset = String(100 - pct);
+      prog.setAttribute('stroke-dashoffset', String(100 - pct));
+    }
   }
 
   function cancelSealHold(silent) {
@@ -2519,7 +2577,9 @@
     }
     if (sealBtn) {
       sealBtn.classList.remove('is-holding');
-      setSealHoldProgress(0);
+      // Keep is-complete flash after a full hold; clear only when resetting progress to 0 mid-hold cancel.
+      if (!sealCoalescing && !lightSealed) sealBtn.classList.remove('is-complete');
+      setSealHoldProgress(sealCoalescing || lightSealed ? 1 : 0);
     }
   }
 
@@ -2531,7 +2591,10 @@
     if (p >= 1) {
       sealHolding = false;
       sealHoldRaf = 0;
-      if (sealBtn) sealBtn.classList.remove('is-holding');
+      if (sealBtn) {
+        sealBtn.classList.remove('is-holding');
+        sealBtn.classList.add('is-complete');
+      }
       setSealHoldProgress(1);
       beginCoalesceAndSeal();
       return;
@@ -2543,6 +2606,9 @@
     if (lightSealed || !bloomReady || !activeMood || sealCoalescing || pathReplayBusy) return;
     if (ev) {
       try { ev.preventDefault(); } catch (err) { /* ignore */ }
+      if (sealBtn && ev.pointerId != null) {
+        try { sealBtn.setPointerCapture(ev.pointerId); } catch (err) { /* ignore */ }
+      }
     }
     // Require at least a touch of light — otherwise soft guide, not failure.
     if (!lightTouches.length && !started) {
@@ -2552,7 +2618,10 @@
     }
     sealHolding = true;
     sealHoldStart = performance.now();
-    if (sealBtn) sealBtn.classList.add('is-holding');
+    if (sealBtn) {
+      sealBtn.classList.remove('is-complete');
+      sealBtn.classList.add('is-holding');
+    }
     setSealHoldProgress(0);
     if (sealHoldRaf) cancelAnimationFrame(sealHoldRaf);
     sealHoldRaf = requestAnimationFrame(tickSealHold);
@@ -2713,7 +2782,7 @@
     if (data.reading) activeReading = data.reading;
     if (data.ritual) activeRitual = data.ritual;
     if (data.code) {
-      lightprintCode = data.code;
+      lightprintCode = isValidLightprintCode(data.code) ? data.code : encodeLightprint(lightTouches, (data.mood || (activeMood && activeMood.id) || ''));
       lightSealed = true;
     }
     lightTouches = data.path.map(p => ({
@@ -2771,7 +2840,8 @@
   }
 
   function lightprintLabel() {
-    return lightprintCode ? ('AE · ' + lightprintCode) : '';
+    if (!isValidLightprintCode(lightprintCode)) return '';
+    return 'AE · ' + lightprintCode;
   }
 
   function sealLight() {
@@ -3036,12 +3106,15 @@
         const dw = iw * scale, dh = ih * scale;
         const dx = (w - dw) / 2, dy = (h - dh) / 2;
         ctx.save();
-        ctx.globalAlpha = dark ? 0.22 : 0.30;
+        /* SHARED pale lock — early === result (Owner correction) */
+        ctx.globalAlpha = dark ? 0.16 : 0.22; /* --cm-pale-art-alpha-* */
         ctx.drawImage(artWashImg, dx, dy, dw, dh);
         ctx.globalAlpha = 1;
         const veil = ctx.createLinearGradient(0, 0, 0, h);
-        veil.addColorStop(0, dark ? 'rgba(20,17,15,.35)' : 'rgba(247,241,232,.28)');
-        veil.addColorStop(1, dark ? 'rgba(20,17,15,.5)' : 'rgba(247,241,232,.42)');
+        /* Same pale veil stops as --cm-pale-veil-* */
+        veil.addColorStop(0, dark ? 'rgba(20,17,15,.52)' : 'rgba(247,241,232,.58)');
+        veil.addColorStop(0.42, dark ? 'rgba(20,17,15,.38)' : 'rgba(247,241,232,.42)');
+        veil.addColorStop(1, dark ? 'rgba(20,17,15,.58)' : 'rgba(247,241,232,.62)');
         ctx.fillStyle = veil;
         ctx.fillRect(0, 0, w, h);
         ctx.restore();
@@ -3402,15 +3475,16 @@
     // Soft memorial wash behind the keepsake (gesture as atmosphere).
     if (memorialBmp) {
       try {
-        imageContext.globalAlpha = 0.34;
+        imageContext.globalAlpha = 0.22;
         drawCover(imageContext, memorialBmp, w, h, 1.08);
         imageContext.globalAlpha = 1;
       } catch (err) { /* ignore */ }
     }
     const veil = imageContext.createLinearGradient(0, 0, 0, h);
-    veil.addColorStop(0, dark ? 'rgba(20,17,15,.84)' : 'rgba(247,241,232,.88)');
-    veil.addColorStop(.45, dark ? 'rgba(20,17,15,.74)' : 'rgba(247,241,232,.78)');
-    veil.addColorStop(1, dark ? 'rgba(20,17,15,.9)' : 'rgba(247,241,232,.92)');
+    /* SHARED pale — same stops as --cm-pale-veil-* / early wash */
+    veil.addColorStop(0, dark ? 'rgba(20,17,15,.52)' : 'rgba(247,241,232,.58)');
+    veil.addColorStop(.42, dark ? 'rgba(20,17,15,.38)' : 'rgba(247,241,232,.42)');
+    veil.addColorStop(1, dark ? 'rgba(20,17,15,.58)' : 'rgba(247,241,232,.62)');
     imageContext.fillStyle = veil;
     imageContext.fillRect(0, 0, w, h);
     imageContext.restore();
@@ -3495,13 +3569,13 @@
     imageContext.textAlign = 'left';
     drawWrapped(imageContext, ritualBody, 24, ritualY + 34, textWidth, 25, null);
 
-    // Secondary Lightprint mark — corner, quiet (gesture / memorial first).
+    // Quiet watermark corner mark — pale, small (Owner lock).
     if (lpLabel) {
       imageContext.fillStyle = muted;
-      imageContext.globalAlpha = 0.55;
+      imageContext.globalAlpha = 0.32;
       imageContext.textAlign = 'right';
-      imageContext.font = cardType(10, { cjk: false });
-      imageContext.fillText(lpLabel, w - 16, h - 12);
+      imageContext.font = cardType(8.5, { cjk: false });
+      imageContext.fillText(lpLabel, w - 14, h - 10);
       imageContext.globalAlpha = 1;
     }
     imageContext.restore();
