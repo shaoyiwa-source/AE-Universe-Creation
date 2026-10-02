@@ -43,6 +43,14 @@
     {
       "source": "/index",
       "destination": "/index.html"
+    },
+    {
+      "source": "/lightprint-figure-proto",
+      "destination": "/lightprint-figure-proto.html"
+    },
+    {
+      "source": "/lightprint-figure",
+      "destination": "/lightprint-figure.html"
     }
   ]
 }
