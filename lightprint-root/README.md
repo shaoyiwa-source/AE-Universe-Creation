@@ -1,6 +1,6 @@
 # ae-lightprint-preview · Root Directory
 
-Color Moment art-card restore (**v2450**).
+Color Moment shared pale memorial cards (**v2453b**).
 
 Flow: opening → 3–4 questions → touch trails → 收光 → memorial **art card** (畫 as hero) with Lightprint seal stamp on the path.
 
