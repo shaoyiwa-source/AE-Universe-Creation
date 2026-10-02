@@ -881,7 +881,7 @@
       choices: [
         { zh: '黃昏的柔金', en: 'The soft gold of dusk', tags: ['gold', 'warm'] },
         { zh: '第一顆星的靛藍', en: 'The indigo of the first star', tags: ['indigo', 'deep'] },
-        { zh: '霧散前的微亮', en: 'The hush before mist clears', tags: ['mist', 'soft'] }
+        { zh: '霧散前的微亮', en: 'A faint glow before the mist clears', tags: ['mist', 'soft'] }
       ]
     },
     {
@@ -989,7 +989,7 @@
       choices: [
         { zh: '曬過的棉與陽光', en: 'Sun-warmed cotton', tags: ['warm', 'gold'] },
         { zh: '雨打濕的青草', en: 'Grass wet with rain', tags: ['mist', 'cool'] },
-        { zh: '夜裡淡淡的花香', en: 'A faint night flower', tags: ['rose', 'indigo'] }
+        { zh: '夜裡淡淡的花香', en: 'A faint floral scent at night', tags: ['rose', 'indigo'] }
       ]
     },
     {
@@ -1032,7 +1032,7 @@
       zh: '舌頭記得的味道，更接近……',
       en: 'A taste the tongue remembers feels closer to…',
       choices: [
-        { zh: '剛泡開的暖茶', en: 'Warm tea just opened', tags: ['warm', 'gold'] },
+        { zh: '剛泡開的暖茶', en: 'Freshly brewed warm tea', tags: ['warm', 'gold'] },
         { zh: '雨後泥土的清涼', en: 'Cool earth after rain', tags: ['cool', 'deep'] },
         { zh: '夜間花蜜的淡甜', en: 'A faint night-nectar sweetness', tags: ['rose', 'soft'] }
       ]
@@ -1489,7 +1489,7 @@
     ],
     spark: [
       { zh: '先動。行動本身，就在創造新的無限。', en: 'Move first. Action itself creates new infinity.' },
-      { zh: 'Action creates infinity —— 今夜從一小步開始。', en: 'Action creates infinity — begin with one small step tonight.' }
+      { zh: 'Action creates infinity —— 從這一刻的一小步開始。', en: 'Action creates infinity — begin with one small step now.' }
     ],
     still: [
       { zh: '可以停，但不要放棄。把安靜留給當下。', en: 'Pause if you need — do not give up. Leave quiet for now.' },
@@ -1992,7 +1992,7 @@
     const L = lang();
     if (memorialDataUrl && memorialEl && memorialImg) {
       memorialImg.src = memorialDataUrl;
-      memorialImg.alt = L === 'zh' ? '獨一無二紀念光痕' : 'One-of-a-kind memorial light-trace';
+      memorialImg.alt = L === 'zh' ? '獨一無二紀念光痕' : 'One-of-a-kind light-trace keepsake';
       memorialEl.hidden = false;
       if (memorialCap) {
         memorialCap.hidden = false;
@@ -2790,7 +2790,7 @@
         cardBg.style.backgroundImage = '';
       }
     }
-    cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Eternal Sun';
+    cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Sheng Ming';
     cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
     cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
     if (cardSrc) {
@@ -2837,7 +2837,7 @@
     }
 
     if (activeRitual) {
-      ritualLabel.textContent = L === 'zh' ? '今夜的柔邀' : 'Tonight’s soft invitation';
+      ritualLabel.textContent = L === 'zh' ? '這一刻的柔邀' : 'A gentle invitation for this moment';
       ritualText.textContent = L === 'zh' ? activeRitual.zh : activeRitual.en;
     } else {
       ritualLabel.textContent = '';
@@ -2847,14 +2847,14 @@
     if (discoverEl) {
       discoverEl.innerHTML = L === 'zh'
         ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
-        : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.';
+        : 'If you want a little more light, visit the <a href="/experience">Experience</a> or browse the <a href="shop.html">Shop</a>.';
     }
 
     if (miniTipEl) {
       miniTipEl.hidden = false;
       miniTipEl.textContent = L === 'zh'
         ? '想把這一瞬帶走時，數位小卡很快會在商店輕輕出現。'
-        : 'When you want to carry this moment, digital mini-cards will soft-arrive in the Shop.';
+        : 'When you want to carry this moment with you, digital mini-cards will soon appear in the Shop.';
     }
 
     cardEl.hidden = false;
@@ -3298,7 +3298,7 @@
     const moodSub = isZh ? activeMood.en : activeMood.zh;
     const eyebrow = isZh ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · ETERNAL SUN';
     const srcLine = isZh ? '摘自《盛明》筆記' : 'From the 《盛明》 notes';
-    const ritualLabelText = isZh ? '今夜的柔邀' : 'TONIGHT’S SOFT INVITATION';
+    const ritualLabelText = isZh ? '這一刻的柔邀' : 'TONIGHT’S SOFT INVITATION';
     const lpLabel = lightprintLabel();
     const hasMemorial = !!memorialDataUrl;
     const memorialPanelH = hasMemorial ? Math.round(Math.min(210, w * 0.42)) : 0;
@@ -3413,7 +3413,7 @@
       imageContext.globalAlpha = 0.9;
       const memorialCaption = isZh
         ? '獨一無二紀念'
-        : 'One-of-a-kind memorial';
+        : 'One-of-a-kind keepsake';
       imageContext.fillText(memorialCaption, w / 2, py + ph + 14);
       imageContext.globalAlpha = 1;
       y = py + ph + memorialGap + memorialCapH;
