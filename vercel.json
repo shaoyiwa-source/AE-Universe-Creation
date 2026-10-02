@@ -13,6 +13,10 @@
       "destination": "/experience.html"
     },
     {
+      "source": "/together",
+      "destination": "/together.html"
+    },
+    {
       "source": "/color-moment",
       "destination": "/color-moment.html"
     },
@@ -52,5 +56,11 @@
       "source": "/lightprint-figure",
       "destination": "/lightprint-figure.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/together.js": {
+      "maxDuration": 10,
+      "regions": ["hkg1"]
+    }
+  }
 }

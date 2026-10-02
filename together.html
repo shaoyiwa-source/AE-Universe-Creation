@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>One table · AE Universe Creation</title>
+<meta name="ae-preview-version" content="together-v1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
+<script src="site.js?v=2427" defer></script>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="icon" type="image/png" href="/favicon.png"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<style>
+:root{--paper:#f3efe6;--ink:#1a1612;--night:#090909;--warm:#f6f1e8;--muted:#8d867c;--line:rgba(255,255,255,.16);--gold:#e7bd67;--rose:#e7b0c8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--night);color:var(--warm);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:inherit}
+button,a{font:inherit}
+.wrap{width:min(720px,92vw);margin:0 auto;padding:18px 0 36px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.brand{font-family:Georgia,serif;letter-spacing:.04em;text-decoration:none;font-size:15px}
+.lang{background:none;border:0;color:inherit;min-height:44px;cursor:pointer}
+h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(40px,10vw,64px);line-height:.95;margin:.1em 0 .2em}
+.how{margin:0 0 8px;line-height:1.45;color:#ddd4c8;font-size:16px}
+.code{margin:0;color:var(--muted);letter-spacing:.14em;font-size:12px}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(100%,calc((100dvh - 330px) * 9 / 16));margin:12px auto;padding:6px;border:1px solid var(--line);border-radius:22px}
+.cell{position:relative;aspect-ratio:9/16;padding:0;border:0;border-radius:13px;overflow:hidden;background:#141210;cursor:pointer}
+.cell img{width:100%;height:100%;object-fit:cover;display:block}
+.cell:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.mark{position:absolute;width:30%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;transform:translate(-50%,-50%);color:#1a140f;font:400 clamp(14px,4vw,22px)/1 Georgia,serif;box-shadow:0 0 0 2px rgba(255,255,255,.8);pointer-events:none}
+.mark.you{background:radial-gradient(circle at 35% 25%,#fff7d8,var(--gold) 62%,#b8893e)}
+.mark.them{background:radial-gradient(circle at 35% 25%,#fff4f8,var(--rose) 62%,#a86d8d)}
+.below{display:grid;gap:8px;margin-top:8px}
+.presence,.count{margin:0;min-height:1.3em}
+.share{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:var(--warm);color:#16130f;cursor:pointer}
+.quiet,.shop{margin:14px 0 0;color:#9c958b;font-size:13px;line-height:1.45}
+.shop{font-size:12px}
+.shop a,.quiet a{text-underline-offset:3px}
+.note{color:#c4554a;min-height:1.2em;font-size:13px}
+@media(max-width:820px){
+  .wrap{padding-top:12px}
+  h1{font-size:clamp(34px,9vw,48px)}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <a class="brand" href="/experience">AE</a>
+    <button class="lang" type="button" data-language>中文</button>
+  </div>
+  <h1 data-en="One table." data-zh="同一張桌子。">One table.</h1>
+  <p class="how" data-en="Tap an artwork. Your light stays, and anyone with this Lightprint can see it." data-zh="點一幅作品。你的光會留在上面，打開同一道光紋的人看得到。">Tap an artwork. Your light stays, and anyone with this Lightprint can see it.</p>
+  <p class="code" id="codeLine">AE · ……</p>
+  <div class="board" id="board" aria-label="Nine artworks"></div>
+  <div class="below">
+    <p class="presence" id="presence" aria-live="polite"></p>
+    <p class="count" id="countLine"></p>
+    <button class="share" id="shareBtn" type="button" data-en="Give this Lightprint to someone" data-zh="把這道光紋給另一個人">Give this Lightprint to someone</button>
+    <p class="note" id="note" aria-live="polite"></p>
+  </div>
+  <p class="quiet"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener" data-en="A dollar is welcome, and it is not required." data-zh="留一塊錢也可以，不是必須。">A dollar is welcome, and it is not required.</a></p>
+  <p class="shop"><a href="/shop" data-en="The shop can wait." data-zh="商店可以晚一點。">The shop can wait.</a></p>
+</main>
+<script>
+const ABC = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+const SYMBOLS = ['♥','∞','☾','✦','❀','☁','◌','⌁'];
+const CODE_RE = /^LP-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{8}$/;
+
+function pick(len, prefix) {
+  const bytes = new Uint8Array(len);
+  crypto.getRandomValues(bytes);
+  let out = prefix;
+  for (let i = 0; i < len; i++) out += ABC[bytes[i] % ABC.length];
+  return out;
+}
+function lang() {
+  return (document.documentElement.lang || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+}
+function say(el, en, zh) {
+  if (!el) return;
+  el.dataset.en = en;
+  el.dataset.zh = zh;
+  el.textContent = lang() === 'zh' ? zh : en;
+}
+function handId() {
+  const key = 'ae_together_hand';
+  try {
+    const saved = sessionStorage.getItem(key);
+    if (/^h[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{6}$/.test(saved || '')) return saved;
+    const next = pick(6, 'h');
+    sessionStorage.setItem(key, next);
+    return next;
+  } catch (error) {
+    return pick(6, 'h');
+  }
+}
+function roomCode() {
+  const params = new URLSearchParams(location.search);
+  const given = params.get('lp') || '';
+  if (CODE_RE.test(given)) return given;
+  const code = pick(8, 'LP-');
+  params.set('lp', code);
+  history.replaceState(null, '', location.pathname + '?' + params.toString());
+  return code;
+}
+
+const code = roomCode();
+const hand = handId();
+const state = { marks: [], others: 0, shared: true, mine: 0 };
+let files = [];
+
+function shareUrl() {
+  return location.origin + '/together?lp=' + code;
+}
+function labelCells() {
+  document.querySelectorAll('.cell').forEach((cell) => {
+    const n = Number(cell.dataset.i) + 1;
+    cell.setAttribute('aria-label', lang() === 'zh' ? '在作品 ' + n + ' 上留光' : 'Leave a light on artwork ' + n);
+  });
+}
+function renderMarks() {
+  labelCells();
+  document.querySelectorAll('.mark').forEach((node) => node.remove());
+  const placed = {};
+  state.marks.forEach((mark) => {
+    const cell = document.querySelector('.cell[data-i="' + mark.art + '"]');
+    if (!cell) return;
+    const key = mark.art + (mark.yours ? ':you' : ':them');
+    const n = placed[key] || 0;
+    placed[key] = n + 1;
+    const el = document.createElement('i');
+    el.className = 'mark ' + (mark.yours ? 'you' : 'them');
+    el.textContent = mark.symbol;
+    el.style.left = (mark.yours ? 36 + n * 8 : 64 - n * 8) + '%';
+    el.style.top = (mark.yours ? 42 + n * 10 : 66 + n * 8) + '%';
+    cell.appendChild(el);
+  });
+  const both = new Set();
+  const you = new Set(state.marks.filter((mark) => mark.yours).map((mark) => mark.art));
+  state.marks.forEach((mark) => { if (!mark.yours && you.has(mark.art)) both.add(mark.art); });
+  const count = document.getElementById('countLine');
+  const n = state.marks.length;
+  if (both.size) say(count, 'Two lights on this piece.', '這幅上，有兩道光。');
+  else say(count, 'Together, ' + n + (n === 1 ? ' light.' : ' lights.'), '一起留下了 ' + n + ' 道。');
+  const presence = document.getElementById('presence');
+  if (state.others > 0) say(presence, 'The other hands are here.', '另一雙手到了。');
+  else say(presence, 'Waiting for the other hands.', '還在等另一雙手。');
+}
+async function pull() {
+  const res = await fetch('/api/together?code=' + code + '&hand=' + hand, { cache: 'no-store' });
+  if (!res.ok) throw new Error('pull');
+  const data = await res.json();
+  state.marks = data.marks || [];
+  state.others = data.others || 0;
+  state.shared = data.shared !== false;
+  renderMarks();
+  const note = document.getElementById('note');
+  if (!state.shared) say(note, 'This preview cannot share the table yet.', '這個預覽還不能把桌子共享出去。');
+  else if (!note.dataset.hold) note.textContent = '';
+}
+async function tap(art) {
+  const symbol = SYMBOLS[state.mine % SYMBOLS.length];
+  state.mine += 1;
+  const id = pick(8, 'm');
+  state.marks.push({ id, art, symbol, yours: true });
+  renderMarks();
+  const res = await fetch('/api/together', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, hand, art, symbol, id }),
+  });
+  if (!res.ok) throw new Error('tap');
+  const data = await res.json();
+  state.marks = data.marks || state.marks;
+  state.others = data.others || 0;
+  state.shared = data.shared !== false;
+  labelCells();
+  renderMarks();
+}
+async function loadArt() {
+  const html = await fetch('experience.html', { cache: 'force-cache' }).then((res) => res.text());
+  const start = html.indexOf('window.AE_EXPERIENCE_FILES=');
+  const end = html.indexOf(';window.AE_EXPERIENCE_SUN=', start);
+  if (start < 0 || end < 0) throw new Error('art');
+  files = Function('"use strict"; return (' + html.slice(start + 'window.AE_EXPERIENCE_FILES='.length, end) + ');')();
+  const board = document.getElementById('board');
+  board.innerHTML = files.slice(0, 9).map((src, i) => '<button class="cell" type="button" data-i="' + i + '" aria-label="Leave a light on artwork ' + (i + 1) + '"><img alt="" src="' + src + '"></button>').join('');
+  labelCells();
+  board.querySelectorAll('.cell').forEach((cell) => {
+    cell.addEventListener('click', () => tap(Number(cell.dataset.i)).catch(() => say(document.getElementById('note'), 'The light did not stay. Tap once more.', '這道光沒留下。再點一次。')));
+  });
+}
+async function share() {
+  const url = shareUrl();
+  const note = document.getElementById('note');
+  note.dataset.hold = '1';
+  try {
+    if (navigator.share) await navigator.share({ title: 'AE · ' + code, url });
+    else {
+      await navigator.clipboard.writeText(url);
+      say(note, 'Link copied.', '連結複製了。');
+    }
+  } catch (error) {
+    try {
+      await navigator.clipboard.writeText(url);
+      say(note, 'Link copied.', '連結複製了。');
+    } catch (err) {
+      say(note, url, url);
+    }
+  }
+  setTimeout(() => { delete note.dataset.hold; }, 2500);
+}
+function boot() {
+  document.getElementById('codeLine').textContent = 'AE · ' + code;
+  document.getElementById('shareBtn').addEventListener('click', share);
+  renderMarks();
+  loadArt().then(pull).catch(() => say(document.getElementById('note'), 'The artworks did not open.', '作品沒有打開。'));
+  setInterval(() => pull().catch(() => {}), 1200);
+}
+document.addEventListener('DOMContentLoaded', boot);
+new MutationObserver(() => renderMarks()).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+</script>
+</body>
+</html>
