@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2450">
+<meta name="ae-version" content="v2452">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2450">
-<script src="site.js?v=2450" defer></script>
+<link rel="stylesheet" href="site.css?v=2452">
+<script src="site.js?v=2452" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -171,34 +171,34 @@
   }
   .cm-seal-back:focus-visible{outline:2px solid rgba(201,164,106,.55);outline-offset:2px}
 
+  /* v2451: painting soft full bg + small centered sealed-light frame + sparse text */
   .cm-memorial{
-    margin:12px auto 4px;width:min(42%,148px);
-    border-radius:14px;overflow:hidden;
-    border:1px solid rgba(201,164,106,.34);
-    background:rgba(255,252,248,.42);
+    margin:20px auto 6px;width:min(62%,220px);
+    border-radius:18px;overflow:hidden;
+    border:1px solid rgba(120,112,118,.28);
+    background:rgba(186,178,188,.38);
     position:relative;
-    aspect-ratio:1/1;
-    box-shadow:0 6px 18px rgba(45,40,36,.06), inset 0 0 0 1px rgba(240,226,196,.22);
+    aspect-ratio:5/3.35;
+    box-shadow:0 8px 22px rgba(45,40,36,.07), inset 0 0 0 1px rgba(255,255,255,.18);
   }
   .cm-memorial[hidden]{display:none!important}
   .cm-memorial img{
-    display:block;width:100%;height:100%;object-fit:cover;
-    filter:saturate(1.08) contrast(1.03) brightness(1.03);
+    display:block;width:100%;height:100%;object-fit:cover;object-position:center 46%;
+    filter:saturate(1.06) contrast(1.02) brightness(1.02);
   }
   .cm-memorial-cap{
-    margin:4px 0 0;font-size:10px;letter-spacing:.12em;
-    color:var(--muted);opacity:.7;text-align:center;
+    margin:8px 0 0;font-size:10px;letter-spacing:.18em;
+    color:var(--muted);opacity:.72;text-align:center;
   }
-  /* v2450: art card is hero — no lean strip. Lightprint seal sits as a small stamp on the art path. */
   .cm-memorial-cap[hidden]{display:none!important}
   .cm-lightprint{
-    margin:8px 0 0;font-size:11px;letter-spacing:.16em;
-    color:var(--muted);opacity:.72;
+    margin:14px 0 0;font-size:10px;letter-spacing:.16em;
+    color:var(--muted);opacity:.62;
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
   }
   .cm-lightprint[hidden]{display:none!important}
 
-  /* v2450 Lightprint: art card hero; fingerprint seal sits on the art path */
+  /* v2451 Lightprint sparse memorial card */
   .cm-opening-kicker{
     margin:0 0 8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--muted);
@@ -287,11 +287,62 @@
   }
   .cm-card-veil{
     position:absolute;inset:0;z-index:1;
-    background:linear-gradient(180deg,rgba(247,241,232,.88) 0%,rgba(247,241,232,.78) 45%,rgba(247,241,232,.9) 100%);
+    /* Soft wash — painting remains readable as full background */
+    background:linear-gradient(180deg,rgba(247,241,232,.46) 0%,rgba(247,241,232,.28) 42%,rgba(247,241,232,.52) 100%);
   }
   :root[data-theme="dark"] .cm-card-veil{
-    background:linear-gradient(180deg,rgba(20,17,15,.82) 0%,rgba(20,17,15,.72) 45%,rgba(20,17,15,.88) 100%);
+    background:linear-gradient(180deg,rgba(20,17,15,.48) 0%,rgba(20,17,15,.32) 42%,rgba(20,17,15,.55) 100%);
   }
+  /* Sparse memorial: Owner reference — soft painting bg + small frame + few lines */
+  .cm-card.is-sparse{
+    padding:28px 20px 20px;margin-top:18px;
+    border-color:rgba(120,112,118,.18);
+    background:transparent;
+  }
+  .cm-card.is-sparse .cm-card-bg{
+    /* Soft painting wash — readable strokes, not loud */
+    filter:saturate(.78) contrast(.96) brightness(1.1);
+    transform:scale(1.1);
+  }
+  .cm-card.is-sparse .cm-card-veil{
+    background:linear-gradient(180deg,rgba(247,241,232,.55) 0%,rgba(247,241,232,.36) 40%,rgba(247,241,232,.58) 100%);
+  }
+  :root[data-theme="dark"] .cm-card.is-sparse .cm-card-veil{
+    background:linear-gradient(180deg,rgba(20,17,15,.5) 0%,rgba(20,17,15,.34) 40%,rgba(20,17,15,.55) 100%);
+  }
+  .cm-card.is-sparse .cm-echo,
+  .cm-card.is-sparse .cm-mem-label,
+  .cm-card.is-sparse .cm-epithet,
+  .cm-card.is-sparse .cm-epithet-en,
+  .cm-card.is-sparse .cm-lore,
+  .cm-card.is-sparse .cm-figure-mood,
+  .cm-card.is-sparse .cm-discover,
+  .cm-card.is-sparse .cm-mini-tip,
+  .cm-card.is-sparse .cm-capture-note{display:none!important}
+  .cm-card.is-sparse .cm-card-eyebrow{margin:0 0 8px;opacity:.78}
+  .cm-card.is-sparse .cm-card-title{font-size:clamp(26px,5.4vw,34px);font-weight:600}
+  .cm-card.is-sparse .cm-card-en{margin-top:4px}
+  .cm-card.is-sparse .cm-card-src{margin-top:6px;opacity:.75}
+  .cm-card.is-sparse .cm-reading{
+    margin:12px auto 0;max-width:34ch;
+    font-size:14px;line-height:1.7;color:rgba(42,36,32,.86);
+  }
+  .cm-card.is-sparse .cm-reading p{margin:0 0 4px}
+  .cm-card.is-sparse .cm-ritual{
+    margin:18px auto 0;max-width:34ch;padding-top:14px;
+    border-top:1px solid rgba(120,112,118,.22);
+    font-size:clamp(16px,2.4vw,19px);
+  }
+  .cm-card.is-sparse .cm-ritual-label{margin-bottom:6px;opacity:.75}
+  .cm-card.is-sparse .cm-lightprint{
+    margin:16px 0 0;text-align:right;opacity:.55;font-size:9.5px;
+  }
+  .cm-card.is-sparse .cm-card-actions{
+    margin-top:18px;padding-top:14px;
+    border-top:1px solid rgba(120,112,118,.18);
+    gap:8px 10px;
+  }
+  .cm-card.is-sparse .cm-card-action{background:transparent;border-color:rgba(120,112,118,.35)}
   .cm-card-body{position:relative;z-index:2}
   .cm-card-eyebrow{
     font-size:11px;letter-spacing:.16em;text-transform:uppercase;
@@ -614,12 +665,12 @@
             <p class="cm-epithet-en" id="cmEpithetEn" hidden></p>
             <div class="cm-lore" id="cmLore" hidden></div>
             <div class="cm-figure-mood" id="cmFigureMood" hidden aria-hidden="true"></div>
-            <p class="cm-lightprint" id="cmLightprint" hidden></p>
             <div class="cm-reading" id="cmReading"></div>
             <p class="cm-ritual" id="cmRitual">
               <span class="cm-ritual-label" id="cmRitualLabel"></span>
               <span id="cmRitualText"></span>
             </p>
+            <p class="cm-lightprint" id="cmLightprint" hidden></p>
             <p class="cm-discover" id="cmDiscover"></p>
             <p class="cm-mini-tip" id="cmMiniTip" hidden></p>
             <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
@@ -663,7 +714,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2450 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2452 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1997,8 +2048,8 @@
       if (memorialCap) {
         memorialCap.hidden = false;
         memorialCap.textContent = L === 'zh'
-          ? '光紋印記'
-          : 'Lightprint seal';
+          ? '獨一無二紀念'
+          : 'One-of-a-kind keepsake';
       }
     } else {
       if (memorialEl) memorialEl.hidden = true;
@@ -2778,11 +2829,11 @@
     return `You leaned toward — “${use[0]}” and “${use[1]}”`;
   }
 
-  // v2450: single art card (畫到底) with Lightprint seal stamp on the path — dual-card deferred.
+  // v2451: art painting soft full bg + small centered sealed-light frame + sparse text (Owner ref).
   function renderCard() {
     if (!activeMood) return;
     const L = lang();
-    // v2450: mood artwork (畫) is the card hero. Lightprint seal sits on the art path as a small stamp — never clears art bg.
+    // v2451: mood artwork stays soft full background; sealed light sits in small centered frame — never clears art bg.
     if (cardBg) {
       if (activeArt) {
         cardBg.style.backgroundImage = `url("${activeArt}")`;
@@ -2829,7 +2880,8 @@
     readingEl.innerHTML = '';
     if (activeReading) {
       const lines = L === 'zh' ? activeReading.zh : activeReading.en;
-      lines.forEach(line => {
+      const maxLines = memorialDataUrl ? 2 : lines.length;
+      lines.slice(0, maxLines).forEach(line => {
         const p = document.createElement('p');
         p.textContent = line;
         readingEl.appendChild(p);
@@ -2859,6 +2911,8 @@
 
     cardEl.hidden = false;
     cardEl.classList.remove('is-lean');
+    // v2451: sparse memorial card when sealed light frame is present (Owner reference).
+    cardEl.classList.toggle('is-sparse', !!memorialDataUrl);
     cardEl.classList.remove('is-on');
     {
       const tb = document.getElementById('cmTouchBack');
@@ -3296,9 +3350,9 @@
     const ritualBody = isZh ? activeRitual.zh : activeRitual.en;
     const moodMain = isZh ? activeMood.zh : activeMood.en;
     const moodSub = isZh ? activeMood.en : activeMood.zh;
-    const eyebrow = isZh ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · ETERNAL SUN';
+    const eyebrow = isZh ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · SHENG MING';
     const srcLine = isZh ? '摘自《盛明》筆記' : 'From the 《盛明》 notes';
-    const ritualLabelText = isZh ? '這一刻的柔邀' : 'TONIGHT’S SOFT INVITATION';
+    const ritualLabelText = isZh ? '這一刻的柔邀' : 'A GENTLE INVITATION FOR THIS MOMENT';
     const lpLabel = lightprintLabel();
     const hasMemorial = !!memorialDataUrl;
     const memorialPanelH = hasMemorial ? Math.round(Math.min(210, w * 0.42)) : 0;
