@@ -1,9 +1,9 @@
 # ae-lightprint-preview · Root Directory
 
-Integrated Color Moment + soft-breath Lightprint figure (**v2448**).
+Color Moment art-card restore (**v2450**).
 
-Flow: opening → 3–4 Q → touch trails → 收光 → memorial card + soft silhouette / epithet / 3 lore lines.
+Flow: opening → 3–4 questions → touch trails → 收光 → memorial **art card** (畫 as hero) with Lightprint seal stamp on the path.
 
-Art mood backgrounds omitted here (figure is hero); full art lives on main site Preview `public/color-moment.html`.
+Unstick: 「回到問題」 from touch/seal stages. Mood art webps included under `assets/`.
 
 Production `ae-universe-creation.vercel.app` untouched.

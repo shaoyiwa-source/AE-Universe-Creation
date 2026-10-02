@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2449">
+<meta name="ae-version" content="v2450">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2449">
-<script src="site.js?v=2449" defer></script>
+<link rel="stylesheet" href="site.css?v=2450">
+<script src="site.js?v=2450" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -163,14 +163,22 @@
     to{opacity:1;transform:none}
   }
   .cm-seal{min-height:52px;min-width:min(220px,72vw);font-size:16px;letter-spacing:.08em}
+  .cm-seal-back{
+    display:block;margin:10px auto 0;padding:6px 10px;border:0;background:transparent;
+    color:var(--muted);font:inherit;font-size:12px;letter-spacing:.06em;cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px;opacity:.78;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cm-seal-back:focus-visible{outline:2px solid rgba(201,164,106,.55);outline-offset:2px}
+
   .cm-memorial{
-    margin:8px auto 6px;width:min(100%,360px);
-    border-radius:16px;overflow:hidden;
-    border:1px solid rgba(201,164,106,.28);
-    background:rgba(255,252,248,.28);
+    margin:12px auto 4px;width:min(42%,148px);
+    border-radius:14px;overflow:hidden;
+    border:1px solid rgba(201,164,106,.34);
+    background:rgba(255,252,248,.42);
     position:relative;
-    aspect-ratio:4/3;
-    box-shadow:0 10px 28px rgba(45,40,36,.07), inset 0 0 0 1px rgba(240,226,196,.18);
+    aspect-ratio:1/1;
+    box-shadow:0 6px 18px rgba(45,40,36,.06), inset 0 0 0 1px rgba(240,226,196,.22);
   }
   .cm-memorial[hidden]{display:none!important}
   .cm-memorial img{
@@ -181,21 +189,7 @@
     margin:4px 0 0;font-size:10px;letter-spacing:.12em;
     color:var(--muted);opacity:.7;text-align:center;
   }
-  /* Lean card: hide long reading stack when memorial is the hero */
-  .cm-card.is-lean .cm-card-src,
-  .cm-card.is-lean .cm-reading,
-  .cm-card.is-lean .cm-ritual,
-  .cm-card.is-lean .cm-discover,
-  .cm-card.is-lean .cm-mini-tip,
-  .cm-card.is-lean .cm-capture-note,
-  .cm-card.is-lean .cm-figure-mood,
-  .cm-card.is-lean .cm-mem-label{display:none!important}
-  .cm-card.is-lean{padding:18px 16px 16px;margin-top:14px}
-  .cm-card.is-lean .cm-card-title{font-size:clamp(20px,4.4vw,26px)}
-  .cm-card.is-lean .cm-lore{margin:4px auto 6px;max-width:34ch}
-  .cm-card.is-lean .cm-lore p{font-size:13px;line-height:1.55;margin:0 0 4px}
-  .cm-card.is-lean .cm-card-actions{margin-top:14px;padding-top:12px}
-  .cm-card.is-lean .cm-echo{margin-top:6px;font-size:11.5px}
+  /* v2450: art card is hero — no lean strip. Lightprint seal sits as a small stamp on the art path. */
   .cm-memorial-cap[hidden]{display:none!important}
   .cm-lightprint{
     margin:8px 0 0;font-size:11px;letter-spacing:.16em;
@@ -204,7 +198,7 @@
   }
   .cm-lightprint[hidden]{display:none!important}
 
-  /* v2449 Lightprint: fingerprint memorial hero; silhouette secondary */
+  /* v2450 Lightprint: art card hero; fingerprint seal sits on the art path */
   .cm-opening-kicker{
     margin:0 0 8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--muted);
@@ -564,7 +558,7 @@
       <div class="cm-intro" id="cmIntro">
         <p class="cm-opening-kicker" id="cmOpeningKicker" data-en="Lightprint Memory" data-zh="光紋記憶">Lightprint Memory</p>
         <p class="cm-opening-lead" id="cmOpeningLead" data-en="Leave your Lightprint" data-zh="留下你的光紋">Leave your Lightprint</p>
-        <p class="cm-intro-soft" id="cmIntroSoft" data-en="Spend a few soft minutes with how you feel — leave your Lightprint, and seal this moment into a keepsake card with your Lightprint memory. Follow your feeling, touch lightly, then 收光. Soft figure preview: later this light can grow into a silhouette that is only yours — how the figure develops, how the story unfolds, is yours to decide. No right or wrong; just come closer to what you feel now." data-zh="花幾分鐘靠近自己的感覺——留下你的光紋，收成這一瞬的紀念。跟著感覺選、輕輕觸碰；最後收光，它會變成一張可留存的紀念卡，上面有你的光紋記憶。之後，這道光紋還能長成只屬於你的光影；人物怎麼發展、故事怎麼展開，都由你決定。沒有對錯，只要靠近你現在的感覺。">Spend a few soft minutes with how you feel — leave your Lightprint, and seal this moment into a keepsake card with your Lightprint memory. Follow your feeling, touch lightly, then 收光. Soft figure preview: later this light can grow into a silhouette that is only yours — how the figure develops, how the story unfolds, is yours to decide. No right or wrong; just come closer to what you feel now.</p>
+        <p class="cm-intro-soft" id="cmIntroSoft" data-en="Please spend a few minutes coming closer to how you feel — answer the soft questions below and leave your Lightprint (a fingerprint trace). Touch lightly, then seal 收光 into a memorial card with the painting. No right or wrong; just come closer to what you feel now." data-zh="請花幾分鐘靠近自己的感覺——回答以下的幾個問題並留下你的光紋（指紋的痕跡）；輕輕觸碰後收光，會收成一張有畫的紀念卡。沒有對錯，只要靠近你現在的感覺。">Please spend a few minutes coming closer to how you feel — answer the soft questions below and leave your Lightprint (a fingerprint trace). Touch lightly, then seal 收光 into a memorial card with the painting. No right or wrong; just come closer to what you feel now.</p>
         <p class="cm-coach" id="cmCoach" data-en="Pick one that fits" data-zh="輕輕選一個">Pick one that fits</p>
       </div>
 
@@ -590,6 +584,7 @@
           <div class="cm-hint" id="cmHint"><span data-en="Touch freely" data-zh="自由觸碰">Touch freely</span></div>
           <p class="cm-figure-breath" id="cmFigureBreath" data-en="Soft breathing" data-zh="柔光呼吸" hidden>Soft breathing</p>
         </div>
+        <button type="button" class="cm-seal-back" id="cmTouchBack" data-en="Back to questions" data-zh="回到問題" hidden>Back to questions</button>
 
         <div class="cm-seal-bar" id="cmSealBar" hidden>
           <p class="cm-lp-hint" id="cmLpHint" data-en="Hold 收光" data-zh="按住「收光」">Hold 收光</p>
@@ -598,6 +593,7 @@
             <span class="cm-seal-label" id="cmSealLabel">收光 · Seal</span>
           </button>
           <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold — release to cancel" data-zh="按住——放開即取消">Hold — release to cancel</p>
+          <button type="button" class="cm-seal-back" id="cmSealBack" data-en="Back to questions" data-zh="回到問題">Back to questions</button>
         </div>
 
         <article class="cm-card" id="cmCard" hidden aria-live="polite">
@@ -605,14 +601,14 @@
           <div class="cm-card-veil" aria-hidden="true"></div>
           <div class="cm-card-body">
             <p class="cm-card-eyebrow" id="cmCardEyebrow"></p>
-            <figure class="cm-memorial" id="cmMemorial" hidden>
-              <img id="cmMemorialImg" alt="" draggable="false">
-            </figure>
-            <p class="cm-memorial-cap" id="cmMemorialCap" hidden></p>
             <h2 class="cm-card-title" id="cmCardTitle"></h2>
             <p class="cm-card-en" id="cmCardEn"></p>
             <p class="cm-echo" id="cmEcho" hidden></p>
             <p class="cm-card-src" id="cmCardSrc"></p>
+            <figure class="cm-memorial" id="cmMemorial" hidden>
+              <img id="cmMemorialImg" alt="" draggable="false">
+            </figure>
+            <p class="cm-memorial-cap" id="cmMemorialCap" hidden></p>
             <p class="cm-mem-label" id="cmMemLabel" hidden data-en="Lightprint Memory" data-zh="光紋記憶">Lightprint Memory</p>
             <h3 class="cm-epithet" id="cmEpithetZh" hidden></h3>
             <p class="cm-epithet-en" id="cmEpithetEn" hidden></p>
@@ -626,7 +622,7 @@
             </p>
             <p class="cm-discover" id="cmDiscover"></p>
             <p class="cm-mini-tip" id="cmMiniTip" hidden></p>
-            <p class="cm-capture-note" data-en="Keep this moment with you." data-zh="帶著這一刻走。">Keep this moment with you.</p>
+            <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
             <div class="cm-card-actions" aria-label="Moment actions">
               <button type="button" class="cm-shutter" id="cmSnap" data-en="Take this moment" data-zh="拍下這一瞬">Take this moment</button>
               <button type="button" class="cm-card-action" id="cmShare" data-en="Share this card" data-zh="分享這張卡">Share this card</button>
@@ -667,7 +663,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2449 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2450 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1779,6 +1775,12 @@
     if (sealHoldHint) {
       sealHoldHint.textContent = L === 'zh' ? '按住——放開即取消' : 'Hold — release to cancel';
     }
+    const sealBack = document.getElementById('cmSealBack');
+    if (sealBack) {
+      sealBack.textContent = L === 'zh'
+        ? (sealBack.getAttribute('data-zh') || '回到問題')
+        : (sealBack.getAttribute('data-en') || 'Back to questions');
+    }
     if (pathReplayBtn) {
       pathReplayBtn.textContent = L === 'zh' ? '看光再走一次' : 'Watch the light again';
     }
@@ -1995,8 +1997,8 @@
       if (memorialCap) {
         memorialCap.hidden = false;
         memorialCap.textContent = L === 'zh'
-          ? '你的光痕 · 獨一無二'
-          : 'Your light-trace · one of a kind';
+          ? '光紋印記'
+          : 'Lightprint seal';
       }
     } else {
       if (memorialEl) memorialEl.hidden = true;
@@ -2324,14 +2326,22 @@
   function syncFigureCard(fig) {
     if (!fig) return;
     const L = lang();
-    // Lean card: epithet already in card title/en — keep extra epithet nodes quiet.
-    if (memLabelEl) memLabelEl.hidden = true;
-    if (epithetZhEl) { epithetZhEl.hidden = true; epithetZhEl.textContent = ''; }
-    if (epithetEnEl) { epithetEnEl.hidden = true; epithetEnEl.textContent = ''; }
+    // Soft secondary: art card keeps mood title; figure epithet/lore sit under the seal stamp.
+    if (memLabelEl) {
+      memLabelEl.hidden = false;
+      memLabelEl.textContent = L === 'zh' ? '光紋記憶' : 'Lightprint Memory';
+    }
+    if (epithetZhEl) {
+      epithetZhEl.hidden = false;
+      epithetZhEl.textContent = fig.epithet.zh;
+    }
+    if (epithetEnEl) {
+      epithetEnEl.hidden = false;
+      epithetEnEl.textContent = fig.epithet.en;
+    }
     if (loreEl) {
       loreEl.hidden = false;
       loreEl.innerHTML = '';
-      // One screen: at most 2 soft lore lines (GPT pre-page will carry more later).
       (fig.lore || []).slice(0, 2).forEach(line => {
         const p = document.createElement('p');
         p.textContent = L === 'zh' ? line.zh : line.en;
@@ -2727,7 +2737,7 @@
     lightSealed = true;
     lightprintCode = encodeLightprint(lightTouches, activeMood.id);
     persistLightprint(lightprintCode);
-    // Seal-moment glow seeds the card hero (fingerprint / touch frame) — capture before figure birth.
+    // Capture Lightprint seal stamp (small) — art remains card hero.
     try { captureMemorialImage(); } catch (err) { memorialDataUrl = null; }
     if (sealBar) {
       sealBar.hidden = true;
@@ -2740,8 +2750,8 @@
     renderCard();
     const L = lang();
     showToast(L === 'zh'
-      ? ('光已收好 · 這一痕就是紀念')
-      : ('Light sealed · this trace is the keepsake'));
+      ? ('光已收好 · 這幅畫是你的紀念卡')
+      : ('Light sealed · this painting is your memorial card'));
   }
 
 
@@ -2768,42 +2778,28 @@
     return `You leaned toward — “${use[0]}” and “${use[1]}”`;
   }
 
-  // Follow-up (not this deploy): dual-card after 收光 —
-  // (A) meaning card mood/line/art; (B) Lightprint trail memorial with trail hero + soft frame + corner LP.
+  // v2450: single art card (畫到底) with Lightprint seal stamp on the path — dual-card deferred.
   function renderCard() {
     if (!activeMood) return;
     const L = lang();
-    const leanMemorial = !!(memorialDataUrl);
-    // Fingerprint memorial is the card hero — do not let mood art replace that look.
+    // v2450: mood artwork (畫) is the card hero. Lightprint seal sits on the art path as a small stamp — never clears art bg.
     if (cardBg) {
-      if (leanMemorial) {
-        cardBg.style.backgroundImage = '';
-      } else if (activeArt) {
+      if (activeArt) {
         cardBg.style.backgroundImage = `url("${activeArt}")`;
-      }
-    }
-    if (leanMemorial || lastFigure) {
-      cardEyebrow.textContent = L === 'zh' ? '光紋記憶' : 'Lightprint Memory';
-      if (lastFigure) {
-        cardTitle.textContent = lastFigure.epithet.zh;
-        cardEn.textContent = lastFigure.epithet.en;
       } else {
-        cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
-        cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
+        cardBg.style.backgroundImage = '';
       }
-    } else {
-      cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Eternal Sun';
-      cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
-      cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
     }
+    cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Eternal Sun';
+    cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
+    cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
     if (cardSrc) {
       cardSrc.textContent = L === 'zh'
         ? '摘自《盛明》筆記'
         : 'From the 《盛明》 notes';
     }
-    // Quiet answer echo only when lean (1 short line); memorial image speaks first.
     if (echoEl) {
-      const echo = leanMemorial ? '' : buildAnswerEcho();
+      const echo = buildAnswerEcho();
       if (echo) {
         echoEl.hidden = false;
         echoEl.textContent = echo;
@@ -2831,7 +2827,7 @@
     }
 
     readingEl.innerHTML = '';
-    if (!leanMemorial && activeReading) {
+    if (activeReading) {
       const lines = L === 'zh' ? activeReading.zh : activeReading.en;
       lines.forEach(line => {
         const p = document.createElement('p');
@@ -2840,7 +2836,7 @@
       });
     }
 
-    if (!leanMemorial && activeRitual) {
+    if (activeRitual) {
       ritualLabel.textContent = L === 'zh' ? '今夜的柔邀' : 'Tonight’s soft invitation';
       ritualText.textContent = L === 'zh' ? activeRitual.zh : activeRitual.en;
     } else {
@@ -2848,30 +2844,26 @@
       ritualText.textContent = '';
     }
 
-    // Lean card: GPT will add a pre-page later — less copy needed here.
     if (discoverEl) {
-      discoverEl.innerHTML = leanMemorial
-        ? ''
-        : (L === 'zh'
-          ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
-          : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.');
+      discoverEl.innerHTML = L === 'zh'
+        ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
+        : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.';
     }
 
     if (miniTipEl) {
-      if (leanMemorial) {
-        miniTipEl.hidden = true;
-        miniTipEl.textContent = '';
-      } else {
-        miniTipEl.hidden = false;
-        miniTipEl.textContent = L === 'zh'
-          ? '想把這一瞬帶走時，數位小卡很快會在商店輕輕出現。'
-          : 'When you want to carry this moment, digital mini-cards will soft-arrive in the Shop.';
-      }
+      miniTipEl.hidden = false;
+      miniTipEl.textContent = L === 'zh'
+        ? '想把這一瞬帶走時，數位小卡很快會在商店輕輕出現。'
+        : 'When you want to carry this moment, digital mini-cards will soft-arrive in the Shop.';
     }
 
     cardEl.hidden = false;
-    cardEl.classList.toggle('is-lean', leanMemorial);
+    cardEl.classList.remove('is-lean');
     cardEl.classList.remove('is-on');
+    {
+      const tb = document.getElementById('cmTouchBack');
+      if (tb) tb.hidden = true;
+    }
     // Double rAF so the opacity/transform transition reliably plays after unhide.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => cardEl.classList.add('is-on'));
@@ -2899,6 +2891,7 @@
         activeRitual = pickFrom(SHENG_RITUALS[activeMood.id] || SHENG_RITUALS.gold);
         const arts = ART_BY_MOOD[activeMood.id] || ART_BY_MOOD.gold || [];
         activeArt = (arts && arts.length) ? pickFrom(arts) : null;
+        try { ensureArtWash(activeArt); } catch (err) { /* ignore */ }
         askEl.hidden = true;
         bloomWrap.hidden = false;
         afterEl.hidden = true; // no shop/experience clutter until sealed
@@ -2917,6 +2910,13 @@
         cardEl.hidden = true;
         cardEl.classList.remove('is-on');
         setSoloPhase('touch');
+        {
+          const tb = document.getElementById('cmTouchBack');
+          if (tb) {
+            tb.hidden = false;
+            tb.textContent = lang() === 'zh' ? '回到問題' : 'Back to questions';
+          }
+        }
         resize();
         window.setTimeout(() => {
           // Soft ambient wake — does NOT unlock 收光 or count as user paint.
@@ -2946,6 +2946,21 @@
     } catch (err) { /* ignore */ }
   }
 
+  let artWashImg = null;
+  let artWashSrc = '';
+  function ensureArtWash(src) {
+    if (!src) { artWashImg = null; artWashSrc = ''; return; }
+    if (artWashSrc === src && artWashImg) return;
+    artWashSrc = src;
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => {
+      artWashImg = img;
+      try { if (bloomReady) resize(); } catch (err) { /* ignore */ }
+    };
+    img.onerror = () => { if (artWashSrc === src) { artWashImg = null; } };
+    img.src = src;
+  }
   function paintBg(w, h) {
     const g = ctx.createLinearGradient(0, 0, w, h);
     const dark = document.documentElement.dataset.theme === 'dark';
@@ -2958,6 +2973,26 @@
     }
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
+    // Soft mood-art wash under touch glow — seal stage must not feel empty.
+    if (artWashImg && artWashImg.complete && artWashImg.naturalWidth) {
+      try {
+        const iw = artWashImg.naturalWidth;
+        const ih = artWashImg.naturalHeight;
+        const scale = Math.max(w / iw, h / ih) * 1.08;
+        const dw = iw * scale, dh = ih * scale;
+        const dx = (w - dw) / 2, dy = (h - dh) / 2;
+        ctx.save();
+        ctx.globalAlpha = dark ? 0.22 : 0.30;
+        ctx.drawImage(artWashImg, dx, dy, dw, dh);
+        ctx.globalAlpha = 1;
+        const veil = ctx.createLinearGradient(0, 0, 0, h);
+        veil.addColorStop(0, dark ? 'rgba(20,17,15,.35)' : 'rgba(247,241,232,.28)');
+        veil.addColorStop(1, dark ? 'rgba(20,17,15,.5)' : 'rgba(247,241,232,.42)');
+        ctx.fillStyle = veil;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      } catch (err) { /* ignore */ }
+    }
   }
 
   function bloomAt(x, y, fromAuto) {
@@ -3848,6 +3883,7 @@
     activeReading = null;
     activeRitual = null;
     activeArt = null;
+    try { ensureArtWash(null); } catch (err) { /* ignore */ }
     blooms = [];
     started = false;
     bloomReady = false;
@@ -3868,11 +3904,25 @@
     if (cardBg) cardBg.style.backgroundImage = '';
     runWash(false);
     setSoloPhase('ask');
+    {
+      const tb = document.getElementById('cmTouchBack');
+      if (tb) tb.hidden = true;
+    }
     showQuestion();
     syncResidueBanner();
   }
 
   replay.addEventListener('click', resetAll);
+  document.getElementById('cmSealBack')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    cancelSealHold(true);
+    resetAll();
+  });
+  document.getElementById('cmTouchBack')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    cancelSealHold(true);
+    resetAll();
+  });
   pathReplayBtn?.addEventListener('click', () => replayLightPath(sealedResidue || loadResidue()));
   residueReplayBtn?.addEventListener('click', () => replayLightPath(loadResidue()));
   residueDismissBtn?.addEventListener('click', () => {
