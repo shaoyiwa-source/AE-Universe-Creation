@@ -590,6 +590,26 @@
     border-color:var(--ink);background:var(--ink);color:var(--paper);
   }
   .cm-card-body{padding-bottom:28px} /* room so watermark never collides with actions */
+  /* One hold target: a round 收光 with a true circle ring (not a stretched pill). */
+  .cm-seal{
+    width:88px;height:88px;min-width:88px;min-height:88px;
+    padding:0;border-radius:50%;
+    display:grid;place-items:center;
+  }
+  .cm-seal-label{font-size:16px;letter-spacing:.12em}
+  .cm-seal-ring{
+    inset:-8px;width:auto;height:auto;border-radius:50%;opacity:1;
+  }
+  .cm-seal-ring-track{stroke-width:3.2}
+  .cm-seal-ring-prog{stroke-width:3.6}
+  .cm-freeze{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:fill;z-index:1;pointer-events:none;border-radius:inherit;
+  }
+  .cm-freeze[hidden]{display:none!important}
+  .cm-shell.is-frozen{cursor:default}
+  .cm-shell.is-frozen #cmCanvas{opacity:0}
+  #cmFigureCanvas{z-index:3}
 </style>
 </head>
 <body>
@@ -640,7 +660,7 @@
       <div class="cm-intro" id="cmIntro">
         <p class="cm-opening-kicker" id="cmOpeningKicker" data-en="Lightprint Memory" data-zh="光紋記憶">Lightprint Memory</p>
         <p class="cm-opening-lead" id="cmOpeningLead" data-en="Leave your Lightprint" data-zh="留下你的光紋">Leave your Lightprint</p>
-        <p class="cm-intro-soft" id="cmIntroSoft" data-en="Please spend a few minutes coming closer to how you feel — answer the soft questions below and leave your Lightprint (a fingerprint trace). Touch lightly, then seal 收光 into a memorial card with the painting. No right or wrong; just come closer to what you feel now." data-zh="請花幾分鐘靠近自己的感覺——回答以下的幾個問題並留下你的光紋（指紋的痕跡）；輕輕觸碰後收光，會收成一張有畫的紀念卡。沒有對錯，只要靠近你現在的感覺。">Please spend a few minutes coming closer to how you feel — answer the soft questions below and leave your Lightprint (a fingerprint trace). Touch lightly, then seal 收光 into a memorial card with the painting. No right or wrong; just come closer to what you feel now.</p>
+        <p class="cm-intro-soft" id="cmIntroSoft" data-en="Pick the one that feels closest." data-zh="選一個最靠近現在的感覺。">Pick the one that feels closest.</p>
         <p class="cm-coach" id="cmCoach" data-en="Pick one that fits" data-zh="輕輕選一個">Pick one that fits</p>
       </div>
 
@@ -659,17 +679,18 @@
       </div>
 
       <div class="cm-bloom-wrap" id="cmBloomWrap" hidden>
-        <div class="cm-shell" id="cmShell" role="img" aria-label="Interactive colour canvas — tap or click to bloom">
+        <div class="cm-shell" id="cmShell" aria-label="Move your finger and light follows">
           <canvas id="cmCanvas" width="920" height="690"></canvas>
           <canvas id="cmFigureCanvas" width="920" height="690" aria-hidden="true"></canvas>
           <div class="cm-mist" id="cmMist" aria-hidden="true"></div>
-          <div class="cm-hint" id="cmHint"><span data-en="Touch freely" data-zh="自由觸碰">Touch freely</span></div>
+          <div class="cm-hint" id="cmHint"><span data-en="Move your finger — light follows." data-zh="手指畫過去，光會跟著。">Move your finger — light follows.</span></div>
+          <img class="cm-freeze" id="cmFreeze" alt="" hidden>
           <p class="cm-figure-breath" id="cmFigureBreath" data-en="Soft breathing" data-zh="柔光呼吸" hidden>Soft breathing</p>
         </div>
         <button type="button" class="cm-seal-back" id="cmTouchBack" data-en="Back to questions" data-zh="回到問題" hidden>Back to questions</button>
 
         <div class="cm-seal-bar" id="cmSealBar" hidden>
-          <p class="cm-lp-hint" id="cmLpHint" data-en="Hold 收光" data-zh="按住「收光」">Hold 收光</p>
+          <p class="cm-lp-hint" id="cmLpHint" data-en="Hold until the ring fills." data-zh="按住，直到光環轉滿。">Hold until the ring fills.</p>
           <button type="button" class="cm-seal" id="cmSeal" aria-label="收光" aria-describedby="cmSealHoldHint">
             <span class="cm-seal-ring" id="cmSealRing" aria-hidden="true">
               <svg class="cm-seal-ring-svg" viewBox="0 0 36 36" width="100%" height="100%" aria-hidden="true">
@@ -677,7 +698,7 @@
                 <circle class="cm-seal-ring-prog" pathLength="100" cx="18" cy="18" r="16" fill="none" stroke-dasharray="100" stroke-dashoffset="100"></circle>
               </svg>
             </span>
-            <span class="cm-seal-label" id="cmSealLabel" data-en="收光 · Seal" data-zh="收光">收光 · Seal</span>
+            <span class="cm-seal-label" id="cmSealLabel" data-en="收光" data-zh="收光">收光</span>
           </button>
           <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold — release to cancel" data-zh="按住——放開即取消">Hold — release to cancel</p>
           <button type="button" class="cm-seal-back" id="cmSealBack" data-en="Back to questions" data-zh="回到問題">Back to questions</button>
@@ -1656,6 +1677,8 @@
   let blooms = [];
   let raf = 0;
   let started = false;
+  let finger = null;
+  const freezeEl = document.getElementById('cmFreeze');
   let bloomReady = false;
   let lightTouches = [];
   let lightSealed = false;
@@ -1849,14 +1872,20 @@
       memorialCap.hidden = true;
       memorialCap.textContent = '';
     }
+    finger = null;
+    if (freezeEl) {
+      freezeEl.hidden = true;
+      freezeEl.removeAttribute('src');
+    }
+    if (shell) shell.classList.remove('is-frozen');
   }
 
   function syncLpHintCopy() {
     const L = lang();
     if (lpHint) {
-      lpHint.textContent = L === 'zh' ? '按住「收光」' : 'Hold 收光';
+      lpHint.textContent = L === 'zh' ? '按住，直到光環轉滿。' : 'Hold until the ring fills.';
     }
-    const label = L === 'zh' ? '收光' : '收光 · Seal';
+    const label = '收光';
     if (sealLabel) sealLabel.textContent = label;
     // Never sealBtn.textContent — that destroys the hold-progress ring DOM.
     if (sealBtn) sealBtn.setAttribute('aria-label', '收光');
@@ -1877,9 +1906,9 @@
   function coachCopy(phase) {
     const L = lang();
     const map = {
-      ask: { zh: '輕輕選一個', en: 'Pick one that fits' },
-      touch: { zh: '自由觸碰畫面', en: 'Touch freely' },
-      seal: { zh: '按住「收光」', en: 'Hold 收光' },
+      ask: { zh: '選一個最靠近現在的感覺。', en: 'Pick the one that feels closest.' },
+      touch: { zh: '手指畫過去，光會跟著。', en: 'Move your finger — light follows.' },
+      seal: { zh: '按住，直到光環轉滿。', en: 'Hold until the ring fills.' },
       done: { zh: '這一刻是你的', en: 'This moment is yours' }
     };
     const row = map[phase] || map.ask;
@@ -1889,7 +1918,7 @@
   function updateCoach() {
     if (!coachEl) return;
     // Seal / done: one action only — seal bar or card carries the cue.
-    if (soloPhase === 'seal' || soloPhase === 'done') {
+    if (soloPhase === 'seal' || soloPhase === 'done' || soloPhase === 'ask') {
       coachEl.hidden = true;
       return;
     }
@@ -2078,23 +2107,18 @@
 
   function syncMemorialUI() {
     const L = lang();
-    if (memorialDataUrl && memorialEl && memorialImg) {
-      memorialImg.src = memorialDataUrl;
-      memorialImg.alt = L === 'zh' ? '獨一無二紀念光痕' : 'One-of-a-kind light-trace keepsake';
-      memorialEl.hidden = false;
-      if (memorialCap) {
-        memorialCap.hidden = false;
-        memorialCap.textContent = L === 'zh'
-          ? '獨一無二紀念'
-          : 'One-of-a-kind keepsake';
-      }
-    } else {
-      if (memorialEl) memorialEl.hidden = true;
-      if (memorialImg) memorialImg.removeAttribute('src');
-      if (memorialCap) {
-        memorialCap.hidden = true;
-        memorialCap.textContent = '';
-      }
+    // Freeze the trail in the same shell the finger just used — no second, smaller frame.
+    if (memorialEl) memorialEl.hidden = true;
+    if (memorialCap) memorialCap.hidden = true;
+    if (memorialDataUrl && freezeEl && shell) {
+      freezeEl.src = memorialDataUrl;
+      freezeEl.alt = L === 'zh' ? '你剛剛留下的光痕' : 'The light your finger just left';
+      freezeEl.hidden = false;
+      shell.classList.add('is-frozen');
+    } else if (freezeEl) {
+      freezeEl.hidden = true;
+      freezeEl.removeAttribute('src');
+      if (shell) shell.classList.remove('is-frozen');
     }
   }
 
@@ -2764,6 +2788,9 @@
     cardEl.classList.remove('is-on');
     bloomReady = true;
     started = true;
+    finger = null;
+    if (freezeEl) { freezeEl.hidden = true; freezeEl.removeAttribute('src'); }
+    if (shell) shell.classList.remove('is-frozen');
     hint.classList.add('is-hidden');
     if (sealBar) sealBar.hidden = true;
 
@@ -3029,7 +3056,7 @@
         // Refresh canvas coach to ultra-short touch cue
         try {
           const hs = hint.querySelector('span');
-          if (hs) hs.textContent = lang() === 'zh' ? '自由觸碰' : 'Touch freely';
+          if (hs) hs.textContent = lang() === 'zh' ? '手指畫過去，光會跟著。' : 'Move your finger — light follows.';
         } catch (err) { /* ignore */ }
         cardEl.hidden = true;
         cardEl.classList.remove('is-on');
@@ -3122,6 +3149,42 @@
     }
   }
 
+  function ensureTick() {
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  function bloomTrail(x, y) {
+    if ((!bloomReady && !pathReplayBusy) || !activeMood) return;
+    const palette = activeMood.palette || ['#e8d5b0'];
+    for (let i = 0; i < 3; i++) {
+      blooms.push({
+        x, y,
+        tx: x + (Math.random() - 0.5) * 16,
+        ty: y + (Math.random() - 0.5) * 16,
+        r: 8 + Math.random() * 14,
+        color: i === 0 ? '#fff8e8' : palette[i % palette.length],
+        life: 0,
+        max: 0.42 + Math.random() * 0.28,
+        delay: 0
+      });
+    }
+    ensureTick();
+  }
+
+  function drawFingerGlow(w, h) {
+    if (!finger || !activeFingerCount()) return;
+    const color = (activeMood && activeMood.palette && activeMood.palette[0]) || '#e8d5b0';
+    const rad = Math.max(28, Math.min(w, h) * 0.075);
+    const g = ctx.createRadialGradient(finger.x, finger.y, 0, finger.x, finger.y, rad);
+    g.addColorStop(0, 'rgba(255,252,240,.96)');
+    g.addColorStop(0.28, hexAlpha(color, 0.72));
+    g.addColorStop(1, hexAlpha(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(finger.x, finger.y, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   function bloomAt(x, y, fromAuto) {
     if ((!bloomReady && !pathReplayBusy) || !activeMood) return;
     const r = shell.getBoundingClientRect();
@@ -3183,7 +3246,8 @@
       ctx.arc(cx, cy, rad, 0, Math.PI * 2);
       ctx.fill();
     }
-    if (blooms.length) raf = requestAnimationFrame(tick);
+    drawFingerGlow(r.width, r.height);
+    if (blooms.length || (finger && activeFingerCount())) raf = requestAnimationFrame(tick);
     else raf = 0;
   }
 
@@ -3211,6 +3275,7 @@
     try { shell.setPointerCapture(e.pointerId); } catch (err) { /* optional */ }
     const r = shell.getBoundingClientRect();
     const p = pointFromEvent(e);
+    finger = { x: p.x, y: p.y };
     if (!lightSealed && bloomReady && r.width && r.height) {
       recordLightPoint(p.x / r.width, p.y / r.height, currentPointerId, 'down');
     }
@@ -3225,15 +3290,18 @@
     const pid = e.pointerId || 0;
     if (!activePointers[pid]) return;
     try { e.preventDefault(); } catch (err) { /* ignore */ }
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const p = pointFromEvent(e);
+    finger = { x: p.x, y: p.y };
+    ensureTick();
     const now = performance.now();
     const last = lastPathSample[pid] || 0;
     const multi = activeFingerCount() >= 2;
     if (now - last < (multi ? 28 : 32)) return;
     lastPathSample[pid] = now;
-    const r = shell.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    const p = pointFromEvent(e);
     recordLightPoint(p.x / r.width, p.y / r.height, pid, 'move');
+    bloomTrail(p.x, p.y);
     // Single finger: clearer trail; multi: denser path marks + living paper mist.
     stampMemorialAt(p.x, p.y, multi ? 0.42 : 0.4);
     if (multi && Math.random() < 0.22) paintMistVeilToMemorial(0.045);
@@ -3245,6 +3313,7 @@
     if (!activePointers[pid]) return;
     delete activePointers[pid];
     delete lastPathSample[pid];
+    if (!activeFingerCount()) finger = null;
     syncMistVeil();
     unlockDrawScroll();
     if (lightSealed || !bloomReady) return;
@@ -4095,7 +4164,7 @@
     if (sealBar && !sealBar.hidden) syncLpHintCopy();
     if (hint && !hint.classList.contains('is-hidden')) {
       const hs = hint.querySelector('span');
-      if (hs) hs.textContent = lang() === 'zh' ? '自由觸碰' : 'Touch freely';
+      if (hs) hs.textContent = lang() === 'zh' ? '手指畫過去，光會跟著。' : 'Move your finger — light follows.';
     }
     if (activeMood && !bloomWrap.hidden && !cardEl.hidden) {
       renderCard();
