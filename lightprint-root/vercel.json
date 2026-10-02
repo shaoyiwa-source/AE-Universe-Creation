@@ -1,3 +1,7 @@
 {
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/color-moment", "destination": "/color-moment.html" },
+    { "source": "/lightprint-figure", "destination": "/lightprint-figure-standalone.html" }
+  ]
 }

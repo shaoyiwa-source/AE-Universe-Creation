@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2447">
+<meta name="ae-version" content="v2448">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2447">
-<script src="site.js?v=2447" defer></script>
+<link rel="stylesheet" href="site.css?v=2448">
+<script src="site.js?v=2448" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -187,6 +187,60 @@
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
   }
   .cm-lightprint[hidden]{display:none!important}
+
+  /* v2448 Lightprint figure + locked opening */
+  .cm-opening-kicker{
+    margin:0 0 8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .cm-opening-lead{
+    margin:0 auto 10px;max-width:40ch;
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-weight:500;font-size:clamp(22px,5.2vw,30px);line-height:1.3;color:var(--ink);
+  }
+  .cm-intro-soft{
+    max-width:48ch;font-size:13.5px;line-height:1.7;opacity:.92;
+  }
+  .cm-shell{position:relative}
+  #cmFigureCanvas{
+    position:absolute;inset:0;width:100%;height:100%;display:block;
+    pointer-events:none;z-index:2;opacity:0;transition:opacity .8s ease;
+  }
+  #cmFigureCanvas.is-on{opacity:1}
+  .cm-shell.is-figure-birthing .cm-mist{opacity:.95}
+  .cm-shell.is-figure-birthing #cmCanvas{transition:opacity 1.2s ease;opacity:.35}
+  .cm-figure-breath{
+    position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+    z-index:3;margin:0;font-size:11px;letter-spacing:.14em;
+    color:rgba(240,226,196,.62);pointer-events:none;opacity:0;
+    transition:opacity .8s ease;
+  }
+  .cm-shell.is-figure-alive .cm-figure-breath{opacity:1}
+  .cm-mem-label{
+    margin:16px 0 6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .cm-mem-label[hidden]{display:none!important}
+  .cm-epithet{
+    margin:0 0 4px;font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-weight:500;font-size:clamp(22px,5vw,28px);line-height:1.25;color:var(--ink);
+  }
+  .cm-epithet[hidden]{display:none!important}
+  .cm-epithet-en{
+    margin:0 0 12px;font-size:13px;letter-spacing:.06em;font-style:italic;color:var(--muted);
+  }
+  .cm-epithet-en[hidden]{display:none!important}
+  .cm-lore{margin:0 auto 10px;max-width:36ch;text-align:left}
+  .cm-lore[hidden]{display:none!important}
+  .cm-lore p{margin:0 0 6px;font-size:14px;line-height:1.7;color:rgba(42,36,32,.88)}
+  :root[data-theme="dark"] .cm-lore p{color:rgba(236,230,222,.9)}
+  .cm-figure-mood{display:flex;justify-content:center;gap:6px;margin:8px 0 4px}
+  .cm-figure-mood[hidden]{display:none!important}
+  .cm-figure-mood span{
+    width:10px;height:10px;border-radius:50%;
+    box-shadow:0 0 0 1px rgba(0,0,0,.08);
+  }
+
   .cm-card{
     position:relative;width:min(560px,100%);margin:22px auto 0;
     border:1px solid var(--line);border-radius:18px;
@@ -487,8 +541,10 @@
   <section class="cm-stage">
     <div class="wrap">
       <div class="cm-intro" id="cmIntro">
+        <p class="cm-opening-kicker" id="cmOpeningKicker" data-en="Lightprint Memory" data-zh="光紋記憶">Lightprint Memory</p>
+        <p class="cm-opening-lead" id="cmOpeningLead" data-en="Leave your Lightprint" data-zh="留下你的光紋">Leave your Lightprint</p>
+        <p class="cm-intro-soft" id="cmIntroSoft" data-en="Spend a few soft minutes with how you feel — leave your Lightprint, and seal this moment into a keepsake card with your Lightprint memory. Follow your feeling, touch lightly, then 收光. Soft figure preview: later this light can grow into a silhouette that is only yours — how the figure develops, how the story unfolds, is yours to decide. No right or wrong; just come closer to what you feel now." data-zh="花幾分鐘靠近自己的感覺——留下你的光紋，收成這一瞬的紀念。跟著感覺選、輕輕觸碰；最後收光，它會變成一張可留存的紀念卡，上面有你的光紋記憶。之後，這道光紋還能長成只屬於你的光影；人物怎麼發展、故事怎麼展開，都由你決定。沒有對錯，只要靠近你現在的感覺。">Spend a few soft minutes with how you feel — leave your Lightprint, and seal this moment into a keepsake card with your Lightprint memory. Follow your feeling, touch lightly, then 收光. Soft figure preview: later this light can grow into a silhouette that is only yours — how the figure develops, how the story unfolds, is yours to decide. No right or wrong; just come closer to what you feel now.</p>
         <p class="cm-coach" id="cmCoach" data-en="Pick one that fits" data-zh="輕輕選一個">Pick one that fits</p>
-        <p class="cm-intro-soft" id="cmIntroSoft" data-en="Each visit draws a new handful of questions." data-zh="每一次來，問題都會重新抽出幾題。">Each visit draws a new handful of questions.</p>
       </div>
 
       <div class="cm-residue" id="cmResidue" hidden>
@@ -508,8 +564,10 @@
       <div class="cm-bloom-wrap" id="cmBloomWrap" hidden>
         <div class="cm-shell" id="cmShell" role="img" aria-label="Interactive colour canvas — tap or click to bloom">
           <canvas id="cmCanvas" width="920" height="690"></canvas>
+          <canvas id="cmFigureCanvas" width="920" height="690" aria-hidden="true"></canvas>
           <div class="cm-mist" id="cmMist" aria-hidden="true"></div>
           <div class="cm-hint" id="cmHint"><span data-en="Touch freely" data-zh="自由觸碰">Touch freely</span></div>
+          <p class="cm-figure-breath" id="cmFigureBreath" data-en="Soft breathing" data-zh="柔光呼吸" hidden>Soft breathing</p>
         </div>
 
         <div class="cm-seal-bar" id="cmSealBar" hidden>
@@ -534,6 +592,11 @@
               <img id="cmMemorialImg" alt="" draggable="false">
             </figure>
             <p class="cm-memorial-cap" id="cmMemorialCap" hidden></p>
+            <p class="cm-mem-label" id="cmMemLabel" hidden data-en="Lightprint Memory" data-zh="光紋記憶">Lightprint Memory</p>
+            <h3 class="cm-epithet" id="cmEpithetZh" hidden></h3>
+            <p class="cm-epithet-en" id="cmEpithetEn" hidden></p>
+            <div class="cm-lore" id="cmLore" hidden></div>
+            <div class="cm-figure-mood" id="cmFigureMood" hidden aria-hidden="true"></div>
             <p class="cm-lightprint" id="cmLightprint" hidden></p>
             <div class="cm-reading" id="cmReading"></div>
             <p class="cm-ritual" id="cmRitual">
@@ -583,7 +646,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2447 · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2448 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -1651,6 +1714,7 @@
     cancelSealHold(true);
     stopPathReplay();
     clearSealRevealTimer();
+    try { clearFigureUI(); } catch (err) { /* ignore */ }
     lightTouches = [];
     userPainted = false;
     lightSealed = false;
@@ -1731,6 +1795,17 @@
     updateCoach();
     const introSoft = document.getElementById('cmIntroSoft');
     if (introSoft) introSoft.hidden = soloPhase !== 'ask';
+    const openKick = document.getElementById('cmOpeningKicker');
+    const openLead = document.getElementById('cmOpeningLead');
+    if (openKick) openKick.hidden = soloPhase !== 'ask';
+    if (openLead) openLead.hidden = soloPhase !== 'ask';
+    // Bilingual opening (do not speak LP number here)
+    if (soloPhase === 'ask') {
+      const L = lang();
+      if (openKick) openKick.textContent = L === 'zh' ? (openKick.getAttribute('data-zh') || '光紋記憶') : (openKick.getAttribute('data-en') || 'Lightprint Memory');
+      if (openLead) openLead.textContent = L === 'zh' ? (openLead.getAttribute('data-zh') || '留下你的光紋') : (openLead.getAttribute('data-en') || 'Leave your Lightprint');
+      if (introSoft) introSoft.textContent = L === 'zh' ? (introSoft.getAttribute('data-zh') || '') : (introSoft.getAttribute('data-en') || '');
+    }
     // Residue fights first-time Solo attention — hide until ask idle is rare; keep off during active steps.
     if (residueEl && soloPhase !== 'ask') residueEl.hidden = true;
   }
@@ -1920,6 +1995,330 @@
     });
     if (userPainted) maybeRevealSeal();
   }
+
+
+  /* —— v2448 Lightprint soft-breath figure (from lp-figure-proto) —— */
+  const EPITHET = {
+    gold:   [{zh:'柔金守夜人',en:'Keeper of Soft Gold'},{zh:'燭心旅人',en:'Candle-Heart Wanderer'},{zh:'蜜光之影',en:'Honey-Light Shade'}],
+    indigo: [{zh:'深靛聽夜者',en:'Night Listener in Indigo'},{zh:'霧紫過客',en:'Mist-Violet Passerby'},{zh:'暗邊的光',en:'Light at the Dark Edge'}],
+    rose:   [{zh:'花瓣收光者',en:'Petal Light-Gatherer'},{zh:'粉霧行者',en:'Walker in Pink Mist'},{zh:'慢開的影',en:'Slow-Opening Silhouette'}],
+    mist:   [{zh:'霧青呼吸',en:'Mist-Green Breath'},{zh:'露邊的人影',en:'Figure at the Dew Edge'},{zh:'緩行霧客',en:'Slow Guest of Mist'}],
+    cool:   [{zh:'月藍靜影',en:'Moon-Blue Quiet Form'},{zh:'湖心停息',en:'Stillness at Lake Heart'},{zh:'涼光旅者',en:'Cool-Light Traveler'}],
+    spark:  [{zh:'微火點亮者',en:'Tiny Fire Kindler'},{zh:'一瞬星屑',en:'A Moment of Star-Dust'},{zh:'跳息之光',en:'Light That Skips Once'}],
+    still:  [{zh:'深水定影',en:'Settled Shadow of Deep Water'},{zh:'無波守望',en:'Watcher Without Ripple'},{zh:'靜岸之形',en:'Form on the Quiet Shore'}],
+    warm:   [{zh:'掌心餘溫',en:'Warmth Left in the Palm'},{zh:'暖廊過影',en:'Warm-Hall Silhouette'},{zh:'低火守者',en:'Keeper of Low Fire'}],
+    soft:   [{zh:'絹光落影',en:'Silk-Light Falling Shade'},{zh:'輕覆之人',en:'One Softly Covered'},{zh:'柔邊行者',en:'Walker of Soft Edges'}],
+    deep:   [{zh:'夜廊深處',en:'Deep in the Night Hall'},{zh:'未名走廊的影',en:'Shade of an Unnamed Corridor'},{zh:'更深一寸',en:'One Inch Deeper'}]
+  };
+  const LORE_A = {
+    gold:   [{zh:'這一點金，先停在你心口。',en:'A little gold rests near the heart.'},{zh:'溫熱不必很大聲，也能被看見。',en:'Warmth need not be loud to be seen.'}],
+    indigo: [{zh:'暗裡也有溫柔的亮。',en:'Even in the dark, a gentle brightness.'},{zh:'深一點，反而更靠近自己。',en:'Going deeper can bring you closer.'}],
+    rose:   [{zh:'一點點綻開，就夠了。',en:'A soft bloom is enough.'},{zh:'柔軟，也是一種力量。',en:'Softness is a kind of strength.'}],
+    mist:   [{zh:'霧不是阻擋——是緩衝。',en:'Mist is not a wall — it is a cushion.'},{zh:'光走得很慢，剛好讓你看見。',en:'Light moves slowly — just enough to be seen.'}],
+    cool:   [{zh:'月色把聲音都放輕了。',en:'Moonlight softens every sound.'},{zh:'安靜可以比答案先到。',en:'Quiet can arrive before an answer.'}],
+    spark:  [{zh:'一下就亮，也夠照見此刻。',en:'One flash is enough to see this moment.'},{zh:'火花停住的地方，有你的指紋。',en:'Where the spark pauses, your fingerprint remains.'}],
+    still:  [{zh:'水不說話，卻記住了紋路。',en:'Water does not speak, yet keeps the pattern.'},{zh:'定影不是停滯——是讓光坐下。',en:'Stillness is not stuck — it is light sitting down.'}],
+    warm:   [{zh:'掌心還留著剛才的溫度。',en:'The palm still holds the last warmth.'},{zh:'暖意自己來了，你只要接住。',en:'Warmth arrives on its own — you only receive.'}],
+    soft:   [{zh:'邊界很柔，剛好讓你進來。',en:'The edge is soft enough to let you in.'},{zh:'這一刻可以很輕。',en:'This moment is allowed to be light.'}],
+    deep:   [{zh:'走廊還沒有名字，影已經先走。',en:'The hall has no name yet; the shade walks first.'},{zh:'更深一點，也不必害怕。',en:'A little deeper need not frighten you.'}]
+  };
+  const LORE_B = {
+    spread:  [{zh:'你的觸碰走得很開，像霧自己散開。',en:'Your touch spread wide — like mist opening itself.'},{zh:'光痕鋪得很遠，剪影便跟著鬆開。',en:'The trail went far; the silhouette loosened with it.'}],
+    dense:   [{zh:'你把光收得很近，像掌心護著火。',en:'You kept the light close — a flame cupped in the palm.'},{zh:'觸點重疊處，剪影的心更亮。',en:'Where touches overlap, the silhouette’s heart brightens.'}],
+    curve:   [{zh:'路徑彎了一下，影也輕輕側身。',en:'The path bent once; the shade turned with it.'},{zh:'你沒有走直線——光影學會了繞路。',en:'You did not walk straight — light learned to curve.'}],
+    sparse:  [{zh:'只有幾點光，已經夠認出你。',en:'Only a few points of light — enough to know you.'},{zh:'留白很大，剪影反而更清楚。',en:'Much empty space — the silhouette reads clearer.'}],
+    long:    [{zh:'你走了一條長長的光路。',en:'You walked a long path of light.'},{zh:'時間在指尖拉長，影慢慢站起。',en:'Time stretched at the fingertip; the shade rose slowly.'}]
+  };
+  const LORE_C = [
+    {zh:'同一道光紋，會長成同一道影；再感覺一次，就是新的光紋。',en:'The same Lightprint grows the same shade; feel again, and a new Lightprint begins.'},
+    {zh:'之後若問外形，那是下一兩問的事——此刻先讓影站好。',en:'Form questions come later (1–2 soft asks) — for now, let the shade stand.'},
+    {zh:'沒有對錯；只要靠近你現在的感覺。',en:'No right or wrong — only nearer to how you feel now.'},
+    {zh:'這張紀念卡上，寫的是光紋記憶，不是編號演說。',en:'This memorial holds Lightprint Memory — not a spoken serial.'}
+  ];
+
+  const figCanvas = document.getElementById('cmFigureCanvas');
+  const figCtx = figCanvas ? figCanvas.getContext('2d') : null;
+  const figBreathEl = document.getElementById('cmFigureBreath');
+  const memLabelEl = document.getElementById('cmMemLabel');
+  const epithetZhEl = document.getElementById('cmEpithetZh');
+  const epithetEnEl = document.getElementById('cmEpithetEn');
+  const loreEl = document.getElementById('cmLore');
+  const figureMoodEl = document.getElementById('cmFigureMood');
+  let lastFigure = null;
+  let figurePaintToken = 0;
+  let figureBreathRaf = 0;
+  const reduceFigureMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function hashStrFigure(s) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function seededFigure(seed) {
+    let s = seed >>> 0;
+    return function () {
+      s ^= s << 13; s >>>= 0;
+      s ^= s >>> 17; s >>>= 0;
+      s ^= s << 5; s >>>= 0;
+      return (s >>> 0) / 4294967296;
+    };
+  }
+  function pickFigure(rng, arr) {
+    return arr[Math.floor(rng() * arr.length) % arr.length];
+  }
+  function touchFeel(path) {
+    if (!path || !path.length) return { kind: 'sparse', spread: 0, density: 0, curve: 0, len: 0, cx: 0.5, cy: 0.5 };
+    let minX = 1, maxX = 0, minY = 1, maxY = 0, dist = 0, turns = 0;
+    for (let i = 0; i < path.length; i++) {
+      const p = path[i];
+      minX = Math.min(minX, p.nx); maxX = Math.max(maxX, p.nx);
+      minY = Math.min(minY, p.ny); maxY = Math.max(maxY, p.ny);
+      if (i) {
+        const a = path[i - 1];
+        dist += Math.hypot(p.nx - a.nx, p.ny - a.ny);
+        if (i > 1) {
+          const b = path[i - 2];
+          const v1x = a.nx - b.nx, v1y = a.ny - b.ny;
+          const v2x = p.nx - a.nx, v2y = p.ny - a.ny;
+          const d1 = Math.hypot(v1x, v1y) || 1e-6, d2 = Math.hypot(v2x, v2y) || 1e-6;
+          const cos = (v1x * v2x + v1y * v2y) / (d1 * d2);
+          if (cos < 0.5) turns++;
+        }
+      }
+    }
+    const spread = (maxX - minX) * (maxY - minY);
+    const density = path.length / Math.max(0.08, spread + 0.05);
+    const curve = turns / Math.max(1, path.length);
+    let kind = 'sparse';
+    if (dist > 1.2) kind = 'long';
+    else if (curve > 0.18) kind = 'curve';
+    else if (density > 80) kind = 'dense';
+    else if (spread > 0.22) kind = 'spread';
+    return { kind, spread, density, curve, len: dist, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+  }
+  function answerTagsForFigure() {
+    const tags = [];
+    (sessionAnswers || []).forEach(a => {
+      (a.tags || []).forEach(t => { if (tags.indexOf(t) < 0) tags.push(t); });
+    });
+    return tags.slice(0, 6);
+  }
+  function buildFigure(code, moodObj, path, tags) {
+    const seed = hashStrFigure(code + '|' + (moodObj && moodObj.id ? moodObj.id : 'gold'));
+    const rng = seededFigure(seed);
+    const feel = touchFeel(path);
+    const mid = (moodObj && moodObj.id) || 'gold';
+    const bank = EPITHET[mid] || EPITHET.gold;
+    const epithet = bank[Math.floor(rng() * bank.length) % bank.length];
+    const aBank = LORE_A[mid] || LORE_A.gold;
+    const line1 = pickFigure(rng, aBank);
+    const bBank = LORE_B[feel.kind] || LORE_B.sparse;
+    const line2 = pickFigure(rng, bBank);
+    const line3 = LORE_C[Math.floor(rng() * LORE_C.length) % LORE_C.length];
+    const lean = (rng() - 0.5) * 0.12 + (feel.cx - 0.5) * 0.08;
+    const headTilt = (rng() - 0.5) * 0.25;
+    const shoulderW = 0.22 + rng() * 0.06 + Math.min(0.04, feel.spread * 0.08);
+    const torsoH = 0.34 + rng() * 0.06;
+    const headR = 0.055 + rng() * 0.012;
+    const glow = 0.55 + rng() * 0.35 + (feel.kind === 'dense' ? 0.1 : 0);
+    const halo = 0.7 + rng() * 0.5;
+    const particleN = 8 + Math.floor(rng() * 10) + (mid === 'spark' ? 6 : 0);
+    const posture = feel.kind === 'long' ? 'tall' : feel.kind === 'dense' ? 'gathered' : feel.kind === 'curve' ? 'turn' : 'open';
+    return {
+      code,
+      moodId: mid,
+      palette: (moodObj.palette || ['#c9a46a', '#e8d5b0', '#8b5a2b', '#f4efe6']).slice(),
+      tags: (tags || []).slice(),
+      feel,
+      epithet,
+      lore: [line1, line2, line3],
+      form: { lean, headTilt, shoulderW, torsoH, headR, glow, halo, particleN, posture, cy: 0.48 + (feel.cy - 0.5) * 0.06 }
+    };
+  }
+  function resizeFigureCanvas() {
+    if (!figCanvas || !shell) return;
+    const r = shell.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    figCanvas.width = Math.max(1, Math.floor(r.width * dpr));
+    figCanvas.height = Math.max(1, Math.floor(r.height * dpr));
+    if (figCtx) figCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function drawSoftBlobFig(ctx, x, y, rx, ry, color, alpha) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, Math.max(rx, ry));
+    g.addColorStop(0, hexAlpha(color, alpha));
+    g.addColorStop(0.45, hexAlpha(color, alpha * 0.45));
+    g.addColorStop(1, hexAlpha(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function drawFigure(fig, t, breath) {
+    if (!figCtx || !figCanvas || !shell) return;
+    const r = shell.getBoundingClientRect();
+    const w = r.width, h = r.height;
+    figCtx.clearRect(0, 0, w, h);
+    if (!fig || t <= 0) return;
+    const f = fig.form;
+    const pal = fig.palette;
+    const cx = w * (0.5 + f.lean * 0.35);
+    const cy = h * f.cy;
+    const appear = Math.min(1, Math.max(0, t));
+    const b = (breath == null ? 0 : breath);
+    const edgePulse = 1 + b * 0.1;
+    const glowPulse = 1 + b * 0.08;
+    drawSoftBlobFig(figCtx, cx, cy + h * 0.05, w * 0.42 * edgePulse, h * 0.38 * edgePulse, pal[0], 0.1 * appear * glowPulse);
+    drawSoftBlobFig(figCtx, cx, cy - h * 0.08, w * 0.28 * f.halo * edgePulse, h * 0.32 * f.halo * edgePulse, pal[1] || pal[0], 0.14 * appear * f.glow * glowPulse);
+    const headY = cy - h * 0.18;
+    const headR = w * f.headR;
+    const shoulderY = headY + headR * 1.55;
+    const shoulderW = w * f.shoulderW;
+    const torsoBottom = shoulderY + h * f.torsoH;
+    drawSoftBlobFig(figCtx, cx + f.lean * w * 0.02, (shoulderY + torsoBottom) / 2,
+      shoulderW * 0.95, (torsoBottom - shoulderY) * 0.55, pal[0], 0.42 * appear * f.glow);
+    drawSoftBlobFig(figCtx, cx, (shoulderY + torsoBottom) / 2,
+      shoulderW * 0.55, (torsoBottom - shoulderY) * 0.42, pal[1] || pal[0], 0.35 * appear);
+    drawSoftBlobFig(figCtx, cx - shoulderW * 0.55, shoulderY, shoulderW * 0.55, headR * 0.85, pal[0], 0.4 * appear);
+    drawSoftBlobFig(figCtx, cx + shoulderW * 0.55, shoulderY, shoulderW * 0.55, headR * 0.85, pal[0], 0.4 * appear);
+    drawSoftBlobFig(figCtx, cx, shoulderY, shoulderW * 0.7, headR * 0.7, pal[1] || pal[0], 0.38 * appear);
+    const hx = cx + Math.sin(f.headTilt) * headR * 0.35;
+    const hy = headY;
+    drawSoftBlobFig(figCtx, hx, hy, headR * 1.35 * edgePulse, headR * 1.55 * edgePulse, pal[0], 0.5 * appear * f.glow * glowPulse);
+    drawSoftBlobFig(figCtx, hx, hy, headR * 0.85, headR * 1.05, pal[1] || pal[0], 0.55 * appear);
+    drawSoftBlobFig(figCtx, hx, hy - headR * 0.15, headR * 0.45, headR * 0.5, '#fff8e8', 0.28 * appear * (0.92 + 0.08 * (1 + b) / 2));
+    drawSoftBlobFig(figCtx, cx, shoulderY + headR * 0.9, headR * 0.7 * edgePulse, headR * 0.9 * edgePulse, pal[1] || pal[0], 0.45 * appear * f.glow * glowPulse);
+    drawSoftBlobFig(figCtx, cx, shoulderY + headR * 0.9, headR * 0.28, headR * 0.35, '#fff8e8', 0.4 * appear * glowPulse);
+    const rng = seededFigure(hashStrFigure(fig.code + ':p'));
+    for (let i = 0; i < f.particleN; i++) {
+      const ang = rng() * Math.PI * 2;
+      const rad = (0.12 + rng() * 0.35) * Math.min(w, h) * (0.4 + appear * 0.6);
+      const px = cx + Math.cos(ang) * rad * (0.6 + f.halo * 0.2);
+      const py = cy + Math.sin(ang) * rad * 0.75 - h * 0.05;
+      const pr = 1.5 + rng() * 3.5;
+      figCtx.fillStyle = hexAlpha(i % 2 ? (pal[1] || pal[0]) : '#fff8e8', (0.25 + rng() * 0.4) * appear);
+      figCtx.beginPath();
+      figCtx.arc(px, py, pr, 0, Math.PI * 2);
+      figCtx.fill();
+    }
+    if (lightTouches && lightTouches.length > 2) {
+      const step = Math.max(1, Math.floor(lightTouches.length / 12));
+      for (let i = 0; i < lightTouches.length; i += step) {
+        const p = lightTouches[i];
+        drawSoftBlobFig(figCtx, p.nx * w, p.ny * h, 10, 10, pal[0], 0.08 * appear);
+      }
+    }
+  }
+  function stopFigureBreath() {
+    if (figureBreathRaf) { cancelAnimationFrame(figureBreathRaf); figureBreathRaf = 0; }
+  }
+  function startFigureBreath(fig) {
+    stopFigureBreath();
+    if (reduceFigureMotion || !fig) return;
+    const token = figurePaintToken;
+    const t0 = performance.now();
+    function frame(now) {
+      if (token !== figurePaintToken || !lastFigure) return;
+      const breath = Math.sin((now - t0) / 5500 * Math.PI * 2);
+      drawFigure(fig, 1, breath);
+      figureBreathRaf = requestAnimationFrame(frame);
+    }
+    figureBreathRaf = requestAnimationFrame(frame);
+  }
+  function clearFigureUI() {
+    stopFigureBreath();
+    figurePaintToken++;
+    lastFigure = null;
+    if (figCtx && shell) {
+      const r = shell.getBoundingClientRect();
+      figCtx.clearRect(0, 0, r.width || 1, r.height || 1);
+    }
+    if (figCanvas) figCanvas.classList.remove('is-on');
+    if (shell) shell.classList.remove('is-figure-birthing', 'is-figure-alive');
+    if (figBreathEl) figBreathEl.hidden = true;
+    if (memLabelEl) memLabelEl.hidden = true;
+    if (epithetZhEl) { epithetZhEl.hidden = true; epithetZhEl.textContent = ''; }
+    if (epithetEnEl) { epithetEnEl.hidden = true; epithetEnEl.textContent = ''; }
+    if (loreEl) { loreEl.hidden = true; loreEl.innerHTML = ''; }
+    if (figureMoodEl) { figureMoodEl.hidden = true; figureMoodEl.innerHTML = ''; }
+  }
+  function animateFigureBirth(fig) {
+    if (!fig) return;
+    figurePaintToken++;
+    stopFigureBreath();
+    resizeFigureCanvas();
+    const token = figurePaintToken;
+    const t0 = performance.now();
+    const dur = 1600;
+    if (figCanvas) figCanvas.classList.add('is-on');
+    if (shell) shell.classList.add('is-figure-birthing');
+    function frame(now) {
+      if (token !== figurePaintToken) return;
+      const t = Math.min(1, (now - t0) / dur);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const breath = reduceFigureMotion ? 0 : Math.sin(ease * Math.PI) * 0.35;
+      drawFigure(fig, ease, breath);
+      if (t < 1) requestAnimationFrame(frame);
+      else {
+        if (shell) {
+          shell.classList.remove('is-figure-birthing');
+          shell.classList.add('is-figure-alive');
+        }
+        if (figBreathEl) {
+          figBreathEl.hidden = false;
+          figBreathEl.textContent = lang() === 'zh' ? '柔光呼吸' : 'Soft breathing';
+        }
+        startFigureBreath(fig);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  function syncFigureCard(fig) {
+    if (!fig) return;
+    const L = lang();
+    if (memLabelEl) {
+      memLabelEl.hidden = false;
+      memLabelEl.textContent = L === 'zh' ? '光紋記憶' : 'Lightprint Memory';
+    }
+    if (epithetZhEl) {
+      epithetZhEl.hidden = false;
+      epithetZhEl.textContent = fig.epithet.zh;
+    }
+    if (epithetEnEl) {
+      epithetEnEl.hidden = false;
+      epithetEnEl.textContent = fig.epithet.en;
+    }
+    if (loreEl) {
+      loreEl.hidden = false;
+      loreEl.innerHTML = '';
+      fig.lore.forEach(line => {
+        const p = document.createElement('p');
+        p.textContent = L === 'zh' ? line.zh : line.en;
+        loreEl.appendChild(p);
+      });
+    }
+    if (figureMoodEl) {
+      figureMoodEl.hidden = false;
+      figureMoodEl.innerHTML = '';
+      (fig.palette || []).slice(0, 4).forEach(hex => {
+        const d = document.createElement('span');
+        d.style.background = hex;
+        figureMoodEl.appendChild(d);
+      });
+    }
+  }
+  function birthLightprintFigure() {
+    if (!activeMood || !lightprintCode) return null;
+    const tags = answerTagsForFigure();
+    const fig = buildFigure(lightprintCode, activeMood, lightTouches, tags);
+    fig._path = lightTouches.map(x => ({ nx: x.nx, ny: x.ny, t: x.t, kind: x.kind }));
+    lastFigure = fig;
+    animateFigureBirth(fig);
+    return fig;
+  }
+
 
   function hashToLightprint(payload) {
     let h = 2166136261 >>> 0;
@@ -2304,11 +2703,12 @@
     }
     afterEl.hidden = false;
     setSoloPhase('done');
+    try { birthLightprintFigure(); } catch (err) { console.warn('[cm] figure birth', err); }
     renderCard();
     const L = lang();
     showToast(L === 'zh'
-      ? ('光已收好')
-      : ('Light sealed'));
+      ? ('光已收好 · 光紋記憶')
+      : ('Light sealed · Lightprint memory'));
   }
 
 
@@ -2343,9 +2743,15 @@
     if (activeArt && cardBg) {
       cardBg.style.backgroundImage = `url("${activeArt}")`;
     }
-    cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Eternal Sun';
-    cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
-    cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
+    if (lastFigure) {
+      cardEyebrow.textContent = L === 'zh' ? '光紋記憶 · 柔光剪影' : 'Lightprint Memory · soft silhouette';
+      cardTitle.textContent = lastFigure.epithet.zh;
+      cardEn.textContent = lastFigure.epithet.en;
+    } else {
+      cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Eternal Sun';
+      cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
+      cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
+    }
     if (cardSrc) {
       cardSrc.textContent = L === 'zh'
         ? '摘自《盛明》筆記'
@@ -2363,6 +2769,9 @@
       }
     }
     syncMemorialUI();
+    if (lastFigure) {
+      try { syncFigureCard(lastFigure); } catch (err) { /* ignore */ }
+    }
     if (lightprintEl) {
       const label = lightprintLabel();
       if (label) {
@@ -2425,8 +2834,8 @@
         const shengPool = SHENG_BY_MOOD[activeMood.id] || SHENG_BY_MOOD.gold;
         activeReading = pickFrom(shengPool);
         activeRitual = pickFrom(SHENG_RITUALS[activeMood.id] || SHENG_RITUALS.gold);
-        const arts = ART_BY_MOOD[activeMood.id] || ART_BY_MOOD.gold;
-        activeArt = pickFrom(arts);
+        const arts = ART_BY_MOOD[activeMood.id] || ART_BY_MOOD.gold || [];
+        activeArt = (arts && arts.length) ? pickFrom(arts) : null;
         askEl.hidden = true;
         bloomWrap.hidden = false;
         afterEl.hidden = true; // no shop/experience clutter until sealed
@@ -2468,6 +2877,10 @@
     canvas.height = Math.max(1, Math.floor(r.height * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     paintBg(r.width, r.height);
+    try {
+      resizeFigureCanvas();
+      if (lastFigure && lightSealed) drawFigure(lastFigure, 1);
+    } catch (err) { /* ignore */ }
   }
 
   function paintBg(w, h) {
