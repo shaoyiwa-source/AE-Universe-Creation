@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ae-version" content="v2448">
+<meta name="ae-version" content="v2449">
 <title>色彩瞬間 · Color Moment · AE Universe Creation</title>
 <meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=2448">
-<script src="site.js?v=2448" defer></script>
+<link rel="stylesheet" href="site.css?v=2449">
+<script src="site.js?v=2449" defer></script>
 <link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
 <style>
   .cm-stage{padding:28px 0 72px}
@@ -164,22 +164,38 @@
   }
   .cm-seal{min-height:52px;min-width:min(220px,72vw);font-size:16px;letter-spacing:.08em}
   .cm-memorial{
-    margin:14px auto 4px;width:min(100%,300px);
-    border-radius:14px;overflow:hidden;
-    border:1px solid var(--line);
+    margin:8px auto 6px;width:min(100%,360px);
+    border-radius:16px;overflow:hidden;
+    border:1px solid rgba(201,164,106,.28);
     background:rgba(255,252,248,.28);
     position:relative;
     aspect-ratio:4/3;
+    box-shadow:0 10px 28px rgba(45,40,36,.07), inset 0 0 0 1px rgba(240,226,196,.18);
   }
   .cm-memorial[hidden]{display:none!important}
   .cm-memorial img{
     display:block;width:100%;height:100%;object-fit:cover;
-    filter:saturate(1.06) contrast(1.02) brightness(1.02);
+    filter:saturate(1.08) contrast(1.03) brightness(1.03);
   }
   .cm-memorial-cap{
-    margin:6px 0 0;font-size:10px;letter-spacing:.12em;
-    color:var(--muted);opacity:.72;text-align:center;
+    margin:4px 0 0;font-size:10px;letter-spacing:.12em;
+    color:var(--muted);opacity:.7;text-align:center;
   }
+  /* Lean card: hide long reading stack when memorial is the hero */
+  .cm-card.is-lean .cm-card-src,
+  .cm-card.is-lean .cm-reading,
+  .cm-card.is-lean .cm-ritual,
+  .cm-card.is-lean .cm-discover,
+  .cm-card.is-lean .cm-mini-tip,
+  .cm-card.is-lean .cm-capture-note,
+  .cm-card.is-lean .cm-figure-mood,
+  .cm-card.is-lean .cm-mem-label{display:none!important}
+  .cm-card.is-lean{padding:18px 16px 16px;margin-top:14px}
+  .cm-card.is-lean .cm-card-title{font-size:clamp(20px,4.4vw,26px)}
+  .cm-card.is-lean .cm-lore{margin:4px auto 6px;max-width:34ch}
+  .cm-card.is-lean .cm-lore p{font-size:13px;line-height:1.55;margin:0 0 4px}
+  .cm-card.is-lean .cm-card-actions{margin-top:14px;padding-top:12px}
+  .cm-card.is-lean .cm-echo{margin-top:6px;font-size:11.5px}
   .cm-memorial-cap[hidden]{display:none!important}
   .cm-lightprint{
     margin:8px 0 0;font-size:11px;letter-spacing:.16em;
@@ -188,7 +204,7 @@
   }
   .cm-lightprint[hidden]{display:none!important}
 
-  /* v2448 Lightprint figure + locked opening */
+  /* v2449 Lightprint: fingerprint memorial hero; silhouette secondary */
   .cm-opening-kicker{
     margin:0 0 8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--muted);
@@ -204,18 +220,23 @@
   .cm-shell{position:relative}
   #cmFigureCanvas{
     position:absolute;inset:0;width:100%;height:100%;display:block;
-    pointer-events:none;z-index:2;opacity:0;transition:opacity .8s ease;
+    pointer-events:none;z-index:2;opacity:0;transition:opacity 1.1s ease;
   }
-  #cmFigureCanvas.is-on{opacity:1}
-  .cm-shell.is-figure-birthing .cm-mist{opacity:.95}
-  .cm-shell.is-figure-birthing #cmCanvas{transition:opacity 1.2s ease;opacity:.35}
+  /* Soft silhouette stays light secondary — sealed touch/fingerprint remains the visual seed */
+  #cmFigureCanvas.is-on{opacity:.34}
+  .cm-shell.is-figure-birthing .cm-mist{opacity:.88}
+  .cm-shell.is-figure-birthing #cmCanvas{transition:opacity 1.2s ease;opacity:.88}
+  .cm-shell.is-figure-alive #cmFigureCanvas{opacity:.26}
+  .cm-shell.is-figure-fading #cmFigureCanvas{opacity:0}
+  .cm-shell.is-figure-fading .cm-figure-breath{opacity:0}
+  .cm-shell.is-seal-done #cmCanvas{opacity:1}
   .cm-figure-breath{
     position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
     z-index:3;margin:0;font-size:11px;letter-spacing:.14em;
-    color:rgba(240,226,196,.62);pointer-events:none;opacity:0;
+    color:rgba(240,226,196,.48);pointer-events:none;opacity:0;
     transition:opacity .8s ease;
   }
-  .cm-shell.is-figure-alive .cm-figure-breath{opacity:1}
+  .cm-shell.is-figure-alive .cm-figure-breath{opacity:.55}
   .cm-mem-label{
     margin:16px 0 6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--muted);
@@ -584,14 +605,14 @@
           <div class="cm-card-veil" aria-hidden="true"></div>
           <div class="cm-card-body">
             <p class="cm-card-eyebrow" id="cmCardEyebrow"></p>
-            <h2 class="cm-card-title" id="cmCardTitle"></h2>
-            <p class="cm-card-en" id="cmCardEn"></p>
-            <p class="cm-echo" id="cmEcho" hidden></p>
-            <p class="cm-card-src" id="cmCardSrc"></p>
             <figure class="cm-memorial" id="cmMemorial" hidden>
               <img id="cmMemorialImg" alt="" draggable="false">
             </figure>
             <p class="cm-memorial-cap" id="cmMemorialCap" hidden></p>
+            <h2 class="cm-card-title" id="cmCardTitle"></h2>
+            <p class="cm-card-en" id="cmCardEn"></p>
+            <p class="cm-echo" id="cmEcho" hidden></p>
+            <p class="cm-card-src" id="cmCardSrc"></p>
             <p class="cm-mem-label" id="cmMemLabel" hidden data-en="Lightprint Memory" data-zh="光紋記憶">Lightprint Memory</p>
             <h3 class="cm-epithet" id="cmEpithetZh" hidden></h3>
             <p class="cm-epithet-en" id="cmEpithetEn" hidden></p>
@@ -605,7 +626,7 @@
             </p>
             <p class="cm-discover" id="cmDiscover"></p>
             <p class="cm-mini-tip" id="cmMiniTip" hidden></p>
-            <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
+            <p class="cm-capture-note" data-en="Keep this moment with you." data-zh="帶著這一刻走。">Keep this moment with you.</p>
             <div class="cm-card-actions" aria-label="Moment actions">
               <button type="button" class="cm-shutter" id="cmSnap" data-en="Take this moment" data-zh="拍下這一瞬">Take this moment</button>
               <button type="button" class="cm-card-action" id="cmShare" data-en="Share this card" data-zh="分享這張卡">Share this card</button>
@@ -646,7 +667,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2448 · color-moment · lightprint-preview</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2449 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -882,7 +903,7 @@
       choices: [
         { zh: '低低的琥珀色', en: 'A low amber glow', tags: ['gold', 'still'] },
         { zh: '牆角的藍色陰影', en: 'A blue shadow in the corner', tags: ['indigo', 'cool'] },
-        { zh: '一盞粉色小燈', en: 'A little pink lamp', tags: ['rose', 'soft'] }
+        { zh: '一盞粉紅小燈', en: 'A little pink lamp', tags: ['rose', 'soft'] }
       ]
     },
     {
@@ -990,7 +1011,7 @@
       choices: [
         { zh: '把金色收進口袋', en: 'Slip a little gold into a pocket', tags: ['gold', 'warm'] },
         { zh: '把藍色放在枕邊', en: 'Leave blue beside the pillow', tags: ['indigo', 'still'] },
-        { zh: '讓粉色慢慢散開', en: 'Let pink dissolve slowly', tags: ['rose', 'mist'] }
+        { zh: '讓粉紅慢慢散開', en: 'Let pink dissolve slowly', tags: ['rose', 'mist'] }
       ]
     },
     {
@@ -1314,7 +1335,75 @@
   /* Website_Selected 8 webp + extra selected-works for variety. */
   /* grade_v1 JPG (IMG_5046–5055 skip 5050): Drive folder found (wallpaper_9_grade_v1) but binary DownloadFile unavailable this turn — still deferred. */
   const ART_BY_MOOD = {
-    gold: [], indigo: [], rose: [], mist: [], cool: [], spark: [], still: [], warm: [], soft: [], deep: []
+    gold: [
+      'assets/selected-works-v2/love-energy-field.webp',
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/infinite-love-strength.webp',
+      'assets/color-moment-grade/IMG_5048_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5053_grade_v1.webp'
+    ],
+    indigo: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/expansion.webp',
+      'assets/color-moment-grade/IMG_5049_grade_v1.webp'
+    ],
+    rose: [
+      'assets/selected-works-v2/heart-fly.webp',
+      'assets/selected-works-v2/love-embrace.webp',
+      'assets/selected-works-v2/flower-heart-bloom.webp',
+      'assets/color-moment-grade/IMG_5051_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5054_grade_v1.webp'
+    ],
+    mist: [
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/heart-recovery.webp',
+      'assets/selected-works-v2/selected-24.webp',
+      'assets/color-moment-grade/IMG_5046_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5052_grade_v1.webp'
+    ],
+    cool: [
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/heart-rebuild.webp',
+      'assets/selected-works-v2/selected-26.webp',
+      'assets/color-moment-grade/IMG_5046_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5049_grade_v1.webp'
+    ],
+    spark: [
+      'assets/selected-works-v2/fun-universe.webp',
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/selected-25.webp',
+      'assets/color-moment-grade/IMG_5047_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5055_grade_v1.webp'
+    ],
+    still: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/selected-17.webp',
+      'assets/color-moment-grade/IMG_5052_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5053_grade_v1.webp'
+    ],
+    warm: [
+      'assets/selected-works-v2/love-embrace.webp',
+      'assets/selected-works-v2/love-energy-field.webp',
+      'assets/selected-works-v2/heart-energy.webp',
+      'assets/color-moment-grade/IMG_5048_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5055_grade_v1.webp'
+    ],
+    soft: [
+      'assets/selected-works-v2/heart-recovery.webp',
+      'assets/selected-works-v2/heart-fly.webp',
+      'assets/selected-works-v2/selected-23.webp',
+      'assets/color-moment-grade/IMG_5051_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5054_grade_v1.webp'
+    ],
+    deep: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/infinite-love-strength.webp',
+      'assets/selected-works-v2/expansion.webp',
+      'assets/color-moment-grade/IMG_5047_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5049_grade_v1.webp'
+    ]
   };
 
   /* 《盛明》精裝版試寫稿 / 觀看筆記 — primary card text (優先). */
@@ -1867,11 +1956,26 @@
     }
     octx.fillStyle = g;
     octx.fillRect(0, 0, w, h);
+    // Seed from the live seal-moment canvas (finger/fingerprint glow) so card matches 收光.
+    try {
+      if (canvas && canvas.width && canvas.height) {
+        octx.globalAlpha = 0.92;
+        octx.drawImage(canvas, 0, 0, w, h);
+        octx.globalAlpha = 1;
+      }
+    } catch (err) { /* ignore */ }
     if (memorialLayer) {
-      octx.globalAlpha = 0.94;
+      octx.globalAlpha = 0.78;
       octx.drawImage(memorialLayer, 0, 0, w, h);
       octx.globalAlpha = 1;
     }
+    // Soft soft-gold frame wash — keepsake, not a hard stamp.
+    const gold = octx.createRadialGradient(w * 0.5, h * 0.48, Math.min(w, h) * 0.12, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
+    gold.addColorStop(0, 'rgba(201,164,106,0)');
+    gold.addColorStop(0.72, 'rgba(201,164,106,0)');
+    gold.addColorStop(1, dark ? 'rgba(201,164,106,.1)' : 'rgba(201,164,106,.08)');
+    octx.fillStyle = gold;
+    octx.fillRect(0, 0, w, h);
     // Soft vignette so it reads as a keepsake panel, not a raw screenshot.
     const vig = octx.createRadialGradient(w * 0.5, h * 0.48, Math.min(w, h) * 0.18, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
     vig.addColorStop(0, 'rgba(0,0,0,0)');
@@ -1891,8 +1995,8 @@
       if (memorialCap) {
         memorialCap.hidden = false;
         memorialCap.textContent = L === 'zh'
-          ? '獨一無二紀念'
-          : 'One-of-a-kind memorial';
+          ? '你的光痕 · 獨一無二'
+          : 'Your light-trace · one of a kind';
       }
     } else {
       if (memorialEl) memorialEl.hidden = true;
@@ -1929,7 +2033,7 @@
   }
 
 
-  /* —— v2448 Lightprint soft-breath figure (from lp-figure-proto) —— */
+  /* —— v2449 Lightprint soft-breath figure (secondary; memorial touch is hero) —— */
   const EPITHET = {
     gold:   [{zh:'柔金守夜人',en:'Keeper of Soft Gold'},{zh:'燭心旅人',en:'Candle-Heart Wanderer'},{zh:'蜜光之影',en:'Honey-Light Shade'}],
     indigo: [{zh:'深靛聽夜者',en:'Night Listener in Indigo'},{zh:'霧紫過客',en:'Mist-Violet Passerby'},{zh:'暗邊的光',en:'Light at the Dark Edge'}],
@@ -2168,7 +2272,7 @@
       figCtx.clearRect(0, 0, r.width || 1, r.height || 1);
     }
     if (figCanvas) figCanvas.classList.remove('is-on');
-    if (shell) shell.classList.remove('is-figure-birthing', 'is-figure-alive');
+    if (shell) shell.classList.remove('is-figure-birthing', 'is-figure-alive', 'is-figure-fading', 'is-seal-done');
     if (figBreathEl) figBreathEl.hidden = true;
     if (memLabelEl) memLabelEl.hidden = true;
     if (epithetZhEl) { epithetZhEl.hidden = true; epithetZhEl.textContent = ''; }
@@ -2196,13 +2300,23 @@
       else {
         if (shell) {
           shell.classList.remove('is-figure-birthing');
-          shell.classList.add('is-figure-alive');
+          shell.classList.add('is-figure-alive', 'is-seal-done');
         }
         if (figBreathEl) {
           figBreathEl.hidden = false;
           figBreathEl.textContent = lang() === 'zh' ? '柔光呼吸' : 'Soft breathing';
         }
         startFigureBreath(fig);
+        // Soft silhouette fades so sealed fingerprint → card is one continuous look.
+        window.setTimeout(() => {
+          if (!lastFigure || lastFigure !== fig) return;
+          stopFigureBreath();
+          if (shell) {
+            shell.classList.add('is-figure-fading');
+            shell.classList.remove('is-figure-alive');
+          }
+          if (figBreathEl) figBreathEl.hidden = true;
+        }, 2200);
       }
     }
     requestAnimationFrame(frame);
@@ -2210,36 +2324,21 @@
   function syncFigureCard(fig) {
     if (!fig) return;
     const L = lang();
-    if (memLabelEl) {
-      memLabelEl.hidden = false;
-      memLabelEl.textContent = L === 'zh' ? '光紋記憶' : 'Lightprint Memory';
-    }
-    if (epithetZhEl) {
-      epithetZhEl.hidden = false;
-      epithetZhEl.textContent = fig.epithet.zh;
-    }
-    if (epithetEnEl) {
-      epithetEnEl.hidden = false;
-      epithetEnEl.textContent = fig.epithet.en;
-    }
+    // Lean card: epithet already in card title/en — keep extra epithet nodes quiet.
+    if (memLabelEl) memLabelEl.hidden = true;
+    if (epithetZhEl) { epithetZhEl.hidden = true; epithetZhEl.textContent = ''; }
+    if (epithetEnEl) { epithetEnEl.hidden = true; epithetEnEl.textContent = ''; }
     if (loreEl) {
       loreEl.hidden = false;
       loreEl.innerHTML = '';
-      fig.lore.forEach(line => {
+      // One screen: at most 2 soft lore lines (GPT pre-page will carry more later).
+      (fig.lore || []).slice(0, 2).forEach(line => {
         const p = document.createElement('p');
         p.textContent = L === 'zh' ? line.zh : line.en;
         loreEl.appendChild(p);
       });
     }
-    if (figureMoodEl) {
-      figureMoodEl.hidden = false;
-      figureMoodEl.innerHTML = '';
-      (fig.palette || []).slice(0, 4).forEach(hex => {
-        const d = document.createElement('span');
-        d.style.background = hex;
-        figureMoodEl.appendChild(d);
-      });
-    }
+    if (figureMoodEl) { figureMoodEl.hidden = true; figureMoodEl.innerHTML = ''; }
   }
   function birthLightprintFigure() {
     if (!activeMood || !lightprintCode) return null;
@@ -2628,6 +2727,7 @@
     lightSealed = true;
     lightprintCode = encodeLightprint(lightTouches, activeMood.id);
     persistLightprint(lightprintCode);
+    // Seal-moment glow seeds the card hero (fingerprint / touch frame) — capture before figure birth.
     try { captureMemorialImage(); } catch (err) { memorialDataUrl = null; }
     if (sealBar) {
       sealBar.hidden = true;
@@ -2635,12 +2735,13 @@
     }
     afterEl.hidden = false;
     setSoloPhase('done');
+    // Soft silhouette is secondary; memorial touch frame remains the card hero.
     try { birthLightprintFigure(); } catch (err) { console.warn('[cm] figure birth', err); }
     renderCard();
     const L = lang();
     showToast(L === 'zh'
-      ? ('光已收好 · 光紋記憶')
-      : ('Light sealed · Lightprint memory'));
+      ? ('光已收好 · 這一痕就是紀念')
+      : ('Light sealed · this trace is the keepsake'));
   }
 
 
@@ -2672,13 +2773,24 @@
   function renderCard() {
     if (!activeMood) return;
     const L = lang();
-    if (activeArt && cardBg) {
-      cardBg.style.backgroundImage = `url("${activeArt}")`;
+    const leanMemorial = !!(memorialDataUrl);
+    // Fingerprint memorial is the card hero — do not let mood art replace that look.
+    if (cardBg) {
+      if (leanMemorial) {
+        cardBg.style.backgroundImage = '';
+      } else if (activeArt) {
+        cardBg.style.backgroundImage = `url("${activeArt}")`;
+      }
     }
-    if (lastFigure) {
-      cardEyebrow.textContent = L === 'zh' ? '光紋記憶 · 柔光剪影' : 'Lightprint Memory · soft silhouette';
-      cardTitle.textContent = lastFigure.epithet.zh;
-      cardEn.textContent = lastFigure.epithet.en;
+    if (leanMemorial || lastFigure) {
+      cardEyebrow.textContent = L === 'zh' ? '光紋記憶' : 'Lightprint Memory';
+      if (lastFigure) {
+        cardTitle.textContent = lastFigure.epithet.zh;
+        cardEn.textContent = lastFigure.epithet.en;
+      } else {
+        cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
+        cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
+      }
     } else {
       cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Eternal Sun';
       cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
@@ -2689,9 +2801,9 @@
         ? '摘自《盛明》筆記'
         : 'From the 《盛明》 notes';
     }
-    // Slim card: quiet answer echo (1, max 2 short); memorial image; quiet LP corner.
+    // Quiet answer echo only when lean (1 short line); memorial image speaks first.
     if (echoEl) {
-      const echo = buildAnswerEcho();
+      const echo = leanMemorial ? '' : buildAnswerEcho();
       if (echo) {
         echoEl.hidden = false;
         echoEl.textContent = echo;
@@ -2703,6 +2815,9 @@
     syncMemorialUI();
     if (lastFigure) {
       try { syncFigureCard(lastFigure); } catch (err) { /* ignore */ }
+    } else if (loreEl) {
+      loreEl.hidden = true;
+      loreEl.innerHTML = '';
     }
     if (lightprintEl) {
       const label = lightprintLabel();
@@ -2716,30 +2831,46 @@
     }
 
     readingEl.innerHTML = '';
-    const lines = L === 'zh' ? activeReading.zh : activeReading.en;
-    lines.forEach(line => {
-      const p = document.createElement('p');
-      p.textContent = line;
-      readingEl.appendChild(p);
-    });
+    if (!leanMemorial && activeReading) {
+      const lines = L === 'zh' ? activeReading.zh : activeReading.en;
+      lines.forEach(line => {
+        const p = document.createElement('p');
+        p.textContent = line;
+        readingEl.appendChild(p);
+      });
+    }
 
-    ritualLabel.textContent = L === 'zh' ? '今夜的柔邀' : 'Tonight’s soft invitation';
-    ritualText.textContent = L === 'zh' ? activeRitual.zh : activeRitual.en;
+    if (!leanMemorial && activeRitual) {
+      ritualLabel.textContent = L === 'zh' ? '今夜的柔邀' : 'Tonight’s soft invitation';
+      ritualText.textContent = L === 'zh' ? activeRitual.zh : activeRitual.en;
+    } else {
+      ritualLabel.textContent = '';
+      ritualText.textContent = '';
+    }
 
-    // One soft line — memorial speaks via the image, not more copy.
-    discoverEl.innerHTML = L === 'zh'
-      ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
-      : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.';
+    // Lean card: GPT will add a pre-page later — less copy needed here.
+    if (discoverEl) {
+      discoverEl.innerHTML = leanMemorial
+        ? ''
+        : (L === 'zh'
+          ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
+          : 'If you want a little more light: visit the <a href="/experience">Experience</a>, or softly browse the <a href="shop.html">Shop</a>.');
+    }
 
-    // Soft mini-card tip only — no price / hard CTA / Shop SKU this pass.
     if (miniTipEl) {
-      miniTipEl.hidden = false;
-      miniTipEl.textContent = L === 'zh'
-        ? '想把這一瞬帶走時，數位小卡很快會在商店輕輕出現。'
-        : 'When you want to carry this moment, digital mini-cards will soft-arrive in the Shop.';
+      if (leanMemorial) {
+        miniTipEl.hidden = true;
+        miniTipEl.textContent = '';
+      } else {
+        miniTipEl.hidden = false;
+        miniTipEl.textContent = L === 'zh'
+          ? '想把這一瞬帶走時，數位小卡很快會在商店輕輕出現。'
+          : 'When you want to carry this moment, digital mini-cards will soft-arrive in the Shop.';
+      }
     }
 
     cardEl.hidden = false;
+    cardEl.classList.toggle('is-lean', leanMemorial);
     cardEl.classList.remove('is-on');
     // Double rAF so the opacity/transform transition reliably plays after unhide.
     requestAnimationFrame(() => {
