@@ -9,20 +9,18 @@ const GET_TOKEN_URL = `${STAGE_HOST}/Merchant/GetTokenbyTrade`;
 const CREATE_PAYMENT_URL = `${STAGE_HOST}/Merchant/CreatePayment`;
 const QUERY_TRADE_URL = 'https://ecpayment-stage.ecpay.com.tw/1.0.0/Cashier/QueryTrade';
 
+const PACK_SKU = 'ES-PACK';
+const PACK_NAME = 'Eternal Sun｜盛明四張組';
+const PACK_FILE_SKUS = ['ES-ORIGINAL', 'ES-GALLERY', 'ES-PHONE', 'ES-SQUARE'];
 const SKU_CODE = {
-  'ES-ORIGINAL': '1',
-  'ES-GALLERY': '2',
-  'ES-PHONE': '3',
-  'ES-SQUARE': '4',
+  [PACK_SKU]: '5',
 };
 const CODE_SKU = Object.fromEntries(Object.entries(SKU_CODE).map(([sku, code]) => [code, sku]));
 const SKU_NAMES = {
-  'ES-ORIGINAL': 'Eternal Sun · Original Painting Edition',
-  'ES-GALLERY': 'Eternal Sun · Gallery Edition',
-  'ES-PHONE': 'Eternal Sun · Phone Wallpaper Edition',
-  'ES-SQUARE': 'Eternal Sun · Square Edition',
+  [PACK_SKU]: PACK_NAME,
 };
 
+const FORMAL_LIST_PRICE_TWD = 444;
 const ASSET_MANIFEST_ID = 'ES-ETERNAL-SUN-BUYER-PACK-V1';
 const ASSET_MANIFEST = {
   'ES-ORIGINAL': {
@@ -78,7 +76,8 @@ function getCredentials() {
 function stageAmountForSku(sku) {
   if (!SKU_CODE[sku]) return null;
   const specific = process.env[`ECPAY_STAGE_AMOUNT_${sku.replace(/-/g, '_')}`];
-  const raw = specific || process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '1';
+  // ECPay Stage GetToken rejects TotalAmount below NT$2 (provider_code 5100070).
+  const raw = specific || process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '2';
   const amount = Number.parseInt(raw, 10);
   if (!Number.isInteger(amount) || amount < 1 || amount > 1000000) {
     throw new Error(`Invalid Stage amount for ${sku}`);
@@ -86,19 +85,26 @@ function stageAmountForSku(sku) {
   return amount;
 }
 
+function packFiles() {
+  return PACK_FILE_SKUS.map((sku) => {
+    const asset = ASSET_MANIFEST[sku];
+    return asset ? { sku, asset_manifest_id: ASSET_MANIFEST_ID, ...asset } : null;
+  }).filter(Boolean);
+}
+
 function getSkuRecord(sku) {
   const clean = String(sku || '').toUpperCase();
-  if (!SKU_CODE[clean]) return null;
-  const asset = ASSET_MANIFEST[clean];
+  if (clean !== PACK_SKU) return null;
+  const files = packFiles();
   return {
-    sku: clean,
-    public_name: SKU_NAMES[clean],
+    sku: PACK_SKU,
+    public_name: PACK_NAME,
     currency: 'TWD',
-    amount: stageAmountForSku(clean),
+    amount: stageAmountForSku(PACK_SKU),
     asset_manifest_id: ASSET_MANIFEST_ID,
-    asset,
-    active: true,
-    fulfillment_enabled: Boolean(asset),
+    files,
+    active: files.length === PACK_FILE_SKUS.length,
+    fulfillment_enabled: files.length === PACK_FILE_SKUS.length,
   };
 }
 
@@ -176,7 +182,7 @@ function makeMerchantTradeNo(sku) {
 
 function skuFromMerchantTradeNo(value) {
   const tradeNo = String(value || '');
-  if (!/^AE[1-4][A-Z0-9]+$/.test(tradeNo) || tradeNo.length > 20) return null;
+  if (!/^AE5[A-Z0-9]+$/.test(tradeNo) || tradeNo.length > 20) return null;
   return CODE_SKU[tradeNo[2]] || null;
 }
 
@@ -226,19 +232,56 @@ function verifyOrderToken(token) {
   return order;
 }
 
-function makeOrderEnvelope(sku) {
+function normalizeBuyer(input) {
+  const name = String((input && input.name) || '').trim();
+  const email = String((input && input.email) || '').trim();
+  const phone = String((input && input.phone) || '').replace(/[\s-]/g, '').trim();
+  return { name, email, phone };
+}
+
+function validateBuyer(input) {
+  const buyer = normalizeBuyer(input);
+  if (!buyer.name || buyer.name.length < 2 || buyer.name.length > 80) {
+    const err = new Error('VALID_NAME_REQUIRED');
+    err.code = 'VALID_NAME_REQUIRED';
+    throw err;
+  }
+  if (!/^\S+@\S+\.\S+$/.test(buyer.email) || buyer.email.length > 120) {
+    const err = new Error('VALID_EMAIL_REQUIRED');
+    err.code = 'VALID_EMAIL_REQUIRED';
+    throw err;
+  }
+  // Phone optional for digital goods. If provided, Taiwan-first / international format.
+  if (buyer.phone) {
+    if (!/^(\+?886-?9\d{8}|09\d{8}|\+?[0-9]{8,15})$/.test(buyer.phone)) {
+      const err = new Error('VALID_PHONE_INVALID');
+      err.code = 'VALID_PHONE_INVALID';
+      throw err;
+    }
+  }
+  return buyer;
+}
+
+function makeOrderEnvelope(sku, buyerInput) {
   const record = getSkuRecord(sku);
   if (!record) throw new Error('Unknown SKU');
+  const buyer = validateBuyer(buyerInput || {});
   const merchantTradeNo = makeMerchantTradeNo(record.sku);
   const now = Date.now();
   const order = {
-    v: 1,
+    v: 2,
     provider: PROVIDER,
     order_id: merchantTradeNo,
     merchant_trade_no: merchantTradeNo,
     sku: record.sku,
     amount: record.amount,
     currency: record.currency,
+    list_price: FORMAL_LIST_PRICE_TWD,
+    buyer: {
+      name: buyer.name,
+      email: buyer.email,
+      phone: buyer.phone,
+    },
     status: 'CREATED',
     issued: now,
     expires: now + 30 * 60 * 1000,
@@ -411,6 +454,12 @@ module.exports = {
   signOrder,
   verifyOrderToken,
   makeOrderEnvelope,
+  normalizeBuyer,
+  validateBuyer,
+  FORMAL_LIST_PRICE_TWD,
+  PACK_SKU,
+  PACK_NAME,
+  packFiles,
   queryOrder,
   validateCallbackData,
   validateQueryData,

@@ -1,0 +1,4275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="ae-version" content="v2452">
+<title>色彩瞬間 · Color Moment · AE Universe Creation</title>
+<meta name="description" content="色彩瞬間 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css?v=2452">
+<script src="site.js?v=2452" defer></script>
+<link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
+<style>
+  .cm-stage{padding:28px 0 72px}
+  .cm-intro{text-align:center;max-width:560px;margin:0 auto 22px}
+  .cm-intro p{color:var(--muted);margin:0 auto}
+  .cm-panel{
+    width:min(560px,100%);margin:0 auto 22px;
+    border:1px solid var(--line);background:var(--paper);
+    border-radius:18px;padding:28px 24px 24px;text-align:center;
+  }
+  .cm-panel[hidden],.cm-bloom-wrap[hidden],.cm-after[hidden],.cm-card[hidden]{display:none!important}
+  .cm-progress{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  .cm-q{
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:clamp(20px,2.8vw,26px);line-height:1.45;margin:0 0 18px;
+    font-weight:500;
+  }
+  .cm-choices{display:flex;flex-direction:column;gap:10px}
+  .cm-choice{
+    appearance:none;border:1px solid var(--line);background:transparent;
+    color:inherit;border-radius:999px;padding:14px 18px;cursor:pointer;
+    font:inherit;font-size:15px;line-height:1.35;transition:border-color .2s,background .2s,transform .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cm-choice:hover,.cm-choice:focus-visible{border-color:var(--ink);outline:none}
+  .cm-choice:active{transform:scale(.98)}
+  .cm-shell{
+    position:relative;width:min(920px,100%);margin:0 auto;
+    border:1px solid var(--line);background:var(--paper);
+    border-radius:18px;overflow:hidden;
+    aspect-ratio:4/3;min-height:320px;
+    touch-action:none;cursor:crosshair;
+    overscroll-behavior:none;-webkit-user-select:none;user-select:none;
+  }
+  .cm-shell canvas{
+    display:block;width:100%;height:100%;
+    touch-action:none;pointer-events:auto;
+  }
+  .cm-mist{
+    position:absolute;inset:0;pointer-events:none;z-index:2;
+    opacity:0;transition:opacity .45s ease;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 48%, rgba(255,252,248,.0), rgba(232,226,216,.0) 62%),
+      linear-gradient(180deg, rgba(255,252,248,.0), rgba(236,230,222,.0));
+    mix-blend-mode:soft-light;
+  }
+  .cm-mist.is-soft{
+    opacity:.48;
+    background:
+      radial-gradient(ellipse 82% 68% at 50% 45%, rgba(255,252,248,.36), rgba(232,226,216,.12) 68%),
+      linear-gradient(165deg, rgba(245,240,232,.24), rgba(220,228,232,.16));
+  }
+  .cm-mist.is-rich{
+    opacity:.68;
+    background:
+      radial-gradient(ellipse 98% 85% at 50% 48%, rgba(255,252,248,.48), rgba(210,222,228,.28) 55%, rgba(200,210,218,.14) 100%),
+      linear-gradient(150deg, rgba(236,242,245,.34), rgba(232,226,216,.2));
+  }
+  :root[data-theme="dark"] .cm-mist.is-soft{
+    background:
+      radial-gradient(ellipse 82% 68% at 50% 45%, rgba(90,110,120,.3), rgba(40,36,32,.12) 68%),
+      linear-gradient(165deg, rgba(70,85,95,.26), rgba(40,36,32,.14));
+  }
+  :root[data-theme="dark"] .cm-mist.is-rich{
+    background:
+      radial-gradient(ellipse 98% 85% at 50% 48%, rgba(110,140,155,.46), rgba(60,70,78,.26) 55%, rgba(30,28,26,.16) 100%),
+      linear-gradient(150deg, rgba(80,100,110,.34), rgba(40,36,32,.2));
+  }
+  .cm-hint{
+    position:absolute;inset:0;display:grid;place-items:center;
+    pointer-events:none;text-align:center;padding:24px;
+    transition:opacity .6s ease;z-index:3;
+  }
+  .cm-hint span{
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:clamp(16px,2.5vw,22px);letter-spacing:.04em;
+    color:var(--muted);opacity:.72;
+  }
+  .cm-hint.is-hidden{opacity:0}
+  .cm-seal-bar{
+    width:min(920px,100%);margin:14px auto 0;padding:12px 14px;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    text-align:center;
+    position:sticky;bottom:max(10px, env(safe-area-inset-bottom));
+    z-index:46;
+    background:rgba(255,252,248,.92);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 10px 28px rgba(20,17,15,.12);
+  }
+  :root[data-theme="dark"] .cm-seal-bar{
+    background:rgba(28,24,20,.92);
+  }
+  .cm-seal-bar[hidden]{display:none!important}
+  .cm-lp-hint{
+    margin:0;max-width:38ch;font-size:12px;line-height:1.5;color:var(--muted);
+  }
+  .cm-seal{
+    appearance:none;cursor:pointer;border:1px solid var(--ink);
+    color:var(--paper);background:var(--ink);border-radius:999px;
+    min-height:50px;min-width:min(200px,68vw);padding:11px 24px;font:inherit;font-size:16px;
+    letter-spacing:.06em;font-weight:500;
+    transition:transform .18s ease,opacity .2s,border-color .2s;
+    -webkit-tap-highlight-color:transparent;touch-action:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  .cm-seal-label{
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+    pointer-events:none;
+  }
+  .cm-seal:hover,.cm-seal:focus-visible{transform:translateY(-1px);outline:none}
+  .cm-seal:active{transform:scale(.97)}
+  html.cm-draw-lock,html.cm-draw-lock body{overflow:hidden!important;overscroll-behavior:none;touch-action:none}
+  body.cm-blooming .page-heading{padding:18px 0 10px}
+  body.cm-blooming .page-heading h1{font-size:clamp(28px,7vw,44px);margin:0 0 8px}
+  body.cm-blooming .page-heading > p{display:none}
+  body.cm-blooming .cm-stage{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  /* v2446 progressive Solo — soft coach, not giant */
+  .cm-coach{
+    margin:0 auto 6px;max-width:34ch;text-align:center;
+    font-family:inherit;
+    font-size:clamp(12px,1.8vw,14px);line-height:1.5;letter-spacing:.04em;
+    color:var(--muted);opacity:.88;
+  }
+  .cm-intro-soft{
+    margin:0 auto;max-width:36ch;text-align:center;
+    font-size:12px;line-height:1.5;color:var(--muted);opacity:.78;
+  }
+  .cm-intro-soft[hidden]{display:none!important}
+  .cm-coach[hidden]{display:none!important}
+  body.cm-phase-ask .cm-residue,
+  body.cm-phase-touch .cm-residue,
+  body.cm-phase-seal .cm-residue{display:none!important}
+  body.cm-phase-touch .cm-after,
+  body.cm-phase-seal .cm-after{display:none!important}
+  body.cm-phase-seal .cm-coach{display:none!important}
+  body.cm-phase-done .cm-coach{display:none!important}
+  body.cm-phase-ask .cm-progress{opacity:.7}
+  .cm-seal-bar .cm-lp-hint{
+    font-size:12px;letter-spacing:.04em;max-width:24ch;
+    font-family:inherit;
+    color:var(--muted);opacity:.85;
+  }
+  .cm-seal-hold-hint{display:none!important} /* aria stays on button; one line only in bar */
+  .cm-seal-bar.is-arrive{
+    animation:cm-seal-arrive .42s cubic-bezier(.22,.61,.36,1);
+  }
+  @keyframes cm-seal-arrive{
+    from{opacity:0;transform:translateY(14px)}
+    to{opacity:1;transform:none}
+  }
+  .cm-seal{min-height:52px;min-width:min(220px,72vw);font-size:16px;letter-spacing:.08em}
+  .cm-seal-back{
+    display:block;margin:10px auto 0;padding:6px 10px;border:0;background:transparent;
+    color:var(--muted);font:inherit;font-size:12px;letter-spacing:.06em;cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px;opacity:.78;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cm-seal-back:focus-visible{outline:2px solid rgba(201,164,106,.55);outline-offset:2px}
+
+  /* v2451: painting soft full bg + small centered sealed-light frame + sparse text */
+  .cm-memorial{
+    margin:20px auto 6px;width:min(62%,220px);
+    border-radius:18px;overflow:hidden;
+    border:1px solid rgba(120,112,118,.28);
+    background:rgba(186,178,188,.38);
+    position:relative;
+    aspect-ratio:5/3.35;
+    box-shadow:0 8px 22px rgba(45,40,36,.07), inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+  .cm-memorial[hidden]{display:none!important}
+  .cm-memorial img{
+    display:block;width:100%;height:100%;object-fit:cover;object-position:center 46%;
+    filter:saturate(1.06) contrast(1.02) brightness(1.02);
+  }
+  .cm-memorial-cap{
+    margin:8px 0 0;font-size:10px;letter-spacing:.18em;
+    color:var(--muted);opacity:.72;text-align:center;
+  }
+  .cm-memorial-cap[hidden]{display:none!important}
+  /* Quiet watermark corner (Owner lock) — pale, small, never compete with art */
+  .cm-lightprint{
+    position:absolute;right:12px;bottom:10px;left:auto;margin:0;
+    font-size:8.5px;letter-spacing:.12em;line-height:1.2;
+    color:var(--muted);opacity:.34;text-align:right;
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    pointer-events:none;z-index:4;user-select:none;-webkit-user-select:none;
+  }
+  .cm-lightprint[hidden]{display:none!important}
+  .cm-pass-qr{display:block;width:132px;height:132px;margin:14px 0 0;background:#fff;image-rendering:pixelated}
+  .cm-pass-qr[hidden]{display:none!important}
+
+  /* v2451 Lightprint sparse memorial card */
+  .cm-opening-kicker{
+    margin:0 0 8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .cm-opening-lead{
+    margin:0 auto 10px;max-width:40ch;
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-weight:500;font-size:clamp(22px,5.2vw,30px);line-height:1.3;color:var(--ink);
+  }
+  .cm-intro-soft{
+    max-width:48ch;font-size:13.5px;line-height:1.7;opacity:.92;
+  }
+  .cm-shell{position:relative}
+  #cmFigureCanvas{
+    position:absolute;inset:0;width:100%;height:100%;display:block;
+    pointer-events:none;z-index:2;opacity:0;transition:opacity 1.1s ease;
+  }
+  /* Soft silhouette stays light secondary — sealed touch/fingerprint remains the visual seed */
+  #cmFigureCanvas.is-on{opacity:.34}
+  .cm-shell.is-figure-birthing .cm-mist{opacity:.88}
+  .cm-shell.is-figure-birthing #cmCanvas{transition:opacity 1.2s ease;opacity:.88}
+  .cm-shell.is-figure-alive #cmFigureCanvas{opacity:.26}
+  .cm-shell.is-figure-fading #cmFigureCanvas{opacity:0}
+  .cm-shell.is-figure-fading .cm-figure-breath{opacity:0}
+  .cm-shell.is-seal-done #cmCanvas{opacity:1}
+  .cm-figure-breath{
+    position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+    z-index:3;margin:0;font-size:11px;letter-spacing:.14em;
+    color:rgba(240,226,196,.48);pointer-events:none;opacity:0;
+    transition:opacity .8s ease;
+  }
+  .cm-shell.is-figure-alive .cm-figure-breath{opacity:.55}
+  .cm-mem-label{
+    margin:16px 0 6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .cm-mem-label[hidden]{display:none!important}
+  .cm-epithet{
+    margin:0 0 4px;font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-weight:500;font-size:clamp(22px,5vw,28px);line-height:1.25;color:var(--ink);
+  }
+  .cm-epithet[hidden]{display:none!important}
+  .cm-epithet-en{
+    margin:0 0 12px;font-size:13px;letter-spacing:.06em;font-style:italic;color:var(--muted);
+  }
+  .cm-epithet-en[hidden]{display:none!important}
+  .cm-lore{margin:0 auto 10px;max-width:36ch;text-align:left}
+  .cm-lore[hidden]{display:none!important}
+  .cm-lore p{margin:0 0 6px;font-size:14px;line-height:1.7;color:rgba(42,36,32,.88)}
+  :root[data-theme="dark"] .cm-lore p{color:rgba(236,230,222,.9)}
+  .cm-figure-mood{display:flex;justify-content:center;gap:6px;margin:8px 0 4px}
+  .cm-figure-mood[hidden]{display:none!important}
+  .cm-figure-mood span{
+    width:10px;height:10px;border-radius:50%;
+    box-shadow:0 0 0 1px rgba(0,0,0,.08);
+  }
+
+  .cm-card{
+    position:relative;width:min(560px,100%);margin:22px auto 0;
+    border:1px solid var(--line);border-radius:18px;
+    padding:26px 22px 22px;text-align:center;overflow:hidden;
+    background:var(--paper);
+    opacity:0;transform:translateY(18px);
+    transition:opacity 1.35s cubic-bezier(.22,.61,.36,1), transform 1.35s cubic-bezier(.22,.61,.36,1);
+    will-change:opacity,transform;
+  }
+  .cm-card.is-on{opacity:1;transform:translateY(0)}
+  .cm-wash{
+    position:fixed;inset:0;z-index:40;pointer-events:none;
+    background:rgba(255,252,248,.0);
+    opacity:0;transition:opacity .7s ease, background .7s ease;
+  }
+  .cm-wash.is-on{
+    pointer-events:auto;
+    opacity:1;background:rgba(255,252,248,.92);
+  }
+  :root[data-theme="dark"] .cm-wash.is-on{
+    background:rgba(236,230,222,.88);
+  }
+  .cm-card-bg{
+    position:absolute;inset:0;background-size:cover;background-position:center center;
+    filter:saturate(1.05) contrast(1.02);
+    /* Center-zoom so edge artwork titles/signatures stay out of UI text */
+    transform:scale(1.24);transform-origin:center center;
+    z-index:0;
+  }
+  /* SHARED pale art lock (Owner v2453 correction): early === result */
+  :root{
+    --cm-pale-art-alpha-light: 0.22;
+    --cm-pale-art-alpha-dark: 0.16;
+    --cm-pale-veil-top: rgba(247,241,232,.58);
+    --cm-pale-veil-mid: rgba(247,241,232,.42);
+    --cm-pale-veil-bot: rgba(247,241,232,.62);
+    --cm-pale-veil-top-dark: rgba(20,17,15,.52);
+    --cm-pale-veil-mid-dark: rgba(20,17,15,.38);
+    --cm-pale-veil-bot-dark: rgba(20,17,15,.58);
+    --cm-pale-bg-filter: saturate(.74) contrast(.94) brightness(1.12);
+    --cm-pale-bg-opacity: .88;
+  }
+  .cm-card-veil{
+    position:absolute;inset:0;z-index:1;
+    /* SHARED pale — same as early touch wash */
+    background:linear-gradient(180deg,var(--cm-pale-veil-top) 0%,var(--cm-pale-veil-mid) 42%,var(--cm-pale-veil-bot) 100%);
+  }
+  :root[data-theme="dark"] .cm-card-veil{
+    background:linear-gradient(180deg,var(--cm-pale-veil-top-dark) 0%,var(--cm-pale-veil-mid-dark) 42%,var(--cm-pale-veil-bot-dark) 100%);
+  }
+  /* Sparse memorial: Owner reference — soft painting bg + small frame + few lines */
+  .cm-card.is-sparse{
+    padding:28px 20px 20px;margin-top:18px;
+    border-color:rgba(120,112,118,.18);
+    background:transparent;
+  }
+  .cm-card.is-sparse .cm-card-bg{
+    /* SHARED pale — match early card (not louder) */
+    filter:var(--cm-pale-bg-filter);
+    transform:scale(1.1);
+    opacity:var(--cm-pale-bg-opacity);
+  }
+  .cm-card.is-sparse .cm-card-veil{
+    background:linear-gradient(180deg,var(--cm-pale-veil-top) 0%,var(--cm-pale-veil-mid) 40%,var(--cm-pale-veil-bot) 100%);
+  }
+  :root[data-theme="dark"] .cm-card.is-sparse .cm-card-veil{
+    background:linear-gradient(180deg,var(--cm-pale-veil-top-dark) 0%,var(--cm-pale-veil-mid-dark) 40%,var(--cm-pale-veil-bot-dark) 100%);
+  }
+  .cm-card.is-sparse .cm-echo,
+  .cm-card.is-sparse .cm-mem-label,
+  .cm-card.is-sparse .cm-epithet,
+  .cm-card.is-sparse .cm-epithet-en,
+  .cm-card.is-sparse .cm-lore,
+  .cm-card.is-sparse .cm-figure-mood,
+  .cm-card.is-sparse .cm-discover,
+  .cm-card.is-sparse .cm-mini-tip,
+  .cm-card.is-sparse .cm-capture-note{display:none!important}
+  .cm-card.is-sparse .cm-card-eyebrow{margin:0 0 8px;opacity:.78}
+  .cm-card.is-sparse .cm-card-title{font-size:clamp(26px,5.4vw,34px);font-weight:600}
+  .cm-card.is-sparse .cm-card-en{margin-top:4px}
+  .cm-card.is-sparse .cm-card-src{margin-top:6px;opacity:.75}
+  .cm-card.is-sparse .cm-reading{
+    margin:12px auto 0;max-width:34ch;
+    font-size:14px;line-height:1.7;color:rgba(42,36,32,.86);
+  }
+  .cm-card.is-sparse .cm-reading p{margin:0 0 4px}
+  .cm-card.is-sparse .cm-ritual{
+    margin:18px auto 0;max-width:34ch;padding-top:14px;
+    border-top:1px solid rgba(120,112,118,.22);
+    font-size:clamp(16px,2.4vw,19px);
+  }
+  .cm-card.is-sparse .cm-ritual-label{margin-bottom:6px;opacity:.75}
+  .cm-card.is-sparse .cm-lightprint{
+    /* Keep watermark corner — even quieter on memorial */
+    margin:0;right:11px;bottom:9px;opacity:.32;font-size:8px;letter-spacing:.11em;
+  }
+  .cm-card.is-sparse .cm-card-actions{
+    margin-top:18px;padding-top:14px;
+    border-top:1px solid rgba(120,112,118,.18);
+    gap:8px 10px;
+  }
+  .cm-card.is-sparse .cm-card-action{background:transparent;border-color:rgba(120,112,118,.35)}
+  .cm-card-body{position:relative;z-index:2}
+  .cm-card-eyebrow{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 10px;
+  }
+  .cm-card-title{
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:clamp(24px,3.2vw,32px);line-height:1.28;margin:0;
+    font-weight:500;
+  }
+  .cm-card-en{
+    margin:6px 0 0;font-size:14px;letter-spacing:.06em;
+    color:var(--muted);font-style:italic;
+  }
+  .cm-card-src{
+    margin:8px 0 0;font-size:11px;letter-spacing:.08em;
+    color:var(--muted);opacity:.85;
+  }
+  .cm-echo{
+    margin:10px auto 0;max-width:34ch;
+    font-size:12px;line-height:1.5;color:var(--muted);
+    text-align:center;opacity:.82;
+  }
+  .cm-echo[hidden]{display:none!important}
+  .cm-reading{
+    margin:18px auto 0;max-width:38ch;
+    font-size:15px;line-height:1.65;color:inherit;
+  }
+  .cm-reading p{margin:0 0 .55em}
+  .cm-reading p:last-child{margin-bottom:0}
+  /* hue dots removed v2435 — Owner: 色點拿掉 */
+  .cm-ritual{
+    margin:18px auto 0;max-width:36ch;
+    padding-top:14px;border-top:1px solid var(--line);
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:clamp(15px,2.2vw,18px);line-height:1.55;
+  }
+  .cm-ritual-label{
+    display:block;font-family:inherit;font-size:11px;font-style:normal;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    margin-bottom:8px;
+  }
+  .cm-discover{
+    margin:16px 0 0;font-size:13px;color:var(--muted);
+  }
+  .cm-discover a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+  .cm-mini-tip{
+    margin:10px auto 0;max-width:36ch;
+    font-size:12px;line-height:1.5;color:var(--muted);
+    text-align:center;opacity:.78;
+  }
+  .cm-mini-tip[hidden]{display:none!important}
+  .cm-card-actions{
+    position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:10px 12px;
+    justify-content:center;align-items:center;margin:24px 0 0;padding-top:18px;
+    border-top:1px solid var(--line);
+  }
+  .cm-capture-note{
+    position:relative;z-index:2;margin:20px auto 0;max-width:32ch;
+    font-size:13px;line-height:1.5;color:var(--muted);
+  }
+  .cm-shutter,.cm-card-action{
+    appearance:none;cursor:pointer;border:1px solid var(--line);
+    color:inherit;background:rgba(255,255,255,.16);border-radius:999px;
+    min-height:44px;padding:10px 16px;font:inherit;font-size:14px;
+    transition:transform .18s ease,border-color .2s,background .2s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cm-shutter{
+    position:relative;z-index:5;
+    display:inline-flex;align-items:center;gap:9px;border-color:var(--ink);
+    background:var(--ink);color:var(--paper);padding-inline:18px;
+    pointer-events:auto;
+  }
+  .cm-shutter::before{
+    content:"";display:block;width:14px;height:14px;border:2px solid currentColor;
+    border-radius:50%;box-shadow:inset 0 0 0 3px transparent;
+  }
+  .cm-shutter:hover,.cm-shutter:focus-visible,.cm-card-action:hover,.cm-card-action:focus-visible{
+    transform:translateY(-1px);outline:none;border-color:var(--ink);
+  }
+  .cm-shutter:active,.cm-card-action:active{transform:scale(.97)}
+  .cm-shutter:disabled{cursor:wait;opacity:.7}
+  .cm-card-action{background:transparent;color:inherit}
+  .cm-card-flash::after{
+    content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:inherit;
+    background:#fff;opacity:0;animation:cm-shutter-flash .45s ease-out;
+  }
+  @keyframes cm-shutter-flash{0%{opacity:.78}100%{opacity:0}}
+  .cm-toast{
+    min-height:1.4em;margin:12px auto 0;font-size:12px;color:var(--muted);
+    text-align:center;opacity:0;transition:opacity .25s ease;
+  }
+  .cm-toast.is-visible{opacity:1}
+  .cm-actions{
+    display:flex;flex-wrap:wrap;gap:16px 22px;justify-content:center;
+    margin-top:28px;align-items:center;
+  }
+  .cm-soft{font-size:13px;color:var(--muted);text-align:center;margin:22px auto 0;max-width:42ch}
+  @media(max-width:700px){
+    .cm-shell{
+      width:100%;aspect-ratio:3/4;
+      min-height:min(52dvh, 400px);
+      max-height:calc(100dvh - 240px);
+      border-radius:14px;
+    }
+    .cm-stage{padding:12px 0 72px}
+    body.cm-blooming .cm-stage{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+    body.cm-phase-seal .cm-stage{padding-bottom:calc(128px + env(safe-area-inset-bottom))}
+    .cm-seal{min-height:52px;font-size:16px}
+    .cm-panel,.cm-card{padding:22px 16px 18px;border-radius:14px}
+    .cm-seal-bar{
+      position:fixed;left:12px;right:12px;bottom:max(10px, env(safe-area-inset-bottom));
+      width:auto;margin:0;z-index:46;
+      padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+    }
+    .cm-lp-hint{font-size:11px;max-width:34ch}
+    .cm-seal{min-height:50px;font-size:16px;width:100%;max-width:300px}
+    .cm-hint span{font-size:clamp(15px,4.2vw,20px);padding:0 8px}
+  }
+
+  /* iOS save sheet — long-press image is the reliable Photos path */
+  .cm-save-sheet{
+    position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;
+    padding:max(12px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+    background:rgba(20,17,15,.52);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    opacity:0;pointer-events:none;transition:opacity .28s ease;
+  }
+  .cm-save-sheet.is-open{opacity:1;pointer-events:auto}
+  .cm-save-panel{
+    width:min(440px,100%);max-height:min(92vh,860px);overflow:auto;
+    background:var(--paper);color:var(--ink);border:1px solid var(--line);
+    border-radius:22px 22px 18px 18px;box-shadow:0 18px 48px rgba(20,17,15,.28);
+    padding:18px 16px 16px;transform:translateY(18px);transition:transform .3s ease;
+  }
+  .cm-save-sheet.is-open .cm-save-panel{transform:translateY(0)}
+  .cm-save-title{
+    margin:0 0 6px;font-size:17px;font-weight:500;letter-spacing:.01em;text-align:center;
+  }
+  .cm-save-hint{
+    margin:0 auto 14px;max-width:34ch;font-size:13px;line-height:1.55;color:var(--muted);text-align:center;
+  }
+  .cm-save-frame{
+    margin:0 auto;width:100%;max-height:min(58vh,520px);border-radius:14px;overflow:hidden;
+    background:rgba(0,0,0,.04);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;position:relative;
+    -webkit-touch-callout:default;touch-action:manipulation;
+  }
+  .cm-save-frame.is-loading{min-height:min(42vh,320px)}
+  .cm-save-loading{
+    display:none;padding:40px 18px;font-size:13px;line-height:1.55;color:var(--muted);text-align:center;
+  }
+  .cm-save-frame.is-loading .cm-save-loading{display:block}
+  .cm-save-frame.is-loading img{display:none}
+  .cm-save-frame img{
+    display:block;width:100%;height:auto;max-height:min(58vh,520px);
+    object-fit:contain;-webkit-touch-callout:default;user-select:none;-webkit-user-select:none;
+  }
+  .cm-save-actions .cm-save-share:disabled{opacity:.55;cursor:wait}
+  .cm-save-actions{
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:16px 0 4px;
+  }
+  .cm-save-actions button{
+    appearance:none;cursor:pointer;border:1px solid var(--line);border-radius:999px;
+    min-height:44px;padding:10px 18px;font:inherit;font-size:14px;color:inherit;
+    background:transparent;-webkit-tap-highlight-color:transparent;
+  }
+  .cm-save-actions .cm-save-share{
+    background:var(--ink);color:var(--paper);border-color:var(--ink);
+  }
+  .cm-save-actions .cm-save-share[hidden]{display:none}
+  .cm-save-note{
+    margin:8px auto 0;max-width:36ch;font-size:12px;line-height:1.5;color:var(--muted);text-align:center;
+  }
+
+  .cm-seal{
+    position:relative;overflow:visible;
+  }
+  /* Hold-to-seal SVG ring — idle track + gold fill (visible mid-hold) */
+  .cm-seal-ring{
+    position:absolute;inset:-12px;border-radius:999px;pointer-events:none;z-index:0;
+    opacity:.9;display:block;
+  }
+  .cm-seal-ring-svg{display:block;width:100%;height:100%;overflow:visible}
+  .cm-seal-ring-track{
+    stroke:rgba(201,164,106,.38);stroke-width:2.4;
+  }
+  .cm-seal-ring-prog{
+    stroke:#c9a46a;stroke-width:2.8;stroke-linecap:round;
+    stroke-dasharray:100; /* dashoffset set in JS via setSealHoldProgress */
+    transform:rotate(-90deg);transform-origin:18px 18px;
+    filter:drop-shadow(0 0 3px rgba(201,164,106,.45));
+    transition:stroke .15s ease;
+  }
+  .cm-seal.is-holding .cm-seal-ring{opacity:1}
+  .cm-seal.is-holding .cm-seal-ring-track{stroke:rgba(201,164,106,.5)}
+  .cm-seal.is-holding .cm-seal-ring-prog{filter:drop-shadow(0 0 6px rgba(201,164,106,.7))}
+  .cm-seal.is-holding{transform:scale(.98);box-shadow:0 0 0 1px rgba(201,164,106,.35)}
+  .cm-seal.is-complete .cm-seal-ring-prog{
+    stroke:#d4b56e;stroke-dashoffset:0;
+    filter:drop-shadow(0 0 10px rgba(201,164,106,.85));
+  }
+  .cm-seal.is-complete{box-shadow:0 0 24px rgba(201,164,106,.5)}
+  .cm-seal.is-coalescing{
+    pointer-events:none;opacity:.88;
+    box-shadow:0 0 28px rgba(201,164,106,.45);
+  }
+  .cm-seal-label{position:relative;z-index:1}
+  .cm-seal-hold-hint{
+    margin:0;font-size:12px;line-height:1.45;color:var(--muted);max-width:34ch;
+  }
+  .cm-residue{
+    width:min(920px,100%);margin:0 auto 14px;padding:12px 14px;
+    border:1px dashed var(--line);border-radius:14px;background:rgba(255,252,248,.35);
+    display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .cm-residue[hidden]{display:none!important}
+  .cm-residue p{margin:0;font-size:13px;line-height:1.5;color:var(--muted);max-width:42ch}
+  .cm-residue-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .cm-residue-actions button{
+    appearance:none;cursor:pointer;border:1px solid var(--line);border-radius:999px;
+    min-height:40px;padding:8px 14px;font:inherit;font-size:13px;color:inherit;background:transparent;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cm-residue-actions .cm-path-replay{
+    border-color:var(--ink);background:var(--ink);color:var(--paper);
+  }
+  .cm-card-body{padding-bottom:28px} /* room so watermark never collides with actions */
+  /* One hold target: a round 收光 with a true circle ring (not a stretched pill). */
+  .cm-seal{
+    width:88px;height:88px;min-width:88px;min-height:88px;
+    padding:0;border-radius:50%;
+    display:grid;place-items:center;
+  }
+  .cm-seal-label{font-size:16px;letter-spacing:.12em}
+  .cm-seal-ring{
+    inset:-8px;width:auto;height:auto;border-radius:50%;opacity:1;
+  }
+  .cm-seal-ring-track{stroke-width:3.2}
+  .cm-seal-ring-prog{stroke-width:3.6}
+  .cm-freeze{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:fill;z-index:1;pointer-events:none;border-radius:inherit;
+  }
+  .cm-freeze[hidden]{display:none!important}
+  .cm-shell.is-frozen{cursor:default}
+  .cm-shell.is-frozen #cmCanvas{opacity:0}
+  #cmFigureCanvas{z-index:3}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content · 跳至內容</a>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <button class="menu-trigger" data-menu-toggle aria-expanded="false" aria-controls="site-menu" aria-label="Open or close menu" type="button">
+        <span class="hamburger" aria-hidden="true"><i></i><i></i></span>
+        <span data-en="Menu" data-zh="選單" class="menu-label">Menu</span>
+      </button>
+    </div>
+    <a class="wordmark" href="index.html" aria-label="AE Universe Creation — Home">
+      <img class="brand-mark" src="assets/ae-three-rings-transparent.webp" alt="" width="74" height="45">
+      <span class="brand-name">AE Universe<span>CREATION</span></span>
+    </a>
+    <div class="header-actions">
+      <a data-en="Collect" data-zh="收藏" href="collections.html" class="header-shop">Collect</a>
+      <button data-language type="button" aria-label="切換至中文">中文</button>
+      <button class="theme-button" data-theme-toggle aria-label="Switch to dark mode" type="button">◐</button>
+    </div>
+  </div>
+  <div class="menu-panel" id="site-menu" hidden>
+    <nav aria-label="Main navigation">
+      <a href="eternal-sun.html" data-en="Eternal Sun" data-zh="盛明">Eternal Sun</a>
+      <a data-en="Home" data-zh="首頁" href="index.html">Home</a>
+      <a data-en="Experience" data-zh="互動體驗" href="/experience">Experience</a>
+      <a data-en="Color Moment" data-zh="色彩瞬間" href="/color-moment">Color Moment</a>
+      <a data-en="The artworks" data-zh="作品" href="works.html">The artworks</a>
+      <a data-en="Collections" data-zh="收藏系列" href="collections.html">Collections</a>
+      <a data-en="Our story" data-zh="我們的故事" href="about.html">Our story</a>
+    </nav>
+    <p class="menu-note">Aurelia &amp; Elion · AE Universe Creation</p>
+    <button class="mobile-theme" data-theme-toggle type="button">Dark appearance</button>
+  </div>
+</header>
+<button class="menu-backdrop" hidden tabindex="-1" aria-label="Close menu"></button>
+
+<main id="main">
+  <div class="wrap page-heading page-heading-wash">
+    <p class="eyebrow" data-en="AE COLOR MOMENT" data-zh="AE 色彩瞬間">AE COLOR MOMENT</p>
+    <h1 data-en="Color Moment" data-zh="色彩瞬間">Color Moment</h1>
+    <p data-en="One soft moment." data-zh="一個柔和的片刻。">One soft moment.</p>
+  </div>
+
+  <section class="cm-stage">
+    <div class="wrap">
+      <div class="cm-intro" id="cmIntro">
+        <p class="cm-opening-kicker" id="cmOpeningKicker" data-en="Lightprint Memory" data-zh="光紋記憶">Lightprint Memory</p>
+        <p class="cm-opening-lead" id="cmOpeningLead" data-en="Leave your Lightprint" data-zh="留下你的光紋">Leave your Lightprint</p>
+        <p class="cm-intro-soft" id="cmIntroSoft" data-en="Pick the one that feels closest." data-zh="選一個最靠近現在的感覺。">Pick the one that feels closest.</p>
+        <p class="cm-coach" id="cmCoach" data-en="Pick one that fits" data-zh="輕輕選一個">Pick one that fits</p>
+      </div>
+
+      <div class="cm-residue" id="cmResidue" hidden>
+        <p id="cmResidueText"></p>
+        <div class="cm-residue-actions">
+          <button type="button" class="cm-path-replay" id="cmResidueReplay" data-en="Watch the light again" data-zh="看光再走一次">Watch the light again</button>
+          <button type="button" id="cmResidueDismiss" data-en="Keep it quiet" data-zh="先靜靜收著">Keep it quiet</button>
+        </div>
+      </div>
+
+      <div class="cm-panel" id="cmAsk" aria-live="polite">
+        <p class="cm-progress" id="cmProgress"></p>
+        <p class="cm-q" id="cmQuestion"></p>
+        <div class="cm-choices" id="cmChoices" role="group" aria-label="Feeling choices"></div>
+      </div>
+
+      <div class="cm-bloom-wrap" id="cmBloomWrap" hidden>
+        <div class="cm-shell" id="cmShell" aria-label="Move your finger and light follows">
+          <canvas id="cmCanvas" width="920" height="690"></canvas>
+          <canvas id="cmFigureCanvas" width="920" height="690" aria-hidden="true"></canvas>
+          <div class="cm-mist" id="cmMist" aria-hidden="true"></div>
+          <div class="cm-hint" id="cmHint"><span data-en="Move your finger — light follows." data-zh="手指畫過去，光會跟著。">Move your finger — light follows.</span></div>
+          <img class="cm-freeze" id="cmFreeze" alt="" hidden>
+          <p class="cm-figure-breath" id="cmFigureBreath" data-en="Soft breathing" data-zh="柔光呼吸" hidden>Soft breathing</p>
+        </div>
+        <button type="button" class="cm-seal-back" id="cmTouchBack" data-en="Back to questions" data-zh="回到問題" hidden>Back to questions</button>
+
+        <div class="cm-seal-bar" id="cmSealBar" hidden>
+          <p class="cm-lp-hint" id="cmLpHint" data-en="Hold until the ring fills." data-zh="按住，直到光環轉滿。">Hold until the ring fills.</p>
+          <button type="button" class="cm-seal" id="cmSeal" aria-label="收光" aria-describedby="cmSealHoldHint">
+            <span class="cm-seal-ring" id="cmSealRing" aria-hidden="true">
+              <svg class="cm-seal-ring-svg" viewBox="0 0 36 36" width="100%" height="100%" aria-hidden="true">
+                <circle class="cm-seal-ring-track" pathLength="100" cx="18" cy="18" r="16" fill="none"></circle>
+                <circle class="cm-seal-ring-prog" pathLength="100" cx="18" cy="18" r="16" fill="none" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+              </svg>
+            </span>
+            <span class="cm-seal-label" id="cmSealLabel" data-en="收光" data-zh="收光">收光</span>
+          </button>
+          <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold — release to cancel" data-zh="按住——放開即取消">Hold — release to cancel</p>
+          <button type="button" class="cm-seal-back" id="cmSealBack" data-en="Back to questions" data-zh="回到問題">Back to questions</button>
+        </div>
+
+        <article class="cm-card" id="cmCard" hidden aria-live="polite">
+          <div class="cm-card-bg" id="cmCardBg" aria-hidden="true"></div>
+          <div class="cm-card-veil" aria-hidden="true"></div>
+          <div class="cm-card-body">
+            <p class="cm-card-eyebrow" id="cmCardEyebrow"></p>
+            <h2 class="cm-card-title" id="cmCardTitle"></h2>
+            <p class="cm-card-en" id="cmCardEn"></p>
+            <p class="cm-echo" id="cmEcho" hidden></p>
+            <p class="cm-card-src" id="cmCardSrc"></p>
+            <figure class="cm-memorial" id="cmMemorial" hidden>
+              <img id="cmMemorialImg" alt="" draggable="false">
+            </figure>
+            <p class="cm-memorial-cap" id="cmMemorialCap" hidden></p>
+            <p class="cm-mem-label" id="cmMemLabel" hidden data-en="Lightprint Memory" data-zh="光紋記憶">Lightprint Memory</p>
+            <h3 class="cm-epithet" id="cmEpithetZh" hidden></h3>
+            <p class="cm-epithet-en" id="cmEpithetEn" hidden></p>
+            <div class="cm-lore" id="cmLore" hidden></div>
+            <div class="cm-figure-mood" id="cmFigureMood" hidden aria-hidden="true"></div>
+            <div class="cm-reading" id="cmReading"></div>
+            <p class="cm-ritual" id="cmRitual">
+              <span class="cm-ritual-label" id="cmRitualLabel"></span>
+              <span id="cmRitualText"></span>
+            </p>
+            <p class="cm-discover" id="cmDiscover"></p>
+            <p class="cm-mini-tip" id="cmMiniTip" hidden></p>
+            <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
+            <div class="cm-card-actions" aria-label="Moment actions">
+              <button type="button" class="cm-shutter" id="cmSnap" data-en="Take this moment" data-zh="拍下這一瞬">Take this moment</button>
+              <button type="button" class="cm-card-action" id="cmShare" data-en="Share this card" data-zh="分享這張卡">Share this card</button>
+              <button type="button" class="cm-card-action" id="cmPathReplay" data-en="Watch the light again" data-zh="看光再走一次">Watch the light again</button>
+              <button type="button" class="cm-card-action" id="cmReplay" data-en="Feel again" data-zh="再感覺一次">Feel again</button>
+            </div>
+            <p class="cm-toast" id="cmToast" role="status" aria-live="polite"></p>
+          </div>
+          <!-- Quiet watermark corner — Owner lock: pale, small, not competing with art -->
+            <img class="cm-pass-qr" id="cmPassQr" alt="" width="132" height="132" hidden>
+            <p class="cm-lightprint" id="cmLightprint" hidden></p>
+        </article>
+      </div>
+
+      <div class="cm-after" id="cmAfter" hidden>
+        <div class="cm-actions">
+          <a class="text-link" href="/experience" data-en="Continue to Experience →" data-zh="前往互動體驗 →">Continue to Experience →</a>
+          <a class="text-link" href="shop.html" data-en="Browse the Shop →" data-zh="看看商店 →">Browse the Shop →</a>
+        </div>
+        <p class="cm-soft" data-en="A quiet moment first. Nothing more is needed." data-zh="先留下這一刻就好。不需要更多。">A quiet moment first. Nothing more is needed.</p>
+      </div>
+    </div>
+  </section>
+  <div class="cm-wash" id="cmWash" aria-hidden="true"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <img src="assets/ae-three-rings-transparent.webp" alt="AE Universe Creation 金色三環標誌" width="110" height="67">
+      AE Universe Creation
+    </div>
+    <nav class="footer-links" aria-label="Footer">
+      <a data-en="Artworks" data-zh="作品" href="works.html">Artworks</a>
+      <a data-en="Collections" data-zh="收藏系列" href="collections.html">Collections</a>
+      <a data-en="Experience" data-zh="互動體驗" href="/experience">Experience</a>
+      <a data-en="Color Moment" data-zh="色彩瞬間" href="/color-moment">Color Moment</a>
+      <a data-en="Our story" data-zh="我們的故事" href="about.html">Our story</a>
+      <a data-en="Ko-fi shop" data-zh="Ko-fi 商店" href="https://ko-fi.com/aeuniverse1314/shop" target="_blank" rel="noopener">Ko-fi shop</a>
+    </nav>
+  </div>
+  <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
+  <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2453b · color-moment</p>
+</footer>
+
+<div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
+  <div class="cm-save-panel" role="dialog" aria-modal="true" aria-labelledby="cmSaveTitle">
+    <p class="cm-save-title" id="cmSaveTitle" data-en="This moment" data-zh="這一瞬">This moment</p>
+    <p class="cm-save-hint" id="cmSaveHint" data-en="Long-press the image → Add to Photos / Save Image" data-zh="長按圖片，選擇『加入照片』或『儲存影像』">Long-press the image → Add to Photos / Save Image</p>
+    <div class="cm-save-frame" id="cmSaveFrame">
+      <p class="cm-save-loading" id="cmSaveLoading" data-en="Developing this moment…" data-zh="正在沖出這一瞬…">Developing this moment…</p>
+      <img id="cmSaveImg" alt="Color Moment card" draggable="false">
+    </div>
+    <div class="cm-save-actions">
+      <button type="button" class="cm-save-share" id="cmSaveShare" data-en="Share" data-zh="分享">Share</button>
+      <button type="button" id="cmSaveClose" data-en="Close" data-zh="關閉">Close</button>
+    </div>
+    <p class="cm-save-note" id="cmSaveNote" data-en="Keep it soft — the picture is waiting in your Photos." data-zh="輕輕收好就好——照片會在你的相簿裡等你。">Keep it soft — the picture is waiting in your Photos.</p>
+  </div>
+</div>
+
+<script src="qrcode.js"></script>
+<script>
+(() => {
+  /* Larger pool — each session draws 3–4, shuffled. Scoring stays under the hood. */
+  const QUESTION_POOL = [
+    {
+      zh: '此刻身體更靠近……',
+      en: 'Right now your body feels closer to…',
+      choices: [
+        { zh: '溫熱的陽光', en: 'Warm sunlight', tags: ['warm', 'gold'] },
+        { zh: '清涼的霧氣', en: 'Cool mist', tags: ['cool', 'mist'] },
+        { zh: '靜靜的水面', en: 'Still water', tags: ['still', 'deep'] }
+      ]
+    },
+    {
+      zh: '若顏色先開口，它會是……',
+      en: 'If a colour spoke first, it would be…',
+      choices: [
+        { zh: '柔金', en: 'Soft gold', tags: ['gold', 'warm'] },
+        { zh: '深靛', en: 'Deep indigo', tags: ['indigo', 'deep'] },
+        { zh: '花瓣粉', en: 'Petal pink', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '你想留給什麼一點空間？',
+      en: 'What do you want to leave a little room for?',
+      choices: [
+        { zh: '一口安靜的呼吸', en: 'A quiet breath', tags: ['still', 'mist'] },
+        { zh: '一點小小火花', en: 'A small spark', tags: ['spark', 'warm'] },
+        { zh: '慢慢展開的感覺', en: 'A slow unfolding', tags: ['soft', 'rose'] }
+      ]
+    },
+    {
+      zh: '今夜的光更像……',
+      en: 'Tonight the light feels more like…',
+      choices: [
+        { zh: '燭火', en: 'Candlelight', tags: ['gold', 'warm'] },
+        { zh: '月光', en: 'Moonlight', tags: ['indigo', 'cool'] },
+        { zh: '黎明', en: 'Dawn', tags: ['spark', 'mist'] }
+      ]
+    },
+    {
+      zh: '如果你的心有溫度，它現在是……',
+      en: 'If your heart had a temperature, it would be…',
+      choices: [
+        { zh: '微微暖著', en: 'Softly warm', tags: ['warm', 'soft'] },
+        { zh: '清涼安靜', en: 'Cool and quiet', tags: ['cool', 'still'] },
+        { zh: '帶一點火', en: 'A touch of fire', tags: ['spark', 'gold'] }
+      ]
+    },
+    {
+      zh: '窗外的天空對你說……',
+      en: 'The sky outside seems to say…',
+      choices: [
+        { zh: '慢慢來就好', en: 'Take it slow', tags: ['mist', 'soft'] },
+        { zh: '有什麼在甦醒', en: 'Something is waking', tags: ['spark', 'rose'] },
+        { zh: '深處有光', en: 'Light in the deep', tags: ['deep', 'indigo'] }
+      ]
+    },
+    {
+      zh: '你更想被什麼包圍？',
+      en: 'What would you rather be wrapped in?',
+      choices: [
+        { zh: '柔軟的布料', en: 'Soft fabric', tags: ['soft', 'rose'] },
+        { zh: '清透的空氣', en: 'Clear air', tags: ['cool', 'mist'] },
+        { zh: '金線般的餘暉', en: 'Golden afterglow', tags: ['gold', 'warm'] }
+      ]
+    },
+    {
+      zh: '記憶裡的氣味更接近……',
+      en: 'A scent from memory feels closer to…',
+      choices: [
+        { zh: '雨後草木', en: 'Rain-washed leaves', tags: ['mist', 'still'] },
+        { zh: '烘過的茶香', en: 'Warmed tea', tags: ['warm', 'gold'] },
+        { zh: '夜間的花', en: 'Night-blooming flower', tags: ['indigo', 'rose'] }
+      ]
+    },
+    {
+      zh: '你想讓時間……',
+      en: 'You want time to…',
+      choices: [
+        { zh: '停一下', en: 'Pause a little', tags: ['still', 'deep'] },
+        { zh: '輕輕往前', en: 'Drift forward', tags: ['soft', 'cool'] },
+        { zh: '亮起來', en: 'Brighten', tags: ['spark', 'warm'] }
+      ]
+    },
+    {
+      zh: '若這一刻是一幅畫，筆觸會是……',
+      en: 'If this moment were a painting, the stroke would be…',
+      choices: [
+        { zh: '薄薄一層霧', en: 'A thin veil of mist', tags: ['mist', 'cool'] },
+        { zh: '濃一點的色塊', en: 'A denser field of colour', tags: ['deep', 'indigo'] },
+        { zh: '柔邊的暈染', en: 'Soft-edged bloom', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '手心想像握住的是……',
+      en: 'In your palm you imagine holding…',
+      choices: [
+        { zh: '一顆溫熱的石', en: 'A warm stone', tags: ['warm', 'still'] },
+        { zh: '一滴冷涼的水', en: 'A cool drop of water', tags: ['cool', 'mist'] },
+        { zh: '一截細細的金線', en: 'A thin gold thread', tags: ['gold', 'spark'] }
+      ]
+    },
+    {
+      zh: '你想對今晚輕輕說……',
+      en: 'You want to whisper to tonight…',
+      choices: [
+        { zh: '陪我安靜一下', en: 'Stay quiet with me', tags: ['still', 'indigo'] },
+        { zh: '給我一點暖', en: 'Give me a little warmth', tags: ['warm', 'gold'] },
+        { zh: '讓我慢慢開', en: 'Let me open slowly', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '如果一扇門為你留著，它後面是……',
+      en: 'If a door were left open for you, behind it would be…',
+      choices: [
+        { zh: '暖暖的長廊', en: 'A warm hallway', tags: ['warm', 'gold'] },
+        { zh: '沒有月亮的夜', en: 'A moonless night', tags: ['indigo', 'deep'] },
+        { zh: '霧裡的小花園', en: 'A little garden in mist', tags: ['mist', 'rose'] }
+      ]
+    },
+    {
+      zh: '此刻最想聽見的聲音是……',
+      en: 'The sound you most want to hear right now is…',
+      choices: [
+        { zh: '遠處的雨', en: 'Rain in the distance', tags: ['mist', 'still'] },
+        { zh: '木柴輕輕響', en: 'A soft crackle of wood', tags: ['warm', 'spark'] },
+        { zh: '一枚鐘聲落下', en: 'A bell settling into the air', tags: ['deep', 'gold'] }
+      ]
+    },
+    {
+      zh: '你的影子今天想往哪裡走？',
+      en: 'Where does your shadow want to wander today?',
+      choices: [
+        { zh: '向著剛亮起的天', en: 'Toward the brightening sky', tags: ['spark', 'mist'] },
+        { zh: '月色較深的地方', en: 'Somewhere deep in moonlight', tags: ['indigo', 'deep'] },
+        { zh: '水邊一小段安靜', en: 'A quiet stretch by the water', tags: ['still', 'cool'] }
+      ]
+    },
+    {
+      zh: '一束光落在你肩上，像……',
+      en: 'A beam of light falls on your shoulder like…',
+      choices: [
+        { zh: '舊信紙上的金色', en: 'Gold on an old letter', tags: ['gold', 'deep'] },
+        { zh: '清晨的淡藍', en: 'The pale blue of morning', tags: ['cool', 'mist'] },
+        { zh: '花瓣邊緣的粉紅', en: 'Pink along a petal edge', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '若把煩惱放在水上，它會……',
+      en: 'If you set a worry on the water, it would…',
+      choices: [
+        { zh: '慢慢漂遠', en: 'Drift slowly away', tags: ['cool', 'still'] },
+        { zh: '在光裡融開', en: 'Melt into the light', tags: ['gold', 'soft'] },
+        { zh: '留下微小的火花', en: 'Leave a tiny spark behind', tags: ['spark', 'warm'] }
+      ]
+    },
+    {
+      zh: '你與夜色之間，還有……',
+      en: 'Between you and the night, there is still…',
+      choices: [
+        { zh: '一小塊安靜', en: 'A small pocket of quiet', tags: ['still', 'soft'] },
+        { zh: '未熄的火', en: 'A fire not yet gone out', tags: ['warm', 'spark'] },
+        { zh: '藍色的遠方', en: 'A blue distance', tags: ['indigo', 'cool'] }
+      ]
+    },
+    {
+      zh: '哪一種觸感正在召喚你？',
+      en: 'Which texture is calling to you?',
+      choices: [
+        { zh: '天鵝絨的柔軟', en: 'The softness of velvet', tags: ['soft', 'rose'] },
+        { zh: '被水磨亮的石頭', en: 'A stone polished by water', tags: ['cool', 'deep'] },
+        { zh: '曬過太陽的麻布', en: 'Linen warmed by the sun', tags: ['warm', 'gold'] }
+      ]
+    },
+    {
+      zh: '當世界放低聲音，你會看見……',
+      en: 'When the world lowers its voice, you will see…',
+      choices: [
+        { zh: '一條細細的金線', en: 'A fine golden thread', tags: ['gold', 'spark'] },
+        { zh: '深藍裡的一點星', en: 'A single star in deep blue', tags: ['indigo', 'deep'] },
+        { zh: '花朵慢慢張開', en: 'A flower opening slowly', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '一個未說完的願望像……',
+      en: 'An unfinished wish feels like…',
+      choices: [
+        { zh: '掌心裡的餘溫', en: 'Lingering warmth in your palm', tags: ['warm', 'still'] },
+        { zh: '水底尚未抵達的光', en: 'Light not yet reached beneath the water', tags: ['cool', 'deep'] },
+        { zh: '將要落下的花瓣', en: 'A petal about to fall', tags: ['rose', 'mist'] }
+      ]
+    },
+    {
+      zh: '你想把哪一種光帶回家？',
+      en: 'Which kind of light would you carry home?',
+      choices: [
+        { zh: '黃昏的柔金', en: 'The soft gold of dusk', tags: ['gold', 'warm'] },
+        { zh: '第一顆星的靛藍', en: 'The indigo of the first star', tags: ['indigo', 'deep'] },
+        { zh: '霧散前的微亮', en: 'A faint glow before the mist clears', tags: ['mist', 'soft'] }
+      ]
+    },
+    {
+      zh: '今天的風把什麼帶來？',
+      en: 'What has today’s wind carried to you?',
+      choices: [
+        { zh: '一點熟悉的暖香', en: 'A familiar warm scent', tags: ['warm', 'rose'] },
+        { zh: '一個未揭開的秘密', en: 'A secret not yet revealed', tags: ['cool', 'deep'] },
+        { zh: '遠方閃過的光', en: 'A glimmer from far away', tags: ['spark', 'gold'] }
+      ]
+    },
+    {
+      zh: '如果心是一座小房間，現在的燈是……',
+      en: 'If your heart were a little room, its light would be…',
+      choices: [
+        { zh: '低低的琥珀色', en: 'A low amber glow', tags: ['gold', 'still'] },
+        { zh: '牆角的藍色陰影', en: 'A blue shadow in the corner', tags: ['indigo', 'cool'] },
+        { zh: '一盞粉紅小燈', en: 'A little pink lamp', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '此刻你想靠近哪一種溫度？',
+      en: 'Which temperature do you want to lean toward now?',
+      choices: [
+        { zh: '掌心裡的暖', en: 'Warmth in the palm', tags: ['warm', 'gold'] },
+        { zh: '窗縫的涼風', en: 'Cool air at the window', tags: ['cool', 'mist'] },
+        { zh: '夜裡不急的靜', en: 'An unhurried quiet of night', tags: ['still', 'deep'] }
+      ]
+    },
+    {
+      zh: '如果顏色有腳步聲，它會……',
+      en: 'If colour had footsteps, it would…',
+      choices: [
+        { zh: '輕得像落葉', en: 'Be as soft as falling leaves', tags: ['soft', 'mist'] },
+        { zh: '帶一點金屬的亮', en: 'Carry a metallic gleam', tags: ['gold', 'spark'] },
+        { zh: '走在更深的走廊', en: 'Walk a deeper corridor', tags: ['indigo', 'deep'] }
+      ]
+    },
+    {
+      zh: '你想把今天收進哪一種容器？',
+      en: 'Which vessel would you keep today inside?',
+      choices: [
+        { zh: '溫熱的陶碗', en: 'A warm clay bowl', tags: ['warm', 'still'] },
+        { zh: '透亮的玻璃', en: 'Clear glass', tags: ['cool', 'mist'] },
+        { zh: '絲絨的小盒', en: 'A velvet box', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '遠方一盞燈對你眨眼，像……',
+      en: 'A far lamp blinks at you like…',
+      choices: [
+        { zh: '還沒說完的話', en: 'Words not yet finished', tags: ['soft', 'deep'] },
+        { zh: '剛點著的微火', en: 'A newly kindled spark', tags: ['spark', 'warm'] },
+        { zh: '水上漂過的月', en: 'The moon drifting on water', tags: ['indigo', 'cool'] }
+      ]
+    },
+    {
+      zh: '哪一種邊界讓你覺得安全？',
+      en: 'Which kind of edge feels safe to you?',
+      choices: [
+        { zh: '霧把一切柔掉', en: 'Mist softening everything', tags: ['mist', 'soft'] },
+        { zh: '金線輕輕圈住', en: 'A thin gold circle', tags: ['gold', 'warm'] },
+        { zh: '深藍靜靜守著', en: 'Deep blue standing watch', tags: ['indigo', 'still'] }
+      ]
+    },
+    {
+      zh: '若把心跳畫成色塊，會是……',
+      en: 'If a heartbeat were painted as colour, it would be…',
+      choices: [
+        { zh: '一抹慢下來的粉紅', en: 'A slow wash of pink', tags: ['rose', 'soft'] },
+        { zh: '一點不斷回溫的琥珀', en: 'Amber that keeps warming', tags: ['gold', 'warm'] },
+        { zh: '一層沉下去的藍綠', en: 'A blue-green sinking deeper', tags: ['cool', 'deep'] }
+      ]
+    },
+    {
+      zh: '你更想讓目光停在……',
+      en: 'Where would you rather let your gaze rest?',
+      choices: [
+        { zh: '剛被陽光碰到的牆', en: 'A wall just touched by sun', tags: ['warm', 'spark'] },
+        { zh: '雨痕尚未乾的窗', en: 'A window still holding rain', tags: ['mist', 'cool'] },
+        { zh: '火焰將熄的餘紅', en: 'The last red of a dying flame', tags: ['deep', 'rose'] }
+      ]
+    },
+    {
+      zh: '一個秘密顏色正等待被……',
+      en: 'A secret colour is waiting to be…',
+      choices: [
+        { zh: '溫柔地揭開', en: 'Gently uncovered', tags: ['soft', 'rose'] },
+        { zh: '在暗裡慢慢亮', en: 'Slowly lit in the dark', tags: ['indigo', 'spark'] },
+        { zh: '放進水裡看它散開', en: 'Set into water to bloom', tags: ['mist', 'still'] }
+      ]
+    },
+    {
+      zh: '你與自己之間，現在更像……',
+      en: 'Between you and yourself, it feels more like…',
+      choices: [
+        { zh: '被毯子輕輕蓋住', en: 'Being lightly covered by a blanket', tags: ['warm', 'soft'] },
+        { zh: '站在湖邊聽風', en: 'Standing by a lake, hearing wind', tags: ['cool', 'still'] },
+        { zh: '走在尚未命名的夜路', en: 'Walking a night path not yet named', tags: ['deep', 'indigo'] }
+      ]
+    },
+    {
+      zh: '若此刻有氣味，它會先是……',
+      en: 'If this moment had a scent, it would first be…',
+      choices: [
+        { zh: '曬過的棉與陽光', en: 'Sun-warmed cotton', tags: ['warm', 'gold'] },
+        { zh: '雨打濕的青草', en: 'Grass wet with rain', tags: ['mist', 'cool'] },
+        { zh: '夜裡淡淡的花香', en: 'A faint floral scent at night', tags: ['rose', 'indigo'] }
+      ]
+    },
+    {
+      zh: '你想讓哪一種節奏進來？',
+      en: 'Which rhythm do you want to let in?',
+      choices: [
+        { zh: '像呼吸一樣慢的起伏', en: 'A rise and fall as slow as breath', tags: ['still', 'soft'] },
+        { zh: '像火花跳一下再停', en: 'A spark that jumps once, then rests', tags: ['spark', 'gold'] },
+        { zh: '像潮水退得很遠', en: 'A tide drawing far away', tags: ['cool', 'deep'] }
+      ]
+    },
+    {
+      zh: '明天還沒醒來，今夜你可以……',
+      en: 'Before tomorrow wakes, tonight you may…',
+      choices: [
+        { zh: '把金色收進口袋', en: 'Slip a little gold into a pocket', tags: ['gold', 'warm'] },
+        { zh: '把藍色放在枕邊', en: 'Leave blue beside the pillow', tags: ['indigo', 'still'] },
+        { zh: '讓粉紅慢慢散開', en: 'Let pink dissolve slowly', tags: ['rose', 'mist'] }
+      ]
+    },
+    {
+      zh: '皮膚更想被什麼輕輕碰觸？',
+      en: 'What does your skin want to be touched by?',
+      choices: [
+        { zh: '微微發熱的空氣', en: 'Air that is faintly warm', tags: ['warm', 'soft'] },
+        { zh: '帶霧的涼意', en: 'A coolness edged with mist', tags: ['cool', 'mist'] },
+        { zh: '像絲線的細光', en: 'A fine thread of light', tags: ['gold', 'spark'] }
+      ]
+    },
+    {
+      zh: '若靠近一個人的距離，你想停在……',
+      en: 'If closeness had a distance, you would stop at…',
+      choices: [
+        { zh: '能聽見呼吸的地方', en: 'Where breath can be heard', tags: ['soft', 'still'] },
+        { zh: '肩與肩之間的溫熱', en: 'The warmth between two shoulders', tags: ['warm', 'rose'] },
+        { zh: '還留一點霧的遠一點', en: 'A little farther, still in mist', tags: ['mist', 'indigo'] }
+      ]
+    },
+    {
+      zh: '舌頭記得的味道，更接近……',
+      en: 'A taste the tongue remembers feels closer to…',
+      choices: [
+        { zh: '剛泡開的暖茶', en: 'Freshly brewed warm tea', tags: ['warm', 'gold'] },
+        { zh: '雨後泥土的清涼', en: 'Cool earth after rain', tags: ['cool', 'deep'] },
+        { zh: '夜間花蜜的淡甜', en: 'A faint night-nectar sweetness', tags: ['rose', 'soft'] }
+      ]
+    },
+    {
+      zh: '胸口那一小塊空間，現在裝著……',
+      en: 'That small space in your chest is holding…',
+      choices: [
+        { zh: '尚未說出口的暖', en: 'Warmth not yet spoken', tags: ['warm', 'still'] },
+        { zh: '像深水一樣的安靜', en: 'A quiet like deep water', tags: ['deep', 'indigo'] },
+        { zh: '一點想靠近的火花', en: 'A spark that wants to draw near', tags: ['spark', 'rose'] }
+      ]
+    },
+  ];
+
+  /* Soft affinities: related tags gently reinforce each other (fuzzy, not exact-only). */
+  const TAG_AFFINITY = {
+    warm:  { gold: 0.45, spark: 0.3, soft: 0.15, rose: 0.1 },
+    cool:  { mist: 0.45, indigo: 0.3, still: 0.25, soft: 0.1 },
+    spark: { gold: 0.35, warm: 0.3, mist: 0.15 },
+    calm:  { still: 0.5, mist: 0.35, soft: 0.25, cool: 0.2 },
+    gold:  { warm: 0.45, spark: 0.25, soft: 0.1 },
+    indigo:{ deep: 0.4, cool: 0.3, still: 0.2 },
+    rose:  { soft: 0.45, warm: 0.15, spark: 0.1 },
+    mist:  { cool: 0.4, still: 0.25, soft: 0.2 },
+    still: { deep: 0.35, mist: 0.3, cool: 0.2, soft: 0.15 },
+    soft:  { rose: 0.35, mist: 0.2, warm: 0.15 },
+    deep:  { indigo: 0.4, still: 0.3, cool: 0.15 }
+  };
+
+  const MOODS = {
+    gold: {
+      id: 'gold',
+      zh: '柔金之息',
+      en: 'Soft Gold Breath',
+      palette: ['#c9a46a', '#e8d5b0', '#8b5a2b', '#f4efe6'],
+      hues: [
+        { hex: '#c9a46a', zh: '柔金', en: 'Soft gold' },
+        { hex: '#e8d5b0', zh: '蜜米', en: 'Honey cream' },
+        { hex: '#8b5a2b', zh: '暖褐', en: 'Warm umber' },
+        { hex: '#f4efe6', zh: '絹白', en: 'Silk ivory' }
+      ],
+      readings: [
+        {
+          zh: ['這一點金，先停在你心口。', '溫熱不必很大聲，也能被看見。', '把呼吸留給這一縷柔光。'],
+          en: ['A little gold rests near the heart.', 'Warmth need not be loud to be seen.', 'Leave a breath for this soft gleam.']
+        },
+        {
+          zh: ['今夜的顏色偏溫。', '像燭火貼近掌心，不催、不散。', '你只要接住——就夠了。'],
+          en: ['Tonight’s colour leans warm.', 'Like candlelight near the palm — unhurried.', 'Receiving is enough.']
+        }
+      ],
+      rituals: [
+        { zh: '閉眼數三息，想像心口有一點柔金慢慢亮起。', en: 'Three soft breaths. Imagine a gold mote blooming at the heart.' },
+        { zh: '把手放在胸口片刻，感受那一點溫熱就夠。', en: 'Palm to chest for a moment — just notice the warmth.' }
+      ]
+    },
+    indigo: {
+      id: 'indigo',
+      zh: '深靛之夜',
+      en: 'Deep Indigo Night',
+      palette: ['#7a6bb0', '#cbb8ef', '#3d2f66', '#f0ebf8'],
+      hues: [
+        { hex: '#7a6bb0', zh: '深靛', en: 'Deep indigo' },
+        { hex: '#cbb8ef', zh: '霧紫', en: 'Mist violet' },
+        { hex: '#3d2f66', zh: '夜墨', en: 'Night ink' },
+        { hex: '#f0ebf8', zh: '薄霞', en: 'Pale dusk' }
+      ],
+      readings: [
+        {
+          zh: ['暗裡也有溫柔的亮。', '深一點，反而更靠近自己。', '這一刻不急著變成答案。'],
+          en: ['Even in the dark, a gentle brightness.', 'Going deeper can bring you closer.', 'This moment need not become an answer.']
+        },
+        {
+          zh: ['夜色沒有要你變聰明。', '它只想陪你安靜一會兒。', '深度不怕慢。'],
+          en: ['Night does not ask you to be clever.', 'It only wants a quiet while with you.', 'Depth is never afraid of slow.']
+        }
+      ],
+      rituals: [
+        { zh: '看向最暗的角落兩秒，再讓視線慢慢回到光邊。', en: 'Glance into the darkest corner, then let your eyes drift back to the edge of light.' },
+        { zh: '把一盞燈調暗一點，讓夜色多留一寸。', en: 'Dim one light a little — leave night an inch more room.' }
+      ]
+    },
+    rose: {
+      id: 'rose',
+      zh: '花瓣之柔',
+      en: 'Petal Softness',
+      palette: ['#c46b7a', '#efc1c9', '#6b2f3a', '#f8ecee'],
+      hues: [
+        { hex: '#c46b7a', zh: '花瓣', en: 'Petal' },
+        { hex: '#efc1c9', zh: '粉霧', en: 'Pink mist' },
+        { hex: '#6b2f3a', zh: '茜影', en: 'Madder shade' },
+        { hex: '#f8ecee', zh: '腮白', en: 'Blush ivory' }
+      ],
+      readings: [
+        {
+          zh: ['一點點綻開，就夠了。', '顏色自己來了，你只要接住。', '柔軟，也是一種力量。'],
+          en: ['A soft bloom is enough.', 'Colour arrives on its own — you only receive.', 'Softness is a kind of strength.']
+        },
+        {
+          zh: ['這一刻可以很輕。', '不必用力證明什麼。', '花瓣一樣的感覺，已經到了。'],
+          en: ['This moment is allowed to be light.', 'Nothing needs proving.', 'A petal-feeling has already arrived.']
+        }
+      ],
+      rituals: [
+        { zh: '對鏡子或窗玻璃，輕聲說一句「慢慢開就好」。', en: 'To a mirror or window, whisper: “Slow opening is enough.”' },
+        { zh: '把手指輕輕按在心口，想像一瓣顏色慢慢展開。', en: 'Fingertips at the heart — imagine one petal of colour unfolding.' }
+      ]
+    },
+    mist: {
+      id: 'mist',
+      zh: '霧青之息',
+      en: 'Mist-Green Breath',
+      palette: ['#6b8f71', '#b7d2bc', '#2f4a38', '#e8f0ea'],
+      hues: [
+        { hex: '#6b8f71', zh: '霧青', en: 'Mist green' },
+        { hex: '#b7d2bc', zh: '露綠', en: 'Dew green' },
+        { hex: '#2f4a38', zh: '苔影', en: 'Moss shade' },
+        { hex: '#e8f0ea', zh: '晨氛', en: 'Morning air' }
+      ],
+      readings: [
+        {
+          zh: ['光走得很慢，剛好讓你看見。', '清涼裡，也藏著溫柔。', '不必想清楚，感覺會帶路。'],
+          en: ['Light moves slowly — just enough to be seen.', 'Even coolness holds a quiet kindness.', 'You need not decide. Feeling will lead.']
+        },
+        {
+          zh: ['霧不是阻擋——是緩衝。', '給自己一層柔軟的距離。', '呼吸可以比念頭更先到。'],
+          en: ['Mist is not a wall — it is a cushion.', 'Give yourself a soft distance.', 'Breath can arrive before thought.']
+        }
+      ],
+      rituals: [
+        { zh: '打開一扇縫，感受空氣換了一下。', en: 'Crack a window — notice the air change once.' },
+        { zh: '喝一小口水，想像清涼從喉嚨走到胸口。', en: 'A sip of water — coolness from throat to chest.' }
+      ]
+    },
+    cool: {
+      id: 'cool',
+      zh: '月藍之靜',
+      en: 'Moon-Blue Quiet',
+      palette: ['#5b7f9a', '#b7d0e2', '#24384a', '#eaf2f7'],
+      hues: [
+        { hex: '#5b7f9a', zh: '月藍', en: 'Moon blue' },
+        { hex: '#b7d0e2', zh: '薄雲', en: 'Thin cloud' },
+        { hex: '#24384a', zh: '夜湖', en: 'Night lake' },
+        { hex: '#eaf2f7', zh: '銀霧', en: 'Silver mist' }
+      ],
+      readings: [
+        {
+          zh: ['靜一點，顏色會自己靠近。', '月光不催促任何人。', '把這一刻留給安靜。'],
+          en: ['Be still — colour will come closer.', 'Moonlight does not hurry anyone.', 'Leave this moment for quiet.']
+        },
+        {
+          zh: ['清涼不是疏遠。', '它是一種很乾淨的靠近。', '你可以什麼都不追。'],
+          en: ['Coolness is not distance.', 'It is a clean kind of nearness.', 'You may chase nothing.']
+        }
+      ],
+      rituals: [
+        { zh: '看向窗外最淡的那一抹藍，數到四。', en: 'Find the softest blue outside — count to four.' },
+        { zh: '讓肩膀鬆一下，像月光落在衣領。', en: 'Drop the shoulders — as if moonlight rested on the collar.' }
+      ]
+    },
+    spark: {
+      id: 'spark',
+      zh: '黎明微火',
+      en: 'Dawn Spark',
+      palette: ['#d4a017', '#f0d78c', '#6b4e12', '#faf3df'],
+      hues: [
+        { hex: '#d4a017', zh: '微火', en: 'Ember gold' },
+        { hex: '#f0d78c', zh: '晨暈', en: 'Dawn haze' },
+        { hex: '#6b4e12', zh: '琥珀', en: 'Amber' },
+        { hex: '#faf3df', zh: '曦白', en: 'First light' }
+      ],
+      readings: [
+        {
+          zh: ['小小火花，也能點亮整片夜。', '開始，不必很大——有光就夠。', '黎明先來找你，再慢慢醒。'],
+          en: ['A small spark can light a whole night.', 'Beginnings need not be large — light is enough.', 'Dawn finds you first; waking can wait.']
+        },
+        {
+          zh: ['有什麼在你裡面輕輕點燃。', '不用急著變成火焰。', '微光也算來到了。'],
+          en: ['Something kindles softly inside.', 'No rush to become flame.', 'A mote of light still counts as arriving.']
+        }
+      ],
+      rituals: [
+        { zh: '在黑暗裡劃亮一點什麼——燈、螢幕、或想像的火。', en: 'Kindle one small light — lamp, screen, or imagined spark.' },
+        { zh: '對即將到來的早晨，輕聲說「我在」。', en: 'To the coming morning, whisper: “I am here.”' }
+      ]
+    },
+    still: {
+      id: 'still',
+      zh: '靜水深流',
+      en: 'Still Deep Water',
+      palette: ['#4a6b78', '#a8c4ce', '#1e323a', '#e8f1f4'],
+      hues: [
+        { hex: '#4a6b78', zh: '深水', en: 'Deep water' },
+        { hex: '#a8c4ce', zh: '淺灣', en: 'Shallow bay' },
+        { hex: '#1e323a', zh: '淵影', en: 'Abyss shade' },
+        { hex: '#e8f1f4', zh: '水霧', en: 'Water mist' }
+      ],
+      readings: [
+        {
+          zh: ['水面很靜，底下卻有光在動。', '安靜，不是空白——是空間。', '這一刻，先什麼都不追。'],
+          en: ['The surface is still; light moves beneath.', 'Quiet is not empty — it is space.', 'For this moment, chase nothing.']
+        },
+        {
+          zh: ['你不需要填滿這一刻。', '空一點，顏色反而更清楚。', '靜，是在聽。'],
+          en: ['You need not fill this moment.', 'A little emptiness makes colour clearer.', 'Stillness is a way of listening.']
+        }
+      ],
+      rituals: [
+        { zh: '想像胸口是一湖靜水，投一顆想像的石，看漣漪散開。', en: 'Imagine a still lake at the chest — drop one imagined stone, watch the ripple.' },
+        { zh: '暫停十秒，什麼都不做，只聽最遠的聲音。', en: 'Ten seconds of nothing — listen only for the farthest sound.' }
+      ]
+    },
+    warm: {
+      id: 'warm',
+      zh: '暖陽之懷',
+      en: 'Warm Sun Hold',
+      palette: ['#c98a4a', '#efd0a8', '#7a4a22', '#faf0e4'],
+      hues: [
+        { hex: '#c98a4a', zh: '暖陽', en: 'Warm sun' },
+        { hex: '#efd0a8', zh: '杏膚', en: 'Apricot skin' },
+        { hex: '#7a4a22', zh: '陶褐', en: 'Clay brown' },
+        { hex: '#faf0e4', zh: '陽光白', en: 'Sun ivory' }
+      ],
+      readings: [
+        {
+          zh: ['溫熱靠近了，你只要接住。', '心口那一點熱，剛好夠。', '不必趕路，陽光會陪著。'],
+          en: ['Warmth draws near — you only receive.', 'That little heat at the heart is enough.', 'No need to rush; the sun stays with you.']
+        },
+        {
+          zh: ['像被陽光輕輕抱住。', '這不是炫耀——是陪伴。', '讓身體記得這一點暖。'],
+          en: ['As if sunlight held you lightly.', 'Not display — companionship.', 'Let the body remember this warmth.']
+        }
+      ],
+      rituals: [
+        { zh: '面向最暖的光源站一會兒，讓臉頰感覺到熱。', en: 'Face the warmest light a moment — let the cheek feel heat.' },
+        { zh: '雙手互握十秒，把掌心的熱留給自己。', en: 'Hold your own hands ten seconds — keep the palm-warmth.' }
+      ]
+    },
+    soft: {
+      id: 'soft',
+      zh: '輕柔之色',
+      en: 'Gentle Hue',
+      palette: ['#b89a9e', '#e8d6d8', '#5a3f44', '#f6eeee'],
+      hues: [
+        { hex: '#b89a9e', zh: '灰粉', en: 'Dust pink' },
+        { hex: '#e8d6d8', zh: '輕霧', en: 'Soft fog' },
+        { hex: '#5a3f44', zh: '影褐', en: 'Shadow mauve' },
+        { hex: '#f6eeee', zh: '雲膚', en: 'Cloud skin' }
+      ],
+      readings: [
+        {
+          zh: ['輕輕的，也算來到了。', '把力氣留給感覺，就好。', '這一刻可以很輕。'],
+          en: ['Even gently counts as arriving.', 'Save your strength for feeling.', 'This moment is allowed to be light.']
+        },
+        {
+          zh: ['顏色不必用力。', '輕柔本身就是一種選擇。', '你已經夠了。'],
+          en: ['Colour need not strain.', 'Gentleness is already a choice.', 'You are already enough.']
+        }
+      ],
+      rituals: [
+        { zh: '用最輕的聲音說自己的名字一次。', en: 'Say your own name once, as softly as you can.' },
+        { zh: '撫平衣角或髮梢，像對顏色一樣溫柔。', en: 'Smooth a sleeve or strand of hair — as gently as colour.' }
+      ]
+    },
+    deep: {
+      id: 'deep',
+      zh: '深色之境',
+      en: 'Deep Colour Realm',
+      palette: ['#5c4a6e', '#b9a8c9', '#2a1f38', '#efeaf4'],
+      hues: [
+        { hex: '#5c4a6e', zh: '深紫', en: 'Deep mauve' },
+        { hex: '#b9a8c9', zh: '薄煙', en: 'Thin smoke' },
+        { hex: '#2a1f38', zh: '淵靛', en: 'Abyss indigo' },
+        { hex: '#efeaf4', zh: '夜白', en: 'Night white' }
+      ],
+      readings: [
+        {
+          zh: ['往裡走一點，顏色會更真。', '深度不怕慢。', '你看見的，已經夠深。'],
+          en: ['A step inward, and colour grows truer.', 'Depth is never afraid of slow.', 'What you see is already deep enough.']
+        },
+        {
+          zh: ['不必浮上來解釋。', '深色裡，也有呼吸。', '這一層剛好是你的。'],
+          en: ['No need to surface and explain.', 'Even deep colour breathes.', 'This layer is yours.']
+        }
+      ],
+      rituals: [
+        { zh: '閉眼，想像往顏色的更深處走三步，再睜開。', en: 'Eyes closed — three steps deeper into colour, then open.' },
+        { zh: '把房間最暗處多看一眼，對它點頭。', en: 'Glance once at the darkest place in the room — nod to it.' }
+      ]
+    }
+  };
+
+
+  /* Owner art pools for card backgrounds (Preview). */
+  /* Website_Selected 8 webp + extra selected-works for variety. */
+  /* grade_v1 JPG (IMG_5046–5055 skip 5050): Drive folder found (wallpaper_9_grade_v1) but binary DownloadFile unavailable this turn — still deferred. */
+  const ART_BY_MOOD = {
+    gold: [
+      'assets/selected-works-v2/love-energy-field.webp',
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/infinite-love-strength.webp',
+      'assets/color-moment-grade/IMG_5048_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5053_grade_v1.webp'
+    ],
+    indigo: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/expansion.webp',
+      'assets/color-moment-grade/IMG_5049_grade_v1.webp'
+    ],
+    rose: [
+      'assets/selected-works-v2/heart-fly.webp',
+      'assets/selected-works-v2/love-embrace.webp',
+      'assets/selected-works-v2/flower-heart-bloom.webp',
+      'assets/color-moment-grade/IMG_5051_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5054_grade_v1.webp'
+    ],
+    mist: [
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/heart-recovery.webp',
+      'assets/selected-works-v2/selected-24.webp',
+      'assets/color-moment-grade/IMG_5046_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5052_grade_v1.webp'
+    ],
+    cool: [
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/heart-rebuild.webp',
+      'assets/selected-works-v2/selected-26.webp',
+      'assets/color-moment-grade/IMG_5046_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5049_grade_v1.webp'
+    ],
+    spark: [
+      'assets/selected-works-v2/fun-universe.webp',
+      'assets/selected-works-v2/colorful-flow.webp',
+      'assets/selected-works-v2/selected-25.webp',
+      'assets/color-moment-grade/IMG_5047_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5055_grade_v1.webp'
+    ],
+    still: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/natures-strength.webp',
+      'assets/selected-works-v2/selected-17.webp',
+      'assets/color-moment-grade/IMG_5052_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5053_grade_v1.webp'
+    ],
+    warm: [
+      'assets/selected-works-v2/love-embrace.webp',
+      'assets/selected-works-v2/love-energy-field.webp',
+      'assets/selected-works-v2/heart-energy.webp',
+      'assets/color-moment-grade/IMG_5048_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5055_grade_v1.webp'
+    ],
+    soft: [
+      'assets/selected-works-v2/heart-recovery.webp',
+      'assets/selected-works-v2/heart-fly.webp',
+      'assets/selected-works-v2/selected-23.webp',
+      'assets/color-moment-grade/IMG_5051_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5054_grade_v1.webp'
+    ],
+    deep: [
+      'assets/selected-works-v2/marvellous-energy-world.webp',
+      'assets/selected-works-v2/infinite-love-strength.webp',
+      'assets/selected-works-v2/expansion.webp',
+      'assets/color-moment-grade/IMG_5047_grade_v1.webp',
+      'assets/color-moment-grade/IMG_5049_grade_v1.webp'
+    ]
+  };
+
+  /* 《盛明》精裝版試寫稿 / 觀看筆記 — primary card text (優先). */
+  const SHENG_BY_MOOD = {
+    gold: [
+      { zh: ['Present 既可以是當下，也可以是禮物。', '豐盛不一定是增加。', '有時候，豐盛只是終於看見。'],
+        en: ['Present is both this moment and a gift.', 'Abundance is not always addition.', 'Sometimes it is finally seeing.'] },
+      { zh: ['當下即永恆。', '每一個 moment，都無可取代。'],
+        en: ['The present is already eternal.', 'Every moment is irreplaceable.'] }
+    ],
+    indigo: [
+      { zh: ['遠看是一個宇宙，近看又是另外一個宇宙。', '宇宙之中，還有宇宙。'],
+        en: ['From afar, one universe; up close, another.', 'Within the cosmos, still more cosmos.'] },
+      { zh: ['光一直都在。', '太陽一直都在。有時候只是被雲遮住。'],
+        en: ['The light has always been here.', 'The sun remains — sometimes only veiled by cloud.'] }
+    ],
+    rose: [
+      { zh: ['每一種狀態，都有它自己的畫。', '當下即永恆。'],
+        en: ['Every state has its own painting.', 'The present is already eternal.'] },
+      { zh: ['這幅畫在誕生時，它就已經進入永恆了。', '每一個 moment，都無可取代。'],
+        en: ['At birth, the painting already entered eternity.', 'Every moment is irreplaceable.'] }
+    ],
+    mist: [
+      { zh: ['豐盛不一定是增加。有時候，豐盛只是終於看見。', '可以停，但不要放棄。'],
+        en: ['Abundance is not always more — sometimes only seeing.', 'You may pause, but do not give up.'] },
+      { zh: ['光一直都在。', '有時候只是被雲遮住。'],
+        en: ['The light has always been here.', 'Sometimes only clouded over.'] }
+    ],
+    cool: [
+      { zh: ['遠看是一個宇宙，近看又是另外一個宇宙。', '起源不變，形態持續演化。'],
+        en: ['One universe from afar; another up close.', 'Origin unchanged; form keeps evolving.'] },
+      { zh: ['可以停，但不要放棄。', '每一個 moment，都無可取代。'],
+        en: ['You may pause, but do not give up.', 'Every moment is irreplaceable.'] }
+    ],
+    spark: [
+      { zh: ['Action creates infinity.', '行動本身，就在創造新的無限。'],
+        en: ['Action creates infinity.', 'The act itself is already making new infinity.'] },
+      { zh: ['這幅畫在誕生時，它就已經進入永恆了。', '當下即永恆。'],
+        en: ['At birth, the painting already entered eternity.', 'The present is already eternal.'] }
+    ],
+    still: [
+      { zh: ['可以停，但不要放棄。', '豐盛不一定是增加。有時候，豐盛只是終於看見。'],
+        en: ['You may pause, but do not give up.', 'Abundance is not always addition — sometimes only seeing.'] },
+      { zh: ['當下即永恆。', '每一個 moment，都無可取代。'],
+        en: ['The present is already eternal.', 'Every moment is irreplaceable.'] }
+    ],
+    warm: [
+      { zh: ['Present 既可以是當下，也可以是禮物。', '光一直都在。太陽一直都在。'],
+        en: ['Present is both this moment and a gift.', 'Light remains. The sun remains.'] },
+      { zh: ['豐盛不一定是增加。有時候，豐盛只是終於看見。'],
+        en: ['Abundance is not always more. Sometimes it is finally seeing.'] }
+    ],
+    soft: [
+      { zh: ['每一種狀態，都有它自己的畫。', '可以停，但不要放棄。'],
+        en: ['Every state has its own painting.', 'You may pause, but do not give up.'] },
+      { zh: ['Present 既可以是當下，也可以是禮物。', '每一個 moment，都無可取代。'],
+        en: ['Present is both this moment and a gift.', 'Every moment is irreplaceable.'] }
+    ],
+    deep: [
+      { zh: ['遠看是一個宇宙，近看又是另外一個宇宙。', '宇宙之中，還有宇宙。'],
+        en: ['From afar, one universe; up close, another.', 'Within the cosmos, still more cosmos.'] },
+      { zh: ['起源不變，形態持續演化。', '這幅畫在誕生時，它就已經進入永恆了。'],
+        en: ['Origin unchanged; form keeps evolving.', 'At birth, the painting already entered eternity.'] }
+    ]
+  };
+
+  const SHENG_RITUALS = {
+    gold: [
+      { zh: '把這一刻當成一份 Present——當下，也是禮物。', en: 'Receive this moment as a Present — now, and gift.' },
+      { zh: '輕輕說：豐盛，有時只是終於看見。', en: 'Whisper: abundance is sometimes only seeing.' }
+    ],
+    indigo: [
+      { zh: '遠看一眼夜色，再近看自己——兩個宇宙都在。', en: 'Glance far into night, then close — two universes both here.' },
+      { zh: '雲遮不住的那一點光，留給胸口。', en: 'Leave for the heart the light cloud cannot cover.' }
+    ],
+    rose: [
+      { zh: '記住：每一種狀態，都有它自己的畫。', en: 'Remember: every state has its own painting.' },
+      { zh: '誕生的同時，已經進入永恆。', en: 'In being born, it has already entered eternity.' }
+    ],
+    mist: [
+      { zh: '可以停。停下來，也是一種看見。', en: 'You may pause. Pausing is also a way of seeing.' },
+      { zh: '雲後面，太陽一直都在。', en: 'Behind the cloud, the sun has always been.' }
+    ],
+    cool: [
+      { zh: '起源不變。形態，可以慢慢演化。', en: 'Origin unchanged. Form may evolve slowly.' },
+      { zh: '停一下也可以——只要不放棄。', en: 'A pause is allowed — only do not give up.' }
+    ],
+    spark: [
+      { zh: '先動。行動本身，就在創造新的無限。', en: 'Move first. Action itself creates new infinity.' },
+      { zh: 'Action creates infinity —— 從這一刻的一小步開始。', en: 'Action creates infinity — begin with one small step now.' }
+    ],
+    still: [
+      { zh: '可以停，但不要放棄。把安靜留給當下。', en: 'Pause if you need — do not give up. Leave quiet for now.' },
+      { zh: '終於看見，就是一種豐盛。', en: 'Finally seeing is already a kind of abundance.' }
+    ],
+    warm: [
+      { zh: '當下即永恆。把溫熱當成禮物收下。', en: 'The present is eternal. Receive warmth as gift.' },
+      { zh: '太陽一直都在——先感受這一點熱。', en: 'The sun remains — feel this little heat first.' }
+    ],
+    soft: [
+      { zh: '這一狀態，也有它自己的畫。輕輕就好。', en: 'This state too has its painting. Soft is enough.' },
+      { zh: '每一個 moment，都無可取代。', en: 'Every moment is irreplaceable.' }
+    ],
+    deep: [
+      { zh: '宇宙之中，還有宇宙。往裡走一點。', en: 'Within cosmos, more cosmos. Step a little inward.' },
+      { zh: '起源不變——形態會找到你。', en: 'Origin unchanged — form will find you.' }
+    ]
+  };
+
+
+  const SESSION_MIN = 3;
+  const SESSION_MAX = 4;
+
+  const askEl = document.getElementById('cmAsk');
+  const progressEl = document.getElementById('cmProgress');
+  const questionEl = document.getElementById('cmQuestion');
+  const choicesEl = document.getElementById('cmChoices');
+  const bloomWrap = document.getElementById('cmBloomWrap');
+  const afterEl = document.getElementById('cmAfter');
+  const canvas = document.getElementById('cmCanvas');
+  const shell = document.getElementById('cmShell');
+  const hint = document.getElementById('cmHint');
+  const mistEl = document.getElementById('cmMist');
+  const sealBar = document.getElementById('cmSealBar');
+  const lpHint = document.getElementById('cmLpHint');
+  const sealBtn = document.getElementById('cmSeal');
+  const lightprintEl = document.getElementById('cmLightprint');
+  const memorialEl = document.getElementById('cmMemorial');
+  const memorialImg = document.getElementById('cmMemorialImg');
+  const memorialCap = document.getElementById('cmMemorialCap');
+  const echoEl = document.getElementById('cmEcho');
+  const sealRing = document.getElementById('cmSealRing');
+  const sealLabel = document.getElementById('cmSealLabel');
+  const sealHoldHint = document.getElementById('cmSealHoldHint');
+  const coachEl = document.getElementById('cmCoach');
+  const residueEl = document.getElementById('cmResidue');
+  const residueText = document.getElementById('cmResidueText');
+  const residueReplayBtn = document.getElementById('cmResidueReplay');
+  const residueDismissBtn = document.getElementById('cmResidueDismiss');
+  const pathReplayBtn = document.getElementById('cmPathReplay');
+  const cardEl = document.getElementById('cmCard');
+  const cardBg = document.getElementById('cmCardBg');
+  const cardEyebrow = document.getElementById('cmCardEyebrow');
+  const cardTitle = document.getElementById('cmCardTitle');
+  const cardEn = document.getElementById('cmCardEn');
+  const cardSrc = document.getElementById('cmCardSrc');
+  const readingEl = document.getElementById('cmReading');
+  const ritualLabel = document.getElementById('cmRitualLabel');
+  const ritualText = document.getElementById('cmRitualText');
+  const discoverEl = document.getElementById('cmDiscover');
+  const miniTipEl = document.getElementById('cmMiniTip');
+  const replay = document.getElementById('cmReplay');
+  const snap = document.getElementById('cmSnap');
+  const share = document.getElementById('cmShare');
+  const toast = document.getElementById('cmToast');
+  const washEl = document.getElementById('cmWash');
+  const ctx = canvas.getContext('2d');
+
+  let sessionQs = [];
+  let qIndex = 0;
+  let tagScores = Object.create(null);
+  let activeMood = null;
+  let activeReading = null;
+  let activeRitual = null;
+  let activeArt = null;
+  let blooms = [];
+  let raf = 0;
+  let started = false;
+  let finger = null;
+  const freezeEl = document.getElementById('cmFreeze');
+  let bloomReady = false;
+  let lightTouches = [];
+  let lightSealed = false;
+  let lightprintCode = null;
+  let lightSessionT0 = 0;
+  let sessionAnswers = [];
+  let sealedResidue = null;
+  let sealHoldRaf = 0;
+  let sealHoldStart = 0;
+  let sealHolding = false;
+  let sealCoalescing = false;
+  let pathReplayBusy = false;
+  let pathReplayTimer = 0;
+  const SEAL_HOLD_MS = 1300;
+  let memorialLayer = null;
+  let memorialLayerCtx = null;
+  let memorialDataUrl = null;
+  let memorialW = 0;
+  let memorialH = 0;
+  let activePointers = Object.create(null);
+  let lastPathSample = Object.create(null);
+  let currentPointerId = 0;
+  let drawScrollLocked = false;
+  let mistLevel = 0; // 0 none, 1 soft single, 2 rich multi
+  let userPainted = false;
+  let soloPhase = 'ask';
+  let sealRevealTimer = 0;
+  const SEAL_READY_TOUCHES = 4; // short drag / a couple taps = "touched a bit"
+  const SEAL_FALLBACK_MS = 1400; // single tap still unlocks 收光 after a beat
+  const LP_ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const LP_STORAGE_KEY = 'ae_lightprint';
+  const LP_RESIDUE_KEY = 'ae_lightprint_residue';
+  let warmBlob = null;
+  let warmBlobUrl = null;
+  let warmBlobToken = 0;
+  let warmBlobPromise = null;
+  let saveSheetBlob = null;
+  let saveSheetUrl = null;
+  let saveSheetFilename = '';
+  let saveSheetFile = null;
+  let captureBusy = false;
+
+  const saveSheet = document.getElementById('cmSaveSheet');
+  const saveFrame = document.getElementById('cmSaveFrame');
+  const saveLoading = document.getElementById('cmSaveLoading');
+  const saveImg = document.getElementById('cmSaveImg');
+  const saveShareBtn = document.getElementById('cmSaveShare');
+  const saveCloseBtn = document.getElementById('cmSaveClose');
+  const saveTitle = document.getElementById('cmSaveTitle');
+  const saveHint = document.getElementById('cmSaveHint');
+  const saveNote = document.getElementById('cmSaveNote');
+
+  function lang() {
+    try { return localStorage.getItem('ae-language') === 'zh' ? 'zh' : 'en'; } catch { return 'en'; }
+  }
+
+  function randUnit() {
+    try {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      return buf[0] / 4294967296;
+    } catch {
+      return Math.random();
+    }
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(randUnit() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function drawSession() {
+    // Fresh random draw every play / replay — never a fixed sequence.
+    const n = SESSION_MIN + Math.floor(randUnit() * (SESSION_MAX - SESSION_MIN + 1));
+    return shuffle(QUESTION_POOL).slice(0, n).map(q => {
+      const copy = { zh: q.zh, en: q.en, choices: shuffle(q.choices || []) };
+      return copy;
+    });
+  }
+
+  function addTag(tag, weight) {
+    tagScores[tag] = (tagScores[tag] || 0) + weight;
+  }
+
+  function applyChoiceTags(tags) {
+    tags.forEach(t => {
+      addTag(t, 1);
+      const aff = TAG_AFFINITY[t];
+      if (aff) {
+        Object.keys(aff).forEach(k => addTag(k, aff[k]));
+      }
+    });
+  }
+
+  function pickMood() {
+    const moodIds = Object.keys(MOODS);
+    const scored = moodIds.map(id => ({
+      id,
+      score: tagScores[id] || 0
+    }));
+    scored.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+    // Soft tie-break: if top two are close, slight random among near-tops
+    const top = scored[0].score;
+    const near = scored.filter(s => s.score >= top - 0.35 && s.score > 0);
+    if (near.length > 1) {
+      return MOODS[near[Math.floor(Math.random() * Math.min(near.length, 3))].id];
+    }
+    if (top <= 0) {
+      const fallback = ['gold', 'mist', 'soft', 'cool'];
+      return MOODS[fallback[Math.floor(Math.random() * fallback.length)]];
+    }
+    return MOODS[scored[0].id];
+  }
+
+  function pickFrom(list) {
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function showQuestion() {
+    const L = lang();
+    const q = sessionQs[qIndex];
+    const total = sessionQs.length;
+    if (soloPhase !== 'ask') setSoloPhase('ask');
+    else updateCoach();
+    progressEl.textContent = L === 'zh'
+      ? `${qIndex + 1} / ${total}`
+      : `${qIndex + 1} / ${total}`;
+    questionEl.textContent = L === 'zh' ? q.zh : q.en;
+    choicesEl.innerHTML = '';
+    q.choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cm-choice';
+      btn.textContent = L === 'zh' ? c.zh : c.en;
+      btn.addEventListener('click', () => onChoose(c));
+      choicesEl.appendChild(btn);
+    });
+  }
+
+  function onChoose(choice) {
+    applyChoiceTags(choice.tags);
+    sessionAnswers.push({
+      q: qIndex,
+      zh: choice.zh,
+      en: choice.en,
+      tags: (choice.tags || []).slice()
+    });
+    qIndex += 1;
+    if (qIndex < sessionQs.length) {
+      showQuestion();
+      return;
+    }
+    enterBloom();
+  }
+
+  function resetLightSession() {
+    cancelSealHold(true);
+    stopPathReplay();
+    clearSealRevealTimer();
+    try { clearFigureUI(); } catch (err) { /* ignore */ }
+    lightTouches = [];
+    userPainted = false;
+    lightSealed = false;
+    lightprintCode = null;
+    lightSessionT0 = 0;
+    sealedResidue = null;
+    activePointers = Object.create(null);
+    lastPathSample = Object.create(null);
+    currentPointerId = 0;
+    memorialDataUrl = null;
+    if (memorialLayerCtx && memorialLayer) {
+      memorialLayerCtx.clearRect(0, 0, memorialLayer.width, memorialLayer.height);
+    }
+    memorialW = 0;
+    memorialH = 0;
+    if (sealBar) {
+      sealBar.hidden = true;
+      sealBar.classList.remove('is-arrive');
+    }
+    if (lightprintEl) {
+      lightprintEl.hidden = true;
+      lightprintEl.textContent = '';
+    }
+    if (memorialEl) memorialEl.hidden = true;
+    if (memorialImg) memorialImg.removeAttribute('src');
+    if (memorialCap) {
+      memorialCap.hidden = true;
+      memorialCap.textContent = '';
+    }
+    finger = null;
+    if (freezeEl) {
+      freezeEl.hidden = true;
+      freezeEl.removeAttribute('src');
+    }
+    if (shell) shell.classList.remove('is-frozen');
+  }
+
+  function syncLpHintCopy() {
+    const L = lang();
+    if (lpHint) {
+      lpHint.textContent = L === 'zh' ? '按住，直到光環轉滿。' : 'Hold until the ring fills.';
+    }
+    const label = '收光';
+    if (sealLabel) sealLabel.textContent = label;
+    // Never sealBtn.textContent — that destroys the hold-progress ring DOM.
+    if (sealBtn) sealBtn.setAttribute('aria-label', '收光');
+    if (sealHoldHint) {
+      sealHoldHint.textContent = L === 'zh' ? '按住——放開即取消' : 'Hold — release to cancel';
+    }
+    const sealBack = document.getElementById('cmSealBack');
+    if (sealBack) {
+      sealBack.textContent = L === 'zh'
+        ? (sealBack.getAttribute('data-zh') || '回到問題')
+        : (sealBack.getAttribute('data-en') || 'Back to questions');
+    }
+    if (pathReplayBtn) {
+      pathReplayBtn.textContent = L === 'zh' ? '看光再走一次' : 'Watch the light again';
+    }
+  }
+
+  function coachCopy(phase) {
+    const L = lang();
+    const map = {
+      ask: { zh: '選一個最靠近現在的感覺。', en: 'Pick the one that feels closest.' },
+      touch: { zh: '手指畫過去，光會跟著。', en: 'Move your finger — light follows.' },
+      seal: { zh: '按住，直到光環轉滿。', en: 'Hold until the ring fills.' },
+      done: { zh: '這一刻是你的', en: 'This moment is yours' }
+    };
+    const row = map[phase] || map.ask;
+    return L === 'zh' ? row.zh : row.en;
+  }
+
+  function updateCoach() {
+    if (!coachEl) return;
+    // Seal / done: one action only — seal bar or card carries the cue.
+    if (soloPhase === 'seal' || soloPhase === 'done' || soloPhase === 'ask') {
+      coachEl.hidden = true;
+      return;
+    }
+    coachEl.hidden = false;
+    coachEl.textContent = coachCopy(soloPhase);
+  }
+
+  function setSoloPhase(phase) {
+    soloPhase = phase || 'ask';
+    try {
+      document.body.classList.remove('cm-phase-ask', 'cm-phase-touch', 'cm-phase-seal', 'cm-phase-done');
+      document.body.classList.add('cm-phase-' + soloPhase);
+    } catch (err) { /* ignore */ }
+    updateCoach();
+    const introSoft = document.getElementById('cmIntroSoft');
+    if (introSoft) introSoft.hidden = soloPhase !== 'ask';
+    const openKick = document.getElementById('cmOpeningKicker');
+    const openLead = document.getElementById('cmOpeningLead');
+    if (openKick) openKick.hidden = soloPhase !== 'ask';
+    if (openLead) openLead.hidden = soloPhase !== 'ask';
+    // Bilingual opening (do not speak LP number here)
+    if (soloPhase === 'ask') {
+      const L = lang();
+      if (openKick) openKick.textContent = L === 'zh' ? (openKick.getAttribute('data-zh') || '光紋記憶') : (openKick.getAttribute('data-en') || 'Lightprint Memory');
+      if (openLead) openLead.textContent = L === 'zh' ? (openLead.getAttribute('data-zh') || '留下你的光紋') : (openLead.getAttribute('data-en') || 'Leave your Lightprint');
+      if (introSoft) introSoft.textContent = L === 'zh' ? (introSoft.getAttribute('data-zh') || '') : (introSoft.getAttribute('data-en') || '');
+    }
+    // Residue fights first-time Solo attention — hide until ask idle is rare; keep off during active steps.
+    if (residueEl && soloPhase !== 'ask') residueEl.hidden = true;
+  }
+
+  function clearSealRevealTimer() {
+    if (sealRevealTimer) {
+      clearTimeout(sealRevealTimer);
+      sealRevealTimer = 0;
+    }
+  }
+
+  function revealSealNow() {
+    if (lightSealed || !bloomReady || !sealBar) return;
+    if (sealBar.hidden === false) return;
+    clearSealRevealTimer();
+    showSealBar();
+    setSoloPhase('seal');
+  }
+
+  function maybeRevealSeal() {
+    if (lightSealed || !bloomReady || !userPainted || !sealBar) return;
+    if (sealBar.hidden === false) return;
+    if (lightTouches.length >= SEAL_READY_TOUCHES) {
+      revealSealNow();
+      return;
+    }
+    // Soft fallback: after first real touch, 收光 arrives on its own beat
+    // so a single tap still teaches the next step without fighting early attention.
+    if (!sealRevealTimer) {
+      sealRevealTimer = window.setTimeout(() => {
+        sealRevealTimer = 0;
+        if (!lightSealed && userPainted && bloomReady) revealSealNow();
+      }, SEAL_FALLBACK_MS);
+    }
+  }
+
+  function ensureMemorialLayer(cssW, cssH) {
+    const w = Math.max(1, Math.round(cssW));
+    const h = Math.max(1, Math.round(cssH));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const needNew = !memorialLayer || memorialW !== w || memorialH !== h;
+    if (!needNew) return;
+    const prev = memorialLayer;
+    memorialLayer = document.createElement('canvas');
+    memorialLayer.width = Math.max(1, Math.floor(w * dpr));
+    memorialLayer.height = Math.max(1, Math.floor(h * dpr));
+    memorialLayerCtx = memorialLayer.getContext('2d');
+    memorialLayerCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (prev && memorialW && memorialH) {
+      try {
+        memorialLayerCtx.drawImage(prev, 0, 0, w, h);
+      } catch (err) { /* ignore */ }
+    }
+    memorialW = w;
+    memorialH = h;
+  }
+
+  function stampMemorialAt(x, y, strength) {
+    if (!activeMood || (lightSealed && !pathReplayBusy && !sealCoalescing)) return;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    ensureMemorialLayer(r.width, r.height);
+    const palette = activeMood.palette || ['#c9a66b'];
+    const s = strength == null ? 1 : strength;
+    const count = 5 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = (8 + Math.random() * Math.min(r.width, r.height) * 0.18) * s;
+      const cx = x + Math.cos(ang) * dist * 0.35;
+      const cy = y + Math.sin(ang) * dist * 0.35;
+      const rad = (16 + Math.random() * 42) * (0.55 + s * 0.45);
+      const color = palette[i % palette.length];
+      const g = memorialLayerCtx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      g.addColorStop(0, hexAlpha(color, 0.32 * s));
+      g.addColorStop(0.5, hexAlpha(color, 0.15 * s));
+      g.addColorStop(1, hexAlpha(color, 0));
+      memorialLayerCtx.fillStyle = g;
+      memorialLayerCtx.beginPath();
+      memorialLayerCtx.arc(cx, cy, rad, 0, Math.PI * 2);
+      memorialLayerCtx.fill();
+    }
+  }
+
+  function flushLiveBloomsToMemorial() {
+    if (!blooms.length || !activeMood) return;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    ensureMemorialLayer(r.width, r.height);
+    for (const b of blooms) {
+      const t = Math.max(0, (b.life - b.delay) / (b.max - b.delay));
+      if (t <= 0) continue;
+      const ease = 1 - Math.pow(1 - Math.min(t, 1), 3);
+      const cx = b.x + (b.tx - b.x) * ease;
+      const cy = b.y + (b.ty - b.y) * ease;
+      const alpha = t < 0.2 ? t / 0.2 : Math.max(0.25, 1 - (t - 0.2) / 0.8);
+      const rad = b.r * (0.35 + ease * 0.9);
+      const g = memorialLayerCtx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      g.addColorStop(0, hexAlpha(b.color, Math.max(0, Math.min(0.42, alpha * 0.42))));
+      g.addColorStop(1, hexAlpha(b.color, 0));
+      memorialLayerCtx.fillStyle = g;
+      memorialLayerCtx.beginPath();
+      memorialLayerCtx.arc(cx, cy, rad, 0, Math.PI * 2);
+      memorialLayerCtx.fill();
+    }
+  }
+
+  function captureMemorialImage() {
+    const r = shell.getBoundingClientRect();
+    const w = Math.max(320, Math.round(r.width) || 640);
+    const h = Math.max(240, Math.round(r.height) || 480);
+    ensureMemorialLayer(r.width || w, r.height || h);
+    flushLiveBloomsToMemorial();
+    const dark = document.documentElement.dataset.theme === 'dark';
+    const out = document.createElement('canvas');
+    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    out.width = Math.round(w * scale);
+    out.height = Math.round(h * scale);
+    const octx = out.getContext('2d');
+    octx.scale(scale, scale);
+    const g = octx.createLinearGradient(0, 0, w, h);
+    if (dark) {
+      g.addColorStop(0, '#14110f');
+      g.addColorStop(1, '#221c18');
+    } else {
+      g.addColorStop(0, '#f7f1e8');
+      g.addColorStop(1, '#ebe2d4');
+    }
+    octx.fillStyle = g;
+    octx.fillRect(0, 0, w, h);
+    // Seed from the live seal-moment canvas (finger/fingerprint glow) so card matches 收光.
+    try {
+      if (canvas && canvas.width && canvas.height) {
+        octx.globalAlpha = 0.92;
+        octx.drawImage(canvas, 0, 0, w, h);
+        octx.globalAlpha = 1;
+      }
+    } catch (err) { /* ignore */ }
+    if (memorialLayer) {
+      octx.globalAlpha = 0.78;
+      octx.drawImage(memorialLayer, 0, 0, w, h);
+      octx.globalAlpha = 1;
+    }
+    // Soft soft-gold frame wash — keepsake, not a hard stamp.
+    const gold = octx.createRadialGradient(w * 0.5, h * 0.48, Math.min(w, h) * 0.12, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
+    gold.addColorStop(0, 'rgba(201,164,106,0)');
+    gold.addColorStop(0.72, 'rgba(201,164,106,0)');
+    gold.addColorStop(1, dark ? 'rgba(201,164,106,.1)' : 'rgba(201,164,106,.08)');
+    octx.fillStyle = gold;
+    octx.fillRect(0, 0, w, h);
+    // Soft vignette so it reads as a keepsake panel, not a raw screenshot.
+    const vig = octx.createRadialGradient(w * 0.5, h * 0.48, Math.min(w, h) * 0.18, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, dark ? 'rgba(20,17,15,.28)' : 'rgba(45,40,36,.12)');
+    octx.fillStyle = vig;
+    octx.fillRect(0, 0, w, h);
+    memorialDataUrl = out.toDataURL('image/png');
+    return memorialDataUrl;
+  }
+
+  function syncMemorialUI() {
+    const L = lang();
+    // Freeze the trail in the same shell the finger just used — no second, smaller frame.
+    if (memorialEl) memorialEl.hidden = true;
+    if (memorialCap) memorialCap.hidden = true;
+    if (memorialDataUrl && freezeEl && shell) {
+      freezeEl.src = memorialDataUrl;
+      freezeEl.alt = L === 'zh' ? '你剛剛留下的光痕' : 'The light your finger just left';
+      freezeEl.hidden = false;
+      shell.classList.add('is-frozen');
+    } else if (freezeEl) {
+      freezeEl.hidden = true;
+      freezeEl.removeAttribute('src');
+      if (shell) shell.classList.remove('is-frozen');
+    }
+  }
+
+  function showSealBar() {
+    if (!sealBar || lightSealed) return;
+    syncLpHintCopy();
+    sealBar.hidden = false;
+    sealBar.classList.remove('is-arrive');
+    // retrigger arrive animation
+    void sealBar.offsetWidth;
+    sealBar.classList.add('is-arrive');
+  }
+
+  function recordLightPoint(nx, ny, pointerId, kind) {
+    if (lightSealed || !bloomReady) return;
+    const now = performance.now();
+    if (!lightSessionT0) lightSessionT0 = now;
+    lightTouches.push({
+      nx: Math.max(0, Math.min(1, Number(nx.toFixed(4)))),
+      ny: Math.max(0, Math.min(1, Number(ny.toFixed(4)))),
+      t: Math.round(now - lightSessionT0),
+      id: pointerId == null ? 0 : pointerId,
+      kind: kind || 'tap'
+    });
+    if (userPainted) maybeRevealSeal();
+  }
+
+
+  /* —— v2449 Lightprint soft-breath figure (secondary; memorial touch is hero) —— */
+  const EPITHET = {
+    gold:   [{zh:'柔金守夜人',en:'Keeper of Soft Gold'},{zh:'燭心旅人',en:'Candle-Heart Wanderer'},{zh:'蜜光之影',en:'Honey-Light Shade'}],
+    indigo: [{zh:'深靛聽夜者',en:'Night Listener in Indigo'},{zh:'霧紫過客',en:'Mist-Violet Passerby'},{zh:'暗邊的光',en:'Light at the Dark Edge'}],
+    rose:   [{zh:'花瓣收光者',en:'Petal Light-Gatherer'},{zh:'粉霧行者',en:'Walker in Pink Mist'},{zh:'慢開的影',en:'Slow-Opening Silhouette'}],
+    mist:   [{zh:'霧青呼吸',en:'Mist-Green Breath'},{zh:'露邊的人影',en:'Figure at the Dew Edge'},{zh:'緩行霧客',en:'Slow Guest of Mist'}],
+    cool:   [{zh:'月藍靜影',en:'Moon-Blue Quiet Form'},{zh:'湖心停息',en:'Stillness at Lake Heart'},{zh:'涼光旅者',en:'Cool-Light Traveler'}],
+    spark:  [{zh:'微火點亮者',en:'Tiny Fire Kindler'},{zh:'一瞬星屑',en:'A Moment of Star-Dust'},{zh:'跳息之光',en:'Light That Skips Once'}],
+    still:  [{zh:'深水定影',en:'Settled Shadow of Deep Water'},{zh:'無波守望',en:'Watcher Without Ripple'},{zh:'靜岸之形',en:'Form on the Quiet Shore'}],
+    warm:   [{zh:'掌心餘溫',en:'Warmth Left in the Palm'},{zh:'暖廊過影',en:'Warm-Hall Silhouette'},{zh:'低火守者',en:'Keeper of Low Fire'}],
+    soft:   [{zh:'絹光落影',en:'Silk-Light Falling Shade'},{zh:'輕覆之人',en:'One Softly Covered'},{zh:'柔邊行者',en:'Walker of Soft Edges'}],
+    deep:   [{zh:'夜廊深處',en:'Deep in the Night Hall'},{zh:'未名走廊的影',en:'Shade of an Unnamed Corridor'},{zh:'更深一寸',en:'One Inch Deeper'}]
+  };
+  const LORE_A = {
+    gold:   [{zh:'這一點金，先停在你心口。',en:'A little gold rests near the heart.'},{zh:'溫熱不必很大聲，也能被看見。',en:'Warmth need not be loud to be seen.'}],
+    indigo: [{zh:'暗裡也有溫柔的亮。',en:'Even in the dark, a gentle brightness.'},{zh:'深一點，反而更靠近自己。',en:'Going deeper can bring you closer.'}],
+    rose:   [{zh:'一點點綻開，就夠了。',en:'A soft bloom is enough.'},{zh:'柔軟，也是一種力量。',en:'Softness is a kind of strength.'}],
+    mist:   [{zh:'霧不是阻擋——是緩衝。',en:'Mist is not a wall — it is a cushion.'},{zh:'光走得很慢，剛好讓你看見。',en:'Light moves slowly — just enough to be seen.'}],
+    cool:   [{zh:'月色把聲音都放輕了。',en:'Moonlight softens every sound.'},{zh:'安靜可以比答案先到。',en:'Quiet can arrive before an answer.'}],
+    spark:  [{zh:'一下就亮，也夠照見此刻。',en:'One flash is enough to see this moment.'},{zh:'火花停住的地方，有你的指紋。',en:'Where the spark pauses, your fingerprint remains.'}],
+    still:  [{zh:'水不說話，卻記住了紋路。',en:'Water does not speak, yet keeps the pattern.'},{zh:'定影不是停滯——是讓光坐下。',en:'Stillness is not stuck — it is light sitting down.'}],
+    warm:   [{zh:'掌心還留著剛才的溫度。',en:'The palm still holds the last warmth.'},{zh:'暖意自己來了，你只要接住。',en:'Warmth arrives on its own — you only receive.'}],
+    soft:   [{zh:'邊界很柔，剛好讓你進來。',en:'The edge is soft enough to let you in.'},{zh:'這一刻可以很輕。',en:'This moment is allowed to be light.'}],
+    deep:   [{zh:'走廊還沒有名字，影已經先走。',en:'The hall has no name yet; the shade walks first.'},{zh:'更深一點，也不必害怕。',en:'A little deeper need not frighten you.'}]
+  };
+  const LORE_B = {
+    spread:  [{zh:'你的觸碰走得很開，像霧自己散開。',en:'Your touch spread wide — like mist opening itself.'},{zh:'光痕鋪得很遠，剪影便跟著鬆開。',en:'The trail went far; the silhouette loosened with it.'}],
+    dense:   [{zh:'你把光收得很近，像掌心護著火。',en:'You kept the light close — a flame cupped in the palm.'},{zh:'觸點重疊處，剪影的心更亮。',en:'Where touches overlap, the silhouette’s heart brightens.'}],
+    curve:   [{zh:'路徑彎了一下，影也輕輕側身。',en:'The path bent once; the shade turned with it.'},{zh:'你沒有走直線——光影學會了繞路。',en:'You did not walk straight — light learned to curve.'}],
+    sparse:  [{zh:'只有幾點光，已經夠認出你。',en:'Only a few points of light — enough to know you.'},{zh:'留白很大，剪影反而更清楚。',en:'Much empty space — the silhouette reads clearer.'}],
+    long:    [{zh:'你走了一條長長的光路。',en:'You walked a long path of light.'},{zh:'時間在指尖拉長，影慢慢站起。',en:'Time stretched at the fingertip; the shade rose slowly.'}]
+  };
+  const LORE_C = [
+    {zh:'同一道光紋，會長成同一道影。再來，還是這一張。',en:'The same Lightprint keeps the same shade. Coming back shows this one.'},
+    {zh:'之後若問外形，那是下一兩問的事——此刻先讓影站好。',en:'Form questions come later (1–2 soft asks) — for now, let the shade stand.'},
+    {zh:'沒有對錯；只要靠近你現在的感覺。',en:'No right or wrong — only nearer to how you feel now.'},
+    {zh:'這張紀念卡上，寫的是光紋記憶，不是編號演說。',en:'This memorial holds Lightprint Memory — not a spoken serial.'}
+  ];
+
+  const figCanvas = document.getElementById('cmFigureCanvas');
+  const figCtx = figCanvas ? figCanvas.getContext('2d') : null;
+  const figBreathEl = document.getElementById('cmFigureBreath');
+  const memLabelEl = document.getElementById('cmMemLabel');
+  const epithetZhEl = document.getElementById('cmEpithetZh');
+  const epithetEnEl = document.getElementById('cmEpithetEn');
+  const loreEl = document.getElementById('cmLore');
+  const figureMoodEl = document.getElementById('cmFigureMood');
+  let lastFigure = null;
+  let figurePaintToken = 0;
+  let figureBreathRaf = 0;
+  const reduceFigureMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function hashStrFigure(s) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function seededFigure(seed) {
+    let s = seed >>> 0;
+    return function () {
+      s ^= s << 13; s >>>= 0;
+      s ^= s >>> 17; s >>>= 0;
+      s ^= s << 5; s >>>= 0;
+      return (s >>> 0) / 4294967296;
+    };
+  }
+  function pickFigure(rng, arr) {
+    return arr[Math.floor(rng() * arr.length) % arr.length];
+  }
+  function touchFeel(path) {
+    if (!path || !path.length) return { kind: 'sparse', spread: 0, density: 0, curve: 0, len: 0, cx: 0.5, cy: 0.5 };
+    let minX = 1, maxX = 0, minY = 1, maxY = 0, dist = 0, turns = 0;
+    for (let i = 0; i < path.length; i++) {
+      const p = path[i];
+      minX = Math.min(minX, p.nx); maxX = Math.max(maxX, p.nx);
+      minY = Math.min(minY, p.ny); maxY = Math.max(maxY, p.ny);
+      if (i) {
+        const a = path[i - 1];
+        dist += Math.hypot(p.nx - a.nx, p.ny - a.ny);
+        if (i > 1) {
+          const b = path[i - 2];
+          const v1x = a.nx - b.nx, v1y = a.ny - b.ny;
+          const v2x = p.nx - a.nx, v2y = p.ny - a.ny;
+          const d1 = Math.hypot(v1x, v1y) || 1e-6, d2 = Math.hypot(v2x, v2y) || 1e-6;
+          const cos = (v1x * v2x + v1y * v2y) / (d1 * d2);
+          if (cos < 0.5) turns++;
+        }
+      }
+    }
+    const spread = (maxX - minX) * (maxY - minY);
+    const density = path.length / Math.max(0.08, spread + 0.05);
+    const curve = turns / Math.max(1, path.length);
+    let kind = 'sparse';
+    if (dist > 1.2) kind = 'long';
+    else if (curve > 0.18) kind = 'curve';
+    else if (density > 80) kind = 'dense';
+    else if (spread > 0.22) kind = 'spread';
+    return { kind, spread, density, curve, len: dist, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+  }
+  function answerTagsForFigure() {
+    const tags = [];
+    (sessionAnswers || []).forEach(a => {
+      (a.tags || []).forEach(t => { if (tags.indexOf(t) < 0) tags.push(t); });
+    });
+    return tags.slice(0, 6);
+  }
+  function buildFigure(code, moodObj, path, tags) {
+    const seed = hashStrFigure(code + '|' + (moodObj && moodObj.id ? moodObj.id : 'gold'));
+    const rng = seededFigure(seed);
+    const feel = touchFeel(path);
+    const mid = (moodObj && moodObj.id) || 'gold';
+    const bank = EPITHET[mid] || EPITHET.gold;
+    const epithet = bank[Math.floor(rng() * bank.length) % bank.length];
+    const aBank = LORE_A[mid] || LORE_A.gold;
+    const line1 = pickFigure(rng, aBank);
+    const bBank = LORE_B[feel.kind] || LORE_B.sparse;
+    const line2 = pickFigure(rng, bBank);
+    const line3 = LORE_C[Math.floor(rng() * LORE_C.length) % LORE_C.length];
+    const lean = (rng() - 0.5) * 0.12 + (feel.cx - 0.5) * 0.08;
+    const headTilt = (rng() - 0.5) * 0.25;
+    const shoulderW = 0.22 + rng() * 0.06 + Math.min(0.04, feel.spread * 0.08);
+    const torsoH = 0.34 + rng() * 0.06;
+    const headR = 0.055 + rng() * 0.012;
+    const glow = 0.55 + rng() * 0.35 + (feel.kind === 'dense' ? 0.1 : 0);
+    const halo = 0.7 + rng() * 0.5;
+    const particleN = 8 + Math.floor(rng() * 10) + (mid === 'spark' ? 6 : 0);
+    const posture = feel.kind === 'long' ? 'tall' : feel.kind === 'dense' ? 'gathered' : feel.kind === 'curve' ? 'turn' : 'open';
+    return {
+      code,
+      moodId: mid,
+      palette: (moodObj.palette || ['#c9a46a', '#e8d5b0', '#8b5a2b', '#f4efe6']).slice(),
+      tags: (tags || []).slice(),
+      feel,
+      epithet,
+      lore: [line1, line2, line3],
+      form: { lean, headTilt, shoulderW, torsoH, headR, glow, halo, particleN, posture, cy: 0.48 + (feel.cy - 0.5) * 0.06 }
+    };
+  }
+  function resizeFigureCanvas() {
+    if (!figCanvas || !shell) return;
+    const r = shell.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    figCanvas.width = Math.max(1, Math.floor(r.width * dpr));
+    figCanvas.height = Math.max(1, Math.floor(r.height * dpr));
+    if (figCtx) figCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function drawSoftBlobFig(ctx, x, y, rx, ry, color, alpha) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, Math.max(rx, ry));
+    g.addColorStop(0, hexAlpha(color, alpha));
+    g.addColorStop(0.45, hexAlpha(color, alpha * 0.45));
+    g.addColorStop(1, hexAlpha(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function drawFigure(fig, t, breath) {
+    if (!figCtx || !figCanvas || !shell) return;
+    const r = shell.getBoundingClientRect();
+    const w = r.width, h = r.height;
+    figCtx.clearRect(0, 0, w, h);
+    if (!fig || t <= 0) return;
+    const f = fig.form;
+    const pal = fig.palette;
+    const cx = w * (0.5 + f.lean * 0.35);
+    const cy = h * f.cy;
+    const appear = Math.min(1, Math.max(0, t));
+    const b = (breath == null ? 0 : breath);
+    const edgePulse = 1 + b * 0.1;
+    const glowPulse = 1 + b * 0.08;
+    drawSoftBlobFig(figCtx, cx, cy + h * 0.05, w * 0.42 * edgePulse, h * 0.38 * edgePulse, pal[0], 0.1 * appear * glowPulse);
+    drawSoftBlobFig(figCtx, cx, cy - h * 0.08, w * 0.28 * f.halo * edgePulse, h * 0.32 * f.halo * edgePulse, pal[1] || pal[0], 0.14 * appear * f.glow * glowPulse);
+    const headY = cy - h * 0.18;
+    const headR = w * f.headR;
+    const shoulderY = headY + headR * 1.55;
+    const shoulderW = w * f.shoulderW;
+    const torsoBottom = shoulderY + h * f.torsoH;
+    drawSoftBlobFig(figCtx, cx + f.lean * w * 0.02, (shoulderY + torsoBottom) / 2,
+      shoulderW * 0.95, (torsoBottom - shoulderY) * 0.55, pal[0], 0.42 * appear * f.glow);
+    drawSoftBlobFig(figCtx, cx, (shoulderY + torsoBottom) / 2,
+      shoulderW * 0.55, (torsoBottom - shoulderY) * 0.42, pal[1] || pal[0], 0.35 * appear);
+    drawSoftBlobFig(figCtx, cx - shoulderW * 0.55, shoulderY, shoulderW * 0.55, headR * 0.85, pal[0], 0.4 * appear);
+    drawSoftBlobFig(figCtx, cx + shoulderW * 0.55, shoulderY, shoulderW * 0.55, headR * 0.85, pal[0], 0.4 * appear);
+    drawSoftBlobFig(figCtx, cx, shoulderY, shoulderW * 0.7, headR * 0.7, pal[1] || pal[0], 0.38 * appear);
+    const hx = cx + Math.sin(f.headTilt) * headR * 0.35;
+    const hy = headY;
+    drawSoftBlobFig(figCtx, hx, hy, headR * 1.35 * edgePulse, headR * 1.55 * edgePulse, pal[0], 0.5 * appear * f.glow * glowPulse);
+    drawSoftBlobFig(figCtx, hx, hy, headR * 0.85, headR * 1.05, pal[1] || pal[0], 0.55 * appear);
+    drawSoftBlobFig(figCtx, hx, hy - headR * 0.15, headR * 0.45, headR * 0.5, '#fff8e8', 0.28 * appear * (0.92 + 0.08 * (1 + b) / 2));
+    drawSoftBlobFig(figCtx, cx, shoulderY + headR * 0.9, headR * 0.7 * edgePulse, headR * 0.9 * edgePulse, pal[1] || pal[0], 0.45 * appear * f.glow * glowPulse);
+    drawSoftBlobFig(figCtx, cx, shoulderY + headR * 0.9, headR * 0.28, headR * 0.35, '#fff8e8', 0.4 * appear * glowPulse);
+    const rng = seededFigure(hashStrFigure(fig.code + ':p'));
+    for (let i = 0; i < f.particleN; i++) {
+      const ang = rng() * Math.PI * 2;
+      const rad = (0.12 + rng() * 0.35) * Math.min(w, h) * (0.4 + appear * 0.6);
+      const px = cx + Math.cos(ang) * rad * (0.6 + f.halo * 0.2);
+      const py = cy + Math.sin(ang) * rad * 0.75 - h * 0.05;
+      const pr = 1.5 + rng() * 3.5;
+      figCtx.fillStyle = hexAlpha(i % 2 ? (pal[1] || pal[0]) : '#fff8e8', (0.25 + rng() * 0.4) * appear);
+      figCtx.beginPath();
+      figCtx.arc(px, py, pr, 0, Math.PI * 2);
+      figCtx.fill();
+    }
+    if (lightTouches && lightTouches.length > 2) {
+      const step = Math.max(1, Math.floor(lightTouches.length / 12));
+      for (let i = 0; i < lightTouches.length; i += step) {
+        const p = lightTouches[i];
+        drawSoftBlobFig(figCtx, p.nx * w, p.ny * h, 10, 10, pal[0], 0.08 * appear);
+      }
+    }
+  }
+  function stopFigureBreath() {
+    if (figureBreathRaf) { cancelAnimationFrame(figureBreathRaf); figureBreathRaf = 0; }
+  }
+  function startFigureBreath(fig) {
+    stopFigureBreath();
+    if (reduceFigureMotion || !fig) return;
+    const token = figurePaintToken;
+    const t0 = performance.now();
+    function frame(now) {
+      if (token !== figurePaintToken || !lastFigure) return;
+      const breath = Math.sin((now - t0) / 5500 * Math.PI * 2);
+      drawFigure(fig, 1, breath);
+      figureBreathRaf = requestAnimationFrame(frame);
+    }
+    figureBreathRaf = requestAnimationFrame(frame);
+  }
+  function clearFigureUI() {
+    stopFigureBreath();
+    figurePaintToken++;
+    lastFigure = null;
+    if (figCtx && shell) {
+      const r = shell.getBoundingClientRect();
+      figCtx.clearRect(0, 0, r.width || 1, r.height || 1);
+    }
+    if (figCanvas) figCanvas.classList.remove('is-on');
+    if (shell) shell.classList.remove('is-figure-birthing', 'is-figure-alive', 'is-figure-fading', 'is-seal-done');
+    if (figBreathEl) figBreathEl.hidden = true;
+    if (memLabelEl) memLabelEl.hidden = true;
+    if (epithetZhEl) { epithetZhEl.hidden = true; epithetZhEl.textContent = ''; }
+    if (epithetEnEl) { epithetEnEl.hidden = true; epithetEnEl.textContent = ''; }
+    if (loreEl) { loreEl.hidden = true; loreEl.innerHTML = ''; }
+    if (figureMoodEl) { figureMoodEl.hidden = true; figureMoodEl.innerHTML = ''; }
+  }
+  function animateFigureBirth(fig) {
+    if (!fig) return;
+    figurePaintToken++;
+    stopFigureBreath();
+    resizeFigureCanvas();
+    const token = figurePaintToken;
+    const t0 = performance.now();
+    const dur = 1600;
+    if (figCanvas) figCanvas.classList.add('is-on');
+    if (shell) shell.classList.add('is-figure-birthing');
+    function frame(now) {
+      if (token !== figurePaintToken) return;
+      const t = Math.min(1, (now - t0) / dur);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const breath = reduceFigureMotion ? 0 : Math.sin(ease * Math.PI) * 0.35;
+      drawFigure(fig, ease, breath);
+      if (t < 1) requestAnimationFrame(frame);
+      else {
+        if (shell) {
+          shell.classList.remove('is-figure-birthing');
+          shell.classList.add('is-figure-alive', 'is-seal-done');
+        }
+        if (figBreathEl) {
+          figBreathEl.hidden = false;
+          figBreathEl.textContent = lang() === 'zh' ? '柔光呼吸' : 'Soft breathing';
+        }
+        startFigureBreath(fig);
+        // Soft silhouette fades so sealed fingerprint → card is one continuous look.
+        window.setTimeout(() => {
+          if (!lastFigure || lastFigure !== fig) return;
+          stopFigureBreath();
+          if (shell) {
+            shell.classList.add('is-figure-fading');
+            shell.classList.remove('is-figure-alive');
+          }
+          if (figBreathEl) figBreathEl.hidden = true;
+        }, 2200);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  function syncFigureCard(fig) {
+    if (!fig) return;
+    const L = lang();
+    // Soft secondary: art card keeps mood title; figure epithet/lore sit under the seal stamp.
+    if (memLabelEl) {
+      memLabelEl.hidden = false;
+      memLabelEl.textContent = L === 'zh' ? '光紋記憶' : 'Lightprint Memory';
+    }
+    if (epithetZhEl) {
+      epithetZhEl.hidden = false;
+      epithetZhEl.textContent = fig.epithet.zh;
+    }
+    if (epithetEnEl) {
+      epithetEnEl.hidden = false;
+      epithetEnEl.textContent = fig.epithet.en;
+    }
+    if (loreEl) {
+      loreEl.hidden = false;
+      loreEl.innerHTML = '';
+      (fig.lore || []).slice(0, 2).forEach(line => {
+        const p = document.createElement('p');
+        p.textContent = L === 'zh' ? line.zh : line.en;
+        loreEl.appendChild(p);
+      });
+    }
+    if (figureMoodEl) { figureMoodEl.hidden = true; figureMoodEl.innerHTML = ''; }
+  }
+  function birthLightprintFigure() {
+    if (!activeMood || !lightprintCode) return null;
+    const tags = answerTagsForFigure();
+    const fig = buildFigure(lightprintCode, activeMood, lightTouches, tags);
+    fig._path = lightTouches.map(x => ({ nx: x.nx, ny: x.ny, t: x.t, kind: x.kind }));
+    lastFigure = fig;
+    animateFigureBirth(fig);
+    return fig;
+  }
+
+
+  function hashToLightprint(payload) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < payload.length; i++) {
+      h ^= payload.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    let x = h >>> 0;
+    let out = '';
+    for (let i = 0; i < 8; i++) {
+      x ^= x >>> 16;
+      x = Math.imul(x, 0x7feb352d) >>> 0;
+      x ^= x >>> 15;
+      x = Math.imul(x, 0x846ca68b) >>> 0;
+      x ^= x >>> 16;
+      // >>> 0: JS % keeps negatives (LP_ALPH[-n] → "undefined" string bug)
+      out += LP_ALPH[(x >>> 0) % LP_ALPH.length];
+      x = (x + h + Math.imul(i + 1, 2654435761)) >>> 0;
+    }
+    return 'LP-' + out;
+  }
+
+  function isValidLightprintCode(code) {
+    return typeof code === 'string' && /^LP-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{8}$/.test(code);
+  }
+
+  function encodeLightprint(touches, moodId) {
+    const payload = JSON.stringify({
+      m: moodId || '',
+      n: (touches && touches.length) || 0,
+      p: (touches || []).map(t => [
+        Number.isFinite(t.nx) ? t.nx : 0,
+        Number.isFinite(t.ny) ? t.ny : 0,
+        Number.isFinite(t.t) ? t.t : 0,
+        t.id == null ? 0 : t.id,
+        t.kind || 'tap'
+      ])
+    });
+    const code = hashToLightprint(payload);
+    return isValidLightprintCode(code) ? code : hashToLightprint(payload + '|safe');
+  }
+
+  function buildResidue(code) {
+    const mood = activeMood || {};
+    return {
+      code,
+      label: 'AE · ' + code,
+      sealedAt: new Date().toISOString(),
+      touchCount: lightTouches.length,
+      path: lightTouches.slice(0, 400),
+      palette: (mood.palette || []).slice(),
+      mood: mood.id || null,
+      moodZh: mood.zh || '',
+      moodEn: mood.en || '',
+      art: activeArt || null,
+      answers: sessionAnswers.slice(),
+      tags: Object.assign({}, tagScores),
+      reading: activeReading ? { zh: activeReading.zh, en: activeReading.en } : null,
+      ritual: activeRitual ? { zh: activeRitual.zh, en: activeRitual.en } : null,
+      v: '1.2'
+    };
+  }
+
+  function keptRecord() {
+    try {
+      const data = JSON.parse(localStorage.getItem(LP_STORAGE_KEY) || '');
+      return data && isValidLightprintCode(data.code) ? data : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function lightprintQrPayload(id) {
+    return location.origin + '/together?lp=' + id;
+  }
+
+  function drawKeptQr() {}
+
+  function restoreKept() {
+    const kept = keptRecord();
+    const residue = loadResidue();
+    if (!kept && !(residue && isValidLightprintCode(residue.code))) return false;
+    const id = kept ? kept.code : residue.code;
+    if (residue && residue.code === id) {
+      lightTouches = (residue.path || []).map(p => ({
+        nx: p.nx, ny: p.ny, t: p.t || 0, id: p.id || 0, kind: p.kind || 'move'
+      }));
+      if (residue.mood && MOODS[residue.mood]) activeMood = MOODS[residue.mood];
+      else activeMood = {
+        id: residue.mood || 'gold',
+        zh: residue.moodZh || '永恆當下',
+        en: residue.moodEn || 'Eternal present',
+        palette: residue.palette || []
+      };
+      if (residue.art) activeArt = residue.art;
+      if (residue.reading) activeReading = residue.reading;
+      if (residue.ritual) activeRitual = residue.ritual;
+      sessionAnswers = residue.answers || [];
+      sealedResidue = residue;
+    } else if (!activeMood) {
+      activeMood = { id: 'gold', zh: '永恆當下', en: 'Eternal present', palette: [] };
+    }
+    lightprintCode = id;
+    lightSealed = true;
+    askEl.hidden = true;
+    bloomWrap.hidden = false;
+    afterEl.hidden = false;
+    bloomReady = true;
+    started = true;
+    if (hint) hint.classList.add('is-hidden');
+    if (sealBar) sealBar.hidden = true;
+    if (replay) replay.hidden = true;
+    setSoloPhase('done');
+    try { birthLightprintFigure(); } catch (err) { /* ignore */ }
+    renderCard();
+    drawKeptQr(id);
+    return true;
+  }
+
+  function persistLightprint(code) {
+    const existing = keptRecord();
+    if (existing) {
+      lightprintCode = existing.code;
+      return existing;
+    }
+    const record = buildResidue(code);
+    sealedResidue = record;
+    try { localStorage.setItem(LP_STORAGE_KEY, JSON.stringify({
+      code: record.code,
+      label: record.label,
+      sealedAt: record.sealedAt,
+      touchCount: record.touchCount,
+      mood: record.mood,
+      v: record.v
+    })); } catch (err) { /* private mode */ }
+    try {
+      // Path + palette + answers for Replay; skip heavy memorial bitmap.
+      localStorage.setItem(LP_RESIDUE_KEY, JSON.stringify(record));
+    } catch (err) {
+      try {
+        const slim = Object.assign({}, record, { answers: record.answers.slice(0, 6) });
+        if (slim.path && slim.path.length > 180) slim.path = slim.path.filter((_, i) => i % 2 === 0).slice(0, 180);
+        localStorage.setItem(LP_RESIDUE_KEY, JSON.stringify(slim));
+      } catch (err2) { /* private / quota */ }
+    }
+    return record;
+  }
+
+  function loadResidue() {
+    try {
+      const raw = localStorage.getItem(LP_RESIDUE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.path) || !data.path.length) return null;
+      return data;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function syncResidueBanner() {
+    if (!residueEl) return;
+    // v2446 ruthless Solo: residue banner fights first-time attention.
+    // Path Replay stays on the result card; banner stays off.
+    residueEl.hidden = true;
+  }
+
+  function setSealHoldProgress(p) {
+    const v = Math.max(0, Math.min(1, p || 0));
+    const pct = Math.round(v * 100);
+    if (sealBtn) sealBtn.style.setProperty('--hold', String(pct));
+    // Direct SVG dash so hold ring is visible across browsers (pathLength=100)
+    const prog = sealRing && sealRing.querySelector
+      ? sealRing.querySelector('.cm-seal-ring-prog')
+      : document.querySelector('.cm-seal-ring-prog');
+    if (prog) {
+      prog.style.strokeDashoffset = String(100 - pct);
+      prog.setAttribute('stroke-dashoffset', String(100 - pct));
+    }
+  }
+
+  function cancelSealHold(silent) {
+    sealHolding = false;
+    sealHoldStart = 0;
+    if (sealHoldRaf) {
+      cancelAnimationFrame(sealHoldRaf);
+      sealHoldRaf = 0;
+    }
+    if (sealBtn) {
+      sealBtn.classList.remove('is-holding');
+      // Keep is-complete flash after a full hold; clear only when resetting progress to 0 mid-hold cancel.
+      if (!sealCoalescing && !lightSealed) sealBtn.classList.remove('is-complete');
+      setSealHoldProgress(sealCoalescing || lightSealed ? 1 : 0);
+    }
+  }
+
+  function tickSealHold(now) {
+    if (!sealHolding || lightSealed || sealCoalescing) return;
+    const t0 = sealHoldStart || now;
+    const p = (now - t0) / SEAL_HOLD_MS;
+    setSealHoldProgress(p);
+    if (p >= 1) {
+      sealHolding = false;
+      sealHoldRaf = 0;
+      if (sealBtn) {
+        sealBtn.classList.remove('is-holding');
+        sealBtn.classList.add('is-complete');
+      }
+      setSealHoldProgress(1);
+      beginCoalesceAndSeal();
+      return;
+    }
+    sealHoldRaf = requestAnimationFrame(tickSealHold);
+  }
+
+  function startSealHold(ev) {
+    if (lightSealed || !bloomReady || !activeMood || sealCoalescing || pathReplayBusy) return;
+    if (ev) {
+      try { ev.preventDefault(); } catch (err) { /* ignore */ }
+      if (sealBtn && ev.pointerId != null) {
+        try { sealBtn.setPointerCapture(ev.pointerId); } catch (err) { /* ignore */ }
+      }
+    }
+    // Require at least a touch of light — otherwise soft guide, not failure.
+    if (!lightTouches.length && !started) {
+      const L = lang();
+      showToast(L === 'zh' ? '先留下一點你的光，再收光。' : 'Leave a little of your light first, then seal.');
+      return;
+    }
+    sealHolding = true;
+    sealHoldStart = performance.now();
+    if (sealBtn) {
+      sealBtn.classList.remove('is-complete');
+      sealBtn.classList.add('is-holding');
+    }
+    setSealHoldProgress(0);
+    if (sealHoldRaf) cancelAnimationFrame(sealHoldRaf);
+    sealHoldRaf = requestAnimationFrame(tickSealHold);
+  }
+
+  function endSealHold(ev) {
+    if (!sealHolding) return;
+    if (ev) {
+      try { ev.preventDefault(); } catch (err) { /* ignore */ }
+    }
+    const elapsed = performance.now() - (sealHoldStart || performance.now());
+    cancelSealHold(true);
+    // Release before complete = cancel, not failure. No seconds / no fail toast.
+    if (elapsed < SEAL_HOLD_MS) {
+      setSealHoldProgress(0);
+    }
+  }
+
+  function setBloomingUI(on) {
+    try {
+      document.body.classList.toggle('cm-blooming', !!on);
+    } catch (err) { /* ignore */ }
+  }
+
+  function lockDrawScroll() {
+    if (drawScrollLocked) return;
+    drawScrollLocked = true;
+    try {
+      document.documentElement.classList.add('cm-draw-lock');
+      document.body.style.overflow = 'hidden';
+    } catch (err) { /* ignore */ }
+  }
+
+  function unlockDrawScroll() {
+    if (!drawScrollLocked) return;
+    if (Object.keys(activePointers).length) return;
+    drawScrollLocked = false;
+    try {
+      document.documentElement.classList.remove('cm-draw-lock');
+      document.body.style.overflow = '';
+    } catch (err) { /* ignore */ }
+  }
+
+  function activeFingerCount() {
+    return Object.keys(activePointers).length;
+  }
+
+  function syncMistVeil() {
+    if (!mistEl) return;
+    const n = activeFingerCount();
+    mistEl.classList.remove('is-soft', 'is-rich');
+    if (n >= 2) {
+      mistLevel = 2;
+      mistEl.classList.add('is-rich');
+    } else if (n === 1 && started) {
+      mistLevel = 1;
+      mistEl.classList.add('is-soft');
+    } else {
+      mistLevel = 0;
+    }
+  }
+
+  function paintMistVeilToMemorial(strength) {
+    if (!activeMood || !memorialLayerCtx) return;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    ensureMemorialLayer(r.width, r.height);
+    const dark = document.documentElement.dataset.theme === 'dark';
+    const s = Math.max(0.04, Math.min(0.35, strength || 0.12));
+    const cx = r.width * 0.5;
+    const cy = r.height * 0.48;
+    const rad = Math.max(r.width, r.height) * 0.72;
+    const g = memorialLayerCtx.createRadialGradient(cx, cy, rad * 0.12, cx, cy, rad);
+    const tint = (activeMood.palette && activeMood.palette[0]) || '#c9a66b';
+    g.addColorStop(0, hexAlpha(tint, s * 0.35));
+    g.addColorStop(0.55, hexAlpha(tint, s * 0.12));
+    g.addColorStop(1, dark ? 'rgba(20,17,15,0)' : 'rgba(255,252,248,0)');
+    memorialLayerCtx.fillStyle = g;
+    memorialLayerCtx.fillRect(0, 0, r.width, r.height);
+  }
+
+  function coalesceBloomPull() {
+    if (!activeMood) return;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    // Soft whole-trail coalesce into card — NO hard mid press-spot / center bloom.
+    const pts = lightTouches.length ? lightTouches : [{ nx: 0.5, ny: 0.48 }];
+    const step = Math.max(1, Math.floor(pts.length / 28));
+    for (let i = 0; i < pts.length; i += step) {
+      const p = pts[i];
+      stampMemorialAt(p.nx * r.width, p.ny * r.height, 0.34);
+    }
+    // Optional very faint gather that dissolves into the path (path-tied, not a hotspot).
+    if (pts.length > 2) {
+      const mid = pts[Math.floor(pts.length * 0.5)];
+      stampMemorialAt(mid.nx * r.width, mid.ny * r.height, 0.16);
+      const gx = (mid.nx * 0.7 + 0.5 * 0.3) * r.width;
+      const gy = (mid.ny * 0.7 + 0.48 * 0.3) * r.height;
+      stampMemorialAt(gx, gy, 0.1);
+    }
+    // Bake a soft residual mist veil into memorial (no hard stamp).
+    paintMistVeilToMemorial(Object.keys(activePointers).length >= 2 ? 0.22 : 0.12);
+  }
+
+  function beginCoalesceAndSeal() {
+    if (lightSealed || !bloomReady || !activeMood || sealCoalescing) return;
+    sealCoalescing = true;
+    if (sealBtn) sealBtn.classList.add('is-coalescing');
+    try { coalesceBloomPull(); } catch (err) { /* ignore */ }
+    window.setTimeout(() => {
+      sealCoalescing = false;
+      if (sealBtn) sealBtn.classList.remove('is-coalescing');
+      setSealHoldProgress(0);
+      sealLight();
+    }, 520);
+  }
+
+  function stopPathReplay() {
+    pathReplayBusy = false;
+    if (pathReplayTimer) {
+      clearTimeout(pathReplayTimer);
+      pathReplayTimer = 0;
+    }
+  }
+
+  function replayLightPath(residue) {
+    const data = residue || sealedResidue || loadResidue();
+    if (!data || !data.path || !data.path.length) {
+      const L = lang();
+      showToast(L === 'zh' ? '還沒有可回放的光痕。' : 'No light path to replay yet.');
+      return;
+    }
+    stopPathReplay();
+    // Bring bloom stage forward for replay.
+    askEl.hidden = true;
+    if (residueEl) residueEl.hidden = true;
+    bloomWrap.hidden = false;
+    afterEl.hidden = false;
+    cardEl.hidden = true;
+    cardEl.classList.remove('is-on');
+    bloomReady = true;
+    started = true;
+    finger = null;
+    if (freezeEl) { freezeEl.hidden = true; freezeEl.removeAttribute('src'); }
+    if (shell) shell.classList.remove('is-frozen');
+    hint.classList.add('is-hidden');
+    if (sealBar) sealBar.hidden = true;
+
+    // Restore mood palette context for bloom colors.
+    if (data.mood && MOODS[data.mood]) {
+      activeMood = MOODS[data.mood];
+    } else if (data.palette && data.palette.length) {
+      activeMood = {
+        id: data.mood || 'gold',
+        zh: data.moodZh || '',
+        en: data.moodEn || '',
+        palette: data.palette
+      };
+    }
+    if (data.art) activeArt = data.art;
+    if (data.reading) activeReading = data.reading;
+    if (data.ritual) activeRitual = data.ritual;
+    if (data.code) {
+      lightprintCode = isValidLightprintCode(data.code) ? data.code : encodeLightprint(lightTouches, (data.mood || (activeMood && activeMood.id) || ''));
+      lightSealed = true;
+    }
+    lightTouches = data.path.map(p => ({
+      nx: p.nx, ny: p.ny, t: p.t || 0, id: p.id || 0, kind: p.kind || 'move'
+    }));
+    sealedResidue = data;
+    blooms = [];
+    resize();
+    // Clear memorial soft layer then restamp during replay.
+    if (memorialLayerCtx && memorialLayer) {
+      memorialLayerCtx.clearRect(0, 0, memorialLayer.width, memorialLayer.height);
+    }
+
+    pathReplayBusy = true;
+    const L = lang();
+    showToast(L === 'zh' ? '看——光正再次走過。' : 'Watch — light is walking again.');
+    const pts = lightTouches.slice();
+    const t0 = pts[0].t || 0;
+    const maxT = Math.max(600, (pts[pts.length - 1].t || 0) - t0);
+    // Cap replay duration ~2.8s while preserving relative rhythm.
+    const span = Math.min(2800, Math.max(900, maxT));
+    const scale = maxT > 0 ? span / maxT : 1;
+    let i = 0;
+    const r = () => shell.getBoundingClientRect();
+
+    function step() {
+      if (!pathReplayBusy) return;
+      if (i >= pts.length) {
+        pathReplayBusy = false;
+        try { captureMemorialImage(); } catch (err) { /* ignore */ }
+        // Restore card from residue context.
+        if (data.reading && data.ritual) {
+          renderCard();
+        } else if (activeMood) {
+          renderCard();
+        }
+        showToast(L === 'zh' ? '光又走過一次——這一刻仍是你的。' : 'The light walked again — this moment is still yours.');
+        return;
+      }
+      const p = pts[i];
+      const rect = r();
+      if (rect.width && rect.height) {
+        const x = p.nx * rect.width;
+        const y = p.ny * rect.height;
+        if (p.kind === 'down' || p.kind === 'tap' || i === 0) bloomAt(x, y, true);
+        else stampMemorialAt(x, y, 0.4);
+      }
+      const tNow = p.t || 0;
+      i += 1;
+      const tNext = i < pts.length ? (pts[i].t || tNow) : tNow;
+      const delay = Math.max(16, Math.min(120, ((tNext - tNow) * scale) || 28));
+      pathReplayTimer = window.setTimeout(step, delay);
+    }
+    pathReplayTimer = window.setTimeout(step, 80);
+  }
+
+  function lightprintLabel() {
+    if (!isValidLightprintCode(lightprintCode)) return '';
+    return 'AE · ' + lightprintCode;
+  }
+
+  function sealLight() {
+    if (keptRecord()) {
+      restoreKept();
+      return;
+    }
+    if (lightSealed || !bloomReady || !activeMood) return;
+    cancelSealHold(true);
+    activePointers = Object.create(null);
+    lastPathSample = Object.create(null);
+    unlockDrawScroll();
+    if (mistEl) mistEl.classList.remove('is-soft', 'is-rich');
+    mistLevel = 0;
+    if (!lightTouches.length) {
+      recordLightPoint(0.5, 0.48, 0, 'seal');
+    }
+    lightSealed = true;
+    lightprintCode = encodeLightprint(lightTouches, activeMood.id);
+    persistLightprint(lightprintCode);
+    // Capture Lightprint seal stamp (small) — art remains card hero.
+    try { captureMemorialImage(); } catch (err) { memorialDataUrl = null; }
+    if (sealBar) {
+      sealBar.hidden = true;
+      sealBar.classList.remove('is-arrive');
+    }
+    afterEl.hidden = false;
+    setSoloPhase('done');
+    // Soft silhouette is secondary; memorial touch frame remains the card hero.
+    try { birthLightprintFigure(); } catch (err) { console.warn('[cm] figure birth', err); }
+    renderCard();
+    const L = lang();
+    showToast(L === 'zh'
+      ? ('光已收好 · 這幅畫是你的紀念卡')
+      : ('Light sealed · this painting is your memorial card'));
+  }
+
+
+  function buildAnswerEcho() {
+    if (!sessionAnswers || !sessionAnswers.length) return '';
+    const L = lang();
+    // Prefer last 1 distinctive phrase; allow 2 only if both short + distinct.
+    const picked = sessionAnswers.slice(-2);
+    const phrases = picked.map(a => (L === 'zh' ? a.zh : a.en)).filter(Boolean);
+    if (!phrases.length) return '';
+    let use = [phrases[phrases.length - 1]];
+    if (phrases.length === 2) {
+      const a = phrases[0], b = phrases[1];
+      const maxLen = L === 'zh' ? 12 : 28;
+      const short = (s) => String(s).length <= maxLen;
+      const distinct = a !== b && !String(a).includes(b) && !String(b).includes(a);
+      if (short(a) && short(b) && distinct) use = phrases;
+    }
+    if (L === 'zh') {
+      if (use.length === 1) return `你剛才靠近的是——「${use[0]}」`;
+      return `你剛才靠近的是——「${use[0]}」與「${use[1]}」`;
+    }
+    if (use.length === 1) return `You leaned toward — “${use[0]}”`;
+    return `You leaned toward — “${use[0]}” and “${use[1]}”`;
+  }
+
+  // v2451: art painting soft full bg + small centered sealed-light frame + sparse text (Owner ref).
+  function renderCard() {
+    if (!activeMood) return;
+    const L = lang();
+    // v2451: mood artwork stays soft full background; sealed light sits in small centered frame — never clears art bg.
+    if (cardBg) {
+      if (activeArt) {
+        cardBg.style.backgroundImage = `url("${activeArt}")`;
+      } else {
+        cardBg.style.backgroundImage = '';
+      }
+    }
+    cardEyebrow.textContent = L === 'zh' ? '此刻色調 · 盛明' : 'This moment’s hue · Sheng Ming';
+    cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
+    cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
+    if (cardSrc) {
+      cardSrc.textContent = L === 'zh'
+        ? '摘自《盛明》筆記'
+        : 'From the 《盛明》 notes';
+    }
+    if (echoEl) {
+      const echo = buildAnswerEcho();
+      if (echo) {
+        echoEl.hidden = false;
+        echoEl.textContent = echo;
+      } else {
+        echoEl.hidden = true;
+        echoEl.textContent = '';
+      }
+    }
+    syncMemorialUI();
+    if (lastFigure) {
+      try { syncFigureCard(lastFigure); } catch (err) { /* ignore */ }
+    } else if (loreEl) {
+      loreEl.hidden = true;
+      loreEl.innerHTML = '';
+    }
+    if (replay) replay.hidden = !!keptRecord();
+    if (isValidLightprintCode(lightprintCode)) drawKeptQr(lightprintCode);
+    if (lightprintEl) {
+      const label = lightprintLabel();
+      if (label) {
+        lightprintEl.hidden = false;
+        lightprintEl.textContent = label;
+      } else {
+        lightprintEl.hidden = true;
+        lightprintEl.textContent = '';
+      }
+    }
+
+    readingEl.innerHTML = '';
+    if (activeReading) {
+      const lines = L === 'zh' ? activeReading.zh : activeReading.en;
+      const maxLines = memorialDataUrl ? 2 : lines.length;
+      lines.slice(0, maxLines).forEach(line => {
+        const p = document.createElement('p');
+        p.textContent = line;
+        readingEl.appendChild(p);
+      });
+    }
+
+    if (activeRitual) {
+      ritualLabel.textContent = L === 'zh' ? '這一刻的柔邀' : 'A gentle invitation for this moment';
+      ritualText.textContent = L === 'zh' ? activeRitual.zh : activeRitual.en;
+    } else {
+      ritualLabel.textContent = '';
+      ritualText.textContent = '';
+    }
+
+    if (discoverEl) {
+      discoverEl.innerHTML = L === 'zh'
+        ? '若想再多一點光：可去 <a href="/experience">互動體驗</a>，或輕輕逛逛 <a href="shop.html">商店</a>。'
+        : 'If you want a little more light, visit the <a href="/experience">Experience</a> or browse the <a href="shop.html">Shop</a>.';
+    }
+
+    if (miniTipEl) {
+      miniTipEl.hidden = false;
+      miniTipEl.textContent = L === 'zh'
+        ? '想把這一瞬帶走時，數位小卡很快會在商店輕輕出現。'
+        : 'When you want to carry this moment with you, digital mini-cards will soon appear in the Shop.';
+    }
+
+    cardEl.hidden = false;
+    cardEl.classList.remove('is-lean');
+    // v2451: sparse memorial card when sealed light frame is present (Owner reference).
+    cardEl.classList.toggle('is-sparse', !!memorialDataUrl);
+    cardEl.classList.remove('is-on');
+    {
+      const tb = document.getElementById('cmTouchBack');
+      if (tb) tb.hidden = true;
+    }
+    // Double rAF so the opacity/transform transition reliably plays after unhide.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => cardEl.classList.add('is-on'));
+    });
+    warmCaptureInBackground();
+  }
+
+  function runWash(on) {
+    if (!washEl) return;
+    if (on) {
+      washEl.classList.add('is-on');
+    } else {
+      washEl.classList.remove('is-on');
+    }
+  }
+
+  function enterBloom() {
+    if (keptRecord()) {
+      restoreKept();
+      return;
+    }
+    // Soft white wash, then bloom + slowly floating result card.
+    runWash(true);
+    window.setTimeout(() => {
+      try {
+        activeMood = pickMood();
+        const shengPool = SHENG_BY_MOOD[activeMood.id] || SHENG_BY_MOOD.gold;
+        activeReading = pickFrom(shengPool);
+        activeRitual = pickFrom(SHENG_RITUALS[activeMood.id] || SHENG_RITUALS.gold);
+        const arts = ART_BY_MOOD[activeMood.id] || ART_BY_MOOD.gold || [];
+        activeArt = (arts && arts.length) ? pickFrom(arts) : null;
+        try { ensureArtWash(activeArt); } catch (err) { /* ignore */ }
+        askEl.hidden = true;
+        bloomWrap.hidden = false;
+        afterEl.hidden = true; // no shop/experience clutter until sealed
+        bloomReady = true;
+        started = false;
+        resetLightSession();
+        setBloomingUI(true);
+        if (mistEl) mistEl.classList.remove('is-soft', 'is-rich');
+        mistLevel = 0;
+        hint.classList.remove('is-hidden');
+        // Refresh canvas coach to ultra-short touch cue
+        try {
+          const hs = hint.querySelector('span');
+          if (hs) hs.textContent = lang() === 'zh' ? '手指畫過去，光會跟著。' : 'Move your finger — light follows.';
+        } catch (err) { /* ignore */ }
+        cardEl.hidden = true;
+        cardEl.classList.remove('is-on');
+        setSoloPhase('touch');
+        {
+          const tb = document.getElementById('cmTouchBack');
+          if (tb) {
+            tb.hidden = false;
+            tb.textContent = lang() === 'zh' ? '回到問題' : 'Back to questions';
+          }
+        }
+        resize();
+        window.setTimeout(() => {
+          // Soft ambient wake — does NOT unlock 收光 or count as user paint.
+          if (!started && bloomReady && !userPainted) {
+            const r = shell.getBoundingClientRect();
+            bloomAt(r.width * 0.5, r.height * 0.48, true);
+          }
+        }, 520);
+      } finally {
+        // Always dissolve the wash so clicks never stay blocked.
+        window.setTimeout(() => runWash(false), 160);
+      }
+    }, 420);
+  }
+
+  function resize() {
+    if (bloomWrap.hidden) return;
+    const r = shell.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.floor(r.width * dpr));
+    canvas.height = Math.max(1, Math.floor(r.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    paintBg(r.width, r.height);
+    try {
+      resizeFigureCanvas();
+      if (lastFigure && lightSealed) drawFigure(lastFigure, 1);
+    } catch (err) { /* ignore */ }
+  }
+
+  let artWashImg = null;
+  let artWashSrc = '';
+  function ensureArtWash(src) {
+    if (!src) { artWashImg = null; artWashSrc = ''; return; }
+    if (artWashSrc === src && artWashImg) return;
+    artWashSrc = src;
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => {
+      artWashImg = img;
+      try { if (bloomReady) resize(); } catch (err) { /* ignore */ }
+    };
+    img.onerror = () => { if (artWashSrc === src) { artWashImg = null; } };
+    img.src = src;
+  }
+  function paintBg(w, h) {
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    const dark = document.documentElement.dataset.theme === 'dark';
+    if (dark) {
+      g.addColorStop(0, '#14110f');
+      g.addColorStop(1, '#221c18');
+    } else {
+      g.addColorStop(0, '#f7f1e8');
+      g.addColorStop(1, '#ebe2d4');
+    }
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    // Soft mood-art wash under touch glow — seal stage must not feel empty.
+    if (artWashImg && artWashImg.complete && artWashImg.naturalWidth) {
+      try {
+        const iw = artWashImg.naturalWidth;
+        const ih = artWashImg.naturalHeight;
+        const scale = Math.max(w / iw, h / ih) * 1.08;
+        const dw = iw * scale, dh = ih * scale;
+        const dx = (w - dw) / 2, dy = (h - dh) / 2;
+        ctx.save();
+        /* SHARED pale lock — early === result (Owner correction) */
+        ctx.globalAlpha = dark ? 0.16 : 0.22; /* --cm-pale-art-alpha-* */
+        ctx.drawImage(artWashImg, dx, dy, dw, dh);
+        ctx.globalAlpha = 1;
+        const veil = ctx.createLinearGradient(0, 0, 0, h);
+        /* Same pale veil stops as --cm-pale-veil-* */
+        veil.addColorStop(0, dark ? 'rgba(20,17,15,.52)' : 'rgba(247,241,232,.58)');
+        veil.addColorStop(0.42, dark ? 'rgba(20,17,15,.38)' : 'rgba(247,241,232,.42)');
+        veil.addColorStop(1, dark ? 'rgba(20,17,15,.58)' : 'rgba(247,241,232,.62)');
+        ctx.fillStyle = veil;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      } catch (err) { /* ignore */ }
+    }
+  }
+
+  function ensureTick() {
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  function bloomTrail(x, y) {
+    if ((!bloomReady && !pathReplayBusy) || !activeMood) return;
+    const palette = activeMood.palette || ['#e8d5b0'];
+    for (let i = 0; i < 3; i++) {
+      blooms.push({
+        x, y,
+        tx: x + (Math.random() - 0.5) * 16,
+        ty: y + (Math.random() - 0.5) * 16,
+        r: 8 + Math.random() * 14,
+        color: i === 0 ? '#fff8e8' : palette[i % palette.length],
+        life: 0,
+        max: 0.42 + Math.random() * 0.28,
+        delay: 0
+      });
+    }
+    ensureTick();
+  }
+
+  function drawFingerGlow(w, h) {
+    if (!finger || !activeFingerCount()) return;
+    const color = (activeMood && activeMood.palette && activeMood.palette[0]) || '#e8d5b0';
+    const rad = Math.max(28, Math.min(w, h) * 0.075);
+    const g = ctx.createRadialGradient(finger.x, finger.y, 0, finger.x, finger.y, rad);
+    g.addColorStop(0, 'rgba(255,252,240,.96)');
+    g.addColorStop(0.28, hexAlpha(color, 0.72));
+    g.addColorStop(1, hexAlpha(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(finger.x, finger.y, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function bloomAt(x, y, fromAuto) {
+    if ((!bloomReady && !pathReplayBusy) || !activeMood) return;
+    const r = shell.getBoundingClientRect();
+    const palette = activeMood.palette;
+    const multi = Object.keys(activePointers).length >= 2;
+    // Restore pre-Lightprint bloom quality (softer count/radius/alpha feel).
+    const count = (multi ? 14 : 12) + Math.floor(Math.random() * (multi ? 8 : 8));
+    const spread = multi ? 0.32 : 0.3;
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 18 + Math.random() * Math.min(r.width, r.height) * spread;
+      blooms.push({
+        x, y,
+        tx: x + Math.cos(ang) * dist,
+        ty: y + Math.sin(ang) * dist,
+        r: (multi ? 20 : 18) + Math.random() * (multi ? 56 : 54),
+        color: palette[i % palette.length],
+        life: 0,
+        max: 1.15 + Math.random() * 0.7,
+        delay: Math.random() * 0.12
+      });
+    }
+    // Drawing stamps stay path-tied; coalesce no longer adds a hard center press-spot.
+    if (!fromAuto) {
+      stampMemorialAt(x, y, multi ? 1.15 : 1.12);
+    } else {
+      stampMemorialAt(x, y, 0.7);
+    }
+    if (!fromAuto) {
+      userPainted = true;
+      if (!started) {
+        started = true;
+        hint.classList.add('is-hidden');
+        if (soloPhase === 'touch') updateCoach();
+      }
+      maybeRevealSeal();
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  function tick() {
+    const r = shell.getBoundingClientRect();
+    paintBg(r.width, r.height);
+    blooms = blooms.filter(b => b.life < b.max);
+    for (const b of blooms) {
+      b.life += 0.016;
+      const t = Math.max(0, (b.life - b.delay) / (b.max - b.delay));
+      if (t <= 0) continue;
+      const ease = 1 - Math.pow(1 - Math.min(t, 1), 3);
+      const cx = b.x + (b.tx - b.x) * ease;
+      const cy = b.y + (b.ty - b.y) * ease;
+      const alpha = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8;
+      const rad = b.r * (0.35 + ease * 0.9);
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      g.addColorStop(0, hexAlpha(b.color, Math.max(0, Math.min(0.55, alpha * 0.55))));
+      g.addColorStop(1, hexAlpha(b.color, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    drawFingerGlow(r.width, r.height);
+    if (blooms.length || (finger && activeFingerCount())) raf = requestAnimationFrame(tick);
+    else raf = 0;
+  }
+
+  function hexAlpha(hex, a) {
+    const h = hex.replace('#', '');
+    const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function pointFromEvent(e) {
+    const r = shell.getBoundingClientRect();
+    const src = e.touches && e.touches[0] ? e.touches[0] : e;
+    return { x: src.clientX - r.left, y: src.clientY - r.top };
+  }
+
+  shell.addEventListener('pointerdown', (e) => {
+    if (pathReplayBusy || sealCoalescing) return;
+    try { e.preventDefault(); } catch (err) { /* ignore */ }
+    currentPointerId = e.pointerId || 0;
+    activePointers[currentPointerId] = true;
+    lastPathSample[currentPointerId] = performance.now();
+    lockDrawScroll();
+    syncMistVeil();
+    try { shell.setPointerCapture(e.pointerId); } catch (err) { /* optional */ }
+    const r = shell.getBoundingClientRect();
+    const p = pointFromEvent(e);
+    finger = { x: p.x, y: p.y };
+    if (!lightSealed && bloomReady && r.width && r.height) {
+      recordLightPoint(p.x / r.width, p.y / r.height, currentPointerId, 'down');
+    }
+    bloomAt(p.x, p.y, false);
+    // Soft ambient mist for single finger; richer when several contacts.
+    if (activeFingerCount() === 1) paintMistVeilToMemorial(0.06);
+    else if (activeFingerCount() >= 2) paintMistVeilToMemorial(0.1);
+  });
+
+  shell.addEventListener('pointermove', (e) => {
+    if (lightSealed || !bloomReady || !started) return;
+    const pid = e.pointerId || 0;
+    if (!activePointers[pid]) return;
+    try { e.preventDefault(); } catch (err) { /* ignore */ }
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const p = pointFromEvent(e);
+    finger = { x: p.x, y: p.y };
+    ensureTick();
+    const now = performance.now();
+    const last = lastPathSample[pid] || 0;
+    const multi = activeFingerCount() >= 2;
+    if (now - last < (multi ? 28 : 32)) return;
+    lastPathSample[pid] = now;
+    recordLightPoint(p.x / r.width, p.y / r.height, pid, 'move');
+    bloomTrail(p.x, p.y);
+    // Single finger: clearer trail; multi: denser path marks + living paper mist.
+    stampMemorialAt(p.x, p.y, multi ? 0.42 : 0.4);
+    if (multi && Math.random() < 0.22) paintMistVeilToMemorial(0.045);
+    else if (!multi && Math.random() < 0.08) paintMistVeilToMemorial(0.025);
+  }, { passive: false });
+
+  function endPointerPath(e) {
+    const pid = e.pointerId || 0;
+    if (!activePointers[pid]) return;
+    delete activePointers[pid];
+    delete lastPathSample[pid];
+    if (!activeFingerCount()) finger = null;
+    syncMistVeil();
+    unlockDrawScroll();
+    if (lightSealed || !bloomReady) return;
+    const r = shell.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const p = pointFromEvent(e);
+    recordLightPoint(p.x / r.width, p.y / r.height, pid, 'up');
+  }
+
+  shell.addEventListener('pointerup', endPointerPath);
+  shell.addEventListener('pointercancel', endPointerPath);
+  // iOS Safari: block page scroll while finger is on the canvas.
+  shell.addEventListener('touchmove', (e) => {
+    if (!bloomReady || lightSealed) return;
+    if (Object.keys(activePointers).length || (e.touches && e.touches.length)) {
+      try { e.preventDefault(); } catch (err) { /* ignore */ }
+    }
+  }, { passive: false });
+  shell.addEventListener('touchstart', (e) => {
+    if (!bloomReady || pathReplayBusy || sealCoalescing) return;
+    // Ensure multi-touch contacts register even if pointer events are limited.
+    if (e.touches && e.touches.length > 1) {
+      try { e.preventDefault(); } catch (err) { /* ignore */ }
+      lockDrawScroll();
+      const r = shell.getBoundingClientRect();
+      if (!r.width || !r.height || !activeMood) return;
+      for (let i = 0; i < e.touches.length; i++) {
+        const t = e.touches[i];
+        const id = (t.identifier != null ? t.identifier : i) + 1000;
+        if (!activePointers[id]) {
+          activePointers[id] = true;
+          lastPathSample[id] = performance.now();
+          const x = t.clientX - r.left;
+          const y = t.clientY - r.top;
+          if (!lightSealed) recordLightPoint(x / r.width, y / r.height, id, 'down');
+          bloomAt(x, y, false);
+        }
+      }
+      syncMistVeil();
+      paintMistVeilToMemorial(0.1);
+    }
+  }, { passive: false });
+
+  function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('is-visible');
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove('is-visible'), 3600);
+  }
+
+  function roundedPath(context, w, h, radius) {
+    const r = Math.min(radius, w / 2, h / 2);
+    context.beginPath();
+    context.moveTo(r, 0);
+    context.arcTo(w, 0, w, h, r);
+    context.arcTo(w, h, 0, h, r);
+    context.arcTo(0, h, 0, 0, r);
+    context.arcTo(0, 0, w, 0, r);
+    context.closePath();
+  }
+
+  /* Canvas typography: iPhone Safari fillText with Arial/Georgia drops CJK glyphs. */
+  const CARD_CJK = '"Noto Serif TC","PingFang TC","Hiragino Sans GB","Microsoft JhengHei",sans-serif';
+  const CARD_LAT = '"Cormorant Garamond",Georgia,"Noto Serif TC","PingFang TC","Hiragino Sans GB",serif';
+
+  function cardType(sizePx, opts) {
+    const o = opts || {};
+    const stack = o.cjk ? CARD_CJK : CARD_LAT;
+    const weight = o.weight ? o.weight + ' ' : '';
+    const italic = o.italic ? 'italic ' : '';
+    return italic + weight + sizePx + 'px ' + stack;
+  }
+
+  async function ensureCardFonts() {
+    if (!document.fonts || !document.fonts.load) return;
+    try {
+      await Promise.race([
+        Promise.all([
+          document.fonts.load('500 32px "Noto Serif TC"'),
+          document.fonts.load('18px "Noto Serif TC"'),
+          document.fonts.load('15px "Noto Serif TC"'),
+          document.fonts.load('11px "Noto Serif TC"'),
+          document.fonts.load('500 32px "Cormorant Garamond"'),
+          document.fonts.load('italic 14px "Cormorant Garamond"')
+        ]),
+        new Promise(resolve => window.setTimeout(resolve, 1600))
+      ]);
+    } catch (err) { /* system CJK stack still used */ }
+  }
+
+  function wrapLines(context, text, maxWidth) {
+    const chars = Array.from(String(text || ''));
+    const out = [];
+    let line = '';
+    for (const char of chars) {
+      if (char === '\n') {
+        out.push(line);
+        line = '';
+        continue;
+      }
+      const next = line + char;
+      if (line && context.measureText(next).width > maxWidth) {
+        out.push(line.trimEnd());
+        line = char.trimStart();
+      } else {
+        line = next;
+      }
+    }
+    if (line) out.push(line.trimEnd());
+    return out.length ? out : [''];
+  }
+
+  function drawWrapped(context, text, x, y, maxWidth, lineHeight, maxLines) {
+    const lines = wrapLines(context, text, maxWidth);
+    const limit = (maxLines == null || maxLines <= 0) ? lines.length : Math.min(maxLines, lines.length);
+    for (let i = 0; i < limit; i++) {
+      context.fillText(lines[i], x, y);
+      y += lineHeight;
+    }
+    return y;
+  }
+
+  function measureWrapped(context, text, maxWidth, lineHeight) {
+    return wrapLines(context, text, maxWidth).length * lineHeight;
+  }
+
+  function loadCardArt() {
+    return new Promise(resolve => {
+      if (!activeArt) {
+        resolve(null);
+        return;
+      }
+      const image = new Image();
+      // Same-origin arts: anonymous keeps canvas exportable if headers vary.
+      image.crossOrigin = 'anonymous';
+      let settled = false;
+      const done = value => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      image.onload = () => done(image);
+      image.onerror = () => {
+        // Retry without CORS flag if the first attempt failed.
+        const fallback = new Image();
+        fallback.onload = () => done(fallback);
+        fallback.onerror = () => done(null);
+        fallback.src = activeArt;
+      };
+      image.src = activeArt;
+      window.setTimeout(() => done(null), 8000);
+    });
+  }
+
+  function drawCover(context, image, w, h, zoom) {
+    const z = zoom == null ? 1.24 : zoom;
+    const ratio = Math.max(w / image.naturalWidth, h / image.naturalHeight) * z;
+    const iw = image.naturalWidth * ratio;
+    const ih = image.naturalHeight * ratio;
+    context.drawImage(image, (w - iw) / 2, (h - ih) / 2, iw, ih);
+  }
+
+  async function buildCardImage() {
+    await ensureCardFonts();
+    const rect = cardEl.getBoundingClientRect();
+    const w = Math.max(320, Math.round(rect.width) || 560);
+    const L = lang();
+    const isZh = L === 'zh';
+    const dark = document.documentElement.dataset.theme === 'dark';
+    const paper = dark ? '#14110f' : '#f7f1e8';
+    const ink = dark ? '#f1e8dc' : '#2d2824';
+    const muted = dark ? '#c6b8aa' : '#766b61';
+    const textWidth = w - 48;
+    const readingLines = (isZh ? activeReading.zh : activeReading.en) || [];
+    const ritualBody = isZh ? activeRitual.zh : activeRitual.en;
+    const moodMain = isZh ? activeMood.zh : activeMood.en;
+    const moodSub = isZh ? activeMood.en : activeMood.zh;
+    const eyebrow = isZh ? '此刻色調 · 盛明' : 'THIS MOMENT’S HUE · SHENG MING';
+    const srcLine = isZh ? '摘自《盛明》筆記' : 'From the 《盛明》 notes';
+    const ritualLabelText = isZh ? '這一刻的柔邀' : 'A GENTLE INVITATION FOR THIS MOMENT';
+    const lpLabel = lightprintLabel();
+    const hasMemorial = !!memorialDataUrl;
+    const memorialPanelH = hasMemorial ? Math.round(Math.min(210, w * 0.42)) : 0;
+    const memorialGap = hasMemorial ? 18 : 0;
+    const memorialCapH = hasMemorial ? 20 : 0;
+
+    // Measure content height first — never clip ritual/reading to a fixed DOM height.
+    const measure = document.createElement('canvas').getContext('2d');
+    let yCursor = 148 + memorialPanelH + memorialGap + memorialCapH;
+    measure.font = cardType(15, { cjk: true });
+    readingLines.forEach(line => {
+      yCursor += measureWrapped(measure, line, textWidth, 24) + 5;
+    });
+    const ritualY = yCursor + 28;
+    measure.font = cardType(18, { cjk: isZh });
+    const ritualBlock = 6 + 28 + measureWrapped(measure, ritualBody, textWidth, 25);
+    const lpPad = lpLabel ? 28 : 0;
+    const h = Math.max(420, Math.ceil(ritualY + ritualBlock + 36 + lpPad));
+
+    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const imageCanvas = document.createElement('canvas');
+    imageCanvas.width = Math.round(w * scale);
+    imageCanvas.height = Math.round(h * scale);
+    const imageContext = imageCanvas.getContext('2d');
+    imageContext.scale(scale, scale);
+    const image = await loadCardArt();
+    let memorialBmp = null;
+    if (memorialDataUrl) {
+      memorialBmp = await new Promise(resolve => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = () => resolve(null);
+        im.src = memorialDataUrl;
+        window.setTimeout(() => resolve(null), 4000);
+      });
+    }
+
+    roundedPath(imageContext, w, h, 18);
+    imageContext.save();
+    imageContext.clip();
+    imageContext.fillStyle = paper;
+    imageContext.fillRect(0, 0, w, h);
+    if (image) {
+      try { drawCover(imageContext, image, w, h, 1.24); }
+      catch (err) { /* tainted or decode issue — keep paper card */ }
+    }
+    // Soft memorial wash behind the keepsake (gesture as atmosphere).
+    if (memorialBmp) {
+      try {
+        imageContext.globalAlpha = 0.22;
+        drawCover(imageContext, memorialBmp, w, h, 1.08);
+        imageContext.globalAlpha = 1;
+      } catch (err) { /* ignore */ }
+    }
+    const veil = imageContext.createLinearGradient(0, 0, 0, h);
+    /* SHARED pale — same stops as --cm-pale-veil-* / early wash */
+    veil.addColorStop(0, dark ? 'rgba(20,17,15,.52)' : 'rgba(247,241,232,.58)');
+    veil.addColorStop(.42, dark ? 'rgba(20,17,15,.38)' : 'rgba(247,241,232,.42)');
+    veil.addColorStop(1, dark ? 'rgba(20,17,15,.58)' : 'rgba(247,241,232,.62)');
+    imageContext.fillStyle = veil;
+    imageContext.fillRect(0, 0, w, h);
+    imageContext.restore();
+
+    imageContext.save();
+    imageContext.fillStyle = muted;
+    imageContext.textAlign = 'center';
+    imageContext.font = cardType(11, { cjk: true });
+    imageContext.fillText(eyebrow, w / 2, 30);
+    imageContext.fillStyle = ink;
+    imageContext.font = cardType(32, { weight: '500', cjk: isZh });
+    imageContext.fillText(moodMain, w / 2, 70);
+    imageContext.fillStyle = muted;
+    imageContext.font = cardType(14, { italic: true, cjk: !isZh });
+    imageContext.fillText(moodSub, w / 2, 94);
+    imageContext.font = cardType(11, { cjk: true });
+    imageContext.fillText(srcLine, w / 2, 115);
+
+    let y = 148;
+    if (memorialBmp && memorialPanelH) {
+      const pw = Math.min(w - 48, 300);
+      const px = (w - pw) / 2;
+      const py = y;
+      const ph = memorialPanelH;
+      imageContext.save();
+      imageContext.beginPath();
+      const rr = 12;
+      imageContext.moveTo(px + rr, py);
+      imageContext.arcTo(px + pw, py, px + pw, py + ph, rr);
+      imageContext.arcTo(px + pw, py + ph, px, py + ph, rr);
+      imageContext.arcTo(px, py + ph, px, py, rr);
+      imageContext.arcTo(px, py, px + pw, py, rr);
+      imageContext.closePath();
+      imageContext.clip();
+      try {
+        const ratio = Math.max(pw / memorialBmp.naturalWidth, ph / memorialBmp.naturalHeight);
+        const iw = memorialBmp.naturalWidth * ratio;
+        const ih = memorialBmp.naturalHeight * ratio;
+        imageContext.drawImage(memorialBmp, px + (pw - iw) / 2, py + (ph - ih) / 2, iw, ih);
+      } catch (err) { /* ignore */ }
+      imageContext.restore();
+      imageContext.strokeStyle = dark ? 'rgba(241,232,220,.22)' : 'rgba(118,107,97,.28)';
+      imageContext.beginPath();
+      imageContext.moveTo(px + rr, py);
+      imageContext.arcTo(px + pw, py, px + pw, py + ph, rr);
+      imageContext.arcTo(px + pw, py + ph, px, py + ph, rr);
+      imageContext.arcTo(px, py + ph, px, py, rr);
+      imageContext.arcTo(px, py, px + pw, py, rr);
+      imageContext.closePath();
+      imageContext.stroke();
+      imageContext.fillStyle = muted;
+      imageContext.textAlign = 'center';
+      imageContext.font = cardType(11, { cjk: true });
+      imageContext.globalAlpha = 0.9;
+      const memorialCaption = isZh
+        ? '獨一無二紀念'
+        : 'One-of-a-kind keepsake';
+      imageContext.fillText(memorialCaption, w / 2, py + ph + 14);
+      imageContext.globalAlpha = 1;
+      y = py + ph + memorialGap + memorialCapH;
+    }
+
+    imageContext.fillStyle = ink;
+    imageContext.font = cardType(15, { cjk: true });
+    imageContext.textAlign = 'left';
+    readingLines.forEach(line => {
+      y = drawWrapped(imageContext, line, 24, y, textWidth, 24, null) + 5;
+    });
+
+    // Hue dots removed (v2435) — cleaner card, less competing with art/text.
+    imageContext.strokeStyle = dark ? 'rgba(241,232,220,.28)' : 'rgba(118,107,97,.3)';
+    imageContext.beginPath();
+    imageContext.moveTo(24, ritualY - 14);
+    imageContext.lineTo(w - 24, ritualY - 14);
+    imageContext.stroke();
+    imageContext.fillStyle = muted;
+    imageContext.textAlign = 'center';
+    imageContext.font = cardType(11, { cjk: true });
+    imageContext.fillText(ritualLabelText, w / 2, ritualY + 6);
+    imageContext.fillStyle = ink;
+    imageContext.font = cardType(18, { cjk: isZh });
+    imageContext.textAlign = 'left';
+    drawWrapped(imageContext, ritualBody, 24, ritualY + 34, textWidth, 25, null);
+
+    // Quiet watermark corner mark — pale, small (Owner lock).
+    if (lpLabel) {
+      imageContext.fillStyle = muted;
+      imageContext.globalAlpha = 0.32;
+      imageContext.textAlign = 'right';
+      imageContext.font = cardType(8.5, { cjk: false });
+      imageContext.fillText(lpLabel, w - 14, h - 10);
+      imageContext.globalAlpha = 1;
+    }
+    imageContext.restore();
+    return imageCanvas;
+  }
+
+  function canvasToBlob(source) {
+    return new Promise((resolve, reject) => {
+      try {
+        if (source.toBlob) {
+          source.toBlob(blob => {
+            if (blob) resolve(blob);
+            else {
+              try {
+                const data = source.toDataURL('image/png');
+                const bin = atob(data.split(',')[1]);
+                const arr = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                resolve(new Blob([arr], { type: 'image/png' }));
+              } catch (err) {
+                reject(err);
+              }
+            }
+          }, 'image/png');
+        } else {
+          const data = source.toDataURL('image/png');
+          const bin = atob(data.split(',')[1]);
+          const arr = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+          resolve(new Blob([arr], { type: 'image/png' }));
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  function triggerDownload(url, filename) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function isAppleTouch() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent || '')
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  function clearWarmBlob() {
+    warmBlob = null;
+    warmBlobPromise = null;
+    if (warmBlobUrl) {
+      try { URL.revokeObjectURL(warmBlobUrl); } catch {}
+      warmBlobUrl = null;
+    }
+  }
+
+  function clearSaveSheetUrl() {
+    if (saveSheetUrl) {
+      try { URL.revokeObjectURL(saveSheetUrl); } catch {}
+      saveSheetUrl = null;
+    }
+    saveSheetBlob = null;
+    saveSheetFile = null;
+    saveSheetFilename = '';
+  }
+
+  function makeShareFile(blob, filename) {
+    try {
+      return new File([blob], filename, { type: 'image/png' });
+    } catch {
+      return null;
+    }
+  }
+
+  function syncSaveSheetCopy() {
+    const L = lang();
+    if (saveTitle) saveTitle.textContent = L === 'zh' ? '這一瞬' : 'This moment';
+    if (saveHint) {
+      saveHint.textContent = L === 'zh'
+        ? '長按下方圖片 → 選『加入照片』或『儲存影像』'
+        : 'Long-press the image below → Add to Photos / Save Image';
+    }
+    if (saveNote) {
+      saveNote.textContent = L === 'zh'
+        ? '輕輕收好就好——照片會在你的相簿裡等你。也可點『分享』。'
+        : 'Keep it soft — Photos will hold it. Or tap Share.';
+    }
+    if (saveLoading) {
+      saveLoading.textContent = L === 'zh' ? '正在沖出這一瞬…' : 'Developing this moment…';
+    }
+    if (saveShareBtn) saveShareBtn.textContent = L === 'zh' ? '分享' : 'Share';
+    if (saveCloseBtn) saveCloseBtn.textContent = L === 'zh' ? '關閉' : 'Close';
+  }
+
+  function setSaveSheetLoading(on) {
+    if (saveFrame) saveFrame.classList.toggle('is-loading', !!on);
+  }
+
+  function updateShareButtonVisibility(blob, filename) {
+    if (!saveShareBtn) return;
+    const canShareFiles = !!(navigator.share && navigator.canShare);
+    let showShare = false;
+    saveSheetFile = null;
+    if (blob && canShareFiles) {
+      const file = makeShareFile(blob, filename);
+      if (file) {
+        try {
+          showShare = navigator.canShare({ files: [file] });
+          if (showShare) saveSheetFile = file;
+        } catch {
+          showShare = false;
+        }
+      }
+    }
+    saveShareBtn.hidden = !showShare;
+    saveShareBtn.disabled = !showShare || !blob;
+  }
+
+  function closeSaveSheet() {
+    if (!saveSheet) return;
+    saveSheet.classList.remove('is-open');
+    saveSheet.setAttribute('aria-hidden', 'true');
+    window.setTimeout(() => {
+      if (saveSheet && !saveSheet.classList.contains('is-open')) {
+        saveSheet.hidden = true;
+        if (saveImg) saveImg.removeAttribute('src');
+        setSaveSheetLoading(false);
+        clearSaveSheetUrl();
+      }
+    }, 320);
+  }
+
+  /** Open sheet immediately. Pass blob=null to show loading, then call fillSaveSheetImage. */
+  function openSaveSheet(blob, filename) {
+    if (!saveSheet || !saveImg) return false;
+    clearSaveSheetUrl();
+    saveSheetFilename = filename || `ae-color-moment-${Date.now()}.png`;
+    syncSaveSheetCopy();
+    saveImg.alt = lang() === 'zh'
+      ? `色彩瞬間 · ${activeMood ? activeMood.zh : ''}`
+      : `Color Moment · ${activeMood ? activeMood.en : ''}`;
+
+    if (blob) {
+      saveSheetBlob = blob;
+      saveSheetUrl = URL.createObjectURL(blob);
+      saveImg.src = saveSheetUrl;
+      setSaveSheetLoading(false);
+      updateShareButtonVisibility(blob, saveSheetFilename);
+    } else {
+      saveImg.removeAttribute('src');
+      setSaveSheetLoading(true);
+      updateShareButtonVisibility(null, saveSheetFilename);
+    }
+
+    saveSheet.hidden = false;
+    saveSheet.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => saveSheet.classList.add('is-open'));
+    });
+    return true;
+  }
+
+  function fillSaveSheetImage(blob, filename) {
+    if (!saveSheet || !saveImg || !blob) return false;
+    if (saveSheetUrl) {
+      try { URL.revokeObjectURL(saveSheetUrl); } catch {}
+      saveSheetUrl = null;
+    }
+    saveSheetBlob = blob;
+    if (filename) saveSheetFilename = filename;
+    saveSheetUrl = URL.createObjectURL(blob);
+    saveImg.src = saveSheetUrl;
+    setSaveSheetLoading(false);
+    updateShareButtonVisibility(blob, saveSheetFilename);
+    return true;
+  }
+
+  async function warmCaptureInBackground() {
+    if (!activeMood) return null;
+    const token = ++warmBlobToken;
+    clearWarmBlob();
+    const run = (async () => {
+      try {
+        const source = await buildCardImage();
+        if (token !== warmBlobToken) return null;
+        const blob = await canvasToBlob(source);
+        if (token !== warmBlobToken) return null;
+        warmBlob = blob;
+        warmBlobUrl = URL.createObjectURL(blob);
+        return blob;
+      } catch (err) {
+        if (token === warmBlobToken) clearWarmBlob();
+        return null;
+      } finally {
+        if (token === warmBlobToken && warmBlobPromise === run) {
+          /* keep resolved promise until next warm clears */
+        }
+      }
+    })();
+    warmBlobPromise = run;
+    return run;
+  }
+
+  async function saveBlobImage(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    try {
+      triggerDownload(url, filename);
+      window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+      return true;
+    } catch (err) {
+      URL.revokeObjectURL(url);
+      throw err;
+    }
+  }
+
+  async function tryShareImageFile(blob, filename) {
+    if (!navigator.share || !navigator.canShare) return false;
+    const file = saveSheetFile && saveSheetBlob === blob
+      ? saveSheetFile
+      : makeShareFile(blob, filename);
+    if (!file) return false;
+    const payload = { files: [file] };
+    if (!navigator.canShare(payload)) return false;
+    try {
+      const L = lang();
+      await navigator.share({
+        files: [file],
+        title: L === 'zh' ? `色彩瞬間 · ${activeMood.zh}` : `Color Moment · ${activeMood.en}`,
+        text: L === 'zh' ? '把這一瞬帶走。' : 'Carry this moment with you.'
+      });
+      return true;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return 'aborted';
+      return false;
+    }
+  }
+
+  async function ensureCaptureBlob() {
+    if (warmBlob) return warmBlob;
+    // Reuse in-flight warm — never block the UI waiting on a duplicate build.
+    if (warmBlobPromise) {
+      try {
+        const warmed = await warmBlobPromise;
+        if (warmBlob) return warmBlob;
+        if (warmed) return warmed;
+      } catch (err) { /* fall through to fresh build */ }
+    }
+    let source;
+    try {
+      source = await buildCardImage();
+    } catch (buildErr) {
+      source = canvas;
+    }
+    return canvasToBlob(source);
+  }
+
+  async function captureMoment(ev) {
+    if (ev) {
+      try { ev.preventDefault(); } catch {}
+    }
+    if (!activeMood) {
+      showToast(lang() === 'zh' ? '先讓顏色綻開，再拍下這一瞬。' : 'Let the colour bloom first, then take this moment.');
+      return;
+    }
+    if (cardEl.hidden) {
+      renderCard();
+    }
+    if (captureBusy) return;
+    captureBusy = true;
+    if (snap) snap.disabled = true;
+    cardEl.classList.remove('cm-card-flash');
+    void cardEl.offsetWidth;
+    cardEl.classList.add('cm-card-flash');
+    const filename = `ae-color-moment-${Date.now()}.png`;
+    const L = lang();
+    try {
+      if (isAppleTouch()) {
+        // First tap MUST open the sheet immediately — warm must not block.
+        const ready = warmBlob || null;
+        const opened = openSaveSheet(ready, filename);
+        if (!opened) {
+          showToast(L === 'zh'
+            ? '這一瞬未能打開預覽，請試著截圖。'
+            : 'Preview could not open — a screenshot will keep it.');
+          return;
+        }
+        if (ready) {
+          showToast(L === 'zh'
+            ? '長按下方圖片，收進相簿。'
+            : 'Long-press the image below to keep it in Photos.');
+        } else {
+          showToast(L === 'zh' ? '正在沖出這一瞬…' : 'Developing this moment…');
+          const blob = await ensureCaptureBlob();
+          fillSaveSheetImage(blob, filename);
+          showToast(L === 'zh'
+            ? '長按下方圖片，收進相簿。'
+            : 'Long-press the image below to keep it in Photos.');
+        }
+        return;
+      }
+      const blob = await ensureCaptureBlob();
+      await saveBlobImage(blob, filename);
+      showToast(L === 'zh' ? '這一瞬，已輕輕收好。' : 'This moment is softly kept.');
+    } catch (error) {
+      try {
+        const blob = await canvasToBlob(canvas);
+        if (isAppleTouch()) {
+          if (saveSheet && !saveSheet.hidden && saveSheet.classList.contains('is-open')) {
+            fillSaveSheetImage(blob, filename);
+          } else if (openSaveSheet(blob, filename)) {
+            /* opened with fallback bloom canvas */
+          }
+          showToast(L === 'zh' ? '先把光拍下來了——長按圖片收好。' : 'The light is ready — long-press to save.');
+        } else {
+          await saveBlobImage(blob, filename);
+          showToast(L === 'zh' ? '先把光拍下來了。' : 'The light has been captured.');
+        }
+      } catch (fallbackError) {
+        showToast(L === 'zh' ? '這一瞬未能保存，請試著截圖。' : 'The moment could not be saved — a screenshot will keep it.');
+      }
+    } finally {
+      captureBusy = false;
+      window.setTimeout(() => { if (snap) snap.disabled = false; }, 420);
+    }
+  }
+
+  async function shareFromSaveSheet(ev) {
+    if (ev) {
+      try { ev.preventDefault(); } catch {}
+    }
+    if (!saveSheetBlob) {
+      showToast(lang() === 'zh' ? '圖片還在準備，稍等一下。' : 'The image is still preparing — a moment more.');
+      return;
+    }
+    const filename = saveSheetFilename || `ae-color-moment-${Date.now()}.png`;
+    const L = lang();
+    // Fresh user gesture from this button — File pre-warmed when possible.
+    const shared = await tryShareImageFile(saveSheetBlob, filename);
+    if (shared === true) {
+      showToast(L === 'zh' ? '把這一瞬交給你想念的人。' : 'This moment is ready to travel.');
+      return;
+    }
+    if (shared === 'aborted') return;
+    showToast(L === 'zh'
+      ? '分享暫時打不開——長按圖片也能收進相簿。'
+      : 'Share is resting — long-press the image to save it instead.');
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    const copied = document.execCommand('copy');
+    area.remove();
+    return copied;
+  }
+
+  async function shareMoment(ev) {
+    if (ev) {
+      try { ev.preventDefault(); } catch {}
+    }
+    if (!activeMood) return;
+    const L = lang();
+    const filename = `ae-color-moment-${Date.now()}.png`;
+    try {
+      if (isAppleTouch()) {
+        // Same as shutter: open sheet on first tap; fill when warm/build ready.
+        const ready = warmBlob || null;
+        if (openSaveSheet(ready, filename)) {
+          if (!ready) {
+            showToast(L === 'zh' ? '正在沖出這一瞬…' : 'Developing this moment…');
+            const blob = await ensureCaptureBlob();
+            fillSaveSheetImage(blob, filename);
+          }
+          showToast(L === 'zh'
+            ? '可長按收進相簿，或點分享。'
+            : 'Long-press to save, or tap Share.');
+          return;
+        }
+      }
+      const blob = await ensureCaptureBlob();
+      const shared = await tryShareImageFile(blob, filename);
+      if (shared === true) {
+        showToast(L === 'zh' ? '把這一瞬交給你想念的人。' : 'This moment is ready to travel.');
+        return;
+      }
+      if (shared === 'aborted') return;
+      await saveBlobImage(blob, filename);
+      showToast(L === 'zh' ? '分享改為下載這一瞬。' : 'Shared as a saved card image instead.');
+    } catch (error) {
+      const title = L === 'zh' ? `色彩瞬間 · ${activeMood.zh}` : `Color Moment · ${activeMood.en}`;
+      const reading = (L === 'zh' ? activeReading.zh : activeReading.en)[0];
+      const text = L === 'zh' ? `${activeMood.zh}\n${reading}` : `${activeMood.en}\n${reading}`;
+      const url = window.location.href;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title, text, url });
+          showToast(L === 'zh' ? '把這一瞬交給你想念的人。' : 'This moment is ready to travel.');
+        } else {
+          throw new Error('Web Share unavailable');
+        }
+      } catch (shareErr) {
+        if (shareErr?.name === 'AbortError') return;
+        try {
+          await copyText(url);
+          showToast(L === 'zh' ? '連結已放進剪貼簿。' : 'The link is resting in your clipboard.');
+        } catch (copyError) {
+          showToast(L === 'zh' ? '可用瀏覽器的分享功能帶走這一瞬。' : 'Use your browser’s share option to carry this moment.');
+        }
+      }
+    }
+  }
+
+  function resetAll() {
+    if (keptRecord()) {
+      restoreKept();
+      return;
+    }
+    qIndex = 0;
+    tagScores = Object.create(null);
+    sessionAnswers = [];
+    activeMood = null;
+    activeReading = null;
+    activeRitual = null;
+    activeArt = null;
+    try { ensureArtWash(null); } catch (err) { /* ignore */ }
+    blooms = [];
+    started = false;
+    bloomReady = false;
+    resetLightSession();
+    setBloomingUI(false);
+    unlockDrawScroll();
+    if (mistEl) mistEl.classList.remove('is-soft', 'is-rich');
+    mistLevel = 0;
+    warmBlobToken += 1;
+    clearWarmBlob();
+    closeSaveSheet();
+    sessionQs = drawSession();
+    askEl.hidden = false;
+    bloomWrap.hidden = true;
+    afterEl.hidden = true;
+    cardEl.hidden = true;
+    cardEl.classList.remove('is-on');
+    if (cardBg) cardBg.style.backgroundImage = '';
+    runWash(false);
+    setSoloPhase('ask');
+    {
+      const tb = document.getElementById('cmTouchBack');
+      if (tb) tb.hidden = true;
+    }
+    showQuestion();
+    syncResidueBanner();
+  }
+
+  replay.addEventListener('click', resetAll);
+  document.getElementById('cmSealBack')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    cancelSealHold(true);
+    resetAll();
+  });
+  document.getElementById('cmTouchBack')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    cancelSealHold(true);
+    resetAll();
+  });
+  pathReplayBtn?.addEventListener('click', () => replayLightPath(sealedResidue || loadResidue()));
+  residueReplayBtn?.addEventListener('click', () => replayLightPath(loadResidue()));
+  residueDismissBtn?.addEventListener('click', () => {
+    if (residueEl) residueEl.hidden = true;
+  });
+
+  // Hold-to-coalesce 收光: release early = cancel (not failure). No timer text.
+  if (sealBtn) {
+    sealBtn.addEventListener('pointerdown', startSealHold);
+    sealBtn.addEventListener('pointerup', endSealHold);
+    sealBtn.addEventListener('pointerleave', endSealHold);
+    sealBtn.addEventListener('pointercancel', endSealHold);
+    sealBtn.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        if (!sealHolding) startSealHold(e);
+      }
+    });
+    sealBtn.addEventListener('keyup', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') endSealHold(e);
+    });
+    // Prevent synthetic click after hold so we never double-seal.
+    sealBtn.addEventListener('click', (e) => { e.preventDefault(); });
+    // iOS: long-press must not select 「收光」 text / show callout.
+    sealBtn.addEventListener('selectstart', (e) => { e.preventDefault(); });
+    sealBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+  }
+  snap?.addEventListener('click', captureMoment);
+  share?.addEventListener('click', shareMoment);
+  saveShareBtn?.addEventListener('click', shareFromSaveSheet);
+  saveCloseBtn?.addEventListener('click', closeSaveSheet);
+  saveSheet?.addEventListener('click', (e) => {
+    if (e.target === saveSheet) closeSaveSheet();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && saveSheet && !saveSheet.hidden) closeSaveSheet();
+  });
+
+  function refreshLangUI() {
+    if (!askEl.hidden) showQuestion();
+    updateCoach();
+    if (sealBar && !sealBar.hidden) syncLpHintCopy();
+    if (hint && !hint.classList.contains('is-hidden')) {
+      const hs = hint.querySelector('span');
+      if (hs) hs.textContent = lang() === 'zh' ? '手指畫過去，光會跟著。' : 'Move your finger — light follows.';
+    }
+    if (activeMood && !bloomWrap.hidden && !cardEl.hidden) {
+      renderCard();
+    }
+    if (saveSheet && !saveSheet.hidden) syncSaveSheetCopy();
+    syncResidueBanner();
+  }
+
+  document.querySelectorAll('[data-language]').forEach(btn => {
+    btn.addEventListener('click', () => setTimeout(refreshLangUI, 0));
+  });
+
+  window.addEventListener('resize', () => {
+    const keep = blooms.slice();
+    resize();
+    blooms = keep;
+    if (blooms.length && !raf) raf = requestAnimationFrame(tick);
+  });
+
+  if (!restoreKept()) {
+    sessionQs = drawSession();
+    setSoloPhase('ask');
+    showQuestion();
+  }
+  syncResidueBanner();
+})();
+</script>
+</body>
+</html>
