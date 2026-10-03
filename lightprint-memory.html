@@ -21,7 +21,13 @@
     --lm-gold-mist:rgba(255,244,214,.92);
     --lm-pink:#f0b7c8;
   }
-  .lm-open{padding:28px 0 72px}
+  .lm-open{
+    background:#fff;
+    min-height:calc(100svh - 100px);
+    padding:56px 24px 80px;
+    text-align:center;
+  }
+  html[data-theme=dark] .lm-open{background:var(--bg)}
   .lm-paper{
     position:relative;
     width:min(720px,calc(100% - 48px));
@@ -31,21 +37,26 @@
     text-align:center;
   }
   .lm-paper-art{
-    position:absolute;inset:0;
-    width:100%;height:100%;
-    object-fit:cover;
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:auto;
+    height:auto;
+    max-width:100%;
+    max-height:100%;
+    transform:translate(-50%,-50%);
+    object-fit:contain;
     object-position:center;
-    opacity:1;
+    opacity:.4;
     pointer-events:none;
   }
   .lm-paper-veil{
     position:absolute;inset:0;
     pointer-events:none;
-    background:
-      radial-gradient(ellipse 64% 72% at 50% 46%, rgba(252,252,250,.58) 0%, rgba(252,252,250,.32) 54%, rgba(252,252,250,.08) 100%);
+    background:rgba(255,255,255,.78);
   }
   html[data-theme=dark] .lm-paper-veil{
-    background:radial-gradient(ellipse 64% 72% at 50% 46%, rgba(20,28,24,.62) 0%, rgba(20,28,24,.34) 54%, rgba(20,28,24,.1) 100%);
+    background:rgba(20,28,24,.78);
   }
   .lm-paper-copy{position:relative;z-index:1;padding:72px 40px 64px}
   .lm-open h1{margin-bottom:10px}
@@ -311,7 +322,7 @@
   body.lm-playing .site-footer{display:none}
   @media (max-width:700px){
     .lm-play{height:calc(100dvh - 86px)}
-    .lm-open{padding:12px 0 48px}
+    .lm-open{min-height:calc(100dvh - 86px);padding:36px 20px 56px;background:#fff}
     .lm-paper,.lm-end .lm-paper{width:calc(100% - 32px)}
     .lm-paper-copy{padding:48px 20px 40px}
     .lm-play-kicker{font-size:22px;letter-spacing:.08em;margin:8px 0 2px}
@@ -366,11 +377,7 @@
 
 <main id="main">
   <section class="lm-open" id="lmOpen">
-    <article class="lm-paper">
-      <!-- Card background slot. Drop a file from the Drive Artworks folder here. Until then, a painting already in the repo is used, faded under a light veil. -->
-      <img id="lmOpenArt" class="lm-paper-art" alt="" hidden data-asset-slot="assets/lightprint-memory/card-open-bg.jpg" data-fallback="assets/bb5c9cf38f67af5b.webp">
-      <div class="lm-paper-veil" aria-hidden="true"></div>
-      <div class="lm-paper-copy">
+    <div class="lm-paper-copy">
         <p class="eyebrow">AE UNIVERSE CREATION</p>
         <h1>光紋記憶</h1>
         <p class="lm-gloss">Lightprint Memory</p>
@@ -380,8 +387,7 @@
         <p class="lm-step" data-en="Play for about twenty seconds. Each touch gathers a bright light. Four fingers, or a click, seal this moment." data-zh="這是大約二十秒的遊戲。每一次觸碰，都會聚起很亮的光。四指，或點一下，封上這一瞬。">Play for about twenty seconds. Each touch gathers a bright light. Four fingers, or a click, seal this moment.</p>
         <p class="lm-step" data-en="Then a Lightprint ID appears. It is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale." data-zh="然後會出現光紋 ID。它像指紋，只屬於這個人、這一刻。它是進入 AE 世界的入場券，不是販售的商品。">Then a Lightprint ID appears. It is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale.</p>
         <button class="button" id="lmBegin" type="button" data-en="Begin" data-zh="開始">Begin</button>
-      </div>
-    </article>
+    </div>
   </section>
 
   <section class="lm-play" id="lmPlay" hidden>
@@ -922,7 +928,6 @@
   }
 
   var sun = document.getElementById('lmSun');
-  loadLayer(document.getElementById('lmOpenArt'));
   loadLayer(document.getElementById('lmEndArt'));
   loadLayer(sun, function () {
     stage.classList.add('is-sun');
