@@ -4,10 +4,10 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生火焰，光紋共創 · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v16"/>
+<meta name="ae-preview-version" content="together-v17"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="site.js?v=2427" defer></script>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="icon" type="image/png" href="/favicon.png"/>
@@ -64,18 +64,29 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .ask input:focus-visible,.ask select:focus-visible,.showfigs:focus-visible,.fig:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .showfigs{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:transparent;color:var(--warm);cursor:pointer}
 .pickline{margin:0 0 8px;color:#ddd4c8}
-.figrow{display:grid;grid-template-columns:1fr;gap:14px}
-.fig,.ticket-fig{position:relative;display:block;width:100%;padding:0;border-radius:18px;border:1px solid rgba(120,112,118,.18);background:#f7f1e8;color:#2d2824;cursor:pointer;overflow:hidden;text-align:center}
-.ticket-fig{width:min(420px,100%);margin:8px auto 0;cursor:default}
-.fig-art{position:absolute;inset:-8%;width:116%;height:116%;object-fit:cover;display:block;filter:saturate(.9) contrast(.98) brightness(1.04);z-index:0}
-.fig-veil{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(247,241,232,.5) 0%,rgba(247,241,232,.28) 46%,rgba(247,241,232,.48) 100%);pointer-events:none}
-.fig-copy{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;min-height:520px;padding:32px 22px 28px;background:none}
-.fig-copy strong{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(32px,8vw,40px);line-height:1.15}
-.fig-marks{display:flex;gap:6px;margin:10px 0 14px}
-.fig-mark{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
-.fig-mark.gold{background:#e7bd67}
-.fig-mark.blue{background:#5b8def}
-.fig-copy small{display:block;max-width:18em;font-size:15px;line-height:1.7;letter-spacing:0;color:rgba(42,36,32,.88)}
+.figrow{display:grid;grid-template-columns:1fr;gap:16px}
+.fig,.ticket-fig{position:relative;display:block;width:100%;padding:0;border-radius:18px;border:1px solid rgba(120,112,118,.18);background:transparent;color:#2a2420;cursor:pointer;overflow:hidden;text-align:center;font-family:"Noto Serif TC",Georgia,serif;appearance:none}
+.ticket-fig{margin:8px auto 0;cursor:default}
+.fig-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.1);transform-origin:center;filter:saturate(.74) contrast(.94) brightness(1.12);opacity:.88;z-index:0;pointer-events:none}
+.fig-veil{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(247,241,232,.58) 0%,rgba(247,241,232,.42) 40%,rgba(247,241,232,.62) 100%);pointer-events:none}
+.fig-body{position:relative;z-index:2;display:block;padding:28px 20px 36px}
+.fig-eye{display:block;margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7a6f64;opacity:.78}
+.fig-title{display:block;font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;font-weight:600;font-size:clamp(26px,5.4vw,34px);line-height:1.28;margin:0;color:#2a2420}
+.fig-en{display:block;margin:4px 0 0;font-size:14px;letter-spacing:.06em;font-style:italic;color:#7a6f64}
+.fig-src{display:block;margin:6px 0 0;font-size:11px;letter-spacing:.08em;color:#7a6f64;opacity:.75}
+.fig-read{display:block;margin:12px auto 0;max-width:34ch;font-size:14px;line-height:1.7;color:rgba(42,36,32,.86)}
+.fig-read p{margin:0 0 4px}
+.fig-ritual{display:block;margin:18px auto 0;max-width:34ch;padding-top:14px;border-top:1px solid rgba(120,112,118,.22);font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;font-size:clamp(16px,2.4vw,19px);line-height:1.55;color:#2a2420}
+.fig-ritual i{display:block;font-style:normal;font-family:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7a6f64;margin-bottom:6px;opacity:.75}
+.fig-lp{position:absolute;right:11px;bottom:9px;z-index:2;margin:0;opacity:.32;font-size:8px;letter-spacing:.11em;color:#7a6f64}
+.fig.memory,.ticket-fig.memory{background:#0c0a09;color:#f6f1e8;border-color:rgba(255,244,220,.12);border-radius:22px;text-align:left;padding:16px 16px 18px}
+.mem-kicker{display:block;margin:0 0 12px;font-size:12px;letter-spacing:.14em;color:#c6a15a}
+.mem-stage{display:grid;place-items:center;height:min(52vw,280px);margin:0 0 18px;border-radius:18px;background:radial-gradient(ellipse at 50% 46%,#4a2c18 0%,#1a100c 58%,#0a0807 100%)}
+.mem-light{width:42%;aspect-ratio:3/4.6;border-radius:2px;background:radial-gradient(ellipse at 50% 46%,#fffaf2 0%,#f6e6c4 36%,#e4c98a 72%,#c9a15a 100%);box-shadow:0 0 32px 14px rgba(226,176,90,.5),0 0 78px 30px rgba(140,78,28,.38)}
+.mem-title{display:block;font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;font-weight:600;font-size:clamp(28px,7vw,36px);line-height:1.2;margin:0 0 10px;color:#f7f3ec}
+.mem-lines{display:block;font-size:16px;line-height:1.75;color:#f3eee6}
+.mem-lines p{margin:0}
+.mem-id{display:block;margin:16px 0 0;font-size:13px;letter-spacing:.08em;color:#9a9086}
 .dollar{background:#f4efe6;color:#241c14;border-radius:22px;padding:26px 22px 16px;border:1px solid #e5dccb;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 12px 32px rgba(0,0,0,.22)}
 .kicker{margin:0;text-align:center;letter-spacing:.42em;font-size:10px;color:#9a8d78}
 .ticket-num{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(26px,6.4vw,34px);letter-spacing:.16em;text-align:center;margin:6px 0 16px;color:#1c1712}
@@ -423,19 +434,70 @@ function overlapFlameSvg(seed, index, tag) {
     + '</g></svg>';
 }
 const CARDS = [
-  { art: 1, zh: '金光', body: '光一直都在。有時候只是被雲遮住。可以停。停下來，也是一種看見。', marks: ['gold'] },
-  { art: 5, zh: '重疊', body: '遠看是一個宇宙，近看又是另外一個宇宙。宇宙之中，還有宇宙。', marks: ['gold', 'blue'] },
-  { art: 4, zh: '藍光', body: '可以停，但不要放棄。豐盛不一定是增加。有時候，豐盛只是終於看見。', marks: ['blue'] }
+  {
+    kind: 'paint',
+    art: 8,
+    zh: '輕柔之色',
+    en: 'Gentle Hue',
+    lines: {
+      zh: ['每一種狀態，都有它自己的畫。', '可以停，但不要放棄。'],
+      en: ['Every state has its own painting.', 'You may pause, but do not give up.']
+    },
+    ritual: {
+      zh: '每一個 moment，都無可取代。',
+      en: 'Every moment is irreplaceable.'
+    }
+  },
+  {
+    kind: 'memory',
+    zh: '金霧',
+    en: 'Gold Mist',
+    lines: {
+      zh: ['感覺比答案先到。', '你只要靠近。', '剩下的可以以後。'],
+      en: ['Feeling arrives before the answer.', 'You only need to come closer.', 'The rest can wait.']
+    }
+  },
+  {
+    kind: 'paint',
+    art: 5,
+    zh: '深色之境',
+    en: 'Deep Colour Realm',
+    lines: {
+      zh: ['遠看是一個宇宙，近看又是另外一個宇宙。', '宇宙之中，還有宇宙。'],
+      en: ['From afar, one universe; up close, another.', 'Within the cosmos, still more cosmos.']
+    },
+    ritual: {
+      zh: '宇宙之中，還有宇宙。往裡走一點。',
+      en: 'Within cosmos, more cosmos. Step a little inward.'
+    }
+  }
 ];
-function cardMarkup(index) {
+function cardMarkup(index, code) {
   const card = CARDS[index] || CARDS[0];
+  const zh = lang() === 'zh';
+  if (card.kind === 'memory') {
+    const lines = (zh ? card.lines.zh : card.lines.en).map((line) => '<p>' + line + '</p>').join('');
+    const id = code ? ('AE-' + code) : '';
+    return '<span class="mem-kicker">' + (zh ? '光紋記憶' : 'Lightprint Memory') + '</span>'
+      + '<span class="mem-stage" aria-hidden="true"><span class="mem-light"></span></span>'
+      + '<strong class="mem-title">' + (zh ? card.zh : card.en) + '</strong>'
+      + '<span class="mem-lines">' + lines + '</span>'
+      + (id ? '<span class="mem-id">' + id + '</span>' : '');
+  }
   const src = files[card.art] || '';
-  const marks = card.marks.map((mark) => '<i class="fig-mark ' + mark + '" aria-hidden="true"></i>').join('');
+  const lines = (zh ? card.lines.zh : card.lines.en).map((line) => '<p>' + line + '</p>').join('');
+  const lp = code ? ('AE · ' + code) : '';
   return '<img class="fig-art" alt="" src="' + src + '">'
     + '<span class="fig-veil"></span>'
-    + '<span class="fig-copy"><strong>' + card.zh + '</strong>'
-    + '<span class="fig-marks">' + marks + '</span>'
-    + '<small>' + card.body + '</small></span>';
+    + '<span class="fig-body">'
+    + '<span class="fig-eye">' + (zh ? '此刻色調 · 盛明' : 'This moment’s hue · Sheng Ming') + '</span>'
+    + '<strong class="fig-title">' + (zh ? card.zh : card.en) + '</strong>'
+    + '<span class="fig-en">' + (zh ? card.en : card.zh) + '</span>'
+    + '<span class="fig-src">' + (zh ? '摘自《盛明》筆記' : 'From the 《盛明》 notes') + '</span>'
+    + '<span class="fig-read">' + lines + '</span>'
+    + '<span class="fig-ritual"><i>' + (zh ? '這一刻的柔邀' : 'A gentle invitation for this moment') + '</i>' + (zh ? card.ritual.zh : card.ritual.en) + '</span>'
+    + '</span>'
+    + (lp ? '<span class="fig-lp">' + lp + '</span>' : '');
 }
 function figureSeed(pass) {
   const born = pass.born;
@@ -492,23 +554,25 @@ function readBorn() {
 }
 function paintFigures(pass) {
   const row = document.getElementById('figRow');
-  const key = [lang(), pass.code, files.length, CARDS.map((card) => (files[card.art] || '').slice(0, 48)).join('|')].join('|');
+  const key = [lang(), pass.code, files.length, CARDS.map((card) => card.kind + ':' + (card.art == null ? '' : (files[card.art] || '').slice(0, 24))).join('|')].join('|');
   if (row.dataset.key !== key || row.childElementCount !== 3) {
     row.dataset.key = key;
-    row.innerHTML = [0, 1, 2].map((i) => '<button class="fig" type="button" data-fig="' + i + '">' + cardMarkup(i) + '</button>').join('');
+    row.innerHTML = [0, 1, 2].map((i) => '<button class="fig ' + CARDS[i].kind + '" type="button" data-fig="' + i + '">' + cardMarkup(i, pass.code) + '</button>').join('');
   }
   row.querySelectorAll('[data-fig]').forEach((btn, i) => {
     const card = CARDS[i];
-    btn.setAttribute('aria-label', card.zh);
+    btn.setAttribute('aria-label', lang() === 'zh' ? card.zh : card.en);
   });
 }
 function paintTicket(pass) {
   const hold = document.getElementById('ticketFig');
-  const src = (files[CARDS[pass.pick] ? CARDS[pass.pick].art : 0] || '').slice(0, 48);
-  const key = lang() + '|' + pass.pick + '|' + pass.ticket + '|' + src;
+  const card = CARDS[pass.pick] || CARDS[0];
+  const src = card.art == null ? '' : (files[card.art] || '').slice(0, 24);
+  const key = lang() + '|' + pass.pick + '|' + pass.code + '|' + pass.ticket + '|' + card.kind + '|' + src;
   if (hold.dataset.key !== key) {
     hold.dataset.key = key;
-    hold.innerHTML = cardMarkup(pass.pick);
+    hold.className = 'ticket-fig ' + card.kind;
+    hold.innerHTML = cardMarkup(pass.pick, pass.code);
   }
   document.getElementById('ticketNum').textContent = pass.ticket.replace(/(\d{4})(\d{4})(\d{2})/, '$1 $2 $3');
 }
