@@ -1,0 +1,10 @@
+End-card background slot, behind the 光紋 ID.
+
+Expected file (same folder):
+card-end-bg.jpg
+
+Use a painting from the Google Drive Artworks folder (AE Universe Creation Project Master).
+The page fades it under a light veil so the ID stays readable.
+Until that file is added, the page uses assets/2ee9aa3b017652d9.webp (Infinite Love), already in the repo.
+
+Do not hotlink private Drive files.

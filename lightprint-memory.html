@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<meta name="ae-version" content="lightprint-memory-1">
+<meta name="ae-version" content="lightprint-memory-2">
 <title>光紋記憶 · AE Universe Creation</title>
 <meta name="description" content="光紋記憶 — a short touch, then a Lightprint ID unique to this person and this moment. An entry ticket into the AE world, not a product.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,11 +21,38 @@
     --lm-gold-mist:rgba(255,244,214,.92);
     --lm-pink:#f0b7c8;
   }
-  .lm-open{text-align:center}
-  .lm-open h1{margin-bottom:18px}
+  .lm-open{padding:28px 0 72px}
+  .lm-paper{
+    position:relative;
+    width:min(720px,calc(100% - 48px));
+    margin:0 auto;
+    overflow:hidden;
+    background:var(--bg);
+    text-align:center;
+  }
+  .lm-paper-art{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    object-fit:cover;
+    object-position:center;
+    opacity:.38;
+    pointer-events:none;
+    filter:saturate(.85);
+  }
+  .lm-paper-veil{
+    position:absolute;inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(252,252,250,.78) 0%, rgba(252,252,250,.88) 42%, rgba(247,243,239,.9) 100%);
+  }
+  html[data-theme=dark] .lm-paper-veil{
+    background:linear-gradient(180deg, rgba(20,28,24,.78), rgba(20,28,24,.9));
+  }
+  .lm-paper-copy{position:relative;z-index:1;padding:72px 40px 64px}
+  .lm-open h1{margin-bottom:10px}
   .lm-gloss{
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:clamp(18px,2.2vw,24px);
+    font-size:clamp(18px,2.2vw,22px);
     letter-spacing:.08em;
     color:var(--muted);
     margin:0 0 28px;
@@ -33,21 +60,22 @@
   .lm-purpose{
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
     font-weight:500;
-    font-size:clamp(26px,3.4vw,40px);
+    font-size:clamp(26px,3.2vw,38px);
     line-height:1.28;
     letter-spacing:-.02em;
     color:var(--ink);
-    margin:0 auto 8px;
+    margin:0 auto 6px;
     max-width:18em;
   }
   .lm-purpose+.lm-purpose{margin-bottom:28px}
-  .lm-lead{
-    max-width:38em;
-    margin:0 auto 28px;
+  .lm-step{
+    max-width:36em;
+    margin:0 auto 16px;
     color:var(--muted);
     font-size:16px;
     line-height:1.8;
   }
+  .lm-step:last-of-type{margin-bottom:28px}
   .lm-open .button{min-width:min(240px,100%)}
 
   .lm-play{
@@ -60,11 +88,19 @@
   }
   .lm-play-kicker{
     text-align:center;
-    margin:18px 0 10px;
+    margin:14px 0 4px;
     font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
-    font-size:28px;
+    font-size:26px;
     letter-spacing:.12em;
     font-weight:500;
+  }
+  .lm-play-why{
+    width:min(640px,calc(100% - 40px));
+    margin:0 auto 10px;
+    text-align:center;
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.65;
   }
   .lm-stage{
     position:relative;
@@ -74,7 +110,6 @@
     min-height:0;
     height:auto;
     overflow:hidden;
-    border:1px solid var(--line);
     border-radius:2px;
     touch-action:none;
     user-select:none;
@@ -82,9 +117,40 @@
     -webkit-touch-callout:none;
     cursor:crosshair;
     background:
-      radial-gradient(ellipse 50% 42% at 50% 46%, rgba(255,248,230,.42), rgba(255,248,230,0) 70%),
-      radial-gradient(ellipse 88% 48% at 50% 92%, rgba(201,162,39,.12), transparent 72%),
-      linear-gradient(180deg,#f7f3ef 0%,#f6f1e6 50%,#f3f6f2 100%);
+      radial-gradient(ellipse 42% 36% at 50% 38%, rgba(255,236,180,.7), transparent 68%),
+      linear-gradient(180deg,#2a2118 0%, #140e0c 100%);
+  }
+  .lm-sun{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    object-fit:cover;
+    object-position:center 42%;
+    pointer-events:none;
+    z-index:0;
+  }
+  .lm-breath{
+    position:absolute;
+    left:50%;top:38%;
+    width:min(280px,46%);
+    aspect-ratio:1;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:1;
+    background:radial-gradient(circle, rgba(255,250,230,.72) 0%, rgba(255,214,120,.28) 32%, rgba(255,180,80,0) 68%);
+    mix-blend-mode:screen;
+    animation:lm-breath 5.2s ease-in-out infinite;
+  }
+  .lm-stage.is-fog .lm-breath{opacity:1;filter:brightness(1.15)}
+  .lm-seal-flash{
+    position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;
+    background:radial-gradient(circle at 50% 40%, rgba(255,255,245,.96), rgba(255,214,120,.55) 36%, rgba(255,180,80,0) 72%);
+  }
+  .lm-stage.is-sealing .lm-seal-flash{animation:lm-seal-flash .72s ease forwards}
+  @keyframes lm-seal-flash{
+    0%{opacity:0}
+    35%{opacity:1}
+    100%{opacity:.92}
   }
   .lm-stage:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
   html[data-theme=dark] .lm-stage{
@@ -143,7 +209,7 @@
     position:absolute;inset:0;
     width:100%;height:100%;
     pointer-events:none;
-    z-index:1;
+    z-index:2;
   }
   .lm-arc{
     position:absolute;
@@ -163,18 +229,20 @@
   .lm-hint{
     position:absolute;
     left:16px;right:16px;bottom:16px;
-    z-index:3;
+    z-index:5;
     margin:0;
     text-align:center;
     font-size:16px;
     line-height:1.55;
     color:var(--ink);
-    background:rgba(252,252,250,.9);
-    border:1px solid var(--line);
-    padding:12px 14px;
+    background:rgba(252,252,250,.94);
+    padding:12px 16px;
     pointer-events:none;
   }
-  html[data-theme=dark] .lm-hint{background:rgba(20,28,24,.9)}
+  html[data-theme=dark] .lm-hint{
+    color:var(--ink);
+    background:rgba(20,28,24,.78);
+  }
   .lm-dock{
     width:min(960px,calc(100% - 48px));
     margin:14px auto 8px;
@@ -187,35 +255,14 @@
     .lm-seal-click{display:none!important}
   }
 
-  .lm-end{
-    padding:48px 0 28px;
-  }
-  .lm-end-field{
-    width:min(720px,calc(100% - 48px));
-    margin:0 auto 28px;
-    height:180px;
-    position:relative;
-    overflow:hidden;
-    border:1px solid var(--line);
-    background:
-      radial-gradient(ellipse 40% 80% at 50% 70%, rgba(228,194,122,.55), transparent 70%),
-      linear-gradient(180deg,#f7f3ef,#f3f6f2);
-  }
-  html[data-theme=dark] .lm-end-field{
-    background:
-      radial-gradient(ellipse 40% 80% at 50% 70%, rgba(228,194,122,.28), transparent 72%),
-      linear-gradient(180deg,#1a221e,#141c18);
-  }
-  .lm-end-field .lm-figure{
-    width:120px;height:200px;top:78%;
-  }
+  .lm-end{padding:36px 0 64px}
+  .lm-end .lm-paper{width:min(680px,calc(100% - 48px))}
   .lm-card{
-    width:min(640px,calc(100% - 48px));
-    margin:0 auto;
+    position:relative;
+    z-index:1;
     text-align:center;
-    background:var(--bg);
-    border:1px solid var(--line);
-    padding:48px 28px 36px;
+    background:transparent;
+    padding:8px 0 0;
   }
   .lm-card h2{
     font-size:clamp(40px,6vw,64px);
@@ -265,22 +312,21 @@
   body.lm-playing .site-footer{display:none}
   @media (max-width:700px){
     .lm-play{height:calc(100dvh - 86px)}
-    .lm-play-kicker{font-size:22px;letter-spacing:.08em;margin:10px 0 8px}
-    .lm-stage{
-      width:100%;
-      border-left:0;border-right:0;
-    }
+    .lm-open{padding:12px 0 48px}
+    .lm-paper,.lm-end .lm-paper{width:calc(100% - 32px)}
+    .lm-paper-copy{padding:48px 20px 40px}
+    .lm-play-kicker{font-size:22px;letter-spacing:.08em;margin:8px 0 2px}
+    .lm-play-why{font-size:14px;margin-bottom:8px}
+    .lm-stage{width:calc(100% - 24px)}
     .lm-dock{width:calc(100% - 32px);margin-top:10px}
     .lm-hint{font-size:15px;left:10px;right:10px;bottom:10px}
-    .lm-end{padding:28px 0 12px}
-    .lm-card{width:calc(100% - 32px);padding:36px 18px 28px}
-    .lm-end-field{width:calc(100% - 32px);height:140px}
+    .lm-end{padding:20px 0 40px}
     .lm-card-actions{flex-direction:column}
     .lm-card-actions .button,.lm-card-actions .text-link{width:100%;text-align:center}
   }
   @media (prefers-reduced-motion:reduce){
-    .lm-svg-mid,.lm-svg-heart,.lm-silhouette-art{animation:none}
-    .lm-fog{transition:none}
+    .lm-svg-mid,.lm-svg-heart,.lm-silhouette-art,.lm-breath{animation:none}
+    .lm-fog,.lm-seal-flash{transition:none}
   }
 </style>
 </head>
@@ -320,21 +366,33 @@
 <button class="menu-backdrop" hidden tabindex="-1" aria-label="Close menu"></button>
 
 <main id="main">
-  <section class="page-heading page-heading-wash lm-open" id="lmOpen">
-    <p class="eyebrow">AE UNIVERSE CREATION</p>
-    <h1>光紋記憶</h1>
-    <p class="lm-gloss">Lightprint Memory</p>
-    <p class="lm-purpose">Make this world a better place.</p>
-    <p class="lm-purpose">Actions create infinity.</p>
-    <p class="lm-lead" data-en="A Lightprint is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product." data-zh="光紋像指紋，只屬於這個人、這一刻。它是進入 AE 世界的入場券，不是商品。">A Lightprint is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product.</p>
-    <button class="button" id="lmBegin" type="button" data-en="Begin" data-zh="開始">Begin</button>
+  <section class="lm-open" id="lmOpen">
+    <article class="lm-paper">
+      <!-- Card background slot. Drop a file from the Drive Artworks folder here. Until then, a painting already in the repo is used, faded under a light veil. -->
+      <img id="lmOpenArt" class="lm-paper-art" alt="" hidden data-asset-slot="assets/lightprint-memory/card-open-bg.jpg" data-fallback="assets/bb5c9cf38f67af5b.webp">
+      <div class="lm-paper-veil" aria-hidden="true"></div>
+      <div class="lm-paper-copy">
+        <p class="eyebrow">AE UNIVERSE CREATION</p>
+        <h1>光紋記憶</h1>
+        <p class="lm-gloss">Lightprint Memory</p>
+        <p class="lm-purpose">Make this world a better place.</p>
+        <p class="lm-purpose">Actions create infinity.</p>
+        <p class="lm-step" data-en="You are here to leave one small action in the world." data-zh="你來到這裡，是為了用一個很小的行動，把光留在這個世界。">You are here to leave one small action in the world.</p>
+        <p class="lm-step" data-en="Play for about twenty seconds. Each touch gathers a bright light. Four fingers, or a click, seal this moment." data-zh="這是大約二十秒的遊戲。每一次觸碰，都會聚起很亮的光。四指，或點一下，封上這一瞬。">Play for about twenty seconds. Each touch gathers a bright light. Four fingers, or a click, seal this moment.</p>
+        <p class="lm-step" data-en="Then a Lightprint ID appears. It is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale." data-zh="然後會出現光紋 ID。它像指紋，只屬於這個人、這一刻。它是進入 AE 世界的入場券，不是販售的商品。">Then a Lightprint ID appears. It is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale.</p>
+        <button class="button" id="lmBegin" type="button" data-en="Begin" data-zh="開始">Begin</button>
+      </div>
+    </article>
   </section>
 
   <section class="lm-play" id="lmPlay" hidden>
     <p class="lm-play-kicker">光紋記憶</p>
-    <div class="lm-stage" id="lmStage" tabindex="0" role="application" aria-label="Soft-gold fog silhouette. Touch to gather light. Four fingers seal. A click seals on desktop.">
+    <p class="lm-play-why" data-en="Gather a bright light, then seal it. The Lightprint ID is like a fingerprint — an entry into the AE world, not for sale." data-zh="把光聚得很亮，再封上。光紋 ID 像指紋，是進入 AE 世界的入場券，不是商品。">Gather a bright light, then seal it. The Lightprint ID is like a fingerprint — an entry into the AE world, not for sale.</p>
+    <div class="lm-stage" id="lmStage" tabindex="0" role="application" aria-label="Eternal Sun. Touch to gather a bright light. Four fingers seal. A click seals on desktop.">
+      <img id="lmSun" class="lm-sun" alt="" hidden data-asset-slot="assets/lightprint-memory/eternal-sun-bg.jpg" data-fallback="assets/4e0991885a9649ea.webp">
+      <div class="lm-breath" aria-hidden="true"></div>
       <div class="lm-fog" aria-hidden="true"></div>
-      <div class="lm-figure" id="lmFigure" aria-hidden="true">
+      <div class="lm-figure" id="lmFigure" hidden aria-hidden="true">
         <svg viewBox="0 0 220 480" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="lmBody" x1="0" y1="0" x2="0" y2="1">
@@ -382,6 +440,7 @@
       -->
       <img id="lmArt" class="lm-silhouette-art" alt="" hidden data-asset-slot="assets/lightprint-memory/soft-gold-fog-silhouette.webp">
       <canvas class="lm-glow" id="lmGlow" aria-hidden="true"></canvas>
+      <div class="lm-seal-flash" aria-hidden="true"></div>
       <div class="lm-arc" aria-hidden="true"><span id="lmArcBar"></span></div>
       <p class="lm-hint" id="lmHint" role="status" aria-live="polite"></p>
     </div>
@@ -391,46 +450,28 @@
   </section>
 
   <section class="lm-end" id="lmEnd" hidden>
-    <div class="lm-end-field" aria-hidden="true">
-      <div class="lm-figure">
-        <svg viewBox="0 0 220 480" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="lmBodyEnd" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#fff3d4"/>
-              <stop offset="48%" stop-color="#c9a227"/>
-              <stop offset="100%" stop-color="#a6843a" stop-opacity="0"/>
-            </linearGradient>
-            <filter id="lmSoftEnd" x="-30%" y="-15%" width="160%" height="140%">
-              <feGaussianBlur stdDeviation="1.6"/>
-            </filter>
-          </defs>
-          <g fill="url(#lmBodyEnd)" stroke="#b08a3e" stroke-width="10" stroke-linecap="round" filter="url(#lmSoftEnd)">
-            <ellipse cx="110" cy="58" rx="20" ry="24"/>
-            <path class="lm-svg-mid" d="M76 112 C64 128 58 168 66 196 C74 220 90 232 110 236 C130 232 146 220 154 196 C162 168 156 128 144 112 C134 100 122 94 110 94 C98 94 86 100 76 112 Z"/>
-            <path d="M78 124 C52 158 44 210 52 252" fill="none"/>
-            <path d="M142 124 C168 158 176 210 168 252" fill="none"/>
-            <path d="M96 214 C88 270 82 340 86 420" fill="none"/>
-            <path d="M124 214 C132 270 138 340 134 420" fill="none"/>
-          </g>
-        </svg>
+    <article class="lm-paper">
+      <img id="lmEndArt" class="lm-paper-art" alt="" hidden data-asset-slot="assets/lightprint-memory/card-end-bg.jpg" data-fallback="assets/2ee9aa3b017652d9.webp">
+      <div class="lm-paper-veil" aria-hidden="true"></div>
+      <div class="lm-paper-copy">
+        <article class="lm-card" aria-labelledby="lmId">
+          <p class="eyebrow">AE UNIVERSE CREATION</p>
+          <p class="lm-play-kicker" style="margin-top:0">光紋記憶</p>
+          <h2 id="lmId" tabindex="-1" spellcheck="false"></h2>
+          <p class="lm-id-label" data-en="Lightprint ID" data-zh="光紋 ID">Lightprint ID</p>
+          <p class="lm-step" data-en="Like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale." data-zh="像指紋一樣，只屬於這個人、這一刻。進入 AE 世界的入場券，不是販售的商品。">Like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale.</p>
+          <p class="lm-madeof" id="lmMadeOf" data-en="Made from this moment’s time, a one-time nonce, and the path of your touch. Another play makes another ID." data-zh="由這一刻的時間、一次不會重複的隨機，和你的觸碰路徑組成。再玩一次，就是另一道。">Made from this moment’s time, a one-time nonce, and the path of your touch. Another play makes another ID.</p>
+          <p class="lm-purpose">Make this world a better place.</p>
+          <p class="lm-purpose">Actions create infinity.</p>
+          <p class="lm-gift" data-en="Optional. A $1 gift, if you wish. This page does not take payment." data-zh="可有可無。若你願意，可以用 1 美元支持。這一頁不收款。">Optional. A $1 gift, if you wish. This page does not take payment.</p>
+          <div class="lm-card-actions">
+            <a class="text-link" id="lmGift" href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener" data-en="Give $1" data-zh="支持 $1">Give $1</a>
+            <button class="text-link" id="lmCopy" type="button" data-en="Copy ID" data-zh="複製光紋 ID">Copy ID</button>
+            <button class="text-link" id="lmAgain" type="button" data-en="Leave another Lightprint" data-zh="再留一道光紋">Leave another Lightprint</button>
+          </div>
+          <p class="lm-copy-status" id="lmCopyStatus" role="status"></p>
+        </article>
       </div>
-    </div>
-    <article class="lm-card" aria-labelledby="lmId">
-      <p class="eyebrow">AE UNIVERSE CREATION</p>
-      <p class="lm-play-kicker" style="margin-top:0">光紋記憶</p>
-      <h2 id="lmId" tabindex="-1" spellcheck="false"></h2>
-      <p class="lm-id-label" data-en="Lightprint ID" data-zh="光紋 ID">Lightprint ID</p>
-      <p class="lm-lead" data-en="Unique to this person and this moment. An entry ticket into the AE world, not a product." data-zh="只屬於這個人、這一刻。進入 AE 世界的入場券，不是商品。">Unique to this person and this moment. An entry ticket into the AE world, not a product.</p>
-      <p class="lm-madeof" id="lmMadeOf" data-en="Made from this moment’s time, a one-time nonce, and the path of your touch. Another play makes another ID." data-zh="由這一刻的時間、一次不會重複的隨機，和你的觸碰路徑組成。再玩一次，就是另一道。">Made from this moment’s time, a one-time nonce, and the path of your touch. Another play makes another ID.</p>
-      <p class="lm-purpose">Make this world a better place.</p>
-      <p class="lm-purpose">Actions create infinity.</p>
-      <p class="lm-gift" data-en="Optional. A $1 gift, if you wish. This page does not take payment." data-zh="可有可無。若你願意，可以用 1 美元支持。這一頁不收款。">Optional. A $1 gift, if you wish. This page does not take payment.</p>
-      <div class="lm-card-actions">
-        <a class="text-link" id="lmGift" href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener" data-en="Give $1" data-zh="支持 $1">Give $1</a>
-        <button class="text-link" id="lmCopy" type="button" data-en="Copy ID" data-zh="複製光紋 ID">Copy ID</button>
-        <button class="text-link" id="lmAgain" type="button" data-en="Leave another Lightprint" data-zh="再留一道光紋">Leave another Lightprint</button>
-      </div>
-      <p class="lm-copy-status" id="lmCopyStatus" role="status"></p>
     </article>
   </section>
 </main>
@@ -493,16 +534,16 @@
 
   var HINTS = {
     gather: {
-      en: 'Touch and gather light for about twenty seconds. One to three fingers bring fog and glow.',
-      zh: '輕輕觸碰，大約二十秒聚光。一到三指會帶來霧與光。'
+      en: 'Touch and gather a bright light for about twenty seconds. One to three fingers ask for more.',
+      zh: '輕輕觸碰，大約二十秒，把光聚得很亮。一到三指時，再加手指。'
     },
     add: {
-      en: 'Fog and glow are with you. Add fingers — four seal this moment.',
-      zh: '霧與光在這裡。再加手指——四指封上這一瞬。'
+      en: 'The light is bright. Add fingers — four seal this moment.',
+      zh: '光已經很亮。再加手指——四指封上這一瞬。'
     },
     desktop: {
-      en: 'Drag to gather light for about twenty seconds. A click seals this moment.',
-      zh: '拖曳聚光，大約二十秒。點一下，封上這一瞬。'
+      en: 'Drag to gather a bright light for about twenty seconds. A click seals this moment.',
+      zh: '拖曳聚起很亮的光，大約二十秒。點一下，封上這一瞬。'
     },
     ready: {
       en: 'This breath has lasted about twenty seconds. Click to seal, or keep gathering light.',
@@ -637,23 +678,28 @@
   }
 
   function stamp(x, y, strong) {
-    var r = strong ? 108 : 78;
+    var r = strong ? 240 : 168;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
     var glow = ctx.createRadialGradient(x, y, 0, x, y, r);
-    glow.addColorStop(0, 'rgba(255,248,230,0.62)');
-    glow.addColorStop(0.38, 'rgba(228,194,122,0.30)');
-    glow.addColorStop(0.72, 'rgba(240,183,200,0.12)');
-    glow.addColorStop(1, 'rgba(255,248,230,0)');
+    glow.addColorStop(0, 'rgba(255,255,250,0.95)');
+    glow.addColorStop(0.08, 'rgba(255,248,220,0.9)');
+    glow.addColorStop(0.22, 'rgba(255,220,130,0.72)');
+    glow.addColorStop(0.48, 'rgba(255,186,90,0.38)');
+    glow.addColorStop(0.72, 'rgba(240,183,200,0.16)');
+    glow.addColorStop(1, 'rgba(255,210,120,0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
-    var fog = ctx.createRadialGradient(x, y, r * 0.2, x, y, r * 2.15);
-    fog.addColorStop(0, 'rgba(232,210,160,0.18)');
-    fog.addColorStop(1, 'rgba(232,210,160,0)');
-    ctx.fillStyle = fog;
+    var core = ctx.createRadialGradient(x, y, 0, x, y, r * 0.18);
+    core.addColorStop(0, 'rgba(255,255,255,1)');
+    core.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = core;
     ctx.beginPath();
-    ctx.arc(x, y, r * 2.15, 0, Math.PI * 2);
+    ctx.arc(x, y, r * 0.18, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   }
 
   function paint(clientX, clientY, pointerId, strong) {
@@ -667,6 +713,11 @@
     if (phase !== 'play') return;
     var p = Math.max(0, Math.min(1, elapsedSec() / 20));
     arcBar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0,0,0,0.008)';
+    ctx.fillRect(0, 0, stage.clientWidth, stage.clientHeight);
+    ctx.restore();
     if (p >= 1 && fingerBucket !== 'add') setHint(hintForRest());
     raf = requestAnimationFrame(tick);
   }
@@ -687,7 +738,7 @@
     mouseDown = null;
     currentId = '';
     playT0 = performance.now();
-    stage.classList.remove('is-fog');
+    stage.classList.remove('is-fog', 'is-sealing');
     resize();
     ctx.clearRect(0, 0, stage.clientWidth, stage.clientHeight);
     arcBar.style.transform = 'scaleX(0)';
@@ -710,16 +761,23 @@
 
   function seal() {
     if (phase !== 'play') return;
+    phase = 'sealing';
     if (!samples.length) {
-      samples.push({ nx: 0.5, ny: 0.46, t: Math.max(0, Math.round(performance.now() - playT0)), id: 0 });
+      samples.push({ nx: 0.5, ny: 0.42, t: Math.max(0, Math.round(performance.now() - playT0)), id: 0 });
     }
     currentId = makeLightprintId();
-    cancelAnimationFrame(raf);
+    var rect = stage.getBoundingClientRect();
+    stamp(rect.width * 0.5, rect.height * 0.4, true);
+    stamp(rect.width * 0.5, rect.height * 0.4, true);
+    stage.classList.add('is-sealing');
     clearInterval(clock);
-    idEl.textContent = currentId;
-    copyStatus.textContent = '';
-    show('end');
-    idEl.focus({ preventScroll: true });
+    window.setTimeout(function () {
+      cancelAnimationFrame(raf);
+      idEl.textContent = currentId;
+      copyStatus.textContent = '';
+      show('end');
+      idEl.focus({ preventScroll: true });
+    }, 680);
   }
 
   function noteFingers(n) {
@@ -848,21 +906,41 @@
   var langWatch = new MutationObserver(function () {
     if (phase === 'play' && hintEl.dataset[lang()]) hintEl.textContent = hintEl.dataset[lang()];
     stage.setAttribute('aria-label', lang() === 'zh'
-      ? '柔金霧剪影。觸碰聚光。四指封上。桌面點擊可封上。'
-      : 'Soft-gold fog silhouette. Touch to gather light. Four fingers seal. A click seals on desktop.');
+      ? '盛明。觸碰聚起很亮的光。四指封上。桌面點擊可封上。'
+      : 'Eternal Sun. Touch to gather a bright light. Four fingers seal. A click seals on desktop.');
   });
   langWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
 
-  art.addEventListener('error', function () {
-    art.hidden = true;
+  function loadLayer(img, onOk, onFail) {
+    var sources = [img.getAttribute('data-asset-slot'), img.getAttribute('data-fallback')].filter(Boolean);
+    var i = 0;
+    function next() {
+      if (i >= sources.length) {
+        img.hidden = true;
+        if (onFail) onFail();
+        return;
+      }
+      var src = sources[i++];
+      img.onload = function () {
+        if (!img.naturalWidth) { next(); return; }
+        img.hidden = false;
+        if (onOk) onOk(src);
+      };
+      img.onerror = function () { next(); };
+      img.src = src;
+    }
+    next();
+  }
+
+  var sun = document.getElementById('lmSun');
+  loadLayer(document.getElementById('lmOpenArt'));
+  loadLayer(document.getElementById('lmEndArt'));
+  loadLayer(sun, function () {
+    stage.classList.add('is-sun');
+    figure.hidden = true;
+  }, function () {
     figure.hidden = false;
   });
-  art.addEventListener('load', function () {
-    if (!art.naturalWidth) return;
-    art.hidden = false;
-    figure.hidden = true;
-  });
-  art.src = art.getAttribute('data-asset-slot');
 
   coarsePointer.addEventListener('change', function () {
     finePointer = !coarsePointer.matches;

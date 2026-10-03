@@ -1,0 +1,10 @@
+Opening-card background slot.
+
+Expected file (same folder):
+card-open-bg.jpg
+
+Use a painting from the Google Drive Artworks folder (AE Universe Creation Project Master).
+The page fades it under a light veil so type stays readable.
+Until that file is added, the page uses assets/bb5c9cf38f67af5b.webp (Universe Heart Bloom), already in the repo.
+
+Do not hotlink private Drive files.
