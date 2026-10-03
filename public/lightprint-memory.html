@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<meta name="ae-version" content="lightprint-memory-3">
+<meta name="ae-version" content="lightprint-memory-4">
 <title>光紋記憶 · AE Universe Creation</title>
 <meta name="description" content="光紋記憶 — a short touch, then a Lightprint ID unique to this person and this moment. An entry ticket into the AE world, not a product.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -355,6 +355,113 @@
     font-size:14px;
     color:var(--muted);
   }
+  .lm-saved-line{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 14px;
+    justify-content:center;
+    align-items:center;
+    margin:18px auto 0;
+    max-width:36em;
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.6;
+  }
+  .lm-saved-line[hidden]{display:none!important}
+  .lm-saved-line .text-link{margin:0}
+  .lm-download{
+    background:transparent;
+    color:var(--ink);
+    border-color:var(--ink);
+  }
+  .lm-save-sheet{
+    position:fixed;
+    inset:0;
+    z-index:80;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding:max(12px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+    background:rgba(32,38,34,.28);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .28s ease;
+  }
+  .lm-save-sheet.is-open{opacity:1;pointer-events:auto}
+  .lm-save-sheet[hidden]{display:none!important}
+  .lm-save-panel{
+    width:min(440px,100%);
+    max-height:min(92vh,860px);
+    overflow:auto;
+    background:#f7f3ec;
+    color:#202622;
+    border:1px solid rgba(90,72,52,.16);
+    border-radius:22px;
+    box-shadow:0 18px 48px rgba(70,48,28,.16);
+    padding:18px 16px 16px;
+  }
+  .lm-save-title{
+    margin:0 0 6px;
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:28px;
+    font-weight:500;
+    text-align:center;
+  }
+  .lm-save-hint,.lm-save-note{
+    margin:0 auto 14px;
+    max-width:34em;
+    font-size:14px;
+    line-height:1.55;
+    color:#626b65;
+    text-align:center;
+  }
+  .lm-save-note{margin:8px auto 0}
+  .lm-save-frame{
+    margin:0 auto;
+    width:100%;
+    max-height:min(58vh,520px);
+    border-radius:14px;
+    overflow:hidden;
+    background:#f3eee6;
+    border:1px solid rgba(90,72,52,.16);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    -webkit-touch-callout:default;
+  }
+  .lm-save-frame img{
+    display:block;
+    width:100%;
+    height:auto;
+    max-height:min(58vh,520px);
+    object-fit:contain;
+    -webkit-touch-callout:default;
+  }
+  .lm-save-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+    margin:16px 0 4px;
+  }
+  .lm-save-actions button{
+    appearance:none;
+    cursor:pointer;
+    border:1px solid #202622;
+    border-radius:0;
+    min-height:44px;
+    padding:10px 18px;
+    font:inherit;
+    font-size:14px;
+    color:#202622;
+    background:transparent;
+  }
+  .lm-save-actions .lm-save-share{
+    background:#244d3d;
+    color:#fff;
+    border-color:#244d3d;
+  }
+  .lm-save-actions .lm-save-share[hidden]{display:none}
   body.lm-playing{overflow:hidden}
   body.lm-playing .site-footer{display:none}
   @media (max-width:700px){
@@ -424,6 +531,10 @@
         <p class="lm-step" data-en="Play for about twenty seconds. Each touch gathers a bright light. Four fingers, or a click, seal this moment." data-zh="這是大約二十秒的遊戲。每一次觸碰，都會聚起很亮的光。四指，或點一下，封上這一瞬。">Play for about twenty seconds. Each touch gathers a bright light. Four fingers, or a click, seal this moment.</p>
         <p class="lm-step" data-en="Then a Lightprint ID appears. It is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale." data-zh="然後會出現光紋 ID。它像指紋，只屬於這個人、這一刻。它是進入 AE 世界的入場券，不是販售的商品。">Then a Lightprint ID appears. It is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale.</p>
         <button class="button" id="lmBegin" type="button" data-en="Begin" data-zh="開始">Begin</button>
+        <p class="lm-saved-line" id="lmSavedLine" hidden>
+          <span data-en="A card is saved on this device." data-zh="這台裝置上存了一張卡。">A card is saved on this device.</span>
+          <button class="text-link" id="lmSeeSaved" type="button" data-en="See the saved card" data-zh="看已存的卡">See the saved card</button>
+        </p>
     </div>
   </section>
 
@@ -506,9 +617,13 @@
           <p class="lm-madeof" id="lmMadeOf" data-en="Made from this moment’s time, a one-time nonce, and the path of your touch. Another play makes another ID." data-zh="由這一刻的時間、一次不會重複的隨機，和你的觸碰路徑組成。再玩一次，就是另一道。">Made from this moment’s time, a one-time nonce, and the path of your touch. Another play makes another ID.</p>
           <p class="lm-purpose">Make this world a better place.</p>
           <p class="lm-purpose">Actions create infinity.</p>
-          <p class="lm-gift" data-en="Optional. A $1 gift, if you wish. This page does not take payment." data-zh="可有可無。若你願意，可以用 1 美元支持。這一頁不收款。">Optional. A $1 gift, if you wish. This page does not take payment.</p>
           <div class="lm-card-actions">
-            <a class="text-link" id="lmGift" href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener" data-en="Give $1" data-zh="支持 $1">Give $1</a>
+            <button class="button lm-save" id="lmSave" type="button" data-en="Save the card" data-zh="儲存這張卡">Save the card</button>
+            <button class="button lm-download" id="lmDownload" type="button" data-en="Download the card" data-zh="下載這張卡">Download the card</button>
+          </div>
+          <p class="lm-gift" data-en="Optional. One dollar buys this card only. It is not charity, not public fundraising, and it does not open a next level." data-zh="可有可無。一塊錢只買這張卡。不是慈善，不是公開募款，也不會打開下一關。">Optional. One dollar buys this card only. It is not charity, not public fundraising, and it does not open a next level.</p>
+          <div class="lm-card-actions">
+            <a class="text-link" id="lmGift" href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener" data-en="$1 for this card" data-zh="一塊錢，買這張卡">$1 for this card</a>
             <button class="text-link" id="lmCopy" type="button" data-en="Copy ID" data-zh="複製光紋 ID">Copy ID</button>
             <button class="text-link" id="lmAgain" type="button" data-en="Leave another Lightprint" data-zh="再留一道光紋">Leave another Lightprint</button>
           </div>
@@ -538,6 +653,22 @@
   <p class="ae-version-mark" aria-hidden="true">AE · lightprint-memory</p>
 </footer>
 
+<div class="lm-save-sheet" id="lmSaveSheet" hidden aria-hidden="true">
+  <div class="lm-save-panel" role="dialog" aria-modal="true" aria-labelledby="lmSaveTitle">
+    <p class="lm-save-title" id="lmSaveTitle" data-en="This card" data-zh="這張卡">This card</p>
+    <p class="lm-save-hint" id="lmSaveHint" data-en="Long-press the image, then choose Save Image." data-zh="長按圖片，然後選擇儲存影像。">Long-press the image, then choose Save Image.</p>
+    <div class="lm-save-frame" id="lmSaveFrame">
+      <img id="lmSaveImg" alt="Lightprint card" draggable="false">
+    </div>
+    <div class="lm-save-actions">
+      <button type="button" class="lm-save-share" id="lmSaveShare" data-en="Save the picture" data-zh="儲存圖片">Save the picture</button>
+      <button type="button" id="lmSaveDownload" data-en="Download the card" data-zh="下載這張卡">Download the card</button>
+      <button type="button" id="lmSaveClose" data-en="Close" data-zh="關閉">Close</button>
+    </div>
+    <p class="lm-save-note" id="lmSaveNote" data-en="This picture is the card." data-zh="這張圖就是這張卡。">This picture is the card.</p>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict';
@@ -555,7 +686,16 @@
   var idEl = document.getElementById('lmId');
   var copyBtn = document.getElementById('lmCopy');
   var againBtn = document.getElementById('lmAgain');
+  var saveBtn = document.getElementById('lmSave');
+  var downloadBtn = document.getElementById('lmDownload');
+  var seeSavedBtn = document.getElementById('lmSeeSaved');
+  var savedLine = document.getElementById('lmSavedLine');
   var copyStatus = document.getElementById('lmCopyStatus');
+  var saveSheet = document.getElementById('lmSaveSheet');
+  var saveImg = document.getElementById('lmSaveImg');
+  var saveShareBtn = document.getElementById('lmSaveShare');
+  var saveDownloadBtn = document.getElementById('lmSaveDownload');
+  var saveCloseBtn = document.getElementById('lmSaveClose');
   var art = document.getElementById('lmArt');
   var figure = document.getElementById('lmFigure');
   var ctx = canvas.getContext('2d', { alpha: true });
@@ -637,7 +777,8 @@
 
   /*
    * Lightprint ID — unique to this person and this moment, not lifetime-once.
-   * LP- + 8 symbols. Nothing is written to an account or kept as the only ID.
+   * LP- + 8 symbols. Nothing is written to an account.
+   * Save the card keeps this ID on this device only. Another play makes another ID.
    * Payload (ASCII, joined by |):
    *   lm1, visitSalt, sealEpochMs, nonce, durationMs, peakFingers, sampleCount, samples
    * visitSalt: random per page view (this visit).
@@ -777,7 +918,7 @@
     ctx.clearRect(0, 0, stage.clientWidth, stage.clientHeight);
     arcBar.style.transform = 'scaleX(0)';
     setHint(hintForRest());
-    copyStatus.textContent = '';
+    setStatus('');
   }
 
   function startPlay() {
@@ -807,9 +948,10 @@
     window.setTimeout(function () {
       cancelAnimationFrame(raf);
       idEl.textContent = currentId;
-      copyStatus.textContent = '';
       show('end');
       placeEndArt();
+      if (rememberCard(currentId)) setStatus('saved');
+      else setStatus('nosave');
       idEl.focus({ preventScroll: true });
     }, 680);
   }
@@ -917,11 +1059,14 @@
     var fail = lang() === 'zh' ? '請直接選取光紋 ID。' : 'Select the Lightprint ID above.';
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(currentId).then(function () {
+        statusKey = '';
         copyStatus.textContent = done;
       }).catch(function () {
+        statusKey = '';
         copyStatus.textContent = fail;
       });
     } else {
+      statusKey = '';
       copyStatus.textContent = fail;
     }
   });
@@ -930,8 +1075,16 @@
     currentId = '';
     idEl.textContent = '';
     show('open');
+    refreshSavedLine();
     window.scrollTo(0, 0);
   });
+
+  saveBtn.addEventListener('click', function () { saveCard(); });
+  downloadBtn.addEventListener('click', function () { downloadCard(false); });
+  seeSavedBtn.addEventListener('click', showSavedCard);
+  saveShareBtn.addEventListener('click', shareFromSheet);
+  saveDownloadBtn.addEventListener('click', function () { downloadCard(true); });
+  saveCloseBtn.addEventListener('click', closeSaveSheet);
 
   window.addEventListener('resize', function () {
     if (phase === 'play') resize();
@@ -939,11 +1092,397 @@
 
   var langWatch = new MutationObserver(function () {
     if (phase === 'play' && hintEl.dataset[lang()]) hintEl.textContent = hintEl.dataset[lang()];
+    if (statusKey) setStatus(statusKey);
     stage.setAttribute('aria-label', lang() === 'zh'
       ? '盛明。觸碰聚起很亮的光。四指封上。桌面點擊可封上。'
       : 'Eternal Sun. Touch to gather a bright light. Four fingers seal. A click seals on desktop.');
   });
   langWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+
+  var SAVE_KEY = 'ae_lightprint_memory';
+  var statusKey = '';
+  var cardBusy = false;
+  var saveSheetUrl = '';
+  var saveSheetBlob = null;
+  var saveSheetFile = null;
+  var saveSheetName = '';
+
+  var STATUS = {
+    saved: {
+      en: 'Card saved on this device.',
+      zh: '這張卡已存在這台裝置上。'
+    },
+    savedFile: {
+      en: 'Card saved on this device. Download the card if you want the picture.',
+      zh: '這張卡已存在這台裝置上。若要圖片，請下載這張卡。'
+    },
+    preparing: {
+      en: 'Preparing the card…',
+      zh: '正在準備這張卡…'
+    },
+    downloaded: {
+      en: 'Card download started.',
+      zh: '已開始下載這張卡。'
+    },
+    opened: {
+      en: 'Card download started. If it does not appear, long-press the image and choose Save Image.',
+      zh: '已開始下載這張卡。若沒有出現，長按圖片，選擇儲存影像。'
+    },
+    shared: {
+      en: 'Card shared or saved.',
+      zh: '卡片已分享或已儲存。'
+    },
+    abort: {
+      en: 'Share closed. The card is still saved on this device.',
+      zh: '分享已關閉。這張卡仍存在這台裝置上。'
+    },
+    sheet: {
+      en: 'Long-press the image, then choose Save Image.',
+      zh: '長按圖片，然後選擇儲存影像。'
+    },
+    error: {
+      en: 'Could not create the card. Please try again.',
+      zh: '無法建立這張卡，請再試一次。'
+    },
+    nosave: {
+      en: 'This browser did not keep the card. Download it instead.',
+      zh: '這個瀏覽器沒有把卡留下。請改下載。'
+    }
+  };
+
+  function setStatus(key) {
+    statusKey = key || '';
+    if (!copyStatus) return;
+    var pack = STATUS[statusKey];
+    copyStatus.textContent = pack ? pack[lang()] : '';
+  }
+
+  function readSaved() {
+    try {
+      var data = JSON.parse(localStorage.getItem(SAVE_KEY) || '');
+      if (data && /^LP-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{8}$/.test(data.code)) return data;
+    } catch (err) { /* private mode or bad json */ }
+    return null;
+  }
+
+  function rememberCard(code) {
+    if (!code) return false;
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        code: code,
+        label: 'AE · ' + code,
+        sealedAt: new Date().toISOString(),
+        v: '1.3',
+        source: 'lightprint-memory'
+      }));
+      refreshSavedLine();
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function refreshSavedLine() {
+    if (!savedLine) return;
+    savedLine.hidden = !readSaved();
+  }
+
+  function showSavedCard() {
+    var saved = readSaved();
+    if (!saved) return;
+    currentId = saved.code;
+    idEl.textContent = saved.code;
+    show('end');
+    placeEndArt();
+    setStatus('saved');
+    idEl.focus({ preventScroll: true });
+  }
+
+  function isAppleTouch() {
+    var ua = navigator.userAgent || '';
+    return /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    var radius = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + radius, y);
+    c.arcTo(x + w, y, x + w, y + h, radius);
+    c.arcTo(x + w, y + h, x, y + h, radius);
+    c.arcTo(x, y + h, x, y, radius);
+    c.arcTo(x, y, x + w, y, radius);
+    c.closePath();
+  }
+
+  function coverBox(nw, nh, dw, dh, scale) {
+    var s = Math.max(dw / nw, dh / nh) * (scale || 1);
+    var w = nw * s;
+    var h = nh * s;
+    return { x: (dw - w) / 2, y: (dh - h) / 2, w: w, h: h };
+  }
+
+  function containBox(nw, nh, dw, dh) {
+    var s = Math.min(1, dw / nw, dh / nh);
+    var w = nw * s;
+    var h = nh * s;
+    return { x: (dw - w) / 2, y: (dh - h) / 2, w: w, h: h };
+  }
+
+  function wrapLines(c, text, maxWidth) {
+    var lines = [];
+    var line = '';
+    var parts = text.indexOf(' ') === -1 ? text.split('') : text.split(' ');
+    var joiner = text.indexOf(' ') === -1 ? '' : ' ';
+    for (var i = 0; i < parts.length; i++) {
+      var test = line ? line + joiner + parts[i] : parts[i];
+      if (c.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = parts[i];
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function drawLines(c, lines, x, y, gap) {
+    for (var i = 0; i < lines.length; i++) {
+      c.fillText(lines[i], x, y);
+      y += gap;
+    }
+    return y;
+  }
+
+  function dataUrlToBlob(data) {
+    var bin = atob(data.split(',')[1]);
+    var arr = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: 'image/png' });
+  }
+
+  function fillTracked(c, text, x, y, tracking) {
+    var total = 0;
+    var i;
+    for (i = 0; i < text.length; i++) total += c.measureText(text[i]).width + tracking;
+    if (text.length) total -= tracking;
+    var cursor = x - total / 2;
+    var prev = c.textAlign;
+    c.textAlign = 'left';
+    for (i = 0; i < text.length; i++) {
+      c.fillText(text[i], cursor, y);
+      cursor += c.measureText(text[i]).width + tracking;
+    }
+    c.textAlign = prev;
+  }
+
+  function paintCardFile() {
+    if (!endArt || !endArt.naturalWidth) throw new Error('art');
+    var W = 1080;
+    var H = 1440;
+    var cv = document.createElement('canvas');
+    cv.width = W;
+    cv.height = H;
+    var c = cv.getContext('2d');
+    c.clearRect(0, 0, W, H);
+    c.save();
+    roundRect(c, 0, 0, W, H, 48);
+    c.clip();
+    c.fillStyle = '#f3eee6';
+    c.fillRect(0, 0, W, H);
+    var img = endArt;
+    if (img && img.naturalWidth) {
+      var fill = coverBox(img.naturalWidth, img.naturalHeight, W, H, 1.48);
+      c.save();
+      c.filter = 'blur(22px) saturate(1.16) brightness(1.04)';
+      c.drawImage(img, fill.x, fill.y, fill.w, fill.h);
+      c.restore();
+      var sharp = document.createElement('canvas');
+      sharp.width = W;
+      sharp.height = H;
+      var sc = sharp.getContext('2d');
+      var box = containBox(img.naturalWidth, img.naturalHeight, W, H);
+      sc.drawImage(img, box.x, box.y, box.w, box.h);
+      sc.globalCompositeOperation = 'destination-in';
+      var mask = sc.createRadialGradient(W / 2, H * 0.48, Math.min(W, H) * 0.12, W / 2, H * 0.48, Math.min(W, H) * 0.42);
+      mask.addColorStop(0, 'rgba(0,0,0,1)');
+      mask.addColorStop(0.28, 'rgba(0,0,0,1)');
+      mask.addColorStop(0.74, 'rgba(0,0,0,0)');
+      sc.fillStyle = mask;
+      sc.fillRect(0, 0, W, H);
+      c.save();
+      c.globalAlpha = 0.7;
+      c.drawImage(sharp, 0, 0);
+      c.restore();
+    }
+    var veil = c.createRadialGradient(W / 2, H * 0.46, W * 0.05, W / 2, H * 0.46, W * 0.48);
+    veil.addColorStop(0, 'rgba(255,250,244,0.46)');
+    veil.addColorStop(0.48, 'rgba(255,250,244,0.18)');
+    veil.addColorStop(0.76, 'rgba(255,250,244,0)');
+    c.fillStyle = veil;
+    c.fillRect(0, 0, W, H);
+
+    var zh = lang() === 'zh';
+    var ink = '#202622';
+    var muted = '#626b65';
+    c.textAlign = 'center';
+    c.fillStyle = muted;
+    c.font = '500 22px "Noto Sans TC", Arial, sans-serif';
+    c.fillText('AE UNIVERSE CREATION', W / 2, 250);
+    c.fillStyle = ink;
+    c.font = '500 72px "Cormorant Garamond", "Noto Serif TC", Georgia, serif';
+    c.fillText('光紋記憶', W / 2, 340);
+    c.font = '500 64px "Cormorant Garamond", Georgia, serif';
+    fillTracked(c, currentId || '', W / 2, 450, 10);
+    c.fillStyle = muted;
+    c.font = '500 22px "Noto Sans TC", Arial, sans-serif';
+    c.fillText(zh ? '光紋 ID' : 'LIGHTPRINT ID', W / 2, 510);
+    c.font = '400 28px "Noto Sans TC", "Noto Serif TC", Arial, sans-serif';
+    var finger = zh
+      ? '像指紋一樣，只屬於這個人、這一刻。進入 AE 世界的入場券，不是販售的商品。'
+      : 'Like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product for sale.';
+    var y = drawLines(c, wrapLines(c, finger, 820), W / 2, 590, 42);
+    c.fillStyle = ink;
+    c.font = '500 40px "Cormorant Garamond", Georgia, serif';
+    c.fillText('Make this world a better place.', W / 2, y + 36);
+    c.fillText('Actions create infinity.', W / 2, y + 96);
+    c.restore();
+    return cv;
+  }
+
+  function cardPack() {
+    var cv = paintCardFile();
+    var blob = dataUrlToBlob(cv.toDataURL('image/png'));
+    var filename = 'AE_Lightprint_Memory_' + (currentId || 'card') + '.png';
+    var file = null;
+    try { file = new File([blob], filename, { type: 'image/png' }); } catch (err) { file = null; }
+    return { blob: blob, filename: filename, file: file };
+  }
+
+  function triggerDownload(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+
+  function closeSaveSheet() {
+    if (!saveSheet) return;
+    saveSheet.classList.remove('is-open');
+    saveSheet.setAttribute('aria-hidden', 'true');
+    saveSheet.hidden = true;
+    if (saveImg) saveImg.removeAttribute('src');
+    if (saveSheetUrl) {
+      try { URL.revokeObjectURL(saveSheetUrl); } catch (err) { /* already gone */ }
+      saveSheetUrl = '';
+    }
+    saveSheetBlob = null;
+    saveSheetFile = null;
+    saveSheetName = '';
+  }
+
+  function openSaveSheet(pack) {
+    if (!saveSheet || !saveImg || !pack) return;
+    closeSaveSheet();
+    saveSheetBlob = pack.blob;
+    saveSheetFile = pack.file;
+    saveSheetName = pack.filename;
+    saveSheetUrl = URL.createObjectURL(pack.blob);
+    saveImg.src = saveSheetUrl;
+    saveImg.alt = lang() === 'zh' ? '光紋記憶卡片' : 'Lightprint Memory card';
+    if (saveShareBtn) {
+      var can = false;
+      if (pack.file && navigator.share && navigator.canShare) {
+        try { can = navigator.canShare({ files: [pack.file] }); } catch (err) { can = false; }
+      }
+      saveShareBtn.hidden = !can;
+    }
+    saveSheet.hidden = false;
+    saveSheet.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(function () { saveSheet.classList.add('is-open'); });
+  }
+
+  async function shareFromSheet() {
+    if (!saveSheetBlob || !saveSheetFile || !navigator.share) return;
+    try {
+      await navigator.share({
+        files: [saveSheetFile],
+        title: '光紋記憶',
+        text: currentId || ''
+      });
+      setStatus('shared');
+    } catch (err) {
+      if (err && err.name === 'AbortError') setStatus('abort');
+      else setStatus('sheet');
+    }
+  }
+
+  function saveCard() {
+    if (!currentId || cardBusy) return;
+    cardBusy = true;
+    saveBtn.disabled = true;
+    var kept = rememberCard(currentId);
+    setStatus('preparing');
+    try {
+      var pack = cardPack();
+      var canShare = !!(pack.file && navigator.share && navigator.canShare && navigator.canShare({ files: [pack.file] }));
+      if (canShare) {
+        navigator.share({
+          files: [pack.file],
+          title: '光紋記憶',
+          text: currentId
+        }).then(function () {
+          setStatus(kept ? 'saved' : 'shared');
+        }).catch(function (err) {
+          if (err && err.name === 'AbortError') setStatus('abort');
+          else {
+            openSaveSheet(pack);
+            setStatus('sheet');
+          }
+        });
+        return;
+      }
+      if (isAppleTouch() || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) {
+        openSaveSheet(pack);
+        setStatus('sheet');
+        return;
+      }
+      setStatus(kept ? 'savedFile' : 'nosave');
+    } catch (err) {
+      setStatus(kept ? 'error' : 'error');
+    } finally {
+      cardBusy = false;
+      saveBtn.disabled = false;
+    }
+  }
+
+  function downloadCard(fromSheet) {
+    if (!currentId || cardBusy) return;
+    cardBusy = true;
+    if (downloadBtn) downloadBtn.disabled = true;
+    setStatus('preparing');
+    try {
+      var pack = cardPack();
+      triggerDownload(pack.blob, pack.filename);
+      if (isAppleTouch() && !fromSheet) {
+        openSaveSheet(pack);
+        setStatus('opened');
+      } else {
+        setStatus('downloaded');
+      }
+    } catch (err) {
+      setStatus('error');
+    } finally {
+      cardBusy = false;
+      if (downloadBtn) downloadBtn.disabled = false;
+    }
+  }
 
   function loadLayer(img, onOk, onFail) {
     var sources = [img.getAttribute('data-asset-slot'), img.getAttribute('data-fallback')].filter(Boolean);
@@ -997,6 +1536,15 @@
     finePointer = !coarsePointer.matches;
     if (phase === 'play' && fingerBucket !== 'add') setHint(hintForRest());
   });
+
+  refreshSavedLine();
+  if (document.fonts && document.fonts.load) {
+    document.fonts.load('500 72px "Cormorant Garamond"');
+    document.fonts.load('500 64px "Cormorant Garamond"');
+    document.fonts.load('500 40px "Cormorant Garamond"');
+    document.fonts.load('400 28px "Noto Sans TC"');
+    document.fonts.load('500 22px "Noto Sans TC"');
+  }
 })();
 </script>
 </body>
