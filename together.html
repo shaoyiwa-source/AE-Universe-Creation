@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生火焰，光紋共創 · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v11"/>
+<meta name="ae-preview-version" content="together-v12"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -224,9 +224,11 @@ function savedPass() {
     if (!data || !CODE_RE.test(data.code) || !Array.isArray(data.marks)) return null;
     if (!bornOk(data.born)) data.born = null;
     const pickOk = data.pick === 0 || data.pick === 1 || data.pick === 2;
-    if (!data.born || !pickOk || !/^\d{10}$/.test(data.ticket || '')) {
+    const chosen = data.figure === 'maomao' && data.born && pickOk && /^\d{10}$/.test(data.ticket || '');
+    if (!chosen) {
       data.pick = null;
       data.ticket = null;
+      data.figure = null;
     }
     return data;
   } catch (error) {
@@ -507,18 +509,27 @@ function paintTicket(pass) {
 }
 function syncStage() {
   const pass = savedPass();
-  const locked = !!(pass && pass.ticket);
+  const locked = !!(pass && pass.figure === 'maomao' && pass.ticket);
+  const choosing = !!(pass && pass.born && !locked);
   paintChoices();
   document.getElementById('birthYear').setAttribute('aria-label', lang() === 'zh' ? '年' : 'Year');
   document.getElementById('birthMonth').setAttribute('aria-label', lang() === 'zh' ? '月' : 'Month');
   document.getElementById('birthDay').setAttribute('aria-label', lang() === 'zh' ? '日' : 'Day');
-  document.getElementById('ask').hidden = !pass || locked;
-  document.getElementById('figures').hidden = !pass || !pass.born || locked;
+  document.getElementById('ask').hidden = !pass || choosing || locked;
+  document.getElementById('figures').hidden = !choosing;
   document.getElementById('dollar').hidden = !locked;
   document.getElementById('makeBtn').hidden = !!pass;
-  if (pass && pass.born && !locked) {
+  if (choosing) {
     fillAsk(pass);
     paintFigures(pass);
+    const row = document.getElementById('figures');
+    const board = document.getElementById('board');
+    if (row && board && board.children.length && row.dataset.seen !== '1') {
+      row.dataset.seen = '1';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (row.scrollIntoView) row.scrollIntoView({ block: 'nearest' });
+      }));
+    }
   }
   if (locked) {
     paintTicket(pass);
@@ -540,6 +551,7 @@ function showFigures() {
   pass.born = born;
   pass.pick = null;
   pass.ticket = null;
+  pass.figure = null;
   const live = overlapList();
   if (live.length) pass.overlap = live;
   localStorage.setItem(PASS_KEY, JSON.stringify(pass));
@@ -548,8 +560,9 @@ function showFigures() {
 }
 function chooseFigure(index) {
   const pass = savedPass();
-  if (!pass || !pass.born || pass.ticket) return;
+  if (!pass || !pass.born || (pass.figure === 'maomao' && pass.ticket)) return;
   if (index !== 0 && index !== 1 && index !== 2) return;
+  pass.figure = 'maomao';
   pass.pick = index;
   pass.ticket = ticketDigits(pass, index);
   const live = overlapList();
