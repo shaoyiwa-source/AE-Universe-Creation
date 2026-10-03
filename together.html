@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生火焰，光紋共創 · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v12"/>
+<meta name="ae-preview-version" content="together-v13"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -218,11 +218,47 @@ function handId() {
   }
 }
 const PASS_KEY = 'ae_together_pass';
+const PASS_EPOCH = '3';
+function forgetStalePass() {
+  let discarded = '';
+  try {
+    const raw = localStorage.getItem(PASS_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (!data || data.epoch !== PASS_EPOCH) {
+        discarded = data && typeof data.code === 'string' ? data.code : '';
+        localStorage.removeItem(PASS_KEY);
+      }
+    }
+  } catch (error) {
+    try { localStorage.removeItem(PASS_KEY); } catch (err) { /* private mode */ }
+  }
+  if (!discarded) return;
+  try {
+    const kept = JSON.parse(localStorage.getItem('ae_lightprint') || '');
+    if (kept && kept.code === discarded && kept.source === 'together') localStorage.removeItem('ae_lightprint');
+  } catch (error) { /* leave other pages alone */ }
+  try {
+    const params = new URLSearchParams(location.search);
+    if (params.get('lp') === discarded) {
+      params.delete('lp');
+      const query = params.toString();
+      history.replaceState(null, '', location.pathname + (query ? '?' + query : ''));
+    }
+  } catch (error) { /* keep the address */ }
+}
+forgetStalePass();
 function savedPass() {
   try {
     const data = JSON.parse(localStorage.getItem(PASS_KEY) || '');
-    if (!data || !CODE_RE.test(data.code) || !Array.isArray(data.marks)) return null;
+    if (!data || data.epoch !== PASS_EPOCH || !CODE_RE.test(data.code) || !Array.isArray(data.marks)) {
+      if (data) {
+        try { localStorage.removeItem(PASS_KEY); } catch (err) { /* private mode */ }
+      }
+      return null;
+    }
     if (!bornOk(data.born)) data.born = null;
+    if (data.asked !== true) data.born = null;
     const pickOk = data.pick === 0 || data.pick === 1 || data.pick === 2;
     const chosen = data.figure === 'maomao' && data.born && pickOk && /^\d{10}$/.test(data.ticket || '');
     if (!chosen) {
@@ -510,7 +546,7 @@ function paintTicket(pass) {
 function syncStage() {
   const pass = savedPass();
   const locked = !!(pass && pass.figure === 'maomao' && pass.ticket);
-  const choosing = !!(pass && pass.born && !locked);
+  const choosing = !!(pass && pass.asked === true && pass.born && !locked);
   paintChoices();
   document.getElementById('birthYear').setAttribute('aria-label', lang() === 'zh' ? '年' : 'Year');
   document.getElementById('birthMonth').setAttribute('aria-label', lang() === 'zh' ? '月' : 'Month');
@@ -549,6 +585,7 @@ function showFigures() {
   }
   note.textContent = '';
   pass.born = born;
+  pass.asked = true;
   pass.pick = null;
   pass.ticket = null;
   pass.figure = null;
@@ -610,7 +647,7 @@ function makePass() {
     symbol: mark.symbol,
     yours: !!mark.yours
   }));
-  localStorage.setItem(PASS_KEY, JSON.stringify({ code: id, marks: picture, v: 2, born: null, pick: null, ticket: null, overlap: overlapList() }));
+  localStorage.setItem(PASS_KEY, JSON.stringify({ code: id, marks: picture, v: 2, epoch: PASS_EPOCH, asked: false, born: null, pick: null, ticket: null, overlap: overlapList() }));
   try {
     const kept = JSON.parse(localStorage.getItem('ae_lightprint') || '');
     if (!kept || !CODE_RE.test(kept.code)) {
