@@ -200,6 +200,8 @@
     pointer-events:none;z-index:4;user-select:none;-webkit-user-select:none;
   }
   .cm-lightprint[hidden]{display:none!important}
+  .cm-pass-qr{display:block;width:132px;height:132px;margin:14px 0 0;background:#fff;image-rendering:pixelated}
+  .cm-pass-qr[hidden]{display:none!important}
 
   /* v2451 Lightprint sparse memorial card */
   .cm-opening-kicker{
@@ -739,7 +741,8 @@
             <p class="cm-toast" id="cmToast" role="status" aria-live="polite"></p>
           </div>
           <!-- Quiet watermark corner — Owner lock: pale, small, not competing with art -->
-          <p class="cm-lightprint" id="cmLightprint" hidden></p>
+            <img class="cm-pass-qr" id="cmPassQr" alt="" width="132" height="132" hidden>
+            <p class="cm-lightprint" id="cmLightprint" hidden></p>
         </article>
       </div>
 
@@ -791,6 +794,7 @@
   </div>
 </div>
 
+<script src="qrcode.js"></script>
 <script>
 (() => {
   /* Larger pool — each session draws 3–4, shuffled. Scoring stays under the hood. */
@@ -2180,7 +2184,7 @@
     long:    [{zh:'你走了一條長長的光路。',en:'You walked a long path of light.'},{zh:'時間在指尖拉長，影慢慢站起。',en:'Time stretched at the fingertip; the shade rose slowly.'}]
   };
   const LORE_C = [
-    {zh:'同一道光紋，會長成同一道影；再感覺一次，就是新的光紋。',en:'The same Lightprint grows the same shade; feel again, and a new Lightprint begins.'},
+    {zh:'同一道光紋，會長成同一道影。再來，還是這一張。',en:'The same Lightprint keeps the same shade. Coming back shows this one.'},
     {zh:'之後若問外形，那是下一兩問的事——此刻先讓影站好。',en:'Form questions come later (1–2 soft asks) — for now, let the shade stand.'},
     {zh:'沒有對錯；只要靠近你現在的感覺。',en:'No right or wrong — only nearer to how you feel now.'},
     {zh:'這張紀念卡上，寫的是光紋記憶，不是編號演說。',en:'This memorial holds Lightprint Memory — not a spoken serial.'}
@@ -2535,7 +2539,79 @@
     };
   }
 
+  function keptRecord() {
+    try {
+      const data = JSON.parse(localStorage.getItem(LP_STORAGE_KEY) || '');
+      return data && isValidLightprintCode(data.code) ? data : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function lightprintQrPayload(id) {
+    return location.origin + '/together?lp=' + id;
+  }
+
+  function drawKeptQr(id) {
+    const img = document.getElementById('cmPassQr');
+    if (!img || !isValidLightprintCode(id) || typeof qrcode !== 'function') return;
+    const payload = lightprintQrPayload(id);
+    const qr = qrcode(0, 'M');
+    qr.addData(payload);
+    qr.make();
+    img.src = qr.createDataURL(4, 16);
+    img.dataset.payload = payload;
+    img.hidden = false;
+    img.alt = lang() === 'zh' ? '這張光紋的 QR code' : 'QR code for this Lightprint';
+  }
+
+  function restoreKept() {
+    const kept = keptRecord();
+    const residue = loadResidue();
+    if (!kept && !(residue && isValidLightprintCode(residue.code))) return false;
+    const id = kept ? kept.code : residue.code;
+    if (residue && residue.code === id) {
+      lightTouches = (residue.path || []).map(p => ({
+        nx: p.nx, ny: p.ny, t: p.t || 0, id: p.id || 0, kind: p.kind || 'move'
+      }));
+      if (residue.mood && MOODS[residue.mood]) activeMood = MOODS[residue.mood];
+      else activeMood = {
+        id: residue.mood || 'gold',
+        zh: residue.moodZh || '永恆當下',
+        en: residue.moodEn || 'Eternal present',
+        palette: residue.palette || []
+      };
+      if (residue.art) activeArt = residue.art;
+      if (residue.reading) activeReading = residue.reading;
+      if (residue.ritual) activeRitual = residue.ritual;
+      sessionAnswers = residue.answers || [];
+      sealedResidue = residue;
+    } else if (!activeMood) {
+      activeMood = { id: 'gold', zh: '永恆當下', en: 'Eternal present', palette: [] };
+    }
+    lightprintCode = id;
+    lightSealed = true;
+    askEl.hidden = true;
+    bloomWrap.hidden = false;
+    afterEl.hidden = false;
+    bloomReady = true;
+    started = true;
+    if (hint) hint.classList.add('is-hidden');
+    if (sealBar) sealBar.hidden = true;
+    if (replay) replay.hidden = true;
+    setSoloPhase('done');
+    try { birthLightprintFigure(); } catch (err) { /* ignore */ }
+    renderCard();
+    drawKeptQr(id);
+    return true;
+  }
+
   function persistLightprint(code) {
+    const existing = keptRecord();
+    if (existing) {
+      lightprintCode = existing.code;
+      return existing;
+    }
     const record = buildResidue(code);
     sealedResidue = record;
     try { localStorage.setItem(LP_STORAGE_KEY, JSON.stringify({
@@ -2872,6 +2948,10 @@
   }
 
   function sealLight() {
+    if (keptRecord()) {
+      restoreKept();
+      return;
+    }
     if (lightSealed || !bloomReady || !activeMood) return;
     cancelSealHold(true);
     activePointers = Object.create(null);
@@ -2963,6 +3043,8 @@
       loreEl.hidden = true;
       loreEl.innerHTML = '';
     }
+    if (replay) replay.hidden = !!keptRecord();
+    if (isValidLightprintCode(lightprintCode)) drawKeptQr(lightprintCode);
     if (lightprintEl) {
       const label = lightprintLabel();
       if (label) {
@@ -3032,6 +3114,10 @@
   }
 
   function enterBloom() {
+    if (keptRecord()) {
+      restoreKept();
+      return;
+    }
     // Soft white wash, then bloom + slowly floating result card.
     runWash(true);
     window.setTimeout(() => {
@@ -4073,6 +4159,10 @@
   }
 
   function resetAll() {
+    if (keptRecord()) {
+      restoreKept();
+      return;
+    }
     qIndex = 0;
     tagScores = Object.create(null);
     sessionAnswers = [];
@@ -4184,9 +4274,11 @@
     if (blooms.length && !raf) raf = requestAnimationFrame(tick);
   });
 
-  sessionQs = drawSession();
-  setSoloPhase('ask');
-  showQuestion();
+  if (!restoreKept()) {
+    sessionQs = drawSession();
+    setSoloPhase('ask');
+    showQuestion();
+  }
   syncResidueBanner();
 })();
 </script>

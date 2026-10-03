@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>One table · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v5"/>
+<meta name="ae-preview-version" content="together-v6"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -134,14 +134,22 @@ function capturedLightprint() {
     return '';
   }
 }
+let mintedRoom = false;
 function roomCode() {
   const params = new URLSearchParams(location.search);
   const given = params.get('lp') || '';
   if (CODE_RE.test(given)) return given;
-  const code = capturedLightprint() || pick(8, 'LP-');
-  params.set('lp', code);
+  const kept = capturedLightprint();
+  if (kept) {
+    params.set('lp', kept);
+    history.replaceState(null, '', location.pathname + '?' + params.toString());
+    return kept;
+  }
+  mintedRoom = true;
+  const next = pick(8, 'LP-');
+  params.set('lp', next);
   history.replaceState(null, '', location.pathname + '?' + params.toString());
-  return code;
+  return next;
 }
 
 const code = roomCode();
@@ -204,17 +212,33 @@ function renderMarks() {
   if (board) board.setAttribute('aria-label', lang() === 'zh' ? '九扇門' : 'Nine doors');
   const qrImg = document.getElementById('passQr');
   if (qrImg) qrImg.alt = lang() === 'zh' ? '這張光紋的 QR code' : 'QR code for this Lightprint';
-  document.getElementById('dollar').hidden = !state.marks.some((mark) => mark.yours);
+  document.getElementById('dollar').hidden = !capturedLightprint();
+}
+function lockLightprint() {
+  const kept = capturedLightprint();
+  if (kept) return kept;
+  const id = mintedRoom ? code : pick(8, 'LP-');
+  try {
+    localStorage.setItem('ae_lightprint', JSON.stringify({
+      code: id,
+      label: 'AE · ' + id,
+      sealedAt: new Date().toISOString(),
+      v: '1.2'
+    }));
+  } catch (error) { /* private mode */ }
+  return id;
 }
 function drawPass() {
-  const payload = shareUrl();
+  const id = capturedLightprint();
+  if (!id) return;
+  const payload = location.origin + '/together?lp=' + id;
   const qr = qrcode(0, 'M');
   qr.addData(payload);
   qr.make();
   const img = document.getElementById('passQr');
   img.src = qr.createDataURL(4, 16);
   img.dataset.payload = payload;
-  document.getElementById('passCode').textContent = capturedLightprint() || code;
+  document.getElementById('passCode').textContent = id;
 }
 function openDoor(cell) {
   if (!cell) return;
@@ -256,6 +280,8 @@ async function pull() {
   else if (!note.dataset.hold) note.textContent = '';
 }
 async function tap(art) {
+  lockLightprint();
+  drawPass();
   openDoor(document.querySelector('.cell[data-i="' + art + '"]'));
   const symbol = SYMBOLS[state.mine % SYMBOLS.length];
   state.mine += 1;
