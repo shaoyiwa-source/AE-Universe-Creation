@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>One table · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v3"/>
+<meta name="ae-preview-version" content="together-v4"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -26,10 +26,25 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .how{margin:0 0 8px;line-height:1.45;color:#ddd4c8;font-size:16px}
 .code{margin:0;color:var(--muted);letter-spacing:.14em;font-size:12px}
 .board{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(100%,calc((100dvh - 330px) * 9 / 16));margin:12px auto;padding:6px;border:1px solid var(--line);border-radius:22px}
-.cell{position:relative;aspect-ratio:9/16;padding:0;border:0;border-radius:13px;overflow:hidden;background:#141210;cursor:pointer}
+.cell{position:relative;aspect-ratio:9/16;padding:0;border:0;border-radius:13px;overflow:hidden;background:#141210;cursor:pointer;perspective:800px;box-shadow:inset 0 0 0 1px rgba(255,248,235,.28)}
 .cell img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.9);transition:filter .35s ease}
 .cell.is-born img{filter:brightness(1.4) saturate(1.35) contrast(1.05)}
+.cell::after{content:"";position:absolute;left:calc(50% - .5px);top:5%;bottom:5%;width:1px;background:rgba(255,250,240,.45);z-index:3;pointer-events:none}
+.cell.opening{overflow:visible;z-index:5}
+.cell.opening::after{opacity:0}
+.cell.opening img{filter:brightness(1.65) saturate(1.2)}
+.door{position:absolute;inset:0;z-index:8;pointer-events:none;transform-style:preserve-3d}
+.leaf{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backface-visibility:hidden}
+.leaf.left{clip-path:inset(0 50% 0 0);transform-origin:left center;animation:swing-l .92s ease forwards}
+.leaf.right{clip-path:inset(0 0 0 50%);transform-origin:right center;animation:swing-r .92s ease forwards}
+.beam{position:absolute;left:34%;width:32%;height:78%;bottom:16%;border-radius:999px;background:linear-gradient(to top,rgba(255,228,170,0),rgba(255,252,245,.98) 40%,rgba(255,255,255,0));filter:blur(.3px);z-index:9;animation:beam-out .92s ease forwards}
+@keyframes swing-l{0%{transform:translateX(0) rotateY(0)}32%{transform:translateX(-22%) rotateY(-70deg)}58%{transform:translateX(-22%) rotateY(-70deg)}100%{transform:translateX(0) rotateY(0)}}
+@keyframes swing-r{0%{transform:translateX(0) rotateY(0)}32%{transform:translateX(22%) rotateY(70deg)}58%{transform:translateX(22%) rotateY(70deg)}100%{transform:translateX(0) rotateY(0)}}
+@keyframes beam-out{0%{opacity:0;transform:translateY(24%) scale(.65)}28%{opacity:1;transform:translateY(-8%) scale(1)}100%{opacity:0;transform:translateY(-175%) scale(1.2)}}
 .cell:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){
+  .leaf,.beam{animation:none}
+}
 .born{position:absolute;left:50%;top:48%;width:72%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;z-index:1;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.55) 0 8%,rgba(255,255,255,.08) 18%,transparent 34%,rgba(255,252,245,.95) 46%,rgba(255,236,196,.15) 54%,transparent 64%);box-shadow:0 0 28px rgba(255,248,230,.75)}
 .mark{position:absolute;z-index:2;width:26%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;transform:translate(-50%,-50%);color:#1a140f;font:400 clamp(13px,3.6vw,20px)/1 Georgia,serif;box-shadow:0 0 0 2px rgba(255,255,255,.8);pointer-events:none}
 .mark.you{background:radial-gradient(circle at 35% 25%,#fff7d8,var(--gold) 62%,#b8893e)}
@@ -40,7 +55,6 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .dollar{margin:18px 0 0}
 .dollar[hidden]{display:none}
 .reason{margin:0;color:#ddd4c8;font-size:15px;line-height:1.5}
-.pattern{margin:8px 0 0;color:#c8c0b4;font-size:14px;line-height:1.45}
 .kofi{margin:8px 0 0;color:#9c958b;font-size:12px}
 .kofi a{text-underline-offset:3px}
 .shop{margin:10px 0 0;color:#7f786f;font-size:11px;line-height:1.45}
@@ -59,9 +73,9 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
     <button class="lang" type="button" data-language>中文</button>
   </div>
   <h1 data-en="One table." data-zh="同一張桌子。">One table.</h1>
-  <p class="how" data-en="Tap an artwork. Where you both touch, the picture grows a light neither of you made alone." data-zh="點一幅作品。兩個人都碰過的地方，會長出一道你們單獨做不出來的光。">Tap an artwork. Where you both touch, the picture grows a light neither of you made alone.</p>
+  <p class="how" data-en="Tap a door. It opens, and the light goes outward. Where you both touch, the picture grows brighter than either of you alone." data-zh="點一扇門。門會打開，光會傳出去。兩個人都碰過的地方，會比單獨一個人更亮。">Tap a door. It opens, and the light goes outward. Where you both touch, the picture grows brighter than either of you alone.</p>
   <p class="code" id="codeLine">AE · ……</p>
-  <div class="board" id="board" aria-label="Nine artworks"></div>
+  <div class="board" id="board" aria-label="Nine doors"></div>
   <div class="below">
     <p class="presence" id="presence" aria-live="polite"></p>
     <p class="count" id="countLine"></p>
@@ -69,8 +83,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
     <p class="note" id="note" aria-live="polite"></p>
   </div>
   <div class="dollar" id="dollar" hidden>
-    <p class="reason" data-en="You just made this picture brighter together, a light neither of you could make alone. A dollar lets that action open the next stage for someone else." data-zh="你們剛剛一起讓這幅作品變得更亮，這道光一個人單獨點不出來。這一塊錢，讓這個動作為下一個人開出下一關。">You just made this picture brighter together, a light neither of you could make alone. A dollar lets that action open the next stage for someone else.</p>
-    <p class="pattern" data-en="Make this world a better place. Actions create infinity." data-zh="讓這個世界更好。動作創造無限。">Make this world a better place. Actions create infinity.</p>
+    <p class="reason" data-en="You opened this door. This dollar goes out with this light." data-zh="你把這扇門打開了。這一塊錢，跟這道光一起傳出去。">You opened this door. This dollar goes out with this light.</p>
     <p class="kofi"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
   </div>
   <p class="shop"><a href="/shop" data-en="The shop can wait." data-zh="商店可以晚一點。">The shop can wait.</a></p>
@@ -122,6 +135,7 @@ const code = roomCode();
 const hand = handId();
 const state = { marks: [], others: 0, shared: true, mine: 0 };
 let files = [];
+let lastDoor = null;
 
 function shareUrl() {
   return location.origin + '/together?lp=' + code;
@@ -129,7 +143,7 @@ function shareUrl() {
 function labelCells() {
   document.querySelectorAll('.cell').forEach((cell) => {
     const n = Number(cell.dataset.i) + 1;
-    cell.setAttribute('aria-label', lang() === 'zh' ? '在作品 ' + n + ' 上留光' : 'Leave a light on artwork ' + n);
+    cell.setAttribute('aria-label', lang() === 'zh' ? '打開第 ' + n + ' 扇門' : 'Open door ' + n);
   });
 }
 function sharedArts() {
@@ -173,7 +187,36 @@ function renderMarks() {
   const presence = document.getElementById('presence');
   if (state.others > 0) say(presence, 'The other hands are here.', '另一雙手到了。');
   else say(presence, 'Waiting for the other hands.', '還在等另一雙手。');
-  document.getElementById('dollar').hidden = both.size === 0;
+  const board = document.getElementById('board');
+  if (board) board.setAttribute('aria-label', lang() === 'zh' ? '九扇門' : 'Nine doors');
+  document.getElementById('dollar').hidden = !state.marks.some((mark) => mark.yours);
+}
+function openDoor(cell) {
+  if (!cell) return;
+  lastDoor = cell;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const img = cell.querySelector(':scope > img');
+  if (!img) return;
+  cell.querySelectorAll('.door').forEach((node) => node.remove());
+  const door = document.createElement('span');
+  door.className = 'door';
+  door.setAttribute('aria-hidden', 'true');
+  ['left', 'right'].forEach((side) => {
+    const leaf = document.createElement('img');
+    leaf.className = 'leaf ' + side;
+    leaf.alt = '';
+    leaf.src = img.currentSrc || img.src;
+    door.appendChild(leaf);
+  });
+  const beam = document.createElement('i');
+  beam.className = 'beam';
+  door.appendChild(beam);
+  cell.classList.add('opening');
+  cell.appendChild(door);
+  window.setTimeout(() => {
+    cell.classList.remove('opening');
+    door.remove();
+  }, 940);
 }
 async function pull() {
   const res = await fetch('/api/together?code=' + code + '&hand=' + hand, { cache: 'no-store' });
@@ -188,6 +231,7 @@ async function pull() {
   else if (!note.dataset.hold) note.textContent = '';
 }
 async function tap(art) {
+  openDoor(document.querySelector('.cell[data-i="' + art + '"]'));
   const symbol = SYMBOLS[state.mine % SYMBOLS.length];
   state.mine += 1;
   const id = pick(8, 'm');
@@ -213,7 +257,7 @@ async function loadArt() {
   if (start < 0 || end < 0) throw new Error('art');
   files = Function('"use strict"; return (' + html.slice(start + 'window.AE_EXPERIENCE_FILES='.length, end) + ');')();
   const board = document.getElementById('board');
-  board.innerHTML = files.slice(0, 9).map((src, i) => '<button class="cell" type="button" data-i="' + i + '" aria-label="Leave a light on artwork ' + (i + 1) + '"><img alt="" src="' + src + '"></button>').join('');
+  board.innerHTML = files.slice(0, 9).map((src, i) => '<button class="cell" type="button" data-i="' + i + '" aria-label="Open door ' + (i + 1) + '"><img alt="" src="' + src + '"></button>').join('');
   labelCells();
   board.querySelectorAll('.cell').forEach((cell) => {
     cell.addEventListener('click', () => tap(Number(cell.dataset.i)).catch(() => say(document.getElementById('note'), 'The light did not stay. Tap once more.', '這道光沒留下。再點一次。')));
@@ -242,6 +286,7 @@ async function share() {
 function boot() {
   document.getElementById('codeLine').textContent = 'AE · ' + code;
   document.getElementById('shareBtn').addEventListener('click', share);
+  document.querySelector('.kofi a').addEventListener('click', () => openDoor(lastDoor));
   renderMarks();
   loadArt().then(pull).catch(() => say(document.getElementById('note'), 'The artworks did not open.', '作品沒有打開。'));
   setInterval(() => pull().catch(() => {}), 1200);
