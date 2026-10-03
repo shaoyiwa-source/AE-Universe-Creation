@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>One table · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v8"/>
+<meta name="ae-preview-version" content="together-v9"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -27,9 +27,9 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .code{margin:0;color:var(--muted);letter-spacing:.14em;font-size:12px}
 .board{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(100%,calc((100dvh - 330px) * 9 / 16));margin:12px auto;padding:6px;border:1px solid var(--line);border-radius:22px}
 .cell{position:relative;aspect-ratio:9/16;padding:0;border:0;border-radius:13px;overflow:hidden;background:#141210;cursor:pointer;perspective:800px;box-shadow:inset 0 0 0 1px rgba(255,248,235,.28)}
-.cell img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.9);transition:filter .35s ease}
+.cell img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(1) saturate(1.05);transition:filter .35s ease}
 .cell.is-born img{filter:brightness(1.4) saturate(1.35) contrast(1.05)}
-.cell::after{content:"";position:absolute;left:calc(50% - .5px);top:5%;bottom:5%;width:1px;background:rgba(255,250,240,.45);z-index:3;pointer-events:none}
+.cell::after{content:"";position:absolute;left:calc(50% - .5px);top:8%;bottom:8%;width:1px;background:rgba(255,250,240,.22);z-index:3;pointer-events:none}
 .cell.opening{overflow:visible;z-index:5}
 .cell.opening::after{opacity:0}
 .cell.opening img{filter:brightness(1.65) saturate(1.2)}
@@ -64,17 +64,20 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .showfigs{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:transparent;color:var(--warm);cursor:pointer}
 .pickline{margin:0 0 8px;color:#ddd4c8}
 .figrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.fig{padding:8px 4px 10px;border-radius:18px;border:1px solid rgba(255,248,235,.35);background:#141210;color:var(--warm);cursor:pointer}
+.fig{padding:8px 4px 10px;border-radius:18px;border:1px solid rgba(255,248,235,.28);background:#141210;color:var(--warm);cursor:pointer}
+.fig:nth-child(1){background:radial-gradient(circle at 50% 38%,#3d311c,#141210 74%)}
+.fig:nth-child(2){background:radial-gradient(circle at 50% 38%,#3c2430,#141210 74%)}
+.fig:nth-child(3){background:radial-gradient(circle at 50% 38%,#2c3036,#141210 74%)}
 .fig svg{width:100%;height:auto;display:block}
-.fig small{display:block;text-align:center;letter-spacing:.14em;font-size:12px;color:#c8bfb2}
-.dollar{background:linear-gradient(180deg,#f7f1e6 0%,#efe2cc 100%);color:#1a1612;border-radius:28px;padding:22px 18px 16px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
-.kicker{margin:0;text-align:center;letter-spacing:.28em;font-size:11px;color:#8a7d6a}
-.ticket-fig{width:min(168px,42vw);margin:6px auto 0}
+.fig small{display:block;text-align:center;letter-spacing:.16em;font-size:11px;color:#c8bfb2}
+.dollar{background:#f4efe6;color:#241c14;border-radius:22px;padding:26px 22px 16px;border:1px solid #e5dccb;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 12px 32px rgba(0,0,0,.22)}
+.kicker{margin:0;text-align:center;letter-spacing:.42em;font-size:10px;color:#9a8d78}
+.ticket-fig{width:min(188px,54vw);margin:4px auto 0}
 .ticket-fig svg{width:100%;height:auto;display:block}
-.ticket-num{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(32px,8vw,44px);letter-spacing:.06em;text-align:center;margin:0 0 12px}
-.pass-qr{display:block;width:148px;height:148px;background:#fff;image-rendering:pixelated;margin:0 auto 12px;border-radius:8px}
-.reason{margin:0;color:#3a332b;font-size:15px;line-height:1.5;text-align:center}
-.kofi{margin:10px 0 0;color:#8a7d6a;font-size:12px;text-align:center}
+.ticket-num{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(26px,6.4vw,34px);letter-spacing:.16em;text-align:center;margin:6px 0 16px;color:#1c1712}
+.pass-qr{display:block;width:112px;height:112px;background:#fff;image-rendering:pixelated;margin:0 auto 14px;border-radius:4px}
+.reason{margin:0 auto;max-width:16em;color:#6a5f52;font-size:13px;line-height:1.55;text-align:center}
+.kofi{margin:14px 0 0;color:#a39888;font-size:11px;text-align:center}
 .kofi a{text-underline-offset:3px}
 .shop{margin:10px 0 0;color:#7f786f;font-size:11px;line-height:1.45}
 .shop a{text-underline-offset:3px}
@@ -343,46 +346,71 @@ function codeFromPlay(marks) {
   }
   return out;
 }
+function fig1(v) {
+  return (Math.round(Number(v) * 10) / 10).toFixed(1);
+}
 function figureSvg(seed, index, paper) {
   const u = (n) => (mix(seed, index * 40 + n) % 10000) / 10000;
   const pal = [
-    ['#f6d78a', '#8d5e2a', '#fff6df'],
-    ['#f3c3d4', '#8d556f', '#fff4f8'],
-    ['#f4f0e6', '#6e7c8a', '#ffffff']
+    { body: '#f2c56a', deep: '#e09a3d', head: '#ffe7b8', cheek: '#f3a56c', ink: '#6b4522', light: '#fff6e4', ear: '#f8d59a' },
+    { body: '#f4b9cc', deep: '#e08aa6', head: '#ffe4ef', cheek: '#ee8eaa', ink: '#7a3d54', light: '#fff7fa', ear: '#f8cddd' },
+    { body: '#f3efe8', deep: '#ddd6cb', head: '#fffdfb', cheek: '#f0c6b8', ink: '#4c5662', light: '#ffffff', ear: '#f7f4ee' }
   ][index];
-  const ink = paper ? '#241c14' : pal[2];
-  const gid = 'g' + index + (paper ? 'p' : 'd');
-  const lean = (u(1) - 0.5) * 22;
-  const hr = 13 + u(2) * 8;
-  const hy = 54;
-  const shoulder = 20 + u(3) * 18;
-  const waist = 9 + u(4) * 7;
-  const hip = 14 + u(5) * 16;
-  const foot = 198 + u(6) * 16;
-  const hipY = 124 + u(7) * 22;
-  const arm = 16 + u(8) * 28;
-  const sway = (y) => lean * ((y - 40) / 200);
-  const X = (dx, y) => (80 + sway(y) + dx).toFixed(1);
-  const Y = (y) => y.toFixed(1);
-  const neck = hy + hr + 3;
-  const body = [
-    'M', X(-shoulder, neck), Y(neck),
-    'C', X(-shoulder - 2, neck + 28), Y(neck + 28), X(-waist, hipY - 8), Y(hipY - 8), X(-waist, hipY), Y(hipY),
-    'C', X(-hip, hipY + 18), Y(hipY + 18), X(-12, foot - 8), Y(foot - 8), X(-7, foot), Y(foot),
-    'L', X(7, foot), Y(foot),
-    'C', X(12, foot - 8), Y(foot - 8), X(hip, hipY + 18), Y(hipY + 18), X(waist, hipY), Y(hipY),
-    'C', X(waist, hipY - 8), Y(hipY - 8), X(shoulder + 2, neck + 28), Y(neck + 28), X(shoulder, neck), Y(neck),
-    'Z'
-  ].join(' ');
-  const armL = 'M ' + X(-shoulder, neck + 8) + ' ' + Y(neck + 8) + ' Q ' + X(-shoulder - arm, neck + 34) + ' ' + Y(neck + 34) + ' ' + X(-shoulder - arm * 0.65, neck + 64) + ' ' + Y(neck + 64);
-  const armR = 'M ' + X(shoulder, neck + 8) + ' ' + Y(neck + 8) + ' Q ' + X(shoulder + arm, neck + 40) + ' ' + Y(neck + 40) + ' ' + X(shoulder + arm * 0.5, neck + 60) + ' ' + Y(neck + 60);
-  const hx = Number(X(0, hy));
-  const ornaments = [
-    '<circle cx="' + hx.toFixed(1) + '" cy="' + (hy - hr - 10).toFixed(1) + '" r="' + (hr + 7).toFixed(1) + '" fill="none" stroke="' + ink + '" stroke-width="1.25" opacity=".75"/>',
-    '<path d="M' + (hx - hr - 6).toFixed(1) + ' ' + (hy - hr).toFixed(1) + ' a' + (hr + 6).toFixed(1) + ' ' + (hr + 6).toFixed(1) + ' 0 0 1 ' + ((hr + 6) * 2).toFixed(1) + ' 0" fill="none" stroke="' + ink + '" stroke-width="1.25"/>',
-    '<path d="M' + hx.toFixed(1) + ' ' + (hy - hr - 18).toFixed(1) + ' l6.5 8.5 l-6.5 8.5 l-6.5 -8.5 z" fill="none" stroke="' + ink + '" stroke-width="1.25"/>'
-  ];
-  return '<svg viewBox="0 0 160 240" aria-hidden="true"><defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + pal[0] + '"/><stop offset="1" stop-color="' + pal[1] + '"/></linearGradient></defs><ellipse cx="80" cy="224" rx="34" ry="5" fill="' + ink + '" opacity=".14"/><path d="' + armL + '" fill="none" stroke="' + ink + '" stroke-width="3.2" stroke-linecap="round"/><path d="' + armR + '" fill="none" stroke="' + ink + '" stroke-width="3.2" stroke-linecap="round"/><path d="' + body + '" fill="url(#' + gid + ')"/><path d="M' + X(0, neck + 18) + ' ' + Y(neck + 18) + ' L' + X(0, hipY - 6) + ' ' + Y(hipY - 6) + '" stroke="' + pal[2] + '" stroke-width="1.5" opacity=".9"/><circle cx="' + hx.toFixed(1) + '" cy="' + hy + '" r="' + hr.toFixed(1) + '" fill="url(#' + gid + ')" stroke="' + ink + '" stroke-width="1.2"/>' + ornaments[index] + '</svg>';
+  const gid = 'fg' + index + (paper ? 'p' : 'd');
+  const tilt = ((u(1) - 0.5) * 8).toFixed(2);
+  const hr = 34 + u(2) * 4;
+  const hx = 80 + (u(3) - 0.5) * 4;
+  const hy = 92;
+  const bw = 36 + u(4) * 6;
+  const bh = 30 + u(5) * 5;
+  const gap = 12 + u(6) * 2;
+  const smile = 7 + u(7) * 2.5;
+  const wave = (u(8) - 0.5) * 7;
+  const by = hy + hr * 0.62;
+  const eyeY = hy + 1;
+  const ears = index === 0
+    ? '<ellipse cx="' + fig1(hx - hr * 0.78) + '" cy="' + fig1(hy - 4) + '" rx="' + fig1(hr * 0.34) + '" ry="' + fig1(hr * 0.4) + '" fill="' + pal.ear + '"/>'
+      + '<ellipse cx="' + fig1(hx + hr * 0.78) + '" cy="' + fig1(hy - 4) + '" rx="' + fig1(hr * 0.34) + '" ry="' + fig1(hr * 0.4) + '" fill="' + pal.ear + '"/>'
+      + '<ellipse cx="' + fig1(hx - hr * 0.78) + '" cy="' + fig1(hy - 2) + '" rx="' + fig1(hr * 0.16) + '" ry="' + fig1(hr * 0.2) + '" fill="#f6c2a4"/>'
+      + '<ellipse cx="' + fig1(hx + hr * 0.78) + '" cy="' + fig1(hy - 2) + '" rx="' + fig1(hr * 0.16) + '" ry="' + fig1(hr * 0.2) + '" fill="#f6c2a4"/>'
+    : (index === 2
+      ? '<ellipse cx="' + fig1(hx - 8) + '" cy="' + fig1(hy - hr * 0.62) + '" rx="' + fig1(hr * 0.7) + '" ry="' + fig1(hr * 0.36) + '" fill="' + pal.deep + '"/>'
+      : '');
+  const bow = index === 1
+    ? '<g transform="translate(' + fig1(hx + hr * 0.42) + ' ' + fig1(hy - hr * 0.78) + ') rotate(-8)">'
+      + '<ellipse cx="-8" cy="1" rx="9" ry="5.5" fill="' + pal.deep + '" transform="rotate(-24)"/>'
+      + '<ellipse cx="8" cy="1" rx="9" ry="5.5" fill="' + pal.cheek + '" transform="rotate(24)"/>'
+      + '<circle r="3.2" fill="' + pal.ink + '"/>'
+      + '</g>'
+    : '';
+  const halo = index === 0
+    ? '<ellipse cx="' + fig1(hx) + '" cy="' + fig1(hy - hr - 16) + '" rx="' + fig1(hr * 0.62) + '" ry="6" fill="none" stroke="' + pal.body + '" stroke-width="2.4"/>'
+    : '';
+  const star = index === 2
+    ? '<path d="M' + fig1(hx + 18) + ' ' + fig1(hy - hr - 8) + ' l2.4 5 5.4.7-4 3.6 1.1 5.3-4.9-2.7-4.9 2.7 1.1-5.3-4-3.6 5.4-.7z" fill="#f2c56a"/>'
+    : '';
+  return '<svg viewBox="18 8 124 196" aria-hidden="true"><defs>'
+    + '<radialGradient id="' + gid + 'h" cx="36%" cy="32%" r="68%"><stop offset="0" stop-color="' + pal.light + '"/><stop offset=".58" stop-color="' + pal.head + '"/><stop offset="1" stop-color="' + pal.body + '"/></radialGradient>'
+    + '<radialGradient id="' + gid + 'b" cx="40%" cy="28%" r="78%"><stop offset="0" stop-color="' + pal.head + '"/><stop offset="1" stop-color="' + pal.deep + '"/></radialGradient>'
+    + '</defs>'
+    + '<ellipse cx="80" cy="186" rx="34" ry="6" fill="' + pal.ink + '" opacity=".13"/>'
+    + '<g transform="rotate(' + tilt + ' 80 120)">'
+    + halo
+    + '<ellipse cx="' + fig1(hx - bw * 0.92) + '" cy="' + fig1(by + 6 + wave) + '" rx="11" ry="8" fill="url(#' + gid + 'b)"/>'
+    + '<ellipse cx="' + fig1(hx + bw * 0.95) + '" cy="' + fig1(by + 4 - wave) + '" rx="11" ry="8" fill="url(#' + gid + 'b)"/>'
+    + '<ellipse cx="' + fig1(hx) + '" cy="' + fig1(by + 18) + '" rx="' + fig1(bw) + '" ry="' + fig1(bh) + '" fill="url(#' + gid + 'b)"/>'
+    + '<ellipse cx="' + fig1(hx - 8) + '" cy="' + fig1(by + 10) + '" rx="10" ry="7" fill="' + pal.light + '" opacity=".28"/>'
+    + ears
+    + '<circle cx="' + fig1(hx) + '" cy="' + fig1(hy) + '" r="' + fig1(hr) + '" fill="url(#' + gid + 'h)"/>'
+    + bow + star
+    + '<ellipse cx="' + fig1(hx - gap) + '" cy="' + fig1(eyeY) + '" rx="4.6" ry="5.2" fill="' + pal.ink + '"/>'
+    + '<ellipse cx="' + fig1(hx + gap) + '" cy="' + fig1(eyeY) + '" rx="4.6" ry="5.2" fill="' + pal.ink + '"/>'
+    + '<circle cx="' + fig1(hx - gap + 1.5) + '" cy="' + fig1(eyeY - 1.7) + '" r="1.6" fill="#fff"/>'
+    + '<circle cx="' + fig1(hx + gap + 1.5) + '" cy="' + fig1(eyeY - 1.7) + '" r="1.6" fill="#fff"/>'
+    + '<ellipse cx="' + fig1(hx - gap - 7) + '" cy="' + fig1(eyeY + 9) + '" rx="5.5" ry="2.8" fill="' + pal.cheek + '" opacity=".7"/>'
+    + '<ellipse cx="' + fig1(hx + gap + 7) + '" cy="' + fig1(eyeY + 9) + '" rx="5.5" ry="2.8" fill="' + pal.cheek + '" opacity=".7"/>'
+    + '<path d="M' + fig1(hx - smile) + ' ' + fig1(eyeY + 12) + ' Q ' + fig1(hx) + ' ' + fig1(eyeY + 12 + smile) + ' ' + fig1(hx + smile) + ' ' + fig1(eyeY + 12) + '" fill="none" stroke="' + pal.ink + '" stroke-width="2" stroke-linecap="round"/>'
+    + '</g></svg>';
 }
 function figureSeed(pass) {
   const born = pass.born;
