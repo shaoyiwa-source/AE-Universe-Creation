@@ -1,0 +1,8 @@
+Asset slot for the soft-gold fog silhouette.
+
+Expected image (same folder):
+soft-gold-fog-silhouette.webp
+
+Use this only when a matching artwork is already in the repo from the Google Drive Artworks folder.
+Until that file exists, lightprint-memory.html draws a soft-gold fog field in the page.
+Do not hotlink private Drive files. Do not drop in unrelated art.
