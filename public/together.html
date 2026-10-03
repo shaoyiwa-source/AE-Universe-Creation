@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生火焰，光紋共創 · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v10"/>
+<meta name="ae-preview-version" content="together-v11"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -65,10 +65,10 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .showfigs{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:transparent;color:var(--warm);cursor:pointer}
 .pickline{margin:0 0 8px;color:#ddd4c8}
 .figrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.fig{padding:8px 4px 10px;border-radius:18px;border:1px solid rgba(255,248,235,.28);background:#141210;color:var(--warm);cursor:pointer}
-.fig:nth-child(1),.fig:nth-child(2),.fig:nth-child(3){background:radial-gradient(circle at 50% 40%,#1a2624,#101211 74%)}
+.fig{padding:8px 4px 10px;border-radius:18px;border:1px solid rgba(36,28,20,.14);background:#f6f1e6;color:#241c14;cursor:pointer}
+.fig:nth-child(1),.fig:nth-child(2),.fig:nth-child(3){background:#f6f1e6}
 .fig svg{width:100%;height:auto;display:block}
-.fig small{display:block;text-align:center;letter-spacing:.16em;font-size:11px;color:#c8bfb2}
+.fig small{display:block;text-align:center;letter-spacing:.16em;font-size:11px;color:#8a7d6a}
 .dollar{background:#f4efe6;color:#241c14;border-radius:22px;padding:26px 22px 16px;border:1px solid #e5dccb;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 12px 32px rgba(0,0,0,.22)}
 .kicker{margin:0;text-align:center;letter-spacing:.42em;font-size:10px;color:#9a8d78}
 .ticket-fig{width:min(188px,54vw);margin:4px auto 0}
@@ -297,7 +297,7 @@ function renderMarks() {
     const born = document.createElement('i');
     born.className = 'born';
     born.setAttribute('aria-hidden', 'true');
-    born.innerHTML = figureSvg(hash32('overlap|' + [...both].sort((a, b) => a - b).join(',')), 1, 'cell' + art);
+    born.innerHTML = overlapFlameSvg(hash32('overlap|' + [...both].sort((a, b) => a - b).join(',')), 1, 'cell' + art);
     cell.appendChild(born);
   });
   const placed = {};
@@ -359,7 +359,7 @@ function flameSeed(pass) {
   const born = pass && pass.born ? [pass.born.sign, pass.born.blood, pass.born.y, pass.born.m, pass.born.d].join('|') : '';
   return hash32(place + '|' + born);
 }
-function figureSvg(seed, index, tag) {
+function overlapFlameSvg(seed, index, tag) {
   const scale = [0.84, 1, 1.14][index] || 1;
   const tongue = (0.36 + (mix(seed, index + 2) % 16) / 100).toFixed(2);
   const gid = 'fm' + tag + index;
@@ -370,6 +370,64 @@ function figureSvg(seed, index, tag) {
     + '<path data-flame="1" d="' + FLAME_D + '" fill="url(#' + gid + 'b)"/>'
     + '<path d="' + FLAME_D + '" fill="none" stroke="url(#' + gid + 'e)" stroke-width="5" stroke-linejoin="round"/>'
     + '<path d="' + FLAME_D + '" fill="#f7fffc" opacity=".9" transform="translate(80 108) scale(' + tongue + ') translate(-80 -108)"/>'
+    + '</g></svg>';
+}
+function figureSvg(seed, index, tag) {
+  const pals = [
+    ['#ffe08a', '#f0a030', '#ff7a3c', '#fff3c4', '#7eb0ea', '#3dffe0'],
+    ['#ffe08a', '#5b8def', '#3dffe0', '#ff8ec8', '#fff4c8', '#f0a030'],
+    ['#9ec6ff', '#3d6fe0', '#1e3f88', '#e7f2ff', '#e7bd67', '#3dffe0']
+  ];
+  const hair = pals[index] || pals[1];
+  const spiral = ['#e7bd67', '#14c9a4', '#5b8def'][index] || '#14c9a4';
+  const scale = [0.92, 1, 1.06][index] || 1;
+  const gid = 'mm' + tag + index;
+  const jitter = (n) => (mix(seed, n) % 11) - 5;
+  let fur = '';
+  for (let i = 0; i < 20; i++) {
+    const ang = (-168 + i * (336 / 19) + jitter(i + 4)).toFixed(1);
+    const len = 18 + (mix(seed, i + 20) % 12);
+    const col = hair[i % hair.length];
+    fur += '<ellipse cx="70" cy="' + (58 - len) + '" rx="3.4" ry="' + len + '" fill="' + col + '" transform="rotate(' + ang + ' 70 64)"/>';
+  }
+  let stars = '';
+  [[48, 56], [42, 64], [54, 68], [40, 52], [78, 54], [86, 62], [74, 70], [90, 50]].forEach((p, i) => {
+    const dx = jitter(i + 40) * 0.15;
+    stars += '<circle cx="' + (p[0] + dx).toFixed(1) + '" cy="' + p[1] + '" r="' + (i % 3 === 0 ? 1.15 : 0.7) + '" fill="#fff" opacity=".9"/>';
+  });
+  const spiralD = (function () {
+    let d = '';
+    for (let i = 0; i <= 26; i++) {
+      const t = i / 26;
+      const a = t * Math.PI * 5.2;
+      const r = 1.2 + t * 9.2;
+      const x = 70 + Math.cos(a) * r;
+      const y = 112 + Math.sin(a) * r;
+      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+    }
+    return d;
+  })();
+  return '<svg viewBox="8 4 124 158" data-shape="maomao" aria-hidden="true"><defs>'
+    + '<radialGradient id="' + gid + '" cx="40%" cy="38%" r="70%"><stop offset="0" stop-color="#6a4ea8"/><stop offset=".42" stop-color="#1a1238"/><stop offset="1" stop-color="#07060f"/></radialGradient>'
+    + '</defs>'
+    + '<g transform="translate(70 86) scale(' + scale + ') translate(-70 -86)">'
+    + '<ellipse cx="70" cy="146" rx="24" ry="5" fill="#241c14" opacity=".12"/>'
+    + fur
+    + '<ellipse cx="46" cy="112" rx="8" ry="5.5" fill="#16120f" transform="rotate(-28 46 112)"/>'
+    + '<ellipse cx="94" cy="112" rx="8" ry="5.5" fill="#16120f" transform="rotate(28 94 112)"/>'
+    + '<ellipse cx="70" cy="114" rx="24" ry="26" fill="#16120f"/>'
+    + '<ellipse cx="70" cy="104" rx="12" ry="8" fill="#2a241e" opacity=".55"/>'
+    + '<ellipse cx="58" cy="140" rx="9" ry="6" fill="#16120f"/>'
+    + '<ellipse cx="82" cy="140" rx="9" ry="6" fill="#16120f"/>'
+    + '<path d="' + spiralD + '" fill="none" stroke="' + spiral + '" stroke-width="2.3" stroke-linecap="round"/>'
+    + '<circle cx="54" cy="62" r="24" fill="url(#' + gid + ')"/>'
+    + '<circle cx="86" cy="62" r="24" fill="url(#' + gid + ')"/>'
+    + '<circle cx="54" cy="62" r="24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.3"/>'
+    + '<circle cx="86" cy="62" r="24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.3"/>'
+    + stars
+    + '<path d="M44 62c0-6 6-8 10-4 4 4 4 4 0 8-4 4-10 2-10-4zm20 0c0-6 6-8 10-4 4 4 4 4 0 8-4 4-10 2-10-4z" fill="none" stroke="#f2d27a" stroke-width="1.35" stroke-linecap="round"/>'
+    + '<ellipse cx="46" cy="54" rx="5" ry="3.2" fill="#fff" opacity=".88"/>'
+    + '<ellipse cx="78" cy="54" rx="5" ry="3.2" fill="#fff" opacity=".88"/>'
     + '</g></svg>';
 }
 function figureSeed(pass) {
