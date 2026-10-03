@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生火焰，光紋共創 · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v15"/>
+<meta name="ae-preview-version" content="together-v16"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -64,20 +64,20 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .ask input:focus-visible,.ask select:focus-visible,.showfigs:focus-visible,.fig:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .showfigs{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:transparent;color:var(--warm);cursor:pointer}
 .pickline{margin:0 0 8px;color:#ddd4c8}
-.figrow{display:grid;grid-template-columns:1fr;gap:10px}
-.fig{position:relative;padding:0;border-radius:18px;border:1px solid rgba(201,168,106,.55);background:#f7f1e8;color:#2d2824;cursor:pointer;overflow:hidden;height:210px}
-.fig-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.fig-copy{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;padding:8px 6px 10px;text-align:center;background:linear-gradient(to bottom,rgba(247,241,232,.46),rgba(247,241,232,.28) 42%,rgba(247,241,232,.84))}
-.fig-copy strong{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:28px;line-height:1.05}
-.fig-copy em{font-style:italic;font-size:13px;line-height:1.2;color:#766b61}
-.fig-copy small{display:block;max-width:16em;font-size:13px;line-height:1.35;letter-spacing:0;color:#2d2824}
+.figrow{display:grid;grid-template-columns:1fr;gap:14px}
+.fig,.ticket-fig{position:relative;display:block;width:100%;padding:0;border-radius:18px;border:1px solid rgba(120,112,118,.18);background:#f7f1e8;color:#2d2824;cursor:pointer;overflow:hidden;text-align:center}
+.ticket-fig{width:min(420px,100%);margin:8px auto 0;cursor:default}
+.fig-art{position:absolute;inset:-8%;width:116%;height:116%;object-fit:cover;display:block;filter:saturate(.9) contrast(.98) brightness(1.04);z-index:0}
+.fig-veil{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(247,241,232,.5) 0%,rgba(247,241,232,.28) 46%,rgba(247,241,232,.48) 100%);pointer-events:none}
+.fig-copy{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;min-height:520px;padding:32px 22px 28px;background:none}
+.fig-copy strong{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(32px,8vw,40px);line-height:1.15}
+.fig-marks{display:flex;gap:6px;margin:10px 0 14px}
+.fig-mark{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.fig-mark.gold{background:#e7bd67}
+.fig-mark.blue{background:#5b8def}
+.fig-copy small{display:block;max-width:18em;font-size:15px;line-height:1.7;letter-spacing:0;color:rgba(42,36,32,.88)}
 .dollar{background:#f4efe6;color:#241c14;border-radius:22px;padding:26px 22px 16px;border:1px solid #e5dccb;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 12px 32px rgba(0,0,0,.22)}
 .kicker{margin:0;text-align:center;letter-spacing:.42em;font-size:10px;color:#9a8d78}
-.ticket-fig{position:relative;width:min(280px,78vw);margin:8px auto 0;border-radius:18px;overflow:hidden;aspect-ratio:3/4.15;background:#f7f1e8}
-.ticket-fig .fig-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.ticket-fig .fig-copy strong{font-size:32px}
-.ticket-fig .fig-copy em{font-size:14px}
-.ticket-fig .fig-copy small{font-size:13px;max-width:16em}
 .ticket-num{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(26px,6.4vw,34px);letter-spacing:.16em;text-align:center;margin:6px 0 16px;color:#1c1712}
 .pass-qr{display:block;width:112px;height:112px;background:#fff;image-rendering:pixelated;margin:0 auto 14px;border-radius:4px}
 .reason{margin:0 auto;max-width:16em;color:#6a5f52;font-size:13px;line-height:1.55;text-align:center}
@@ -423,18 +423,19 @@ function overlapFlameSvg(seed, index, tag) {
     + '</g></svg>';
 }
 const CARDS = [
-  { art: 1, zh: '金光', en: 'Gold light', lineZh: '你的顏色。', lineEn: 'Your color.' },
-  { art: 5, zh: '重疊', en: 'Overlap', lineZh: '第三個顏色，和第三個形狀。', lineEn: 'A third color and a third shape.' },
-  { art: 4, zh: '藍光', en: 'Blue light', lineZh: '另一道顏色。', lineEn: 'The other color.' }
+  { art: 1, zh: '金光', body: '光一直都在。有時候只是被雲遮住。可以停。停下來，也是一種看見。', marks: ['gold'] },
+  { art: 5, zh: '重疊', body: '遠看是一個宇宙，近看又是另外一個宇宙。宇宙之中，還有宇宙。', marks: ['gold', 'blue'] },
+  { art: 4, zh: '藍光', body: '可以停，但不要放棄。豐盛不一定是增加。有時候，豐盛只是終於看見。', marks: ['blue'] }
 ];
 function cardMarkup(index) {
   const card = CARDS[index] || CARDS[0];
-  const zh = lang() === 'zh';
   const src = files[card.art] || '';
+  const marks = card.marks.map((mark) => '<i class="fig-mark ' + mark + '" aria-hidden="true"></i>').join('');
   return '<img class="fig-art" alt="" src="' + src + '">'
-    + '<span class="fig-copy"><strong>' + (zh ? card.zh : card.en) + '</strong>'
-    + '<em>' + (zh ? card.en : card.zh) + '</em>'
-    + '<small>' + (zh ? card.lineZh : card.lineEn) + '</small></span>';
+    + '<span class="fig-veil"></span>'
+    + '<span class="fig-copy"><strong>' + card.zh + '</strong>'
+    + '<span class="fig-marks">' + marks + '</span>'
+    + '<small>' + card.body + '</small></span>';
 }
 function figureSeed(pass) {
   const born = pass.born;
@@ -498,7 +499,7 @@ function paintFigures(pass) {
   }
   row.querySelectorAll('[data-fig]').forEach((btn, i) => {
     const card = CARDS[i];
-    btn.setAttribute('aria-label', lang() === 'zh' ? card.zh : card.en);
+    btn.setAttribute('aria-label', card.zh);
   });
 }
 function paintTicket(pass) {
