@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>One table · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v4"/>
+<meta name="ae-preview-version" content="together-v5"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -54,6 +54,8 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .share{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:var(--warm);color:#16130f;cursor:pointer}
 .dollar{margin:18px 0 0}
 .dollar[hidden]{display:none}
+.pass-qr{display:block;width:148px;height:148px;background:#fff;image-rendering:pixelated;margin:0 0 8px}
+.pass-id{margin:0 0 8px;color:#9c958b;font-size:12px;letter-spacing:.12em}
 .reason{margin:0;color:#ddd4c8;font-size:15px;line-height:1.5}
 .kofi{margin:8px 0 0;color:#9c958b;font-size:12px}
 .kofi a{text-underline-offset:3px}
@@ -83,11 +85,14 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
     <p class="note" id="note" aria-live="polite"></p>
   </div>
   <div class="dollar" id="dollar" hidden>
-    <p class="reason" data-en="You opened this door. This dollar goes out with this light." data-zh="你把這扇門打開了。這一塊錢，跟這道光一起傳出去。">You opened this door. This dollar goes out with this light.</p>
+    <img class="pass-qr" id="passQr" alt="" width="148" height="148">
+    <p class="pass-id" id="passCode"></p>
+    <p class="reason" data-en="You pay one dollar. You buy a ticket in, and it is also your ID. This ID is the Lightprint you already left. The face comes later. It has a QR code. Someone scans it and can enter this place, to make things with other people, with yourself, with the environment, and with AI. Drawing, music, talking, planting, anime. Anything is fine." data-zh="你付一塊錢，買的是一張入場券，也是你的 ID。這張 ID 現在是你在永恆當下留下的光紋，臉以後才加。上面有 QR code。別人掃了，就進得了這個空間，跟別人、跟自己、跟環境、跟 AI 一起做。畫畫、音樂、說話、種東西、動漫，什麼都行。">你付一塊錢，買的是一張入場券，也是你的 ID。這張 ID 現在是你在永恆當下留下的光紋，臉以後才加。上面有 QR code。別人掃了，就進得了這個空間，跟別人、跟自己、跟環境、跟 AI 一起做。畫畫、音樂、說話、種東西、動漫，什麼都行。</p>
     <p class="kofi"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
   </div>
   <p class="shop"><a href="/shop" data-en="The shop can wait." data-zh="商店可以晚一點。">The shop can wait.</a></p>
 </main>
+<script src="qrcode.js"></script>
 <script>
 const ABC = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 const SYMBOLS = ['♥','∞','☾','✦','❀','☁','◌','⌁'];
@@ -121,11 +126,19 @@ function handId() {
     return pick(6, 'h');
   }
 }
+function capturedLightprint() {
+  try {
+    const data = JSON.parse(localStorage.getItem('ae_lightprint') || '');
+    return CODE_RE.test(data && data.code) ? data.code : '';
+  } catch (error) {
+    return '';
+  }
+}
 function roomCode() {
   const params = new URLSearchParams(location.search);
   const given = params.get('lp') || '';
   if (CODE_RE.test(given)) return given;
-  const code = pick(8, 'LP-');
+  const code = capturedLightprint() || pick(8, 'LP-');
   params.set('lp', code);
   history.replaceState(null, '', location.pathname + '?' + params.toString());
   return code;
@@ -189,7 +202,19 @@ function renderMarks() {
   else say(presence, 'Waiting for the other hands.', '還在等另一雙手。');
   const board = document.getElementById('board');
   if (board) board.setAttribute('aria-label', lang() === 'zh' ? '九扇門' : 'Nine doors');
+  const qrImg = document.getElementById('passQr');
+  if (qrImg) qrImg.alt = lang() === 'zh' ? '這張光紋的 QR code' : 'QR code for this Lightprint';
   document.getElementById('dollar').hidden = !state.marks.some((mark) => mark.yours);
+}
+function drawPass() {
+  const payload = shareUrl();
+  const qr = qrcode(0, 'M');
+  qr.addData(payload);
+  qr.make();
+  const img = document.getElementById('passQr');
+  img.src = qr.createDataURL(4, 16);
+  img.dataset.payload = payload;
+  document.getElementById('passCode').textContent = capturedLightprint() || code;
 }
 function openDoor(cell) {
   if (!cell) return;
@@ -287,6 +312,7 @@ function boot() {
   document.getElementById('codeLine').textContent = 'AE · ' + code;
   document.getElementById('shareBtn').addEventListener('click', share);
   document.querySelector('.kofi a').addEventListener('click', () => openDoor(lastDoor));
+  drawPass();
   renderMarks();
   loadArt().then(pull).catch(() => say(document.getElementById('note'), 'The artworks did not open.', '作品沒有打開。'));
   setInterval(() => pull().catch(() => {}), 1200);
