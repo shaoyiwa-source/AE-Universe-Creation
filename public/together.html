@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>One table · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v2"/>
+<meta name="ae-preview-version" content="together-v3"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -37,9 +37,14 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .below{display:grid;gap:8px;margin-top:8px}
 .presence,.count{margin:0;min-height:1.3em}
 .share{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:var(--warm);color:#16130f;cursor:pointer}
-.quiet,.shop{margin:14px 0 0;color:#9c958b;font-size:13px;line-height:1.45}
-.shop{font-size:12px}
-.shop a,.quiet a{text-underline-offset:3px}
+.dollar{margin:18px 0 0}
+.dollar[hidden]{display:none}
+.reason{margin:0;color:#ddd4c8;font-size:15px;line-height:1.5}
+.pattern{margin:8px 0 0;color:#c8c0b4;font-size:14px;line-height:1.45}
+.kofi{margin:8px 0 0;color:#9c958b;font-size:12px}
+.kofi a{text-underline-offset:3px}
+.shop{margin:10px 0 0;color:#7f786f;font-size:11px;line-height:1.45}
+.shop a{text-underline-offset:3px}
 .note{color:#c4554a;min-height:1.2em;font-size:13px}
 @media(max-width:820px){
   .wrap{padding-top:12px}
@@ -63,7 +68,11 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
     <button class="share" id="shareBtn" type="button" data-en="Give this Lightprint to someone" data-zh="把這道光紋給另一個人">Give this Lightprint to someone</button>
     <p class="note" id="note" aria-live="polite"></p>
   </div>
-  <p class="quiet"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener" data-en="This dollar opens the next stage. Each stage is one more person's action, and the shared picture gets brighter than it was. Make this world a better place. Actions create infinity." data-zh="這一塊錢，是讓下一關開出來。每一關都是多一個人的動作，讓這張桌子變得比原本更亮。讓這個世界更好。動作創造無限。">This dollar opens the next stage. Each stage is one more person's action, and the shared picture gets brighter than it was. Make this world a better place. Actions create infinity.</a></p>
+  <div class="dollar" id="dollar" hidden>
+    <p class="reason" data-en="You just made this picture brighter together, a light neither of you could make alone. A dollar lets that action open the next stage for someone else." data-zh="你們剛剛一起讓這幅作品變得更亮，這道光一個人單獨點不出來。這一塊錢，讓這個動作為下一個人開出下一關。">You just made this picture brighter together, a light neither of you could make alone. A dollar lets that action open the next stage for someone else.</p>
+    <p class="pattern" data-en="Make this world a better place. Actions create infinity." data-zh="讓這個世界更好。動作創造無限。">Make this world a better place. Actions create infinity.</p>
+    <p class="kofi"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
+  </div>
   <p class="shop"><a href="/shop" data-en="The shop can wait." data-zh="商店可以晚一點。">The shop can wait.</a></p>
 </main>
 <script>
@@ -164,6 +173,7 @@ function renderMarks() {
   const presence = document.getElementById('presence');
   if (state.others > 0) say(presence, 'The other hands are here.', '另一雙手到了。');
   else say(presence, 'Waiting for the other hands.', '還在等另一雙手。');
+  document.getElementById('dollar').hidden = both.size === 0;
 }
 async function pull() {
   const res = await fetch('/api/together?code=' + code + '&hand=' + hand, { cache: 'no-store' });
