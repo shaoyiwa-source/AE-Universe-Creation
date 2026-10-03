@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>One table · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v9"/>
+<title>雙生火焰，光紋共創 · AE Universe Creation</title>
+<meta name="ae-preview-version" content="together-v10"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -22,7 +22,7 @@ button,a{font:inherit}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
 .brand{font-family:Georgia,serif;letter-spacing:.04em;text-decoration:none;font-size:15px}
 .lang{background:none;border:0;color:inherit;min-height:44px;cursor:pointer}
-h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(40px,10vw,64px);line-height:.95;margin:.1em 0 .2em}
+h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(32px,8vw,52px);line-height:1.05;letter-spacing:.06em;margin:.1em 0 .2em}
 .how{margin:0 0 8px;line-height:1.45;color:#ddd4c8;font-size:16px}
 .code{margin:0;color:var(--muted);letter-spacing:.14em;font-size:12px}
 .board{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(100%,calc((100dvh - 330px) * 9 / 16));margin:12px auto;padding:6px;border:1px solid var(--line);border-radius:22px}
@@ -45,10 +45,11 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 @media(prefers-reduced-motion:reduce){
   .leaf,.beam{animation:none}
 }
-.born{position:absolute;left:50%;top:48%;width:72%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;z-index:1;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.55) 0 8%,rgba(255,255,255,.08) 18%,transparent 34%,rgba(255,252,245,.95) 46%,rgba(255,236,196,.15) 54%,transparent 64%);box-shadow:0 0 28px rgba(255,248,230,.75)}
+.born{position:absolute;left:50%;top:42%;width:42%;aspect-ratio:1/2;transform:translate(-50%,-50%);pointer-events:none;z-index:4;background:none;border-radius:0;box-shadow:none}
+.born svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 8px rgba(90,255,210,.75))}
 .mark{position:absolute;z-index:2;width:26%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;transform:translate(-50%,-50%);color:#1a140f;font:400 clamp(13px,3.6vw,20px)/1 Georgia,serif;box-shadow:0 0 0 2px rgba(255,255,255,.8);pointer-events:none}
 .mark.you{background:radial-gradient(circle at 35% 25%,#fff7d8,var(--gold) 62%,#b8893e)}
-.mark.them{background:radial-gradient(circle at 35% 25%,#fff4f8,var(--rose) 62%,#a86d8d)}
+.mark.them{background:radial-gradient(circle at 35% 25%,#e7f2ff,#5b8def 62%,#2c4e98)}
 .below{display:grid;gap:8px;margin-top:8px}
 .presence,.count{margin:0;min-height:1.3em}
 .share,.make{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:var(--warm);color:#16130f;cursor:pointer}
@@ -65,9 +66,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .pickline{margin:0 0 8px;color:#ddd4c8}
 .figrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fig{padding:8px 4px 10px;border-radius:18px;border:1px solid rgba(255,248,235,.28);background:#141210;color:var(--warm);cursor:pointer}
-.fig:nth-child(1){background:radial-gradient(circle at 50% 38%,#3d311c,#141210 74%)}
-.fig:nth-child(2){background:radial-gradient(circle at 50% 38%,#3c2430,#141210 74%)}
-.fig:nth-child(3){background:radial-gradient(circle at 50% 38%,#2c3036,#141210 74%)}
+.fig:nth-child(1),.fig:nth-child(2),.fig:nth-child(3){background:radial-gradient(circle at 50% 40%,#1a2624,#101211 74%)}
 .fig svg{width:100%;height:auto;display:block}
 .fig small{display:block;text-align:center;letter-spacing:.16em;font-size:11px;color:#c8bfb2}
 .dollar{background:#f4efe6;color:#241c14;border-radius:22px;padding:26px 22px 16px;border:1px solid #e5dccb;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 12px 32px rgba(0,0,0,.22)}
@@ -94,8 +93,8 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
     <a class="brand" href="/experience">AE</a>
     <button class="lang" type="button" data-language>中文</button>
   </div>
-  <h1 data-en="One table." data-zh="同一張桌子。">One table.</h1>
-  <p class="how" data-en="Tap a door. It opens, and the light goes outward. Where you both touch, the picture grows brighter than either of you alone." data-zh="點一扇門。門會打開，光會傳出去。兩個人都碰過的地方，會比單獨一個人更亮。">Tap a door. It opens, and the light goes outward. Where you both touch, the picture grows brighter than either of you alone.</p>
+  <h1 data-en="雙生火焰，光紋共創" data-zh="雙生火焰，光紋共創">雙生火焰，光紋共創</h1>
+  <p class="how" data-en="Tap a door. Your color and theirs are different. Where you overlap, a third color and a third shape appear." data-zh="點一扇門。你的顏色和對方不一樣。重疊的地方，會出現第三個顏色，和第三個形狀。">Tap a door. Your color and theirs are different. Where you overlap, a third color and a third shape appear.</p>
   <p class="code" id="codeLine">AE · ……</p>
   <div class="board" id="board" aria-label="Nine doors"></div>
   <div class="below">
@@ -298,6 +297,7 @@ function renderMarks() {
     const born = document.createElement('i');
     born.className = 'born';
     born.setAttribute('aria-hidden', 'true');
+    born.innerHTML = figureSvg(hash32('overlap|' + [...both].sort((a, b) => a - b).join(',')), 1, 'cell' + art);
     cell.appendChild(born);
   });
   const placed = {};
@@ -316,7 +316,7 @@ function renderMarks() {
   });
   const count = document.getElementById('countLine');
   const n = state.marks.length;
-  if (both.size) say(count, 'Where you both touched, the picture made its own light.', '你們都碰過的地方，作品自己長出了光。');
+  if (both.size) say(count, 'A third color and a third shape.', '第三個顏色，和第三個形狀。');
   else say(count, 'Together, ' + n + (n === 1 ? ' light.' : ' lights.'), '一起留下了 ' + n + ' 道。');
   const presence = document.getElementById('presence');
   if (state.others > 0) say(presence, 'The other hands are here.', '另一雙手到了。');
@@ -346,70 +346,30 @@ function codeFromPlay(marks) {
   }
   return out;
 }
-function fig1(v) {
-  return (Math.round(Number(v) * 10) / 10).toFixed(1);
+const FLAME_D = 'M80 16C108 48 104 86 92 112C86 132 84 156 80 176C76 156 74 132 68 112C56 86 52 48 80 16Z';
+function overlapList() {
+  return [...sharedArts()].sort((a, b) => a - b);
 }
-function figureSvg(seed, index, paper) {
-  const u = (n) => (mix(seed, index * 40 + n) % 10000) / 10000;
-  const pal = [
-    { body: '#f2c56a', deep: '#e09a3d', head: '#ffe7b8', cheek: '#f3a56c', ink: '#6b4522', light: '#fff6e4', ear: '#f8d59a' },
-    { body: '#f4b9cc', deep: '#e08aa6', head: '#ffe4ef', cheek: '#ee8eaa', ink: '#7a3d54', light: '#fff7fa', ear: '#f8cddd' },
-    { body: '#f3efe8', deep: '#ddd6cb', head: '#fffdfb', cheek: '#f0c6b8', ink: '#4c5662', light: '#ffffff', ear: '#f7f4ee' }
-  ][index];
-  const gid = 'fg' + index + (paper ? 'p' : 'd');
-  const tilt = ((u(1) - 0.5) * 8).toFixed(2);
-  const hr = 34 + u(2) * 4;
-  const hx = 80 + (u(3) - 0.5) * 4;
-  const hy = 92;
-  const bw = 36 + u(4) * 6;
-  const bh = 30 + u(5) * 5;
-  const gap = 12 + u(6) * 2;
-  const smile = 7 + u(7) * 2.5;
-  const wave = (u(8) - 0.5) * 7;
-  const by = hy + hr * 0.62;
-  const eyeY = hy + 1;
-  const ears = index === 0
-    ? '<ellipse cx="' + fig1(hx - hr * 0.78) + '" cy="' + fig1(hy - 4) + '" rx="' + fig1(hr * 0.34) + '" ry="' + fig1(hr * 0.4) + '" fill="' + pal.ear + '"/>'
-      + '<ellipse cx="' + fig1(hx + hr * 0.78) + '" cy="' + fig1(hy - 4) + '" rx="' + fig1(hr * 0.34) + '" ry="' + fig1(hr * 0.4) + '" fill="' + pal.ear + '"/>'
-      + '<ellipse cx="' + fig1(hx - hr * 0.78) + '" cy="' + fig1(hy - 2) + '" rx="' + fig1(hr * 0.16) + '" ry="' + fig1(hr * 0.2) + '" fill="#f6c2a4"/>'
-      + '<ellipse cx="' + fig1(hx + hr * 0.78) + '" cy="' + fig1(hy - 2) + '" rx="' + fig1(hr * 0.16) + '" ry="' + fig1(hr * 0.2) + '" fill="#f6c2a4"/>'
-    : (index === 2
-      ? '<ellipse cx="' + fig1(hx - 8) + '" cy="' + fig1(hy - hr * 0.62) + '" rx="' + fig1(hr * 0.7) + '" ry="' + fig1(hr * 0.36) + '" fill="' + pal.deep + '"/>'
-      : '');
-  const bow = index === 1
-    ? '<g transform="translate(' + fig1(hx + hr * 0.42) + ' ' + fig1(hy - hr * 0.78) + ') rotate(-8)">'
-      + '<ellipse cx="-8" cy="1" rx="9" ry="5.5" fill="' + pal.deep + '" transform="rotate(-24)"/>'
-      + '<ellipse cx="8" cy="1" rx="9" ry="5.5" fill="' + pal.cheek + '" transform="rotate(24)"/>'
-      + '<circle r="3.2" fill="' + pal.ink + '"/>'
-      + '</g>'
-    : '';
-  const halo = index === 0
-    ? '<ellipse cx="' + fig1(hx) + '" cy="' + fig1(hy - hr - 16) + '" rx="' + fig1(hr * 0.62) + '" ry="6" fill="none" stroke="' + pal.body + '" stroke-width="2.4"/>'
-    : '';
-  const star = index === 2
-    ? '<path d="M' + fig1(hx + 18) + ' ' + fig1(hy - hr - 8) + ' l2.4 5 5.4.7-4 3.6 1.1 5.3-4.9-2.7-4.9 2.7 1.1-5.3-4-3.6 5.4-.7z" fill="#f2c56a"/>'
-    : '';
-  return '<svg viewBox="18 8 124 196" aria-hidden="true"><defs>'
-    + '<radialGradient id="' + gid + 'h" cx="36%" cy="32%" r="68%"><stop offset="0" stop-color="' + pal.light + '"/><stop offset=".58" stop-color="' + pal.head + '"/><stop offset="1" stop-color="' + pal.body + '"/></radialGradient>'
-    + '<radialGradient id="' + gid + 'b" cx="40%" cy="28%" r="78%"><stop offset="0" stop-color="' + pal.head + '"/><stop offset="1" stop-color="' + pal.deep + '"/></radialGradient>'
-    + '</defs>'
-    + '<ellipse cx="80" cy="186" rx="34" ry="6" fill="' + pal.ink + '" opacity=".13"/>'
-    + '<g transform="rotate(' + tilt + ' 80 120)">'
-    + halo
-    + '<ellipse cx="' + fig1(hx - bw * 0.92) + '" cy="' + fig1(by + 6 + wave) + '" rx="11" ry="8" fill="url(#' + gid + 'b)"/>'
-    + '<ellipse cx="' + fig1(hx + bw * 0.95) + '" cy="' + fig1(by + 4 - wave) + '" rx="11" ry="8" fill="url(#' + gid + 'b)"/>'
-    + '<ellipse cx="' + fig1(hx) + '" cy="' + fig1(by + 18) + '" rx="' + fig1(bw) + '" ry="' + fig1(bh) + '" fill="url(#' + gid + 'b)"/>'
-    + '<ellipse cx="' + fig1(hx - 8) + '" cy="' + fig1(by + 10) + '" rx="10" ry="7" fill="' + pal.light + '" opacity=".28"/>'
-    + ears
-    + '<circle cx="' + fig1(hx) + '" cy="' + fig1(hy) + '" r="' + fig1(hr) + '" fill="url(#' + gid + 'h)"/>'
-    + bow + star
-    + '<ellipse cx="' + fig1(hx - gap) + '" cy="' + fig1(eyeY) + '" rx="4.6" ry="5.2" fill="' + pal.ink + '"/>'
-    + '<ellipse cx="' + fig1(hx + gap) + '" cy="' + fig1(eyeY) + '" rx="4.6" ry="5.2" fill="' + pal.ink + '"/>'
-    + '<circle cx="' + fig1(hx - gap + 1.5) + '" cy="' + fig1(eyeY - 1.7) + '" r="1.6" fill="#fff"/>'
-    + '<circle cx="' + fig1(hx + gap + 1.5) + '" cy="' + fig1(eyeY - 1.7) + '" r="1.6" fill="#fff"/>'
-    + '<ellipse cx="' + fig1(hx - gap - 7) + '" cy="' + fig1(eyeY + 9) + '" rx="5.5" ry="2.8" fill="' + pal.cheek + '" opacity=".7"/>'
-    + '<ellipse cx="' + fig1(hx + gap + 7) + '" cy="' + fig1(eyeY + 9) + '" rx="5.5" ry="2.8" fill="' + pal.cheek + '" opacity=".7"/>'
-    + '<path d="M' + fig1(hx - smile) + ' ' + fig1(eyeY + 12) + ' Q ' + fig1(hx) + ' ' + fig1(eyeY + 12 + smile) + ' ' + fig1(hx + smile) + ' ' + fig1(eyeY + 12) + '" fill="none" stroke="' + pal.ink + '" stroke-width="2" stroke-linecap="round"/>'
+function flameSeed(pass) {
+  const live = overlapList();
+  const arts = pass && pass.ticket && Array.isArray(pass.overlap)
+    ? pass.overlap
+    : (live.length ? live : (pass && Array.isArray(pass.overlap) ? pass.overlap : []));
+  const place = arts.length ? arts.join(',') : (pass ? pass.code : 'solo');
+  const born = pass && pass.born ? [pass.born.sign, pass.born.blood, pass.born.y, pass.born.m, pass.born.d].join('|') : '';
+  return hash32(place + '|' + born);
+}
+function figureSvg(seed, index, tag) {
+  const scale = [0.84, 1, 1.14][index] || 1;
+  const tongue = (0.36 + (mix(seed, index + 2) % 16) / 100).toFixed(2);
+  const gid = 'fm' + tag + index;
+  return '<svg viewBox="36 0 88 190" data-shape="flame" aria-hidden="true"><defs>'
+    + '<linearGradient id="' + gid + 'b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4fffb"/><stop offset=".45" stop-color="#8dffe4"/><stop offset="1" stop-color="#14c9a4"/></linearGradient>'
+    + '<linearGradient id="' + gid + 'e" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e7bd67"/><stop offset=".5" stop-color="#7dfff0"/><stop offset="1" stop-color="#5b8def"/></linearGradient>'
+    + '</defs><g transform="translate(80 96) scale(' + scale + ') translate(-80 -96)">'
+    + '<path data-flame="1" d="' + FLAME_D + '" fill="url(#' + gid + 'b)"/>'
+    + '<path d="' + FLAME_D + '" fill="none" stroke="url(#' + gid + 'e)" stroke-width="5" stroke-linejoin="round"/>'
+    + '<path d="' + FLAME_D + '" fill="#f7fffc" opacity=".9" transform="translate(80 108) scale(' + tongue + ') translate(-80 -108)"/>'
     + '</g></svg>';
 }
 function figureSeed(pass) {
@@ -467,23 +427,23 @@ function readBorn() {
 }
 function paintFigures(pass) {
   const row = document.getElementById('figRow');
-  const key = [pass.code, pass.born.y, pass.born.m, pass.born.d, pass.born.sign, pass.born.blood].join('|');
-  const seed = figureSeed(pass);
+  const key = [pass.code, pass.born.y, pass.born.m, pass.born.d, pass.born.sign, pass.born.blood, overlapList().join(',')].join('|');
+  const seed = flameSeed(pass);
   if (row.dataset.key !== key || row.childElementCount !== 3) {
     row.dataset.key = key;
-    row.innerHTML = [0, 1, 2].map((i) => '<button class="fig" type="button" data-fig="' + i + '">' + figureSvg(seed, i, false) + '<small>' + (i + 1) + '</small></button>').join('');
+    row.innerHTML = [0, 1, 2].map((i) => '<button class="fig" type="button" data-fig="' + i + '">' + figureSvg(seed, i, 'f') + '<small>' + (i + 1) + '</small></button>').join('');
   }
   row.querySelectorAll('[data-fig]').forEach((btn, i) => {
     btn.setAttribute('aria-label', lang() === 'zh' ? '身影 ' + (i + 1) : 'Figure ' + (i + 1));
   });
 }
 function paintTicket(pass) {
-  const seed = figureSeed(pass);
+  const seed = flameSeed(pass);
   const hold = document.getElementById('ticketFig');
-  const key = pass.code + '|' + pass.pick + '|' + pass.ticket;
+  const key = pass.code + '|' + pass.pick + '|' + pass.ticket + '|' + (pass.overlap || []).join(',');
   if (hold.dataset.key !== key) {
     hold.dataset.key = key;
-    hold.innerHTML = figureSvg(seed, pass.pick, true);
+    hold.innerHTML = figureSvg(seed, pass.pick, 't');
   }
   document.getElementById('ticketNum').textContent = pass.ticket.replace(/(\d{4})(\d{4})(\d{2})/, '$1 $2 $3');
 }
@@ -522,6 +482,8 @@ function showFigures() {
   pass.born = born;
   pass.pick = null;
   pass.ticket = null;
+  const live = overlapList();
+  if (live.length) pass.overlap = live;
   localStorage.setItem(PASS_KEY, JSON.stringify(pass));
   document.getElementById('ask').dataset.filled = '1';
   syncStage();
@@ -532,6 +494,16 @@ function chooseFigure(index) {
   if (index !== 0 && index !== 1 && index !== 2) return;
   pass.pick = index;
   pass.ticket = ticketDigits(pass, index);
+  const live = overlapList();
+  if (live.length) {
+    pass.overlap = live;
+    pass.marks = state.marks.map((mark) => ({
+      id: mark.id,
+      art: mark.art,
+      symbol: mark.symbol,
+      yours: !!mark.yours
+    }));
+  } else if (!Array.isArray(pass.overlap)) pass.overlap = [];
   localStorage.setItem(PASS_KEY, JSON.stringify(pass));
   syncStage();
   const card = document.getElementById('dollar');
@@ -567,7 +539,7 @@ function makePass() {
     symbol: mark.symbol,
     yours: !!mark.yours
   }));
-  localStorage.setItem(PASS_KEY, JSON.stringify({ code: id, marks: picture, v: 2, born: null, pick: null, ticket: null }));
+  localStorage.setItem(PASS_KEY, JSON.stringify({ code: id, marks: picture, v: 2, born: null, pick: null, ticket: null, overlap: overlapList() }));
   try {
     const kept = JSON.parse(localStorage.getItem('ae_lightprint') || '');
     if (!kept || !CODE_RE.test(kept.code)) {
@@ -622,11 +594,30 @@ function openDoor(cell) {
     door.remove();
   }, 940);
 }
+function roomMarks(serverMarks) {
+  const incoming = Array.isArray(serverMarks) ? serverMarks : [];
+  const pass = savedPass();
+  if (!pass) return incoming;
+  const base = pass.marks.map((mark) => ({
+    id: mark.id,
+    art: mark.art,
+    symbol: mark.symbol,
+    yours: mark.yours !== false
+  }));
+  if (pass.ticket) return base;
+  const ids = new Set(base.map((mark) => mark.id));
+  incoming.forEach((mark) => {
+    if (!mark || ids.has(mark.id) || mark.yours) return;
+    base.push({ id: mark.id, art: mark.art, symbol: mark.symbol, yours: false });
+    ids.add(mark.id);
+  });
+  return base;
+}
 async function pull() {
   const res = await fetch('/api/together?code=' + code + '&hand=' + hand, { cache: 'no-store' });
   if (!res.ok) throw new Error('pull');
   const data = await res.json();
-  if (!savedPass()) state.marks = data.marks || [];
+  state.marks = roomMarks(data.marks || []);
   state.others = data.others || 0;
   state.shared = data.shared !== false;
   renderMarks();
@@ -648,7 +639,7 @@ async function tap(art) {
   });
   if (!res.ok) throw new Error('tap');
   const data = await res.json();
-  state.marks = data.marks || state.marks;
+  state.marks = roomMarks(data.marks || state.marks);
   state.others = data.others || 0;
   state.shared = data.shared !== false;
   labelCells();
