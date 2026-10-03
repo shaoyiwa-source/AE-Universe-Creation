@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生火焰，光紋共創 · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v14"/>
+<meta name="ae-preview-version" content="together-v15"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -82,6 +82,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .pass-qr{display:block;width:112px;height:112px;background:#fff;image-rendering:pixelated;margin:0 auto 14px;border-radius:4px}
 .reason{margin:0 auto;max-width:16em;color:#6a5f52;font-size:13px;line-height:1.55;text-align:center}
 .kofi{margin:14px 0 0;color:#a39888;font-size:11px;text-align:center}
+.again{width:100%;margin-top:14px}
 .kofi a{text-underline-offset:3px}
 .shop{margin:10px 0 0;color:#7f786f;font-size:11px;line-height:1.45}
 .shop a{text-underline-offset:3px}
@@ -141,6 +142,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
     <img class="pass-qr" id="passQr" alt="" width="148" height="148">
     <p class="reason" data-en="This dollar buys this card." data-zh="這一塊錢，買的是這張卡。">This dollar buys this card.</p>
     <p class="kofi"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
+    <button class="make again" id="againBtn" type="button" data-en="Play again" data-zh="再玩一次">Play again</button>
   </article>
   <p class="shop"><a href="/shop" data-en="The shop can wait." data-zh="商店可以晚一點。">The shop can wait.</a></p>
 </main>
@@ -230,10 +232,8 @@ function forgetStalePass() {
     const raw = localStorage.getItem(PASS_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      if (!data || data.epoch !== PASS_EPOCH) {
-        discarded = data && typeof data.code === 'string' ? data.code : '';
-        localStorage.removeItem(PASS_KEY);
-      }
+      discarded = data && typeof data.code === 'string' ? data.code : '';
+      localStorage.removeItem(PASS_KEY);
     }
   } catch (error) {
     try { localStorage.removeItem(PASS_KEY); } catch (err) { /* private mode */ }
@@ -368,10 +368,17 @@ function renderMarks() {
   if (board) board.setAttribute('aria-label', lang() === 'zh' ? '九扇門' : 'Nine doors');
   syncStage();
 }
-function codeFromPlay(marks) {
+function nextPlayNonce() {
+  let n = 0;
+  try { n = Number(localStorage.getItem('ae_together_play')) || 0; } catch (error) { n = 0; }
+  n = (n + 1) % 1000000;
+  try { localStorage.setItem('ae_together_play', String(n)); } catch (error) { /* private mode */ }
+  return n;
+}
+function codeFromPlay(marks, nonce) {
   const payload = JSON.stringify(marks.filter((mark) => mark.yours).map((mark) => [mark.art, mark.symbol]));
   let h = 2166136261 >>> 0;
-  const text = payload + '|' + hand;
+  const text = payload + '|' + hand + '|' + nonce;
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i);
     h = Math.imul(h, 16777619) >>> 0;
@@ -515,6 +522,7 @@ function syncStage() {
   document.getElementById('ask').hidden = !pass || choosing || locked;
   document.getElementById('figures').hidden = !choosing;
   document.getElementById('dollar').hidden = !locked;
+  document.getElementById('againBtn').hidden = !locked;
   document.getElementById('makeBtn').hidden = !!pass;
   if (choosing) {
     fillAsk(pass);
@@ -591,6 +599,24 @@ function drawPass() {
   img.src = qr.createDataURL(4, 16);
   img.dataset.payload = payload;
 }
+function playAgain() {
+  try { localStorage.removeItem(PASS_KEY); } catch (error) { /* private mode */ }
+  const ask = document.getElementById('ask');
+  if (ask) delete ask.dataset.filled;
+  const figures = document.getElementById('figures');
+  if (figures) delete figures.dataset.seen;
+  const hold = document.getElementById('ticketFig');
+  if (hold) delete hold.dataset.key;
+  const qr = document.getElementById('passQr');
+  if (qr) {
+    qr.removeAttribute('src');
+    delete qr.dataset.payload;
+  }
+  showCodeLine();
+  renderMarks();
+  const make = document.getElementById('makeBtn');
+  if (make && make.scrollIntoView) make.scrollIntoView({ block: 'nearest' });
+}
 function makePass() {
   if (savedPass()) return;
   const note = document.getElementById('note');
@@ -601,36 +627,24 @@ function makePass() {
     setTimeout(() => { delete note.dataset.hold; }, 2500);
     return;
   }
-  const id = codeFromPlay(state.marks);
+  const nonce = nextPlayNonce();
+  const id = codeFromPlay(state.marks, nonce);
   const picture = state.marks.map((mark) => ({
     id: mark.id,
     art: mark.art,
     symbol: mark.symbol,
     yours: !!mark.yours
   }));
-  localStorage.setItem(PASS_KEY, JSON.stringify({ code: id, marks: picture, v: 2, epoch: PASS_EPOCH, asked: false, born: null, pick: null, ticket: null, overlap: overlapList() }));
+  localStorage.setItem(PASS_KEY, JSON.stringify({ code: id, marks: picture, v: 2, epoch: PASS_EPOCH, play: nonce, asked: false, born: null, pick: null, ticket: null, overlap: overlapList() }));
   try {
-    const kept = JSON.parse(localStorage.getItem('ae_lightprint') || '');
-    if (!kept || !CODE_RE.test(kept.code)) {
-      localStorage.setItem('ae_lightprint', JSON.stringify({
-        code: id,
-        label: 'AE · ' + id,
-        sealedAt: new Date().toISOString(),
-        v: '1.2',
-        source: 'together'
-      }));
-    }
-  } catch (error) {
-    try {
-      localStorage.setItem('ae_lightprint', JSON.stringify({
-        code: id,
-        label: 'AE · ' + id,
-        sealedAt: new Date().toISOString(),
-        v: '1.2',
-        source: 'together'
-      }));
-    } catch (err) { /* private mode */ }
-  }
+    localStorage.setItem('ae_lightprint', JSON.stringify({
+      code: id,
+      label: 'AE · ' + id,
+      sealedAt: new Date().toISOString(),
+      v: '1.2',
+      source: 'together'
+    }));
+  } catch (error) { /* private mode */ }
   showCodeLine();
   renderMarks();
   const ask = document.getElementById('ask');
@@ -751,6 +765,7 @@ function boot() {
   showCodeLine();
   document.getElementById('shareBtn').addEventListener('click', share);
   document.getElementById('makeBtn').addEventListener('click', makePass);
+  document.getElementById('againBtn').addEventListener('click', playAgain);
   document.getElementById('showFigs').addEventListener('click', showFigures);
   document.getElementById('figRow').addEventListener('click', (event) => {
     const btn = event.target.closest('[data-fig]');
