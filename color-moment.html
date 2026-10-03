@@ -2552,18 +2552,7 @@
     return location.origin + '/together?lp=' + id;
   }
 
-  function drawKeptQr(id) {
-    const img = document.getElementById('cmPassQr');
-    if (!img || !isValidLightprintCode(id) || typeof qrcode !== 'function') return;
-    const payload = lightprintQrPayload(id);
-    const qr = qrcode(0, 'M');
-    qr.addData(payload);
-    qr.make();
-    img.src = qr.createDataURL(4, 16);
-    img.dataset.payload = payload;
-    img.hidden = false;
-    img.alt = lang() === 'zh' ? '這張光紋的 QR code' : 'QR code for this Lightprint';
-  }
+  function drawKeptQr() {}
 
   function restoreKept() {
     const kept = keptRecord();
