@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="ae-version" content="lightprint-memory-1">
+<title>光紋記憶 · AE Universe Creation</title>
+<meta name="description" content="光紋記憶 — a short touch, then a Lightprint ID unique to this person and this moment. An entry ticket into the AE world, not a product.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&amp;family=Noto+Sans+TC:wght@400;500&amp;family=Noto+Serif+TC:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css?v=2427">
+<script src="site.js?v=2427" defer></script>
+<link rel="icon" type="image/webp" href="assets/ae-three-rings-transparent.webp">
+<style>
+  /* Page tokens sit on the site VI (site.css). Soft gold is the fog; 粉紅 / pink is only a quiet breath tint. */
+  :root{
+    --lm-gold:#e4c27a;
+    --lm-gold-deep:#c9a227;
+    --lm-gold-mist:rgba(255,244,214,.92);
+    --lm-pink:#f0b7c8;
+  }
+  .lm-open{text-align:center}
+  .lm-open h1{margin-bottom:18px}
+  .lm-gloss{
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:clamp(18px,2.2vw,24px);
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin:0 0 28px;
+  }
+  .lm-purpose{
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-weight:500;
+    font-size:clamp(26px,3.4vw,40px);
+    line-height:1.28;
+    letter-spacing:-.02em;
+    color:var(--ink);
+    margin:0 auto 8px;
+    max-width:18em;
+  }
+  .lm-purpose+.lm-purpose{margin-bottom:28px}
+  .lm-lead{
+    max-width:38em;
+    margin:0 auto 28px;
+    color:var(--muted);
+    font-size:16px;
+    line-height:1.8;
+  }
+  .lm-open .button{min-width:min(240px,100%)}
+
+  .lm-play{
+    display:flex;
+    flex-direction:column;
+    height:calc(100svh - 100px);
+    min-height:0;
+    padding:0 0 8px;
+    overflow:hidden;
+  }
+  .lm-play-kicker{
+    text-align:center;
+    margin:18px 0 10px;
+    font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+    font-size:28px;
+    letter-spacing:.12em;
+    font-weight:500;
+  }
+  .lm-stage{
+    position:relative;
+    flex:1 1 auto;
+    width:min(960px,calc(100% - 48px));
+    margin:0 auto;
+    min-height:0;
+    height:auto;
+    overflow:hidden;
+    border:1px solid var(--line);
+    border-radius:2px;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-touch-callout:none;
+    cursor:crosshair;
+    background:
+      radial-gradient(ellipse 48% 42% at 50% 44%, rgba(255,248,230,.95), rgba(255,248,230,0) 72%),
+      radial-gradient(ellipse 70% 58% at 50% 62%, rgba(228,194,122,.42), rgba(228,194,122,0) 74%),
+      linear-gradient(165deg,#f7f3ef 0%,#f8f4ea 42%,#f3f6f2 100%);
+  }
+  .lm-stage:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+  html[data-theme=dark] .lm-stage{
+    background:
+      radial-gradient(ellipse 46% 40% at 50% 44%, rgba(228,194,122,.34), rgba(228,194,122,0) 72%),
+      radial-gradient(ellipse 80% 60% at 50% 70%, rgba(201,162,39,.16), transparent 70%),
+      linear-gradient(165deg,#1a221e 0%,#141c18 100%);
+  }
+  .lm-fog{
+    position:absolute;inset:-8%;
+    pointer-events:none;
+    background:
+      radial-gradient(ellipse 40% 32% at 50% 46%, rgba(255,248,230,.55), transparent 70%),
+      radial-gradient(ellipse 90% 70% at 50% 100%, rgba(243,246,242,.65), transparent 60%);
+    opacity:.72;
+    transition:opacity .6s ease;
+  }
+  .lm-stage.is-fog .lm-fog{opacity:1}
+  .lm-figure{
+    position:absolute;
+    left:50%;
+    top:48%;
+    width:min(280px,62%);
+    height:min(520px,86%);
+    transform:translate(-50%,-52%);
+    pointer-events:none;
+  }
+  .lm-figure svg{width:100%;height:100%;display:block;overflow:visible}
+  .lm-svg-mid,.lm-svg-heart{
+    transform-box:fill-box;
+    transform-origin:center;
+    animation:lm-breath 5.2s ease-in-out infinite;
+  }
+  .lm-svg-heart{animation-duration:5.2s}
+  @keyframes lm-breath{
+    0%,100%{transform:scale(1,1)}
+    50%{transform:scale(1.075,1.05)}
+  }
+  .lm-silhouette-art{
+    position:absolute;
+    left:50%;
+    top:48%;
+    width:min(340px,70%);
+    height:min(560px,88%);
+    transform:translate(-50%,-52%);
+    object-fit:contain;
+    pointer-events:none;
+    transform-origin:50% 42%;
+    animation:lm-breath-art 5.2s ease-in-out infinite;
+  }
+  @keyframes lm-breath-art{
+    0%,100%{transform:translate(-50%,-52%) scale(1,1)}
+    50%{transform:translate(-50%,-52%) scale(1.035,1.02)}
+  }
+  .lm-glow{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    pointer-events:none;
+    z-index:1;
+  }
+  .lm-arc{
+    position:absolute;
+    left:24px;right:24px;top:16px;
+    height:2px;
+    background:rgba(32,38,34,.08);
+    z-index:2;
+    pointer-events:none;
+  }
+  html[data-theme=dark] .lm-arc{background:rgba(244,244,237,.12)}
+  .lm-arc span{
+    display:block;height:100%;width:100%;
+    transform:scaleX(0);
+    transform-origin:left center;
+    background:linear-gradient(90deg,var(--lm-gold-deep),var(--lm-gold));
+  }
+  .lm-hint{
+    position:absolute;
+    left:16px;right:16px;bottom:16px;
+    z-index:3;
+    margin:0;
+    text-align:center;
+    font-size:16px;
+    line-height:1.55;
+    color:var(--ink);
+    background:rgba(252,252,250,.9);
+    border:1px solid var(--line);
+    padding:12px 14px;
+    pointer-events:none;
+  }
+  html[data-theme=dark] .lm-hint{background:rgba(20,28,24,.9)}
+  .lm-dock{
+    width:min(960px,calc(100% - 48px));
+    margin:14px auto 8px;
+    display:flex;
+    justify-content:center;
+    gap:16px;
+  }
+  .lm-seal-click{min-width:min(280px,100%)}
+  @media (pointer:coarse){
+    .lm-seal-click{display:none!important}
+  }
+
+  .lm-end{
+    padding:48px 0 28px;
+  }
+  .lm-end-field{
+    width:min(720px,calc(100% - 48px));
+    margin:0 auto 28px;
+    height:180px;
+    position:relative;
+    overflow:hidden;
+    border:1px solid var(--line);
+    background:
+      radial-gradient(ellipse 40% 80% at 50% 70%, rgba(228,194,122,.55), transparent 70%),
+      linear-gradient(180deg,#f7f3ef,#f3f6f2);
+  }
+  html[data-theme=dark] .lm-end-field{
+    background:
+      radial-gradient(ellipse 40% 80% at 50% 70%, rgba(228,194,122,.28), transparent 72%),
+      linear-gradient(180deg,#1a221e,#141c18);
+  }
+  .lm-end-field .lm-figure{
+    width:120px;height:200px;top:78%;
+  }
+  .lm-card{
+    width:min(640px,calc(100% - 48px));
+    margin:0 auto;
+    text-align:center;
+    background:var(--bg);
+    border:1px solid var(--line);
+    padding:48px 28px 36px;
+  }
+  .lm-card h2{
+    font-size:clamp(40px,6vw,64px);
+    letter-spacing:.14em;
+    margin:8px 0 8px;
+    font-weight:500;
+  }
+  .lm-id-label{
+    font-size:12px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 22px;
+  }
+  .lm-card .lm-lead{margin-bottom:12px}
+  .lm-madeof{
+    font-size:14px;
+    color:var(--muted);
+    line-height:1.7;
+    max-width:40em;
+    margin:0 auto 28px;
+  }
+  .lm-card .lm-purpose{font-size:clamp(22px,3vw,30px)}
+  .lm-gift{
+    margin:8px auto 0;
+    max-width:36em;
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.7;
+  }
+  .lm-card-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px 28px;
+    justify-content:center;
+    align-items:center;
+    margin-top:22px;
+  }
+  .lm-card-actions .button{min-width:140px}
+  .lm-copy-status{
+    min-height:1.4em;
+    margin:14px 0 0;
+    font-size:14px;
+    color:var(--muted);
+  }
+  body.lm-playing{overflow:hidden}
+  body.lm-playing .site-footer{display:none}
+  @media (max-width:700px){
+    .lm-play{height:calc(100dvh - 86px)}
+    .lm-play-kicker{font-size:22px;letter-spacing:.08em;margin:10px 0 8px}
+    .lm-stage{
+      width:100%;
+      border-left:0;border-right:0;
+    }
+    .lm-dock{width:calc(100% - 32px);margin-top:10px}
+    .lm-hint{font-size:15px;left:10px;right:10px;bottom:10px}
+    .lm-end{padding:28px 0 12px}
+    .lm-card{width:calc(100% - 32px);padding:36px 18px 28px}
+    .lm-end-field{width:calc(100% - 32px);height:140px}
+    .lm-card-actions{flex-direction:column}
+    .lm-card-actions .button,.lm-card-actions .text-link{width:100%;text-align:center}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .lm-svg-mid,.lm-svg-heart,.lm-silhouette-art{animation:none}
+    .lm-fog{transition:none}
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content · 跳至內容</a>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <button class="menu-trigger" data-menu-toggle aria-expanded="false" aria-controls="site-menu" aria-label="Open or close menu" type="button">
+        <span class="hamburger" aria-hidden="true"><i></i><i></i></span>
+        <span data-en="Menu" data-zh="選單" class="menu-label">Menu</span>
+      </button>
+    </div>
+    <a class="wordmark" href="index.html" aria-label="AE Universe Creation — Home">
+      <img class="brand-mark" src="assets/ae-three-rings-transparent.webp" alt="" width="74" height="45">
+      <span class="brand-name">AE Universe<span>CREATION</span></span>
+    </a>
+    <div class="header-actions">
+      <a data-en="Collect" data-zh="收藏" href="collections.html" class="header-shop">Collect</a>
+      <button data-language type="button" aria-label="切換至中文">中文</button>
+      <button class="theme-button" data-theme-toggle aria-label="Switch to dark mode" type="button">◐</button>
+    </div>
+  </div>
+  <div class="menu-panel" id="site-menu" hidden>
+    <nav aria-label="Main navigation">
+      <a href="eternal-sun.html" data-en="Eternal Sun" data-zh="盛明">Eternal Sun</a>
+      <a data-en="Home" data-zh="首頁" href="index.html">Home</a>
+      <a data-en="Experience" data-zh="互動體驗" href="/experience">Experience</a>
+      <a data-en="The artworks" data-zh="作品" href="works.html">The artworks</a>
+      <a data-en="Collections" data-zh="收藏系列" href="collections.html">Collections</a>
+      <a data-en="Our story" data-zh="我們的故事" href="about.html">Our story</a>
+    </nav>
+    <p class="menu-note">Aurelia &amp; Elion · AE Universe Creation</p>
+    <button class="mobile-theme" data-theme-toggle type="button">Dark appearance</button>
+  </div>
+</header>
+<button class="menu-backdrop" hidden tabindex="-1" aria-label="Close menu"></button>
+
+<main id="main">
+  <section class="page-heading page-heading-wash lm-open" id="lmOpen">
+    <p class="eyebrow">AE UNIVERSE CREATION</p>
+    <h1>光紋記憶</h1>
+    <p class="lm-gloss">Lightprint Memory</p>
+    <p class="lm-purpose">Make this world a better place.</p>
+    <p class="lm-purpose">Actions create infinity.</p>
+    <p class="lm-lead" data-en="A Lightprint is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product." data-zh="光紋像指紋，只屬於這個人、這一刻。它是進入 AE 世界的入場券，不是商品。">A Lightprint is like a fingerprint: unique to this person and this moment. An entry ticket into the AE world, not a product.</p>
+    <button class="button" id="lmBegin" type="button" data-en="Begin" data-zh="開始">Begin</button>
+  </section>
+
+  <section class="lm-play" id="lmPlay" hidden>
+    <p class="lm-play-kicker">光紋記憶</p>
+    <div class="lm-stage" id="lmStage" tabindex="0" role="application" aria-label="Soft-gold fog silhouette. Touch to gather light. Four fingers seal. A click seals on desktop.">
+      <div class="lm-fog" aria-hidden="true"></div>
+      <div class="lm-figure" id="lmFigure" aria-hidden="true">
+        <svg viewBox="0 0 200 440" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="lmFogBlur" x="-50%" y="-20%" width="200%" height="150%">
+              <feGaussianBlur stdDeviation="9"/>
+            </filter>
+            <radialGradient id="lmBody" cx="50%" cy="38%" r="62%">
+              <stop offset="0%" stop-color="#fff8ea"/>
+              <stop offset="42%" stop-color="#e4c27a"/>
+              <stop offset="100%" stop-color="#e4c27a" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="lmHeart" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#f0b7c8"/>
+              <stop offset="70%" stop-color="#f0b7c8" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <g filter="url(#lmFogBlur)" fill="url(#lmBody)">
+            <ellipse cx="100" cy="62" rx="26" ry="32"/>
+            <ellipse class="lm-svg-mid" cx="100" cy="168" rx="48" ry="64"/>
+            <ellipse cx="100" cy="292" rx="58" ry="92"/>
+            <ellipse cx="78" cy="250" rx="22" ry="46"/>
+            <ellipse cx="122" cy="250" rx="22" ry="46"/>
+          </g>
+          <ellipse class="lm-svg-heart" cx="100" cy="162" rx="18" ry="14" fill="url(#lmHeart)" opacity="0.8"/>
+        </svg>
+      </div>
+      <!--
+        Asset slot: assets/lightprint-memory/soft-gold-fog-silhouette.webp
+        When a soft-gold fog silhouette from the Artworks folder is in the repo,
+        this image replaces the CSS fog figure. Do not hotlink private Drive files.
+      -->
+      <img id="lmArt" class="lm-silhouette-art" alt="" hidden data-asset-slot="assets/lightprint-memory/soft-gold-fog-silhouette.webp">
+      <canvas class="lm-glow" id="lmGlow" aria-hidden="true"></canvas>
+      <div class="lm-arc" aria-hidden="true"><span id="lmArcBar"></span></div>
+      <p class="lm-hint" id="lmHint" role="status" aria-live="polite"></p>
+    </div>
+    <div class="lm-dock">
+      <button class="button lm-seal-click" id="lmSealClick" type="button" data-en="Click to seal" data-zh="點擊封上">Click to seal</button>
+    </div>
+  </section>
+
+  <section class="lm-end" id="lmEnd" hidden>
+    <div class="lm-end-field" aria-hidden="true">
+      <div class="lm-figure">
+        <svg viewBox="0 0 200 440" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="lmFogBlurEnd" x="-50%" y="-20%" width="200%" height="150%">
+              <feGaussianBlur stdDeviation="9"/>
+            </filter>
+            <radialGradient id="lmBodyEnd" cx="50%" cy="38%" r="62%">
+              <stop offset="0%" stop-color="#fff8ea"/>
+              <stop offset="42%" stop-color="#e4c27a"/>
+              <stop offset="100%" stop-color="#e4c27a" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <g filter="url(#lmFogBlurEnd)" fill="url(#lmBodyEnd)">
+            <ellipse cx="100" cy="62" rx="26" ry="32"/>
+            <ellipse class="lm-svg-mid" cx="100" cy="168" rx="48" ry="64"/>
+            <ellipse cx="100" cy="292" rx="58" ry="92"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <article class="lm-card" aria-labelledby="lmId">
+      <p class="eyebrow">AE UNIVERSE CREATION</p>
+      <p class="lm-play-kicker" style="margin-top:0">光紋記憶</p>
+      <h2 id="lmId" tabindex="-1" spellcheck="false"></h2>
+      <p class="lm-id-label" data-en="Lightprint ID" data-zh="光紋 ID">Lightprint ID</p>
+      <p class="lm-lead" data-en="Unique to this person and this moment. An entry ticket into the AE world, not a product." data-zh="只屬於這個人、這一刻。進入 AE 世界的入場券，不是商品。">Unique to this person and this moment. An entry ticket into the AE world, not a product.</p>
+      <p class="lm-madeof" id="lmMadeOf" data-en="Made from this moment’s time, a one-time nonce, and the path of your touch. Another play makes another ID." data-zh="由這一刻的時間、一次不會重複的隨機，和你的觸碰路徑組成。再玩一次，就是另一道。">Made from this moment’s time, a one-time nonce, and the path of your touch. Another play makes another ID.</p>
+      <p class="lm-purpose">Make this world a better place.</p>
+      <p class="lm-purpose">Actions create infinity.</p>
+      <p class="lm-gift" data-en="Optional. A $1 gift, if you wish. This page does not take payment." data-zh="可有可無。若你願意，可以用 1 美元支持。這一頁不收款。">Optional. A $1 gift, if you wish. This page does not take payment.</p>
+      <div class="lm-card-actions">
+        <a class="button" id="lmGift" href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener" data-en="Give $1" data-zh="支持 $1">Give $1</a>
+        <button class="text-link" id="lmCopy" type="button" data-en="Copy ID" data-zh="複製光紋 ID">Copy ID</button>
+        <button class="text-link" id="lmAgain" type="button" data-en="Leave another Lightprint" data-zh="再留一道光紋">Leave another Lightprint</button>
+      </div>
+      <p class="lm-copy-status" id="lmCopyStatus" role="status"></p>
+    </article>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <img src="assets/ae-three-rings-transparent.webp" alt="AE Universe Creation 金色三環標誌" width="110" height="67">
+      AE Universe Creation
+    </div>
+    <nav class="footer-links" aria-label="Footer">
+      <a data-en="Artworks" data-zh="作品" href="works.html">Artworks</a>
+      <a data-en="Collections" data-zh="收藏系列" href="collections.html">Collections</a>
+      <a data-en="Experience" data-zh="互動體驗" href="/experience">Experience</a>
+      <a data-en="Our story" data-zh="我們的故事" href="about.html">Our story</a>
+      <a data-en="Ko-fi" data-zh="Ko-fi" href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a>
+    </nav>
+  </div>
+  <p class="footer-note" data-en="A Lightprint is an entry ticket into the AE world, unique to this person and this moment. It is not a product." data-zh="光紋是進入 AE 世界的入場券，只屬於這個人、這一刻。它不是商品。">A Lightprint is an entry ticket into the AE world, unique to this person and this moment. It is not a product.</p>
+  <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · lightprint-memory</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  var openEl = document.getElementById('lmOpen');
+  var playEl = document.getElementById('lmPlay');
+  var endEl = document.getElementById('lmEnd');
+  var stage = document.getElementById('lmStage');
+  var hintEl = document.getElementById('lmHint');
+  var canvas = document.getElementById('lmGlow');
+  var arcBar = document.getElementById('lmArcBar');
+  var beginBtn = document.getElementById('lmBegin');
+  var sealBtn = document.getElementById('lmSealClick');
+  var idEl = document.getElementById('lmId');
+  var copyBtn = document.getElementById('lmCopy');
+  var againBtn = document.getElementById('lmAgain');
+  var copyStatus = document.getElementById('lmCopyStatus');
+  var art = document.getElementById('lmArt');
+  var figure = document.getElementById('lmFigure');
+  var ctx = canvas.getContext('2d', { alpha: true });
+
+  var phase = 'open';
+  var playT0 = 0;
+  var samples = [];
+  var lastSampleAt = 0;
+  var peakFingers = 0;
+  var fingerBucket = 'none';
+  var mouseDown = null;
+  var lastTouchAt = 0;
+  var raf = 0;
+  var clock = 0;
+  var currentId = '';
+  var visitSalt = randomHex(8);
+  var finePointer = window.matchMedia('(pointer: fine)').matches;
+
+  var HINTS = {
+    gather: {
+      en: 'Touch and gather light for about twenty seconds. One to three fingers bring fog and glow.',
+      zh: '輕輕觸碰，大約二十秒聚光。一到三指會帶來霧與光。'
+    },
+    add: {
+      en: 'Fog and glow are with you. Add fingers — four seal this moment.',
+      zh: '霧與光在這裡。再加手指——四指封上這一瞬。'
+    },
+    desktop: {
+      en: 'Drag to gather light for about twenty seconds. A click seals this moment.',
+      zh: '拖曳聚光，大約二十秒。點一下，封上這一瞬。'
+    },
+    ready: {
+      en: 'This breath has lasted about twenty seconds. Click to seal, or keep gathering light.',
+      zh: '這一息大約二十秒了。點一下封上，或繼續聚光。'
+    },
+    readyTouch: {
+      en: 'This breath has lasted about twenty seconds. Four fingers seal this moment.',
+      zh: '這一息大約二十秒了。四指封上這一瞬。'
+    }
+  };
+
+  function lang() {
+    return document.documentElement.lang === 'zh-Hant' ? 'zh' : 'en';
+  }
+
+  function randomHex(bytes) {
+    var buf = new Uint8Array(bytes);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(buf);
+    else for (var i = 0; i < bytes; i++) buf[i] = Math.floor(Math.random() * 256);
+    var out = '';
+    for (var j = 0; j < buf.length; j++) out += buf[j].toString(16).padStart(2, '0');
+    return out;
+  }
+
+  function fnv1a(str) {
+    var h = 2166136261 >>> 0;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function expandId(h) {
+    var x = h >>> 0;
+    var out = '';
+    for (var i = 0; i < 8; i++) {
+      x ^= x >>> 16;
+      x = Math.imul(x, 0x7feb352d) >>> 0;
+      x ^= x >>> 15;
+      x = Math.imul(x, 0x846ca68b) >>> 0;
+      x ^= x >>> 16;
+      out += ALPH[(x >>> 0) % ALPH.length];
+      x = (x + h + Math.imul(i + 1, 2654435761)) >>> 0;
+    }
+    return 'LP-' + out;
+  }
+
+  /*
+   * Lightprint ID — unique to this person and this moment, not lifetime-once.
+   * LP- + 8 symbols. Nothing is written to an account or kept as the only ID.
+   * Payload (ASCII, joined by |):
+   *   lm1, visitSalt, sealEpochMs, nonce, durationMs, peakFingers, sampleCount, samples
+   * visitSalt: random per page view (this visit).
+   * sealEpochMs: clock time at seal.
+   * nonce: 8 random bytes so the same millisecond still differs.
+   * samples: up to 24 touch points, nx.ny.t.pointer (nx/ny scaled 0–1000).
+   */
+  function makeLightprintId() {
+    var picked = [];
+    var step = Math.max(1, Math.ceil(samples.length / 24));
+    for (var i = 0; i < samples.length && picked.length < 24; i += step) {
+      var s = samples[i];
+      picked.push([
+        Math.round(s.nx * 1000),
+        Math.round(s.ny * 1000),
+        s.t,
+        s.id
+      ].join('.'));
+    }
+    var payload = [
+      'lm1',
+      visitSalt,
+      String(Date.now()),
+      randomHex(8),
+      String(Math.max(0, Math.round(performance.now() - playT0))),
+      String(peakFingers),
+      String(samples.length),
+      picked.join(',')
+    ].join('|');
+    return expandId(fnv1a(payload));
+  }
+
+  function setHint(key) {
+    var pack = HINTS[key] || HINTS.gather;
+    hintEl.dataset.en = pack.en;
+    hintEl.dataset.zh = pack.zh;
+    hintEl.textContent = pack[lang()];
+  }
+
+  function elapsedSec() {
+    return playT0 ? (performance.now() - playT0) / 1000 : 0;
+  }
+
+  function hintForRest() {
+    var ready = elapsedSec() >= 20;
+    if (finePointer && ready) return 'ready';
+    if (finePointer) return 'desktop';
+    if (ready) return 'readyTouch';
+    return 'gather';
+  }
+
+  function resize() {
+    var rect = stage.getBoundingClientRect();
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function stagePoint(clientX, clientY) {
+    var rect = stage.getBoundingClientRect();
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+      nx: rect.width ? (clientX - rect.left) / rect.width : 0.5,
+      ny: rect.height ? (clientY - rect.top) / rect.height : 0.5
+    };
+  }
+
+  function remember(pt, pointerId) {
+    var now = performance.now();
+    if (now - lastSampleAt < 36 && samples.length) return;
+    lastSampleAt = now;
+    if (samples.length > 96) samples.shift();
+    samples.push({
+      nx: Math.max(0, Math.min(1, pt.nx)),
+      ny: Math.max(0, Math.min(1, pt.ny)),
+      t: Math.max(0, Math.round(now - playT0)),
+      id: Math.abs(pointerId == null ? 0 : pointerId) % 97
+    });
+  }
+
+  function stamp(x, y, strong) {
+    var r = strong ? 108 : 78;
+    var glow = ctx.createRadialGradient(x, y, 0, x, y, r);
+    glow.addColorStop(0, 'rgba(255,248,230,0.62)');
+    glow.addColorStop(0.38, 'rgba(228,194,122,0.30)');
+    glow.addColorStop(0.72, 'rgba(240,183,200,0.12)');
+    glow.addColorStop(1, 'rgba(255,248,230,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    var fog = ctx.createRadialGradient(x, y, r * 0.2, x, y, r * 2.15);
+    fog.addColorStop(0, 'rgba(232,210,160,0.18)');
+    fog.addColorStop(1, 'rgba(232,210,160,0)');
+    ctx.fillStyle = fog;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 2.15, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function paint(clientX, clientY, pointerId, strong) {
+    if (phase !== 'play') return;
+    var pt = stagePoint(clientX, clientY);
+    remember(pt, pointerId);
+    stamp(pt.x, pt.y, !!strong);
+  }
+
+  function tick() {
+    if (phase !== 'play') return;
+    var p = Math.max(0, Math.min(1, elapsedSec() / 20));
+    arcBar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+    if (p >= 1 && fingerBucket !== 'add') setHint(hintForRest());
+    raf = requestAnimationFrame(tick);
+  }
+
+  function show(which) {
+    phase = which;
+    openEl.hidden = which !== 'open';
+    playEl.hidden = which !== 'play';
+    endEl.hidden = which !== 'end';
+    document.body.classList.toggle('lm-playing', which === 'play');
+  }
+
+  function resetPlay() {
+    samples = [];
+    lastSampleAt = 0;
+    peakFingers = 0;
+    fingerBucket = 'none';
+    mouseDown = null;
+    currentId = '';
+    playT0 = performance.now();
+    stage.classList.remove('is-fog');
+    resize();
+    ctx.clearRect(0, 0, stage.clientWidth, stage.clientHeight);
+    arcBar.style.transform = 'scaleX(0)';
+    setHint(hintForRest());
+    copyStatus.textContent = '';
+  }
+
+  function startPlay() {
+    cancelAnimationFrame(raf);
+    clearInterval(clock);
+    show('play');
+    resetPlay();
+    raf = requestAnimationFrame(tick);
+    clock = setInterval(function () {
+      if (phase !== 'play') return;
+      if (fingerBucket !== 'add') setHint(hintForRest());
+    }, 400);
+    stage.focus({ preventScroll: true });
+  }
+
+  function seal() {
+    if (phase !== 'play') return;
+    if (!samples.length) {
+      samples.push({ nx: 0.5, ny: 0.46, t: Math.max(0, Math.round(performance.now() - playT0)), id: 0 });
+    }
+    currentId = makeLightprintId();
+    cancelAnimationFrame(raf);
+    clearInterval(clock);
+    idEl.textContent = currentId;
+    copyStatus.textContent = '';
+    show('end');
+    idEl.focus({ preventScroll: true });
+  }
+
+  function noteFingers(n) {
+    peakFingers = Math.max(peakFingers, n);
+    stage.classList.toggle('is-fog', n >= 1 && n < 4);
+    if (n >= 4) {
+      fingerBucket = 'seal';
+      seal();
+      return;
+    }
+    if (n >= 1) {
+      if (fingerBucket !== 'add') {
+        fingerBucket = 'add';
+        setHint('add');
+      }
+      return;
+    }
+    if (fingerBucket !== 'rest') {
+      fingerBucket = 'rest';
+      setHint(hintForRest());
+    }
+  }
+
+  function onTouch(e) {
+    if (phase !== 'play') return;
+    e.preventDefault();
+    lastTouchAt = Date.now();
+    var n = e.touches.length;
+    for (var i = 0; i < n; i++) {
+      var t = e.touches[i];
+      paint(t.clientX, t.clientY, t.identifier, n >= 2);
+    }
+    noteFingers(n);
+  }
+
+  function recentTouch() {
+    return Date.now() - lastTouchAt < 800;
+  }
+
+  beginBtn.addEventListener('click', startPlay);
+
+  stage.addEventListener('touchstart', onTouch, { passive: false });
+  stage.addEventListener('touchmove', onTouch, { passive: false });
+  stage.addEventListener('touchend', onTouch, { passive: false });
+  stage.addEventListener('touchcancel', onTouch, { passive: false });
+
+  stage.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'touch' || phase !== 'play' || recentTouch()) return;
+    mouseDown = { x: e.clientX, y: e.clientY, moved: false };
+    peakFingers = Math.max(peakFingers, 1);
+    stage.classList.add('is-fog');
+    paint(e.clientX, e.clientY, 1, false);
+  });
+
+  stage.addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'touch' || !mouseDown || phase !== 'play') return;
+    if (Math.hypot(e.clientX - mouseDown.x, e.clientY - mouseDown.y) > 7) mouseDown.moved = true;
+    paint(e.clientX, e.clientY, 1, false);
+  });
+
+  stage.addEventListener('pointerup', function (e) {
+    if (e.pointerType === 'touch' || !mouseDown || phase !== 'play' || recentTouch()) {
+      mouseDown = null;
+      return;
+    }
+    var wasClick = !mouseDown.moved;
+    mouseDown = null;
+    stage.classList.remove('is-fog');
+    if (wasClick) seal();
+    else if (fingerBucket !== 'add') {
+      fingerBucket = 'rest';
+      setHint(hintForRest());
+    }
+  });
+
+  stage.addEventListener('pointerleave', function () {
+    if (mouseDown && mouseDown.moved) stage.classList.remove('is-fog');
+  });
+
+  stage.addEventListener('keydown', function (e) {
+    if (phase !== 'play') return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      peakFingers = Math.max(peakFingers, 1);
+      seal();
+    }
+  });
+
+  sealBtn.addEventListener('pointerdown', function (e) {
+    sealBtn.dataset.pointerType = e.pointerType || '';
+  });
+  sealBtn.addEventListener('click', function () {
+    if (sealBtn.dataset.pointerType === 'touch') {
+      setHint('add');
+      return;
+    }
+    if (phase === 'play') seal();
+  });
+
+  copyBtn.addEventListener('click', function () {
+    if (!currentId) return;
+    var done = lang() === 'zh' ? '已複製。' : 'Copied.';
+    var fail = lang() === 'zh' ? '請直接選取光紋 ID。' : 'Select the Lightprint ID above.';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(currentId).then(function () {
+        copyStatus.textContent = done;
+      }).catch(function () {
+        copyStatus.textContent = fail;
+      });
+    } else {
+      copyStatus.textContent = fail;
+    }
+  });
+
+  againBtn.addEventListener('click', function () {
+    currentId = '';
+    idEl.textContent = '';
+    show('open');
+    window.scrollTo(0, 0);
+  });
+
+  window.addEventListener('resize', function () {
+    if (phase === 'play') resize();
+  });
+
+  var langWatch = new MutationObserver(function () {
+    if (phase === 'play' && hintEl.dataset[lang()]) hintEl.textContent = hintEl.dataset[lang()];
+    stage.setAttribute('aria-label', lang() === 'zh'
+      ? '柔金霧剪影。觸碰聚光。四指封上。桌面點擊可封上。'
+      : 'Soft-gold fog silhouette. Touch to gather light. Four fingers seal. A click seals on desktop.');
+  });
+  langWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+
+  art.addEventListener('error', function () {
+    art.hidden = true;
+    figure.hidden = false;
+  });
+  art.addEventListener('load', function () {
+    if (!art.naturalWidth) return;
+    art.hidden = false;
+    figure.hidden = true;
+  });
+  art.src = art.getAttribute('data-asset-slot');
+
+  window.matchMedia('(pointer: fine)').addEventListener('change', function (e) {
+    finePointer = e.matches;
+    if (phase === 'play' && fingerBucket !== 'add') setHint(hintForRest());
+  });
+})();
+</script>
+</body>
+</html>

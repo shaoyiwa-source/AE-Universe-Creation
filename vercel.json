@@ -55,6 +55,10 @@
     {
       "source": "/lightprint-figure",
       "destination": "/lightprint-figure.html"
+    },
+    {
+      "source": "/lightprint-memory",
+      "destination": "/lightprint-memory.html"
     }
   ],
   "functions": {
