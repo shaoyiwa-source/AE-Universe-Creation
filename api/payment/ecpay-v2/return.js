@@ -1,6 +1,6 @@
 const {
   decodeEnvelope, parseJsonBody, validateCallbackData, queryOrder, validateQueryData,
-  getAssetRecord, writeOrderState, privateBlobReady,
+  getSkuRecord, writeOrderState, privateBlobReady,
 } = require('./_lib');
 
 module.exports = async function handler(req, res) {
@@ -28,20 +28,24 @@ module.exports = async function handler(req, res) {
 
     let fulfillment = 'DENIED_PAYMENT_NOT_VERIFIED';
     if (finalState.paidVerified) {
-      const asset = getAssetRecord(finalState.sku);
-      if (!asset) {
+      const record = getSkuRecord(finalState.sku);
+      if (!record || !record.files || record.files.length !== 4) {
         fulfillment = 'DENIED_ASSET_MANIFEST_UNRESOLVED';
       } else if (!privateBlobReady()) {
         fulfillment = 'DENIED_PRIVATE_STORAGE_NOT_READY';
       } else {
         await writeOrderState({
-          v: 1,
+          v: 2,
           provider: 'ecpay_stage_embedded_v2',
           merchantTradeNo: finalState.merchantTradeNo,
           sku: finalState.sku,
-          asset_manifest_id: asset.asset_manifest_id,
-          filename: asset.filename,
-          sha256: asset.sha256,
+          public_name: record.public_name,
+          asset_manifest_id: record.asset_manifest_id,
+          files: record.files.map((file) => ({
+            sku: file.sku,
+            filename: file.filename,
+            sha256: file.sha256,
+          })),
           amount: initial.record.amount,
           currency: initial.record.currency,
           paid_verified: true,

@@ -21,8 +21,11 @@
 .field{margin:0 0 18px}
 .field label{display:block;font-size:13px;letter-spacing:.04em;margin:0 0 8px}
 .field label span{color:var(--muted);font-size:12px;margin-left:8px}
-.field input,.field select{width:100%;padding:14px 14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;box-sizing:border-box}
-.field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:2px}
+.field input{width:100%;padding:14px 14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;box-sizing:border-box}
+.field input:focus{outline:2px solid var(--accent);outline-offset:2px}
+.pack-name{margin:0;font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;font-weight:500}
+.download-list{margin:12px 0 0}
+.download-list a{display:block;margin:8px 0}
 .price-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:8px 0 20px;padding-bottom:18px;border-bottom:1px solid var(--line)}
 .price-row strong{font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;font-weight:500}
 .price-row span{color:var(--muted);font-size:14px}
@@ -58,13 +61,8 @@
     <p class="checkout-lead">請填寫購買人資料後繼續付款。數位收藏檔將依完成付款後的訂單交付。<br>Please enter buyer details, then continue to payment.</p>
 
     <div class="field">
-      <label for="sku">版本 Edition</label>
-      <select id="sku">
-        <option value="ES-ORIGINAL">Original Painting Edition · 原作完整版</option>
-        <option value="ES-GALLERY">Gallery Edition · 展示版</option>
-        <option value="ES-PHONE">Phone Wallpaper Edition · 手機桌布</option>
-        <option value="ES-SQUARE">Square Edition · 方版</option>
-      </select>
+      <label>作品</label>
+      <p class="pack-name">Eternal Sun｜盛明四張組</p>
     </div>
     <div class="field">
       <label for="name">姓名 Name <span>必填 required</span></label>
@@ -88,6 +86,7 @@
       <button type="button" class="button secondary" id="verify">確認付款狀態</button>
       <button type="button" class="button secondary" id="download" disabled>取得下載</button>
     </div>
+    <div id="downloads" class="download-list"></div>
     <pre id="status" class="status-box" aria-live="polite">Ready.</pre>
     <p class="soft-note">付款閘道目前仍走 ECPay Stage（沙箱），直到自家 Production 金鑰就緒。頁面標示售價為盛明四張組正式草稿價 NT$444；沙箱實際扣款可能為 Stage 測試金額。正式商店 CTA 暫仍保留 Ko-fi。</p>
   </section>
@@ -121,6 +120,7 @@
 <script>
 (() => {
   const LIST_PRICE = 444;
+  const PACK_SKU = 'ES-PACK';
   let orderToken = sessionStorage.getItem('ae_formal_order_token') || null;
   const status = document.getElementById('status');
   const pay = document.getElementById('pay');
@@ -133,7 +133,7 @@
 
   function buyerPayload() {
     return {
-      sku: document.getElementById('sku').value,
+      sku: PACK_SKU,
       name: document.getElementById('name').value.trim(),
       email: document.getElementById('email').value.trim(),
       phone: document.getElementById('phone').value.trim(),
@@ -235,8 +235,15 @@
     try {
       if (!orderToken) throw new Error('Missing order token.');
       const j = await postJson('/api/order/download-token', { order_token: orderToken });
+      const hold = document.getElementById('downloads');
+      hold.replaceChildren();
+      (j.downloads || []).forEach((file) => {
+        const link = document.createElement('a');
+        link.href = file.download_url;
+        link.textContent = file.filename;
+        hold.appendChild(link);
+      });
       msg(j);
-      if (j.download_url) location.href = j.download_url;
     } catch (e) {
       msg(e.payload || e.message);
     }

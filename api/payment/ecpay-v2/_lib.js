@@ -9,18 +9,15 @@ const GET_TOKEN_URL = `${STAGE_HOST}/Merchant/GetTokenbyTrade`;
 const CREATE_PAYMENT_URL = `${STAGE_HOST}/Merchant/CreatePayment`;
 const QUERY_TRADE_URL = 'https://ecpayment-stage.ecpay.com.tw/1.0.0/Cashier/QueryTrade';
 
+const PACK_SKU = 'ES-PACK';
+const PACK_NAME = 'Eternal Sun｜盛明四張組';
+const PACK_FILE_SKUS = ['ES-ORIGINAL', 'ES-GALLERY', 'ES-PHONE', 'ES-SQUARE'];
 const SKU_CODE = {
-  'ES-ORIGINAL': '1',
-  'ES-GALLERY': '2',
-  'ES-PHONE': '3',
-  'ES-SQUARE': '4',
+  [PACK_SKU]: '5',
 };
 const CODE_SKU = Object.fromEntries(Object.entries(SKU_CODE).map(([sku, code]) => [code, sku]));
 const SKU_NAMES = {
-  'ES-ORIGINAL': 'Eternal Sun · Original Painting Edition',
-  'ES-GALLERY': 'Eternal Sun · Gallery Edition',
-  'ES-PHONE': 'Eternal Sun · Phone Wallpaper Edition',
-  'ES-SQUARE': 'Eternal Sun · Square Edition',
+  [PACK_SKU]: PACK_NAME,
 };
 
 const FORMAL_LIST_PRICE_TWD = 444;
@@ -88,19 +85,26 @@ function stageAmountForSku(sku) {
   return amount;
 }
 
+function packFiles() {
+  return PACK_FILE_SKUS.map((sku) => {
+    const asset = ASSET_MANIFEST[sku];
+    return asset ? { sku, asset_manifest_id: ASSET_MANIFEST_ID, ...asset } : null;
+  }).filter(Boolean);
+}
+
 function getSkuRecord(sku) {
   const clean = String(sku || '').toUpperCase();
-  if (!SKU_CODE[clean]) return null;
-  const asset = ASSET_MANIFEST[clean];
+  if (clean !== PACK_SKU) return null;
+  const files = packFiles();
   return {
-    sku: clean,
-    public_name: SKU_NAMES[clean],
+    sku: PACK_SKU,
+    public_name: PACK_NAME,
     currency: 'TWD',
-    amount: stageAmountForSku(clean),
+    amount: stageAmountForSku(PACK_SKU),
     asset_manifest_id: ASSET_MANIFEST_ID,
-    asset,
-    active: true,
-    fulfillment_enabled: Boolean(asset),
+    files,
+    active: files.length === PACK_FILE_SKUS.length,
+    fulfillment_enabled: files.length === PACK_FILE_SKUS.length,
   };
 }
 
@@ -178,7 +182,7 @@ function makeMerchantTradeNo(sku) {
 
 function skuFromMerchantTradeNo(value) {
   const tradeNo = String(value || '');
-  if (!/^AE[1-4][A-Z0-9]+$/.test(tradeNo) || tradeNo.length > 20) return null;
+  if (!/^AE5[A-Z0-9]+$/.test(tradeNo) || tradeNo.length > 20) return null;
   return CODE_SKU[tradeNo[2]] || null;
 }
 
@@ -453,6 +457,9 @@ module.exports = {
   normalizeBuyer,
   validateBuyer,
   FORMAL_LIST_PRICE_TWD,
+  PACK_SKU,
+  PACK_NAME,
+  packFiles,
   queryOrder,
   validateCallbackData,
   validateQueryData,

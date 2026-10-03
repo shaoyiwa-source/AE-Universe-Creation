@@ -15,50 +15,56 @@ const cipher = lib.encryptData({Name:'Test',ID:'A123456789'}, 'pwFHCqoQZGmho4w6'
 assert.strictEqual(cipher, 'o4TJSHkQBM1bogbn5BNFRofCVTfsQjoqv/TX8DKn757fe5AoYzoalYmrMsGXTiwxGpI8NsE2vu4tScAwISx8kw==');
 assert.deepStrictEqual(lib.decryptData(cipher, 'pwFHCqoQZGmho4w6', 'EkRm7iFT261dpevs'), {Name:'Test',ID:'A123456789'});
 
-for (const sku of Object.keys(expectedAssets)) {
-  const {order, orderToken, skuRecord} = lib.makeOrderEnvelope(sku, {name:'王義軒',email:'buyer@example.com',phone:'0912345678'});
-  assert.strictEqual(lib.skuFromMerchantTradeNo(order.merchant_trade_no), sku);
-  assert.strictEqual(lib.verifyOrderToken(orderToken).sku, sku);
-  assert.strictEqual(lib.verifyOrderToken(orderToken).buyer.email, 'buyer@example.com');
-  assert.strictEqual(lib.verifyOrderToken(orderToken).list_price, 444);
-  assert.strictEqual(skuRecord.asset_manifest_id, 'ES-ETERNAL-SUN-BUYER-PACK-V1');
-  assert.strictEqual(skuRecord.fulfillment_enabled, true);
+const {order, orderToken, skuRecord} = lib.makeOrderEnvelope('ES-PACK', {name:'王義軒',email:'buyer@example.com',phone:'0912345678'});
+assert.strictEqual(skuRecord.public_name, 'Eternal Sun｜盛明四張組');
+assert.strictEqual(lib.PACK_NAME, 'Eternal Sun｜盛明四張組');
+assert.strictEqual(lib.skuFromMerchantTradeNo(order.merchant_trade_no), 'ES-PACK');
+assert.strictEqual(lib.skuFromMerchantTradeNo('AE3ABCDEF'), null);
+assert.strictEqual(lib.verifyOrderToken(orderToken).sku, 'ES-PACK');
+assert.strictEqual(lib.verifyOrderToken(orderToken).buyer.email, 'buyer@example.com');
+assert.strictEqual(lib.verifyOrderToken(orderToken).list_price, 444);
+assert.strictEqual(skuRecord.asset_manifest_id, 'ES-ETERNAL-SUN-BUYER-PACK-V1');
+assert.strictEqual(skuRecord.fulfillment_enabled, true);
+assert.strictEqual(skuRecord.files.length, 4);
+assert.deepStrictEqual(skuRecord.files.map((file) => file.sku), Object.keys(expectedAssets));
+for (const file of skuRecord.files) {
   assert.deepStrictEqual(
-    [skuRecord.asset.filename, skuRecord.asset.sha256, skuRecord.asset.size],
-    expectedAssets[sku]
+    [file.filename, file.sha256, file.size],
+    expectedAssets[file.sku]
   );
-
-  const cb = lib.validateCallbackData({
-    RtnCode:1,MerchantID:'3002607',SimulatePaid:0,
-    OrderInfo:{MerchantTradeNo:order.merchant_trade_no,TradeAmt:skuRecord.amount,TradeStatus:'1'}
-  });
-  assert.strictEqual(cb.paidVerified,true);
-  assert.strictEqual(cb.sku,sku);
-  assert.strictEqual(
-    lib.validateQueryData({
-      RtnCode:1,
-      OrderInfo:{MerchantTradeNo:order.merchant_trade_no,TradeAmt:skuRecord.amount,TradeStatus:'1'}
-    },cb).paidVerified,
-    true
-  );
-
-  const asset = lib.getAssetRecord(sku);
+  const asset = lib.getAssetRecord(file.sku);
   const token = lib.signDownloadToken({
     order_id: order.order_id,
-    sku,
+    sku: file.sku,
     filename: asset.filename,
     sha256: asset.sha256,
   });
   const decoded = lib.verifyDownloadToken(token);
-  assert.strictEqual(decoded.sku, sku);
+  assert.strictEqual(decoded.sku, file.sku);
   assert.strictEqual(decoded.filename, asset.filename);
   assert.strictEqual(decoded.sha256, asset.sha256);
 }
+assert.strictEqual(lib.getSkuRecord('ES-PHONE'), null);
+assert.strictEqual(lib.getSkuRecord('ES-ORIGINAL'), null);
+assert.throws(() => lib.makeOrderEnvelope('ES-PHONE', {name:'王義軒',email:'buyer@example.com',phone:'0912345678'}));
 
-const {order:o} = lib.makeOrderEnvelope('ES-PHONE', {name:'王義軒',email:'buyer@example.com',phone:'0912345678'});
-assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:1,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:1,TradeStatus:'1'}}).paidVerified,false);
-assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:999,TradeStatus:'1'}}).reason,'AMOUNT_MISMATCH');
-assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:o.merchant_trade_no,TradeAmt:o.amount,TradeStatus:'0'}}).reason,'CALLBACK_NOT_PAID');
+const cb = lib.validateCallbackData({
+  RtnCode:1,MerchantID:'3002607',SimulatePaid:0,
+  OrderInfo:{MerchantTradeNo:order.merchant_trade_no,TradeAmt:skuRecord.amount,TradeStatus:'1'}
+});
+assert.strictEqual(cb.paidVerified,true);
+assert.strictEqual(cb.sku,'ES-PACK');
+assert.strictEqual(
+  lib.validateQueryData({
+    RtnCode:1,
+    OrderInfo:{MerchantTradeNo:order.merchant_trade_no,TradeAmt:skuRecord.amount,TradeStatus:'1'}
+  },cb).paidVerified,
+  true
+);
+
+assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:1,OrderInfo:{MerchantTradeNo:order.merchant_trade_no,TradeAmt:1,TradeStatus:'1'}}).paidVerified,false);
+assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:order.merchant_trade_no,TradeAmt:999,TradeStatus:'1'}}).reason,'AMOUNT_MISMATCH');
+assert.strictEqual(lib.validateCallbackData({RtnCode:1,MerchantID:'3002607',SimulatePaid:0,OrderInfo:{MerchantTradeNo:order.merchant_trade_no,TradeAmt:order.amount,TradeStatus:'0'}}).reason,'CALLBACK_NOT_PAID');
 
 const phone = lib.getAssetRecord('ES-PHONE');
 let crossToken = lib.signDownloadToken({order_id:'X',sku:'ES-PHONE',filename:phone.filename,sha256:phone.sha256});
@@ -69,9 +75,9 @@ const tampered = Buffer.from(JSON.stringify(body),'utf8').toString('base64url')+
 assert.throws(()=>lib.verifyDownloadToken(tampered));
 
 
-assert.throws(() => lib.makeOrderEnvelope('ES-PHONE', {name:'',email:'a@b.co',phone:'0912345678'}));
-assert.throws(() => lib.makeOrderEnvelope('ES-PHONE', {name:'AE',email:'bad',phone:'0912345678'}));
-assert.throws(() => lib.makeOrderEnvelope('ES-PHONE', {name:'AE',email:'a@b.co',phone:'123'}));
+assert.throws(() => lib.makeOrderEnvelope('ES-PACK', {name:'',email:'a@b.co',phone:'0912345678'}));
+assert.throws(() => lib.makeOrderEnvelope('ES-PACK', {name:'AE',email:'bad',phone:'0912345678'}));
+assert.throws(() => lib.makeOrderEnvelope('ES-PACK', {name:'AE',email:'a@b.co',phone:'123'}));
 assert.strictEqual(lib.FORMAL_LIST_PRICE_TWD, 444);
 
 console.log('PASS ECPay Embedded Checkout 2.0 Stage + buyer-manifest unit gates');
