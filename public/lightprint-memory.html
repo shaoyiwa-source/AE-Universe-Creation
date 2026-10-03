@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<meta name="ae-version" content="lightprint-memory-2">
+<meta name="ae-version" content="lightprint-memory-3">
 <title>光紋記憶 · AE Universe Creation</title>
 <meta name="description" content="光紋記憶 — a short touch, then a Lightprint ID unique to this person and this moment. An entry ticket into the AE world, not a product.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,27 +36,64 @@
     background:var(--bg);
     text-align:center;
   }
+  .lm-end .lm-paper{
+    border-radius:22px;
+    background:#f3eee6;
+    border:1px solid rgba(90,72,52,.16);
+    box-shadow:0 16px 40px rgba(70,48,28,.06);
+  }
+  .lm-paper-fill,
   .lm-paper-art{
     position:absolute;
+    pointer-events:none;
+  }
+  /* Soft color to the card edges. Blur hides any enlarge; the sharp layer stays at native pixels. */
+  .lm-paper-fill{
     left:50%;
     top:50%;
+    width:148%;
+    height:148%;
+    max-width:none;
+    max-height:none;
+    transform:translate(-50%,-50%);
+    object-fit:cover;
+    object-position:center 46%;
+    filter:blur(18px) saturate(1.16) brightness(1.04);
+    opacity:1;
+  }
+  .lm-paper-art{
+    left:50%;
+    top:48%;
     width:auto;
     height:auto;
-    max-width:100%;
-    max-height:100%;
+    max-width:none;
+    max-height:none;
     transform:translate(-50%,-50%);
-    object-fit:contain;
-    object-position:center;
-    opacity:.4;
-    pointer-events:none;
+    object-fit:fill;
+    opacity:.7;
+    -webkit-mask-image:radial-gradient(ellipse 92% 84% at 50% 50%, #000 28%, transparent 74%);
+    mask-image:radial-gradient(ellipse 92% 84% at 50% 50%, #000 28%, transparent 74%);
   }
   .lm-paper-veil{
     position:absolute;inset:0;
     pointer-events:none;
-    background:rgba(255,255,255,.78);
+    background:
+      radial-gradient(ellipse 86% 76% at 50% 46%,
+        rgba(255,250,244,.46) 0%,
+        rgba(255,250,244,.18) 48%,
+        rgba(255,250,244,0) 76%);
+  }
+  html[data-theme=dark] .lm-end .lm-paper{
+    background:#141c18;
+    border-color:rgba(232,220,200,.14);
+    box-shadow:none;
   }
   html[data-theme=dark] .lm-paper-veil{
-    background:rgba(20,28,24,.78);
+    background:
+      radial-gradient(ellipse 86% 76% at 50% 46%,
+        rgba(16,22,19,.5) 0%,
+        rgba(16,22,19,.2) 50%,
+        rgba(16,22,19,0) 78%);
   }
   .lm-paper-copy{position:relative;z-index:1;padding:72px 40px 64px}
   .lm-open h1{margin-bottom:10px}
@@ -456,6 +493,7 @@
 
   <section class="lm-end" id="lmEnd" hidden>
     <article class="lm-paper">
+      <img id="lmEndFill" class="lm-paper-fill" alt="" hidden>
       <img id="lmEndArt" class="lm-paper-art" alt="" hidden data-asset-slot="assets/lightprint-memory/card-end-bg.jpg" data-fallback="assets/2ee9aa3b017652d9.webp">
       <div class="lm-paper-veil" aria-hidden="true"></div>
       <div class="lm-paper-copy">
@@ -771,6 +809,7 @@
       idEl.textContent = currentId;
       copyStatus.textContent = '';
       show('end');
+      placeEndArt();
       idEl.focus({ preventScroll: true });
     }, 680);
   }
@@ -928,7 +967,25 @@
   }
 
   var sun = document.getElementById('lmSun');
-  loadLayer(document.getElementById('lmEndArt'));
+  var endArt = document.getElementById('lmEndArt');
+  var endFill = document.getElementById('lmEndFill');
+  function placeEndArt() {
+    if (!endArt || endArt.hidden || !endArt.naturalWidth) return;
+    var card = endArt.closest('.lm-paper');
+    if (!card || !card.clientWidth || !card.clientHeight) return;
+    var nw = endArt.naturalWidth;
+    var nh = endArt.naturalHeight;
+    /* Whole painting, never larger than the file. Card edges stay on the soft fill. */
+    var scale = Math.min(1, card.clientWidth / nw, card.clientHeight / nh);
+    endArt.style.width = Math.round(nw * scale) + 'px';
+    endArt.style.height = Math.round(nh * scale) + 'px';
+  }
+  loadLayer(endArt, function () {
+    endFill.src = endArt.currentSrc || endArt.src;
+    endFill.hidden = false;
+    placeEndArt();
+  });
+  window.addEventListener('resize', placeEndArt);
   loadLayer(sun, function () {
     stage.classList.add('is-sun');
     figure.hidden = true;
