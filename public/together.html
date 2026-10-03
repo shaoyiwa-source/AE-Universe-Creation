@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>One table · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v7"/>
+<meta name="ae-preview-version" content="together-v8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -53,12 +53,28 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .presence,.count{margin:0;min-height:1.3em}
 .share,.make{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:var(--warm);color:#16130f;cursor:pointer}
 .make[hidden]{display:none}
-.dollar{margin:18px 0 0}
-.dollar[hidden]{display:none}
-.pass-qr{display:block;width:148px;height:148px;background:#fff;image-rendering:pixelated;margin:0 0 8px}
-.pass-id{margin:0 0 8px;color:#9c958b;font-size:12px;letter-spacing:.12em}
-.reason{margin:0;color:#ddd4c8;font-size:15px;line-height:1.5}
-.kofi{margin:8px 0 0;color:#9c958b;font-size:12px}
+.ask,.figures,.dollar{margin-top:18px}
+.ask[hidden],.figures[hidden],.dollar[hidden]{display:none}
+.ask h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(28px,7vw,40px);margin:0 0 12px}
+.q{display:grid;gap:6px;margin:0 0 12px}
+.q > span{font-size:13px;letter-spacing:.06em;color:#c8bfb2}
+.date{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px}
+.ask input,.ask select{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:#141210;color:var(--warm);padding:0 12px}
+.ask input:focus-visible,.ask select:focus-visible,.showfigs:focus-visible,.fig:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.showfigs{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:transparent;color:var(--warm);cursor:pointer}
+.pickline{margin:0 0 8px;color:#ddd4c8}
+.figrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fig{padding:8px 4px 10px;border-radius:18px;border:1px solid rgba(255,248,235,.35);background:#141210;color:var(--warm);cursor:pointer}
+.fig svg{width:100%;height:auto;display:block}
+.fig small{display:block;text-align:center;letter-spacing:.14em;font-size:12px;color:#c8bfb2}
+.dollar{background:linear-gradient(180deg,#f7f1e6 0%,#efe2cc 100%);color:#1a1612;border-radius:28px;padding:22px 18px 16px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.kicker{margin:0;text-align:center;letter-spacing:.28em;font-size:11px;color:#8a7d6a}
+.ticket-fig{width:min(168px,42vw);margin:6px auto 0}
+.ticket-fig svg{width:100%;height:auto;display:block}
+.ticket-num{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(32px,8vw,44px);letter-spacing:.06em;text-align:center;margin:0 0 12px}
+.pass-qr{display:block;width:148px;height:148px;background:#fff;image-rendering:pixelated;margin:0 auto 12px;border-radius:8px}
+.reason{margin:0;color:#3a332b;font-size:15px;line-height:1.5;text-align:center}
+.kofi{margin:10px 0 0;color:#8a7d6a;font-size:12px;text-align:center}
 .kofi a{text-underline-offset:3px}
 .shop{margin:10px 0 0;color:#7f786f;font-size:11px;line-height:1.45}
 .shop a{text-underline-offset:3px}
@@ -86,12 +102,39 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
     <button class="share" id="shareBtn" type="button" data-en="Give this Lightprint to someone" data-zh="把這道光紋給另一個人">Give this Lightprint to someone</button>
     <p class="note" id="note" aria-live="polite"></p>
   </div>
-  <div class="dollar" id="dollar" hidden>
-    <img class="pass-qr" id="passQr" alt="" width="148" height="148">
-    <p class="pass-id" id="passCode"></p>
-    <p class="reason" data-en="You pay one dollar. You buy a ticket in, and it is also your ID. This ID is the Lightprint you already left. The face comes later. It has a QR code. Someone scans it and can enter this place, to make things with other people, with yourself, with the environment, and with AI. Drawing, music, talking, planting, anime. Anything is fine." data-zh="你付一塊錢，買的是一張入場券，也是你的 ID。這張 ID 現在是你在永恆當下留下的光紋，臉以後才加。上面有 QR code。別人掃了，就進得了這個空間，跟別人、跟自己、跟環境、跟 AI 一起做。畫畫、音樂、說話、種東西、動漫，什麼都行。">你付一塊錢，買的是一張入場券，也是你的 ID。這張 ID 現在是你在永恆當下留下的光紋，臉以後才加。上面有 QR code。別人掃了，就進得了這個空間，跟別人、跟自己、跟環境、跟 AI 一起做。畫畫、音樂、說話、種東西、動漫，什麼都行。</p>
-    <p class="kofi"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
+  <section class="ask" id="ask" hidden>
+    <h2 data-en="Three questions." data-zh="三個問題。">Three questions.</h2>
+    <label class="q">
+      <span data-en="Birth date" data-zh="出生日期">Birth date</span>
+      <span class="date">
+        <input id="birthYear" type="text" inputmode="numeric" maxlength="4" autocomplete="bday-year" aria-label="Year">
+        <input id="birthMonth" type="text" inputmode="numeric" maxlength="2" autocomplete="bday-month" aria-label="Month">
+        <input id="birthDay" type="text" inputmode="numeric" maxlength="2" autocomplete="bday-day" aria-label="Day">
+      </span>
+    </label>
+    <label class="q">
+      <span data-en="Zodiac sign" data-zh="星座">Zodiac sign</span>
+      <select id="zodiac"></select>
+    </label>
+    <label class="q">
+      <span data-en="Blood type" data-zh="血型">Blood type</span>
+      <select id="blood"></select>
+    </label>
+    <button class="showfigs" id="showFigs" type="button" data-en="Show the three figures." data-zh="顯示三個身影。">Show the three figures.</button>
+    <p class="note" id="askNote" aria-live="polite"></p>
+  </section>
+  <div class="figures" id="figures" hidden>
+    <p class="pickline" id="pickLine" data-en="Pick one. It cannot be changed." data-zh="選一個。不能改。">Pick one. It cannot be changed.</p>
+    <div class="figrow" id="figRow"></div>
   </div>
+  <article class="dollar" id="dollar" hidden>
+    <p class="kicker" data-en="Ticket" data-zh="票">Ticket</p>
+    <div class="ticket-fig" id="ticketFig"></div>
+    <p class="ticket-num" id="ticketNum"></p>
+    <img class="pass-qr" id="passQr" alt="" width="148" height="148">
+    <p class="reason" data-en="This dollar buys this card." data-zh="這一塊錢，買的是這張卡。">This dollar buys this card.</p>
+    <p class="kofi"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
+  </article>
   <p class="shop"><a href="/shop" data-en="The shop can wait." data-zh="商店可以晚一點。">The shop can wait.</a></p>
 </main>
 <script src="qrcode.js"></script>
@@ -99,6 +142,50 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 const ABC = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 const SYMBOLS = ['♥','∞','☾','✦','❀','☁','◌','⌁'];
 const CODE_RE = /^LP-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{8}$/;
+const SIGNS = [
+  ['aries', 'Aries', '牡羊'],
+  ['taurus', 'Taurus', '金牛'],
+  ['gemini', 'Gemini', '雙子'],
+  ['cancer', 'Cancer', '巨蟹'],
+  ['leo', 'Leo', '獅子'],
+  ['virgo', 'Virgo', '處女'],
+  ['libra', 'Libra', '天秤'],
+  ['scorpio', 'Scorpio', '天蠍'],
+  ['sagittarius', 'Sagittarius', '射手'],
+  ['capricorn', 'Capricorn', '摩羯'],
+  ['aquarius', 'Aquarius', '水瓶'],
+  ['pisces', 'Pisces', '雙魚']
+];
+const BLOODS = ['A', 'B', 'AB', 'O'];
+function hash32(text) {
+  let h = 2166136261 >>> 0;
+  const s = String(text);
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+function mix(h, i) {
+  let x = (h + Math.imul(i + 1, 2654435761)) >>> 0;
+  x ^= x >>> 16;
+  x = Math.imul(x, 0x7feb352d) >>> 0;
+  x ^= x >>> 15;
+  x = Math.imul(x, 0x846ca68b) >>> 0;
+  x ^= x >>> 16;
+  return x >>> 0;
+}
+function validDate(y, m, d) {
+  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+  if (y < 1900 || m < 1 || m > 12 || d < 1) return false;
+  if (d > new Date(Date.UTC(y, m, 0)).getUTCDate()) return false;
+  const now = new Date();
+  const today = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+  return y * 10000 + m * 100 + d <= today;
+}
+function bornOk(born) {
+  return !!(born && validDate(born.y, born.m, born.d) && SIGNS.some((sign) => sign[0] === born.sign) && BLOODS.indexOf(born.blood) >= 0);
+}
 
 function pick(len, prefix) {
   const bytes = new Uint8Array(len);
@@ -133,6 +220,12 @@ function savedPass() {
   try {
     const data = JSON.parse(localStorage.getItem(PASS_KEY) || '');
     if (!data || !CODE_RE.test(data.code) || !Array.isArray(data.marks)) return null;
+    if (!bornOk(data.born)) data.born = null;
+    const pickOk = data.pick === 0 || data.pick === 1 || data.pick === 2;
+    if (!data.born || !pickOk || !/^\d{10}$/.test(data.ticket || '')) {
+      data.pick = null;
+      data.ticket = null;
+    }
     return data;
   } catch (error) {
     return null;
@@ -227,11 +320,7 @@ function renderMarks() {
   else say(presence, 'You can play alone.', '一個人也可以玩。');
   const board = document.getElementById('board');
   if (board) board.setAttribute('aria-label', lang() === 'zh' ? '九扇門' : 'Nine doors');
-  const qrImg = document.getElementById('passQr');
-  if (qrImg) qrImg.alt = lang() === 'zh' ? '這張光紋的 QR code' : 'QR code for this Lightprint';
-  const pass = savedPass();
-  document.getElementById('dollar').hidden = !pass;
-  document.getElementById('makeBtn').hidden = !!pass;
+  syncStage();
 }
 function codeFromPlay(marks) {
   const payload = JSON.stringify(marks.filter((mark) => mark.yours).map((mark) => [mark.art, mark.symbol]));
@@ -254,17 +343,184 @@ function codeFromPlay(marks) {
   }
   return out;
 }
+function figureSvg(seed, index, paper) {
+  const u = (n) => (mix(seed, index * 40 + n) % 10000) / 10000;
+  const pal = [
+    ['#f6d78a', '#8d5e2a', '#fff6df'],
+    ['#f3c3d4', '#8d556f', '#fff4f8'],
+    ['#f4f0e6', '#6e7c8a', '#ffffff']
+  ][index];
+  const ink = paper ? '#241c14' : pal[2];
+  const gid = 'g' + index + (paper ? 'p' : 'd');
+  const lean = (u(1) - 0.5) * 22;
+  const hr = 13 + u(2) * 8;
+  const hy = 54;
+  const shoulder = 20 + u(3) * 18;
+  const waist = 9 + u(4) * 7;
+  const hip = 14 + u(5) * 16;
+  const foot = 198 + u(6) * 16;
+  const hipY = 124 + u(7) * 22;
+  const arm = 16 + u(8) * 28;
+  const sway = (y) => lean * ((y - 40) / 200);
+  const X = (dx, y) => (80 + sway(y) + dx).toFixed(1);
+  const Y = (y) => y.toFixed(1);
+  const neck = hy + hr + 3;
+  const body = [
+    'M', X(-shoulder, neck), Y(neck),
+    'C', X(-shoulder - 2, neck + 28), Y(neck + 28), X(-waist, hipY - 8), Y(hipY - 8), X(-waist, hipY), Y(hipY),
+    'C', X(-hip, hipY + 18), Y(hipY + 18), X(-12, foot - 8), Y(foot - 8), X(-7, foot), Y(foot),
+    'L', X(7, foot), Y(foot),
+    'C', X(12, foot - 8), Y(foot - 8), X(hip, hipY + 18), Y(hipY + 18), X(waist, hipY), Y(hipY),
+    'C', X(waist, hipY - 8), Y(hipY - 8), X(shoulder + 2, neck + 28), Y(neck + 28), X(shoulder, neck), Y(neck),
+    'Z'
+  ].join(' ');
+  const armL = 'M ' + X(-shoulder, neck + 8) + ' ' + Y(neck + 8) + ' Q ' + X(-shoulder - arm, neck + 34) + ' ' + Y(neck + 34) + ' ' + X(-shoulder - arm * 0.65, neck + 64) + ' ' + Y(neck + 64);
+  const armR = 'M ' + X(shoulder, neck + 8) + ' ' + Y(neck + 8) + ' Q ' + X(shoulder + arm, neck + 40) + ' ' + Y(neck + 40) + ' ' + X(shoulder + arm * 0.5, neck + 60) + ' ' + Y(neck + 60);
+  const hx = Number(X(0, hy));
+  const ornaments = [
+    '<circle cx="' + hx.toFixed(1) + '" cy="' + (hy - hr - 10).toFixed(1) + '" r="' + (hr + 7).toFixed(1) + '" fill="none" stroke="' + ink + '" stroke-width="1.25" opacity=".75"/>',
+    '<path d="M' + (hx - hr - 6).toFixed(1) + ' ' + (hy - hr).toFixed(1) + ' a' + (hr + 6).toFixed(1) + ' ' + (hr + 6).toFixed(1) + ' 0 0 1 ' + ((hr + 6) * 2).toFixed(1) + ' 0" fill="none" stroke="' + ink + '" stroke-width="1.25"/>',
+    '<path d="M' + hx.toFixed(1) + ' ' + (hy - hr - 18).toFixed(1) + ' l6.5 8.5 l-6.5 8.5 l-6.5 -8.5 z" fill="none" stroke="' + ink + '" stroke-width="1.25"/>'
+  ];
+  return '<svg viewBox="0 0 160 240" aria-hidden="true"><defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + pal[0] + '"/><stop offset="1" stop-color="' + pal[1] + '"/></linearGradient></defs><ellipse cx="80" cy="224" rx="34" ry="5" fill="' + ink + '" opacity=".14"/><path d="' + armL + '" fill="none" stroke="' + ink + '" stroke-width="3.2" stroke-linecap="round"/><path d="' + armR + '" fill="none" stroke="' + ink + '" stroke-width="3.2" stroke-linecap="round"/><path d="' + body + '" fill="url(#' + gid + ')"/><path d="M' + X(0, neck + 18) + ' ' + Y(neck + 18) + ' L' + X(0, hipY - 6) + ' ' + Y(hipY - 6) + '" stroke="' + pal[2] + '" stroke-width="1.5" opacity=".9"/><circle cx="' + hx.toFixed(1) + '" cy="' + hy + '" r="' + hr.toFixed(1) + '" fill="url(#' + gid + ')" stroke="' + ink + '" stroke-width="1.2"/>' + ornaments[index] + '</svg>';
+}
+function figureSeed(pass) {
+  const born = pass.born;
+  return hash32([pass.code, born.y, born.m, born.d, born.sign, born.blood].join('|'));
+}
+function ticketDigits(pass, pick) {
+  let h = figureSeed(pass);
+  let out = '';
+  for (let i = 0; i < 10; i++) {
+    h = mix(h, pick * 10 + i + 3);
+    out += String(h % 10);
+  }
+  return out;
+}
+let choiceLang = '';
+function paintChoices() {
+  const now = lang();
+  const zodiac = document.getElementById('zodiac');
+  const blood = document.getElementById('blood');
+  if (choiceLang === now && zodiac.options.length > 1 && blood.options.length > 1) return;
+  const z = zodiac.value;
+  const b = blood.value;
+  const zh = now === 'zh';
+  zodiac.innerHTML = '<option value="">' + (zh ? '請選' : 'Choose') + '</option>' + SIGNS.map((sign) => '<option value="' + sign[0] + '">' + (zh ? sign[2] : sign[1]) + '</option>').join('');
+  blood.innerHTML = '<option value="">' + (zh ? '請選' : 'Choose') + '</option>' + BLOODS.map((type) => '<option value="' + type + '">' + type + '</option>').join('');
+  zodiac.value = z;
+  blood.value = b;
+  choiceLang = now;
+}
+function fillAsk(pass) {
+  const ask = document.getElementById('ask');
+  if (!pass || !pass.born || ask.dataset.filled === '1') return;
+  document.getElementById('birthYear').value = String(pass.born.y);
+  document.getElementById('birthMonth').value = String(pass.born.m);
+  document.getElementById('birthDay').value = String(pass.born.d);
+  document.getElementById('zodiac').value = pass.born.sign;
+  document.getElementById('blood').value = pass.born.blood;
+  ask.dataset.filled = '1';
+}
+function readInt(id) {
+  const raw = document.getElementById(id).value.trim();
+  if (!/^\d+$/.test(raw)) return NaN;
+  return Number(raw);
+}
+function readBorn() {
+  const born = {
+    y: readInt('birthYear'),
+    m: readInt('birthMonth'),
+    d: readInt('birthDay'),
+    sign: document.getElementById('zodiac').value,
+    blood: document.getElementById('blood').value
+  };
+  return bornOk(born) ? born : null;
+}
+function paintFigures(pass) {
+  const row = document.getElementById('figRow');
+  const key = [pass.code, pass.born.y, pass.born.m, pass.born.d, pass.born.sign, pass.born.blood].join('|');
+  const seed = figureSeed(pass);
+  if (row.dataset.key !== key || row.childElementCount !== 3) {
+    row.dataset.key = key;
+    row.innerHTML = [0, 1, 2].map((i) => '<button class="fig" type="button" data-fig="' + i + '">' + figureSvg(seed, i, false) + '<small>' + (i + 1) + '</small></button>').join('');
+  }
+  row.querySelectorAll('[data-fig]').forEach((btn, i) => {
+    btn.setAttribute('aria-label', lang() === 'zh' ? '身影 ' + (i + 1) : 'Figure ' + (i + 1));
+  });
+}
+function paintTicket(pass) {
+  const seed = figureSeed(pass);
+  const hold = document.getElementById('ticketFig');
+  const key = pass.code + '|' + pass.pick + '|' + pass.ticket;
+  if (hold.dataset.key !== key) {
+    hold.dataset.key = key;
+    hold.innerHTML = figureSvg(seed, pass.pick, true);
+  }
+  document.getElementById('ticketNum').textContent = pass.ticket.replace(/(\d{4})(\d{4})(\d{2})/, '$1 $2 $3');
+}
+function syncStage() {
+  const pass = savedPass();
+  const locked = !!(pass && pass.ticket);
+  paintChoices();
+  document.getElementById('birthYear').setAttribute('aria-label', lang() === 'zh' ? '年' : 'Year');
+  document.getElementById('birthMonth').setAttribute('aria-label', lang() === 'zh' ? '月' : 'Month');
+  document.getElementById('birthDay').setAttribute('aria-label', lang() === 'zh' ? '日' : 'Day');
+  document.getElementById('ask').hidden = !pass || locked;
+  document.getElementById('figures').hidden = !pass || !pass.born || locked;
+  document.getElementById('dollar').hidden = !locked;
+  document.getElementById('makeBtn').hidden = !!pass;
+  if (pass && pass.born && !locked) {
+    fillAsk(pass);
+    paintFigures(pass);
+  }
+  if (locked) {
+    paintTicket(pass);
+    drawPass();
+  }
+  const qrImg = document.getElementById('passQr');
+  if (qrImg) qrImg.alt = lang() === 'zh' ? '這張卡的 QR code' : 'QR code for this card';
+}
+function showFigures() {
+  const pass = savedPass();
+  const note = document.getElementById('askNote');
+  if (!pass || pass.ticket) return;
+  const born = readBorn();
+  if (!born) {
+    say(note, 'Answer the three questions.', '先回答這三題。');
+    return;
+  }
+  note.textContent = '';
+  pass.born = born;
+  pass.pick = null;
+  pass.ticket = null;
+  localStorage.setItem(PASS_KEY, JSON.stringify(pass));
+  document.getElementById('ask').dataset.filled = '1';
+  syncStage();
+}
+function chooseFigure(index) {
+  const pass = savedPass();
+  if (!pass || !pass.born || pass.ticket) return;
+  if (index !== 0 && index !== 1 && index !== 2) return;
+  pass.pick = index;
+  pass.ticket = ticketDigits(pass, index);
+  localStorage.setItem(PASS_KEY, JSON.stringify(pass));
+  syncStage();
+  const card = document.getElementById('dollar');
+  if (card && card.scrollIntoView) card.scrollIntoView({ block: 'nearest' });
+}
 function drawPass() {
   const pass = savedPass();
-  if (!pass) return;
-  const payload = location.origin + '/together?lp=' + pass.code;
+  if (!pass || !pass.ticket) return;
+  const payload = location.origin + '/together?n=' + pass.ticket;
+  const img = document.getElementById('passQr');
+  document.getElementById('ticketNum').textContent = pass.ticket.replace(/(\d{4})(\d{4})(\d{2})/, '$1 $2 $3');
+  if (img.dataset.payload === payload && img.getAttribute('src')) return;
   const qr = qrcode(0, 'M');
   qr.addData(payload);
   qr.make();
-  const img = document.getElementById('passQr');
   img.src = qr.createDataURL(4, 16);
   img.dataset.payload = payload;
-  document.getElementById('passCode').textContent = pass.code;
 }
 function makePass() {
   if (savedPass()) return;
@@ -283,7 +539,7 @@ function makePass() {
     symbol: mark.symbol,
     yours: !!mark.yours
   }));
-  localStorage.setItem(PASS_KEY, JSON.stringify({ code: id, marks: picture, v: 1 }));
+  localStorage.setItem(PASS_KEY, JSON.stringify({ code: id, marks: picture, v: 2, born: null, pick: null, ticket: null }));
   try {
     const kept = JSON.parse(localStorage.getItem('ae_lightprint') || '');
     if (!kept || !CODE_RE.test(kept.code)) {
@@ -307,8 +563,9 @@ function makePass() {
     } catch (err) { /* private mode */ }
   }
   showCodeLine();
-  drawPass();
   renderMarks();
+  const ask = document.getElementById('ask');
+  if (ask && !ask.hidden && ask.scrollIntoView) ask.scrollIntoView({ block: 'nearest' });
 }
 function openDoor(cell) {
   if (!cell) return;
@@ -406,10 +663,16 @@ function boot() {
   showCodeLine();
   document.getElementById('shareBtn').addEventListener('click', share);
   document.getElementById('makeBtn').addEventListener('click', makePass);
+  document.getElementById('showFigs').addEventListener('click', showFigures);
+  document.getElementById('figRow').addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-fig]');
+    if (!btn) return;
+    chooseFigure(Number(btn.dataset.fig));
+  });
   document.querySelector('.kofi a').addEventListener('click', () => openDoor(lastDoor));
   paintSaved();
   renderMarks();
-  loadArt().then(() => { paintSaved(); drawPass(); renderMarks(); return pull(); }).catch(() => say(document.getElementById('note'), 'The artworks did not open.', '作品沒有打開。'));
+  loadArt().then(() => { paintSaved(); renderMarks(); return pull(); }).catch(() => say(document.getElementById('note'), 'The artworks did not open.', '作品沒有打開。'));
   setInterval(() => pull().catch(() => {}), 1200);
 }
 document.addEventListener('DOMContentLoaded', boot);
