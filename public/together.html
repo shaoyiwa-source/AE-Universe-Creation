@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生火焰，光紋共創 · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v13"/>
+<meta name="ae-preview-version" content="together-v14"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
@@ -64,15 +64,20 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .ask input:focus-visible,.ask select:focus-visible,.showfigs:focus-visible,.fig:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .showfigs{min-height:48px;border-radius:999px;border:1px solid var(--warm);background:transparent;color:var(--warm);cursor:pointer}
 .pickline{margin:0 0 8px;color:#ddd4c8}
-.figrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.fig{padding:8px 4px 10px;border-radius:18px;border:1px solid rgba(36,28,20,.14);background:#f6f1e6;color:#241c14;cursor:pointer}
-.fig:nth-child(1),.fig:nth-child(2),.fig:nth-child(3){background:#f6f1e6}
-.fig svg{width:100%;height:auto;display:block}
-.fig small{display:block;text-align:center;letter-spacing:.16em;font-size:11px;color:#8a7d6a}
+.figrow{display:grid;grid-template-columns:1fr;gap:10px}
+.fig{position:relative;padding:0;border-radius:18px;border:1px solid rgba(201,168,106,.55);background:#f7f1e8;color:#2d2824;cursor:pointer;overflow:hidden;height:210px}
+.fig-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.fig-copy{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;padding:8px 6px 10px;text-align:center;background:linear-gradient(to bottom,rgba(247,241,232,.46),rgba(247,241,232,.28) 42%,rgba(247,241,232,.84))}
+.fig-copy strong{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:28px;line-height:1.05}
+.fig-copy em{font-style:italic;font-size:13px;line-height:1.2;color:#766b61}
+.fig-copy small{display:block;max-width:16em;font-size:13px;line-height:1.35;letter-spacing:0;color:#2d2824}
 .dollar{background:#f4efe6;color:#241c14;border-radius:22px;padding:26px 22px 16px;border:1px solid #e5dccb;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 12px 32px rgba(0,0,0,.22)}
 .kicker{margin:0;text-align:center;letter-spacing:.42em;font-size:10px;color:#9a8d78}
-.ticket-fig{width:min(188px,54vw);margin:4px auto 0}
-.ticket-fig svg{width:100%;height:auto;display:block}
+.ticket-fig{position:relative;width:min(280px,78vw);margin:8px auto 0;border-radius:18px;overflow:hidden;aspect-ratio:3/4.15;background:#f7f1e8}
+.ticket-fig .fig-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ticket-fig .fig-copy strong{font-size:32px}
+.ticket-fig .fig-copy em{font-size:14px}
+.ticket-fig .fig-copy small{font-size:13px;max-width:16em}
 .ticket-num{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(26px,6.4vw,34px);letter-spacing:.16em;text-align:center;margin:6px 0 16px;color:#1c1712}
 .pass-qr{display:block;width:112px;height:112px;background:#fff;image-rendering:pixelated;margin:0 auto 14px;border-radius:4px}
 .reason{margin:0 auto;max-width:16em;color:#6a5f52;font-size:13px;line-height:1.55;text-align:center}
@@ -260,7 +265,7 @@ function savedPass() {
     if (!bornOk(data.born)) data.born = null;
     if (data.asked !== true) data.born = null;
     const pickOk = data.pick === 0 || data.pick === 1 || data.pick === 2;
-    const chosen = data.figure === 'maomao' && data.born && pickOk && /^\d{10}$/.test(data.ticket || '');
+    const chosen = (data.figure === 'card' || data.figure === 'maomao') && data.born && pickOk && /^\d{10}$/.test(data.ticket || '');
     if (!chosen) {
       data.pick = null;
       data.ticket = null;
@@ -410,63 +415,19 @@ function overlapFlameSvg(seed, index, tag) {
     + '<path d="' + FLAME_D + '" fill="#f7fffc" opacity=".9" transform="translate(80 108) scale(' + tongue + ') translate(-80 -108)"/>'
     + '</g></svg>';
 }
-function figureSvg(seed, index, tag) {
-  const pals = [
-    ['#ffe08a', '#f0a030', '#ff7a3c', '#fff3c4', '#7eb0ea', '#3dffe0'],
-    ['#ffe08a', '#5b8def', '#3dffe0', '#ff8ec8', '#fff4c8', '#f0a030'],
-    ['#9ec6ff', '#3d6fe0', '#1e3f88', '#e7f2ff', '#e7bd67', '#3dffe0']
-  ];
-  const hair = pals[index] || pals[1];
-  const spiral = ['#e7bd67', '#14c9a4', '#5b8def'][index] || '#14c9a4';
-  const scale = [0.92, 1, 1.06][index] || 1;
-  const gid = 'mm' + tag + index;
-  const jitter = (n) => (mix(seed, n) % 11) - 5;
-  let fur = '';
-  for (let i = 0; i < 20; i++) {
-    const ang = (-168 + i * (336 / 19) + jitter(i + 4)).toFixed(1);
-    const len = 18 + (mix(seed, i + 20) % 12);
-    const col = hair[i % hair.length];
-    fur += '<ellipse cx="70" cy="' + (58 - len) + '" rx="3.4" ry="' + len + '" fill="' + col + '" transform="rotate(' + ang + ' 70 64)"/>';
-  }
-  let stars = '';
-  [[48, 56], [42, 64], [54, 68], [40, 52], [78, 54], [86, 62], [74, 70], [90, 50]].forEach((p, i) => {
-    const dx = jitter(i + 40) * 0.15;
-    stars += '<circle cx="' + (p[0] + dx).toFixed(1) + '" cy="' + p[1] + '" r="' + (i % 3 === 0 ? 1.15 : 0.7) + '" fill="#fff" opacity=".9"/>';
-  });
-  const spiralD = (function () {
-    let d = '';
-    for (let i = 0; i <= 26; i++) {
-      const t = i / 26;
-      const a = t * Math.PI * 5.2;
-      const r = 1.2 + t * 9.2;
-      const x = 70 + Math.cos(a) * r;
-      const y = 112 + Math.sin(a) * r;
-      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
-    }
-    return d;
-  })();
-  return '<svg viewBox="8 4 124 158" data-shape="maomao" aria-hidden="true"><defs>'
-    + '<radialGradient id="' + gid + '" cx="40%" cy="38%" r="70%"><stop offset="0" stop-color="#6a4ea8"/><stop offset=".42" stop-color="#1a1238"/><stop offset="1" stop-color="#07060f"/></radialGradient>'
-    + '</defs>'
-    + '<g transform="translate(70 86) scale(' + scale + ') translate(-70 -86)">'
-    + '<ellipse cx="70" cy="146" rx="24" ry="5" fill="#241c14" opacity=".12"/>'
-    + fur
-    + '<ellipse cx="46" cy="112" rx="8" ry="5.5" fill="#16120f" transform="rotate(-28 46 112)"/>'
-    + '<ellipse cx="94" cy="112" rx="8" ry="5.5" fill="#16120f" transform="rotate(28 94 112)"/>'
-    + '<ellipse cx="70" cy="114" rx="24" ry="26" fill="#16120f"/>'
-    + '<ellipse cx="70" cy="104" rx="12" ry="8" fill="#2a241e" opacity=".55"/>'
-    + '<ellipse cx="58" cy="140" rx="9" ry="6" fill="#16120f"/>'
-    + '<ellipse cx="82" cy="140" rx="9" ry="6" fill="#16120f"/>'
-    + '<path d="' + spiralD + '" fill="none" stroke="' + spiral + '" stroke-width="2.3" stroke-linecap="round"/>'
-    + '<circle cx="54" cy="62" r="24" fill="url(#' + gid + ')"/>'
-    + '<circle cx="86" cy="62" r="24" fill="url(#' + gid + ')"/>'
-    + '<circle cx="54" cy="62" r="24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.3"/>'
-    + '<circle cx="86" cy="62" r="24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.3"/>'
-    + stars
-    + '<path d="M44 62c0-6 6-8 10-4 4 4 4 4 0 8-4 4-10 2-10-4zm20 0c0-6 6-8 10-4 4 4 4 4 0 8-4 4-10 2-10-4z" fill="none" stroke="#f2d27a" stroke-width="1.35" stroke-linecap="round"/>'
-    + '<ellipse cx="46" cy="54" rx="5" ry="3.2" fill="#fff" opacity=".88"/>'
-    + '<ellipse cx="78" cy="54" rx="5" ry="3.2" fill="#fff" opacity=".88"/>'
-    + '</g></svg>';
+const CARDS = [
+  { art: 1, zh: '金光', en: 'Gold light', lineZh: '你的顏色。', lineEn: 'Your color.' },
+  { art: 5, zh: '重疊', en: 'Overlap', lineZh: '第三個顏色，和第三個形狀。', lineEn: 'A third color and a third shape.' },
+  { art: 4, zh: '藍光', en: 'Blue light', lineZh: '另一道顏色。', lineEn: 'The other color.' }
+];
+function cardMarkup(index) {
+  const card = CARDS[index] || CARDS[0];
+  const zh = lang() === 'zh';
+  const src = files[card.art] || '';
+  return '<img class="fig-art" alt="" src="' + src + '">'
+    + '<span class="fig-copy"><strong>' + (zh ? card.zh : card.en) + '</strong>'
+    + '<em>' + (zh ? card.en : card.zh) + '</em>'
+    + '<small>' + (zh ? card.lineZh : card.lineEn) + '</small></span>';
 }
 function figureSeed(pass) {
   const born = pass.born;
@@ -523,29 +484,29 @@ function readBorn() {
 }
 function paintFigures(pass) {
   const row = document.getElementById('figRow');
-  const key = [pass.code, pass.born.y, pass.born.m, pass.born.d, pass.born.sign, pass.born.blood, overlapList().join(',')].join('|');
-  const seed = flameSeed(pass);
+  const key = [lang(), pass.code, files.length, CARDS.map((card) => (files[card.art] || '').slice(0, 48)).join('|')].join('|');
   if (row.dataset.key !== key || row.childElementCount !== 3) {
     row.dataset.key = key;
-    row.innerHTML = [0, 1, 2].map((i) => '<button class="fig" type="button" data-fig="' + i + '">' + figureSvg(seed, i, 'f') + '<small>' + (i + 1) + '</small></button>').join('');
+    row.innerHTML = [0, 1, 2].map((i) => '<button class="fig" type="button" data-fig="' + i + '">' + cardMarkup(i) + '</button>').join('');
   }
   row.querySelectorAll('[data-fig]').forEach((btn, i) => {
-    btn.setAttribute('aria-label', lang() === 'zh' ? '身影 ' + (i + 1) : 'Figure ' + (i + 1));
+    const card = CARDS[i];
+    btn.setAttribute('aria-label', lang() === 'zh' ? card.zh : card.en);
   });
 }
 function paintTicket(pass) {
-  const seed = flameSeed(pass);
   const hold = document.getElementById('ticketFig');
-  const key = pass.code + '|' + pass.pick + '|' + pass.ticket + '|' + (pass.overlap || []).join(',');
+  const src = (files[CARDS[pass.pick] ? CARDS[pass.pick].art : 0] || '').slice(0, 48);
+  const key = lang() + '|' + pass.pick + '|' + pass.ticket + '|' + src;
   if (hold.dataset.key !== key) {
     hold.dataset.key = key;
-    hold.innerHTML = figureSvg(seed, pass.pick, 't');
+    hold.innerHTML = cardMarkup(pass.pick);
   }
   document.getElementById('ticketNum').textContent = pass.ticket.replace(/(\d{4})(\d{4})(\d{2})/, '$1 $2 $3');
 }
 function syncStage() {
   const pass = savedPass();
-  const locked = !!(pass && pass.figure === 'maomao' && pass.ticket);
+  const locked = !!(pass && (pass.figure === 'card' || pass.figure === 'maomao') && pass.ticket);
   const choosing = !!(pass && pass.asked === true && pass.born && !locked);
   paintChoices();
   document.getElementById('birthYear').setAttribute('aria-label', lang() === 'zh' ? '年' : 'Year');
@@ -597,9 +558,9 @@ function showFigures() {
 }
 function chooseFigure(index) {
   const pass = savedPass();
-  if (!pass || !pass.born || (pass.figure === 'maomao' && pass.ticket)) return;
+  if (!pass || !pass.born || ((pass.figure === 'card' || pass.figure === 'maomao') && pass.ticket)) return;
   if (index !== 0 && index !== 1 && index !== 2) return;
-  pass.figure = 'maomao';
+  pass.figure = 'card';
   pass.pick = index;
   pass.ticket = ticketDigits(pass, index);
   const live = overlapList();
