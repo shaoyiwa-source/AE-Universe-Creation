@@ -35,6 +35,10 @@
     {
       "source": "/index",
       "destination": "/index.html"
+    },
+    {
+      "source": "/ex1",
+      "destination": "/ex1.html"
     }
   ]
 }
