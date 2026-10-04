@@ -10,7 +10,7 @@ const CREATE_PAYMENT_URL = `${STAGE_HOST}/Merchant/CreatePayment`;
 const QUERY_TRADE_URL = 'https://ecpayment-stage.ecpay.com.tw/1.0.0/Cashier/QueryTrade';
 
 const PACK_SKU = 'ES-PACK';
-const PACK_NAME = 'Eternal Sun｜盛明四張組';
+const PACK_NAME = 'Eternal Sun｜永恆之日四張組';
 const PACK_FILE_SKUS = ['ES-ORIGINAL', 'ES-GALLERY', 'ES-PHONE', 'ES-SQUARE'];
 const SKU_CODE = {
   [PACK_SKU]: '5',
