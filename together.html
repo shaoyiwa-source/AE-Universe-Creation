@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生火焰，光紋共創 · AE Universe Creation</title>
-<meta name="ae-preview-version" content="together-v17"/>
+<meta name="ae-preview-version" content="together-v18"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -151,7 +151,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
     <div class="ticket-fig" id="ticketFig"></div>
     <p class="ticket-num" id="ticketNum"></p>
     <img class="pass-qr" id="passQr" alt="" width="148" height="148">
-    <p class="reason" data-en="This dollar buys this card." data-zh="這一塊錢，買的是這張卡。">This dollar buys this card.</p>
+    <p class="reason" data-en="If this experience meant something to you, you can support it from US$1. The experience stays the same at every amount." data-zh="如果這段體驗對你有意義，你可以從 US$1 開始支持；無論金額多少，你得到的體驗都一樣。">If this experience meant something to you, you can support it from US$1. The experience stays the same at every amount.</p>
     <p class="kofi"><a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
     <button class="make again" id="againBtn" type="button" data-en="Play again" data-zh="再玩一次">Play again</button>
   </article>
@@ -371,7 +371,12 @@ function renderMarks() {
   const count = document.getElementById('countLine');
   const n = state.marks.length;
   if (both.size) say(count, 'A third color and a third shape.', '第三個顏色，和第三個形狀。');
-  else say(count, 'Together, ' + n + (n === 1 ? ' light.' : ' lights.'), '一起留下了 ' + n + ' 道。');
+  else if (n > 0) say(count, 'Together, ' + n + (n === 1 ? ' light.' : ' lights.'), '一起留下了 ' + n + ' 道。');
+  else {
+    delete count.dataset.en;
+    delete count.dataset.zh;
+    count.textContent = '';
+  }
   const presence = document.getElementById('presence');
   if (state.others > 0) say(presence, 'The other hands are here.', '另一雙手到了。');
   else say(presence, 'You can play alone.', '一個人也可以玩。');
@@ -840,7 +845,11 @@ function boot() {
   document.querySelector('.kofi a').addEventListener('click', () => openDoor(lastDoor));
   paintSaved();
   renderMarks();
-  loadArt().then(() => { paintSaved(); renderMarks(); return pull(); }).catch(() => say(document.getElementById('note'), 'The artworks did not open.', '作品沒有打開。'));
+  loadArt().then(() => { paintSaved(); renderMarks(); return pull(); }).catch((error) => {
+    const note = document.getElementById('note');
+    if (error && error.message === 'pull') say(note, 'This preview cannot share the table yet.', '這個預覽還不能把桌子共享出去。');
+    else say(note, 'The artworks did not open.', '作品沒有打開。');
+  });
   setInterval(() => pull().catch(() => {}), 1200);
 }
 document.addEventListener('DOMContentLoaded', boot);
