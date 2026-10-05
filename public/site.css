@@ -193,3 +193,5 @@ html[data-theme=dark] .collection-index a:focus-visible{
 @media(max-width:700px){
   .edition-grid .edition-art{padding:10px}
 }
+
+.ae-version-mark{display:none}
