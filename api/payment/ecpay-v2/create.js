@@ -23,6 +23,17 @@ module.exports = async function handler(req, res) {
     if (Number(d.RtnCode) !== 1) {
       return res.status(402).json({ error: 'ECPAY_CREATE_PAYMENT_FAILED', provider_code: d.RtnCode, provider_message: d.RtnMsg || '' });
     }
+    const paymentInfo = {
+      payment_type: d.PaymentType || null,
+      bank_code: d.BankCode || d.ATMBankCode || null,
+      virtual_account: d.vAccount || d.VAccount || null,
+      payment_no: d.PaymentNo || null,
+      expire_date: d.ExpireDate || null,
+      barcode1: d.Barcode1 || null,
+      barcode2: d.Barcode2 || null,
+      barcode3: d.Barcode3 || null,
+      message: d.RtnMsg || null,
+    };
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
       provider: PROVIDER,
@@ -32,7 +43,8 @@ module.exports = async function handler(req, res) {
       three_d_url: d.ThreeDURL || null,
       union_pay_url: d.UnionPayURL || null,
       payment_type: d.PaymentType || null,
-      fulfillment_enabled: Boolean(order.sku),
+      payment_info: paymentInfo,
+      fulfillment_enabled: Boolean(order.sku && order.sku !== 'CART'),
     });
   } catch (error) {
     console.error('ECPay CreatePayment error', error && error.message);

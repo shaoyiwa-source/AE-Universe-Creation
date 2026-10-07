@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { products: PUBLIC_PRODUCTS, quoteLines } = require('../../../shop/catalog');
 
 const PROVIDER = 'ecpay_stage_embedded_v2';
 const STAGE_MERCHANT_ID = '3002607';
@@ -9,11 +10,14 @@ const GET_TOKEN_URL = `${STAGE_HOST}/Merchant/GetTokenbyTrade`;
 const CREATE_PAYMENT_URL = `${STAGE_HOST}/Merchant/CreatePayment`;
 const QUERY_TRADE_URL = 'https://ecpayment-stage.ecpay.com.tw/1.0.0/Cashier/QueryTrade';
 
+const PUBLIC_BY_SKU = Object.fromEntries(PUBLIC_PRODUCTS.map((product) => [product.sku, product]));
 const SKU_CODE = {
   'ES-ORIGINAL': '1',
   'ES-GALLERY': '2',
   'ES-PHONE': '3',
   'ES-SQUARE': '4',
+  ...Object.fromEntries(PUBLIC_PRODUCTS.map((product) => [product.sku, product.code])),
+  CART: '8',
 };
 const CODE_SKU = Object.fromEntries(Object.entries(SKU_CODE).map(([sku, code]) => [code, sku]));
 const SKU_NAMES = {
@@ -76,9 +80,10 @@ function getCredentials() {
 }
 
 function stageAmountForSku(sku) {
-  if (!SKU_CODE[sku]) return null;
+  if (!SKU_CODE[sku] || sku === 'CART') return null;
   const specific = process.env[`ECPAY_STAGE_AMOUNT_${sku.replace(/-/g, '_')}`];
-  const raw = specific || process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '1';
+  const listed = PUBLIC_BY_SKU[sku] && PUBLIC_BY_SKU[sku].priceTwd;
+  const raw = specific || (listed ? String(listed) : (process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '1'));
   const amount = Number.parseInt(raw, 10);
   if (!Number.isInteger(amount) || amount < 1 || amount > 1000000) {
     throw new Error(`Invalid Stage amount for ${sku}`);
@@ -88,16 +93,18 @@ function stageAmountForSku(sku) {
 
 function getSkuRecord(sku) {
   const clean = String(sku || '').toUpperCase();
-  if (!SKU_CODE[clean]) return null;
+  if (!SKU_CODE[clean] || clean === 'CART') return null;
   const asset = ASSET_MANIFEST[clean];
+  const listed = PUBLIC_BY_SKU[clean];
   return {
     sku: clean,
-    public_name: SKU_NAMES[clean],
+    public_name: listed ? `${listed.nameZh} / ${listed.nameEn}` : SKU_NAMES[clean],
     currency: 'TWD',
     amount: stageAmountForSku(clean),
-    asset_manifest_id: ASSET_MANIFEST_ID,
+    asset_manifest_id: asset ? ASSET_MANIFEST_ID : null,
     asset,
     active: true,
+    public: Boolean(listed),
     fulfillment_enabled: Boolean(asset),
   };
 }
@@ -166,9 +173,15 @@ async function postEncrypted(url, data, fetchImpl = global.fetch) {
   return { outer: body, data: decodeEnvelope(body) };
 }
 
-function makeMerchantTradeNo(sku) {
+function makeMerchantTradeNo(sku, amount) {
   const code = SKU_CODE[sku];
   if (!code) throw new Error('Unknown SKU');
+  if (sku === 'CART') {
+    const encoded = Number(amount).toString(36).toUpperCase().padStart(5, '0');
+    if (!/^[A-Z0-9]{5}$/.test(encoded)) throw new Error('Cart amount exceeds trade number capacity');
+    const rnd = crypto.randomBytes(6).toString('hex').toUpperCase();
+    return `AE8${encoded}${rnd}`;
+  }
   const stamp = Date.now().toString(36).toUpperCase().slice(-9);
   const rnd = crypto.randomBytes(3).toString('hex').toUpperCase();
   return (`AE${code}${stamp}${rnd}`).slice(0, 20);
@@ -176,8 +189,16 @@ function makeMerchantTradeNo(sku) {
 
 function skuFromMerchantTradeNo(value) {
   const tradeNo = String(value || '');
-  if (!/^AE[1-4][A-Z0-9]+$/.test(tradeNo) || tradeNo.length > 20) return null;
+  if (!/^AE[1-8][A-Z0-9]+$/.test(tradeNo) || tradeNo.length > 20) return null;
   return CODE_SKU[tradeNo[2]] || null;
+}
+
+function amountFromCartTradeNo(value) {
+  const tradeNo = String(value || '');
+  if (!/^AE8[A-Z0-9]{17}$/.test(tradeNo)) return null;
+  const amount = Number.parseInt(tradeNo.slice(3, 8), 36);
+  if (!Number.isInteger(amount) || amount < 1 || amount > 200000) return null;
+  return amount;
 }
 
 function formatTaipeiDate(date = new Date()) {
@@ -221,9 +242,49 @@ function verifyOrderToken(token) {
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) throw new Error('Invalid order token signature.');
   const order = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
   if (!order.expires || Date.now() > order.expires) throw new Error('Order token expired.');
+  if (order.sku === 'CART') {
+    const quote = quoteLines(order.lines);
+    if (quote.amount !== order.amount || order.currency !== 'TWD') throw new Error('Order token/config mismatch.');
+    if (amountFromCartTradeNo(order.merchant_trade_no) !== order.amount) throw new Error('Order token/config mismatch.');
+    return order;
+  }
   const sku = getSkuRecord(order.sku);
   if (!sku || sku.amount !== order.amount || order.currency !== 'TWD') throw new Error('Order token/config mismatch.');
   return order;
+}
+
+function makeCartEnvelope(lines) {
+  const quote = quoteLines(lines);
+  const merchantTradeNo = makeMerchantTradeNo('CART', quote.amount);
+  const now = Date.now();
+  const order = {
+    v: 1,
+    provider: PROVIDER,
+    order_id: merchantTradeNo,
+    merchant_trade_no: merchantTradeNo,
+    sku: 'CART',
+    lines: quote.lines.map((line) => ({ sku: line.sku, qty: line.qty })),
+    amount: quote.amount,
+    currency: 'TWD',
+    status: 'CREATED',
+    issued: now,
+    expires: now + 30 * 60 * 1000,
+  };
+  return {
+    order,
+    orderToken: signOrder(order),
+    skuRecord: {
+      sku: 'CART',
+      public_name: quote.lines.map((line) => line.nameZh).join(' / '),
+      currency: 'TWD',
+      amount: quote.amount,
+      lines: quote.lines,
+      asset_manifest_id: null,
+      fulfillment_enabled: false,
+      active: true,
+      public: true,
+    },
+  };
 }
 
 function makeOrderEnvelope(sku) {
@@ -262,9 +323,18 @@ function validateCallbackData(data) {
   if (Number(data.SimulatePaid || 0) === 1) return { paidVerified: false, reason: 'SIMULATED_PAYMENT' };
   const info = data.OrderInfo || {};
   const sku = skuFromMerchantTradeNo(info.MerchantTradeNo);
-  const record = sku && getSkuRecord(sku);
-  if (!record) return { paidVerified: false, reason: 'UNKNOWN_ORDER_SKU' };
-  if (Number(info.TradeAmt) !== record.amount) return { paidVerified: false, reason: 'AMOUNT_MISMATCH', sku };
+  if (!sku) return { paidVerified: false, reason: 'UNKNOWN_ORDER_SKU' };
+  let record = null;
+  if (sku === 'CART') {
+    const expected = amountFromCartTradeNo(info.MerchantTradeNo);
+    if (!expected) return { paidVerified: false, reason: 'UNKNOWN_ORDER_SKU' };
+    if (Number(info.TradeAmt) !== expected) return { paidVerified: false, reason: 'AMOUNT_MISMATCH', sku };
+    record = { sku: 'CART', amount: expected, currency: 'TWD', public_name: 'AE cart' };
+  } else {
+    record = getSkuRecord(sku);
+    if (!record) return { paidVerified: false, reason: 'UNKNOWN_ORDER_SKU' };
+    if (Number(info.TradeAmt) !== record.amount) return { paidVerified: false, reason: 'AMOUNT_MISMATCH', sku };
+  }
   if (String(info.TradeStatus || '') !== '1') return { paidVerified: false, reason: 'CALLBACK_NOT_PAID', sku };
   return { paidVerified: true, reason: 'CALLBACK_VALID', sku, record, merchantTradeNo: info.MerchantTradeNo };
 }
@@ -405,6 +475,8 @@ module.exports = {
   postEncrypted,
   makeMerchantTradeNo,
   skuFromMerchantTradeNo,
+  amountFromCartTradeNo,
+  makeCartEnvelope,
   formatTaipeiDate,
   getBaseUrl,
   parseJsonBody,
