@@ -13,6 +13,10 @@
       "destination": "/experience.html"
     },
     {
+      "source": "/together",
+      "destination": "/together.html"
+    },
+    {
       "source": "/checkout-stage",
       "destination": "/checkout-stage.html"
     },
