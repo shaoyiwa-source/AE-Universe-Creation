@@ -1,0 +1,10 @@
+Play-surface slot for the Eternal Sun center painting.
+
+Expected file (same folder):
+eternal-sun-bg.jpg
+
+Prefer the center image from the Google Drive Artworks folder (names like EternalSun_Center), under AE Universe Creation Project Master.
+Until that file is added, the page uses the Eternal Sun painting already in the repo:
+assets/4e0991885a9649ea.webp
+
+Do not hotlink private Drive files. Do not drop in unrelated art.
