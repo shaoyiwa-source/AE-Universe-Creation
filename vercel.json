@@ -17,6 +17,14 @@
       "destination": "/checkout-stage.html"
     },
     {
+      "source": "/checkout",
+      "destination": "/checkout.html"
+    },
+    {
+      "source": "/cart",
+      "destination": "/cart.html"
+    },
+    {
       "source": "/collections",
       "destination": "/collections.html"
     },

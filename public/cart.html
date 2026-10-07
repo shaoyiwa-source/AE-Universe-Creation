@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>選購 · Shop · AE Universe Creation</title>
-<meta name="description" content="AE Universe Creation 數位收藏。標價為新台幣 NT$。結帳在本站完成。">
+<title>購物車 · Cart · AE Universe Creation</title>
+<meta name="description" content="AE Universe Creation 購物車。合計以新台幣 NT$ 顯示，結帳在本站完成。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
@@ -18,13 +18,16 @@
 <button class="menu-backdrop" hidden tabindex="-1" aria-label="Close menu"></button>
 <main id="main">
 <section class="page-heading page-heading-wash">
-<p class="eyebrow">SHOP · 選購</p>
-<h1 data-en="Bring the work into daily life." data-zh="把原作帶進日常。">把原作帶進日常。</h1>
-<p data-en="Original hand-painted digital collections. Every price is NT$ (新台幣). Add to cart and checkout stay on this site." data-zh="原創手繪數位收藏。標價皆為 NT$（新台幣）。加入購物車與結帳都在本站完成。">原創手繪數位收藏。標價皆為 NT$（新台幣）。加入購物車與結帳都在本站完成。</p>
+<p class="eyebrow">CART · 購物車</p>
+<h1 data-en="Your cart" data-zh="購物車">購物車</h1>
+<p data-en="Prices stay in NT$ (新台幣). Checkout continues on this site." data-zh="價格以 NT$（新台幣）計。結帳繼續在本站完成。">價格以 NT$（新台幣）計。結帳繼續在本站完成。</p>
 </section>
-<section class="section" style="padding-top:24px"><div class="wrap"><div class="shop-grid" id="shop-grid"></div></div></section>
+<section class="section" style="padding-top:0"><div class="wrap checkout-panel">
+<div id="cart-lines"></div>
+<p class="checkout-actions"><a class="button" href="checkout.html">結帳 · Checkout</a> <a class="text-link" href="shop.html">繼續選購 · Continue shopping</a></p>
+</div></section>
 </main>
-<footer class="site-footer"><div class="footer-top"><div class="footer-brand"><img src="assets/ae-three-rings-transparent.webp" alt="AE Universe Creation 金色三環標誌" width="110" height="67">AE Universe Creation</div><nav class="footer-links" aria-label="Footer"><a data-en="Shop" data-zh="選購" href="shop.html">Shop</a><a data-en="Artworks" data-zh="作品" href="works.html">Artworks</a><a data-en="Collections" data-zh="收藏系列" href="collections.html">Collections</a><a data-en="Our story" data-zh="我們的故事" href="about.html">Our story</a><a data-en="Ko-fi backup" data-zh="Ko-fi 備用" href="https://ko-fi.com/aeuniverse1314/shop" target="_blank" rel="noopener">Ko-fi backup</a></nav></div><div data-ae-contact></div><p data-en="Original hand-painted art by Aurelia & Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia & Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p><p class="copyright">© AE Universe Creation · Aurelia & Elion</p></footer>
+<footer class="site-footer"><div class="footer-top"><div class="footer-brand"><img src="assets/ae-three-rings-transparent.webp" alt="AE Universe Creation 金色三環標誌" width="110" height="67">AE Universe Creation</div><nav class="footer-links" aria-label="Footer"><a data-en="Shop" data-zh="選購" href="shop.html">Shop</a><a data-en="Artworks" data-zh="作品" href="works.html">Artworks</a><a data-en="Collections" data-zh="收藏系列" href="collections.html">Collections</a><a data-en="Our story" data-zh="我們的故事" href="about.html">Our story</a><a data-en="Ko-fi backup" data-zh="Ko-fi 備用" href="https://ko-fi.com/aeuniverse1314/shop" target="_blank" rel="noopener">Ko-fi backup</a></nav></div><div data-ae-contact></div><p class="footer-note">Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。</p><p class="copyright">© AE Universe Creation · Aurelia & Elion</p></footer>
 <script src="shop/catalog.js"></script>
 <script src="shop/ui.js"></script>
 </body>
