@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="ae-version" content="v2475.8-owner-sun-framing">
+<title>AE Universe Creation — Hand-painted Art. Digital Sensation.</title>
+<meta name="description" content="Original art, digital editions and interactive experiences by AE Universe Creation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--near:#090b0a;--pearl:#f4f0e7;--ink:#f7f5ee;--quiet:rgba(249,246,239,.69);--gold:#edcd75;--shadow:0 14px 32px rgba(0,0,0,.24)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}body{margin:0;background:var(--near);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}button,a{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}a:focus-visible,button:focus-visible{outline:2px solid #f2c96c;outline-offset:4px}button{border:0}p,h1,h2,h3{margin:0}img{max-width:100%;display:block}
+.hero{position:relative;min-height:max(900px,100svh);overflow:hidden;isolation:isolate}
+.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:#090b0a url("assets/eternal-sun-canonical-1110x1536.jpg") center 42%/cover no-repeat;transform:none}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(5,5,5,.13) 0%,rgba(6,6,7,.22) 24%,rgba(5,6,6,.48) 39%,rgba(8,10,9,.9) 72%,#080a09 98%)}
+.hero-grid{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.22),transparent 38%,transparent 65%,rgba(0,0,0,.14))}
+.header{position:relative;z-index:5;max-width:1600px;margin:0 auto;padding:27px clamp(22px,4.6vw,64px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;color:#fff}
+.menu-toggle,.language-toggle,.theme-toggle{background:transparent;color:white;padding:8px 0;letter-spacing:.18em;font-size:12px;line-height:1.1}.menu-toggle{justify-self:start}.header-right{display:flex;align-items:center;justify-content:end;gap:22px}.language-toggle{letter-spacing:0;font-size:13px}.theme-toggle{font-size:16px;letter-spacing:0;width:22px;height:25px}
+.brand-mark{width:clamp(84px,6vw,116px);height:58px;object-fit:contain;filter:drop-shadow(0 1px 4px rgba(0,0,0,.35))}
+.hero-inner{width:min(100%,1500px);margin:auto;padding:0 clamp(22px,4.6vw,64px) 45px;display:flex;flex-direction:column;justify-content:flex-end;min-height:calc(max(900px,100svh) - 100px)}
+.hero-copy{max-width:920px;margin-top:auto}.kicker{font-size:clamp(15px,1.25vw,24px);letter-spacing:.18em;color:rgba(255,255,255,.9);font-weight:600;text-transform:uppercase;margin-bottom:18px}
+h1{font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.049em;font-size:clamp(68px,7.3vw,116px);line-height:.89;color:#fff;text-wrap:balance;text-shadow:0 4px 22px rgba(0,0,0,.2)}
+.hero-subtitle{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(24px,3vw,31px);line-height:1.16;font-weight:400;max-width:540px;color:rgba(252,247,239,.93);margin-top:21px}
+.rainbow{font-size:11px;font-weight:700;letter-spacing:.17em;line-height:1.5;display:inline-block;margin-top:22px;background:linear-gradient(95deg,#fff1a5 0%,#efaaa7 24%,#cce98f 48%,#9fe7f8 75%,#e5b7fc 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-transform:none}
+.nav-choices{margin-top:28px;width:min(100%,780px)}.feature{position:relative;isolation:isolate;display:flex;align-items:center;gap:17px;padding:17px 21px;min-height:91px;border:1px solid rgba(250,224,173,.56);border-radius:20px;background:linear-gradient(115deg,rgba(159,110,112,.59),rgba(57,105,98,.66) 50%,rgba(76,66,130,.68));box-shadow:0 7px 30px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.22);transition:transform .25s ease,background .25s ease,box-shadow .25s ease}.feature::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(100deg,rgba(253,237,194,.2),transparent 65%);z-index:-1}.feature:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(0,0,0,.3),0 0 20px rgba(250,224,173,.18)}
+.feature-emblem{width:36px;height:36px;flex:0 0 36px;border-radius:50%;border:1px solid rgba(255,234,183,.87);display:grid;place-items:center;color:#f7ddac;font-size:15px;box-shadow:inset 0 0 9px rgba(244,221,165,.14)}.feature-heading{font-size:18px;font-weight:500;letter-spacing:.006em;display:block}.feature-sub{font-size:11px;color:rgba(255,255,255,.86);letter-spacing:.02em;display:block;margin-top:5px}.feature-end{margin-left:auto;color:#fff1d2;font-size:20px;border:1px solid #ffffff54;border-radius:100%;width:35px;height:35px;display:grid;place-items:center}
+.secondary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:10px}.secondary a{min-height:60px;padding:12px 9px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px solid rgba(239,240,229,.22);background:rgba(218,224,215,.1);border-radius:15px;backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);font-size:12px;line-height:1.27;color:rgba(255,255,255,.93);transition:background .2s,transform .2s}.secondary a:hover{background:rgba(218,224,215,.2);transform:translateY(-2px)}.scroll-hint{display:flex;align-items:center;gap:10px;letter-spacing:.18em;font-size:9px;color:#c5c8be;margin-top:24px;text-transform:uppercase}.scroll-hint::before{content:"";width:24px;height:1px;background:#c5c8be80}
+.ivory{background:#f1eee6;color:#191d1b;padding:105px clamp(23px,4.6vw,64px)}.container{max-width:1150px;margin:auto}.section-kicker{font-size:12px;color:#7f807a;letter-spacing:.22em;font-weight:600;text-transform:uppercase}.ivory h2,.dark-section h2{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(59px,7vw,100px);line-height:.94;font-weight:400;letter-spacing:-.046em;margin:21px 0 18px;max-width:850px}.section-lead{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(23px,2.8vw,31px);line-height:1.16;max-width:670px;color:#525850}.discover{margin-top:42px;display:grid;grid-template-columns:1fr 1fr;gap:30px}.discover-visual{min-height:470px;border-radius:24px;overflow:hidden;box-shadow:var(--shadow);background:url("assets/selected-works-v2/infinite-love-strength.webp") 50% 45%/cover no-repeat}.discover-copy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px}.discover-copy h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:43px;font-weight:400;line-height:1}.discover-copy p{font-size:15px;line-height:1.75;color:#59615b}.text-link{border-bottom:1px solid #5a655b;padding-bottom:5px;font-size:13px;font-weight:600}
+.dark-section{background:linear-gradient(135deg,#101715,#0a0e0e);padding:105px clamp(23px,4.6vw,64px);color:#e8e7df}.dark-section .section-kicker{color:#99a3a0}.dark-section h2{max-width:670px}.dark-section p{font-size:15px;line-height:1.7;color:#b7c0b8;max-width:620px}.link-button{display:inline-flex;padding:15px 21px;border:1px solid #e2ceb0;border-radius:100px;margin-top:26px;font-size:13px;background:rgba(255,255,255,.06);transition:background .2s}.link-button:hover{background:rgba(255,255,255,.17)}
+.tail-links{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:58px}.tail-links a{border:1px solid #ffffff40;border-radius:21px;min-height:130px;padding:26px;background:rgba(255,255,255,.05);display:flex;flex-direction:column;justify-content:space-between}.tail-links small{font-size:10px;letter-spacing:.17em;color:#bcc3bb;text-transform:uppercase}.tail-links strong{font-family:"Cormorant Garamond",Georgia,serif;font-size:29px;font-weight:400}
+.manifesto{background:#f1eee6;color:#181a17;padding:72px 5vw 126px}.manifesto-inner{max-width:1150px;margin:auto;border-top:1px solid #cdd0ca;padding-top:34px;display:grid;grid-template-columns:1fr 1.5fr;gap:50px}.manifesto .label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#777}.manifesto blockquote{margin:0;font-family:"Cormorant Garamond",serif;font-size:clamp(36px,4vw,58px);line-height:1.02;font-weight:400}.manifesto .links{grid-column:2;display:flex;gap:26px;margin-top:8px;font-size:13px}.manifesto .links a{border-bottom:1px solid #222;padding-bottom:4px}.slogan-review{grid-column:2;display:flex;align-items:center;gap:8px;margin-top:18px}.slogan-review .review-label{font:600 10px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#777;margin-right:4px}.slogan-review button{border:1px solid #aeb3aa;background:transparent;color:#30332f;padding:8px 10px;border-radius:999px;font:600 10px Inter,sans-serif;letter-spacing:.08em}.slogan-review button[aria-pressed="true"]{background:#1a1d19;color:#fff;border-color:#1a1d19}
+.footer{background:#090d0b;color:#9baca0;padding:31px clamp(23px,4.6vw,64px);font-size:11px;letter-spacing:.08em;text-align:center}
+.drawer{position:fixed;inset:0;z-index:100;display:none}.drawer.open{display:block}.drawer-scrim{position:absolute;inset:0;background:#000b;cursor:pointer}.drawer-panel{position:absolute;left:0;top:0;bottom:0;width:min(92vw,430px);background:#121813;padding:calc(30px + env(safe-area-inset-top)) 28px 30px;box-shadow:10px 0 50px #0008;display:flex;flex-direction:column}.drawer-head{display:flex;align-items:center;justify-content:space-between;color:#e8d4a3;letter-spacing:.16em;font-size:11px}.drawer-close{border:1px solid #ffffff44;background:transparent;color:white;border-radius:50%;height:35px;width:35px;font-size:20px}.drawer-list{display:flex;flex-direction:column;gap:2px;margin-top:62px}.drawer-list a{padding:16px 0;border-bottom:1px solid #ffffff1d;font-family:"Cormorant Garamond",Georgia,serif;font-size:29px}.drawer-bottom{margin-top:auto;color:#aab6aa;font-size:12px;line-height:1.6}
+html[data-theme=light] .ivory,html[data-theme=light] .manifesto{background:#fffdf8}html[data-theme=light] .dark-section{background:linear-gradient(135deg,#ddd9cf,#eeeae1);color:#202720}html[data-theme=light] .dark-section p{color:#505c53}html[data-theme=light] .dark-section .section-kicker{color:#65726b}html[data-theme=light] .tail-links a{border-color:#70807540;background:#788f7212}html[data-theme=light] .tail-links small{color:#65726b}html[data-theme=light] .link-button{border-color:#7a6750}html[data-theme=light] .footer{background:#eeebe4;color:#5f695d}
+@media(min-width:850px){.hero{min-height:930px}.hero-inner{min-height:830px;padding-bottom:62px}.hero::before{background-position:74% 46%;background-size:auto min(100%,1536px);background-color:#090b0a}.hero::after{background:linear-gradient(90deg,#050706b0 0%,#10100b50 60%,#08090744),linear-gradient(180deg,#0000001a 0%,#0708082b 24%,#090b09cc 84%,#090a09 100%)}.nav-choices{width:720px}.secondary a{min-height:66px}.feature{min-height:98px}.ivory,.dark-section{padding:130px clamp(23px,6vw,80px)}.discover-visual{min-height:550px}}
+@media(max-width:520px){.header{padding:20px 20px 10px}.header-right{gap:15px}.brand-mark{width:62px;height:42px}.hero{min-height:100svh}.hero-inner{padding:0 18px 16px;min-height:calc(100svh - 72px)}.hero::before{background-position:50% 37%;background-size:cover}.hero::after{background:linear-gradient(180deg,rgba(3,4,3,.24) 0%,rgba(3,4,3,.19) 25%,rgba(5,6,5,.5) 39%,rgba(6,9,8,.92) 61%,#070a08 92%)}.kicker{font-size:11px;letter-spacing:.16em;margin-bottom:10px}h1{font-size:clamp(48px,14.3vw,61px);line-height:.92}.hero-subtitle{font-size:22px;line-height:1.08;margin-top:13px;max-width:315px}.rainbow{margin-top:12px;font-size:9px}.nav-choices{margin-top:16px}.feature{padding:11px 13px;min-height:68px;border-radius:15px}.feature-heading{font-size:16px}.feature-sub{font-size:9.5px}.feature-end{width:27px;height:27px;font-size:15px}.secondary{gap:7px;margin-top:8px}.secondary a{border-radius:12px;min-height:48px;font-size:10px}.scroll-hint{margin-top:8px}.ivory{padding-top:82px;padding-bottom:78px}.discover{grid-template-columns:1fr;gap:27px}.discover-visual{min-height:350px}.discover-copy h3{font-size:42px}.dark-section{padding-top:82px;padding-bottom:82px}.tail-links{grid-template-columns:1fr}.tail-links a{min-height:108px}.drawer-panel{padding:45px 28px 30px}.manifesto{padding:46px 18px 80px}.manifesto-inner{display:block}.manifesto blockquote{margin-top:32px;font-size:38px}.slogan-review{display:flex;flex-wrap:wrap}.manifesto .links{display:flex;flex-wrap:wrap;margin-top:28px}}
+@media(max-width:355px){.header{padding:16px 16px 5px}.hero-inner{padding-left:16px;padding-right:16px}h1{font-size:46px}.hero-subtitle{font-size:20px}.feature{gap:9px}.feature-end{display:none}.secondary a{font-size:9.5px}}
+/* v2475.1 homepage theme and mobile drawer repair; canonical patch cd00be67 */
+.drawer-panel{height:100dvh;max-height:100dvh;min-height:0;overflow:hidden;padding-bottom:calc(18px + env(safe-area-inset-bottom));}
+.drawer-head{flex:0 0 auto;font-size:clamp(12px,1vw,17px);}
+.drawer-list{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;margin-top:22px;gap:0;padding:0 4px 8px 0;scrollbar-width:thin;}
+.drawer-list a{display:block;flex:0 0 auto;font-size:clamp(21px,2.8vh,28px);line-height:1.2;padding:11px 0;}
+.drawer-bottom{flex:0 0 auto;margin-top:6px;padding-top:8px;border-top:1px solid #ffffff2d;}
+.theme-toggle{width:35px;height:35px;min-width:35px;display:grid;place-items:center;border:1px solid #fffaee88;border-radius:50%;background:#0d150e70;font-size:20px;letter-spacing:0;}
+.theme-toggle:focus-visible,.drawer-list a:focus-visible{outline:2px solid #f1cb78;outline-offset:3px;}
+html[data-theme="light"]{color-scheme:light;--near:#f7f5ee;--ink:#1a271e;--quiet:#516355;}
+html[data-theme="light"] body{background:#f7f5ee;color:#1a271e;}
+html[data-theme="light"] .hero::after{background:linear-gradient(180deg,rgba(255,255,255,.13) 0%,rgba(249,246,239,.16) 22%,rgba(246,243,232,.40) 43%,rgba(250,247,236,.91) 73%,#f7f5ee 98%);}
+html[data-theme="light"] .hero-grid{background:linear-gradient(90deg,rgba(255,249,237,.08),transparent 40%,transparent 65%,rgba(255,248,234,.12));}
+html[data-theme="light"] .header{background:rgba(255,251,244,.90);border-radius:0 0 17px 17px;box-shadow:0 2px 18px rgba(12,27,18,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);}
+html[data-theme="light"] .menu-toggle,html[data-theme="light"] .language-toggle,html[data-theme="light"] .theme-toggle{color:#243d2d;}
+html[data-theme="light"] .theme-toggle{background:#fbedd0;border-color:#9a895f;box-shadow:0 1px 8px rgba(100,80,32,.12);}
+html[data-theme="light"] .hero .kicker{color:#2a4839;}
+html[data-theme="light"] .hero h1{color:#24382b;text-shadow:none;}
+html[data-theme="light"] .hero-subtitle{color:#3c5042;}
+html[data-theme="light"] .rainbow{background:linear-gradient(95deg,#947329,#a34f6a 24%,#487c37 49%,#16788a 74%,#8051a5 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+html[data-theme="light"] .feature{background:linear-gradient(115deg,rgba(253,237,222,.96),rgba(223,242,229,.95) 48%,rgba(229,226,247,.95));border-color:rgba(80,115,87,.62);box-shadow:0 6px 20px rgba(29,51,32,.12),inset 0 1px 0 rgba(255,255,255,.6);color:#24382b;}
+html[data-theme="light"] .feature-sub{color:#4a594f;}
+html[data-theme="light"] .feature-emblem{color:#805e35;border-color:#b59562;}
+html[data-theme="light"] .feature-end{color:#244b36;border-color:#9fae9a;}
+html[data-theme="light"] .secondary a{background:rgba(255,255,250,.78);border-color:rgba(75,94,77,.3);color:#263b30;}
+html[data-theme="light"] .scroll-hint{color:#536756;}
+html[data-theme="light"] .scroll-hint::before{background:#53675680;}
+html[data-theme="light"] .drawer-panel{background:#fdf8ef;color:#263d31;box-shadow:12px 0 40px #1c332255;}
+html[data-theme="light"] .drawer-head{color:#6f603c;}
+html[data-theme="light"] .drawer-close{color:#23382b;border-color:#8b9c8e;background:#ffffffbb;}
+html[data-theme="light"] .drawer-list a{color:#284435;border-color:#36554230;}
+html[data-theme="light"] .drawer-bottom{color:#526653;border-color:#36554230;}
+@media(max-width:520px){.drawer-panel{padding:calc(18px + env(safe-area-inset-top)) 22px calc(12px + env(safe-area-inset-bottom));}.drawer-list{margin-top:16px}.drawer-list a{font-size:clamp(21px,2.85vh,25px);padding:9px 0}.drawer-bottom{font-size:11px;line-height:1.38}}
+@media(max-height:650px){.drawer-list{margin-top:12px}.drawer-list a{font-size:21px;padding:8px 0}.drawer-bottom{font-size:10px;padding-top:6px;line-height:1.3}}
+/* Owner 2026-10-11 mobile readability repair: a stable contrast surface, not shadow-only. */
+.hero .kicker{display:inline-block;width:max-content;max-width:100%;padding:8px 12px;border:1px solid rgba(244,231,203,.45);border-radius:999px;background:rgba(7,10,8,.72);color:#fff;font-weight:700}
+html[data-theme="light"] .hero .kicker{color:#21372a;background:rgba(252,248,239,.94);border-color:rgba(108,90,54,.48)}
+@media(max-width:520px){.hero .kicker{font-size:13px;letter-spacing:.12em;font-weight:700;padding:7px 10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* v2475.6 bounded Owner content: factual AE / artworks / available digital products / online experiences */
+.ae-intro,.ae-shop{color:#1c2420;padding:90px clamp(22px,4.6vw,64px)}
+.ae-intro{background:#f1eee6;padding-bottom:70px}
+.home-intro-grid{max-width:1150px;margin:auto;padding-top:34px;border-top:1px solid #a3aaa08b;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(28px,5vw,90px)}
+.ae-intro h2,.ae-shop h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:400;font-size:clamp(48px,5.4vw,78px);letter-spacing:-.04em;line-height:.98;margin:20px 0;max-width:850px}
+.ae-intro-copy{display:flex;flex-direction:column;align-items:flex-start;gap:27px;justify-content:center}
+.ae-intro-copy p,.ae-shop-lead{font-size:clamp(16px,1.5vw,20px);line-height:1.75;color:#435047;max-width:720px}
+.home-work-gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:42px}
+.home-work-gallery figure{min-width:0;margin:0}
+.home-work-gallery img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;border-radius:15px;background:#d1d6d0}
+.home-work-gallery figcaption{font-size:13px;font-weight:600;line-height:1.35;padding:12px 3px 0;color:#27342b}
+.ae-shop{background:#e5e8e2}.ae-shop .container{max-width:1150px}
+.home-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:19px;margin:33px 0 27px}
+.home-product-grid article{min-width:0;border:1px solid #b4bdb4;background:#f5f4ee;border-radius:21px;overflow:hidden}
+.home-product-grid img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;display:block;background:#d6d9d0}
+.home-product-body{padding:19px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.home-product-body h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(27px,2.2vw,37px);font-weight:500;line-height:1.05}
+.home-product-body p{font-size:12px;color:#55665a}
+.home-product-body a,.ae-shop-link{border-bottom:1px solid #456149;padding-bottom:4px;font-size:13px;font-weight:600;line-height:1.4}
+.ae-shop-link{display:inline-block;margin-top:10px}
+.ae-activity-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-top:38px}
+.ae-activity-grid a{min-width:0;display:flex;flex-direction:column;gap:17px;padding:24px 22px;border:1px solid #d8e0d45c;border-radius:19px;background:#ffffff0b;min-height:240px;transition:background .2s ease}
+.ae-activity-grid a:hover{background:#ffffff1a}
+.ae-activity-grid small{font-size:10px;letter-spacing:.12em;color:#a9b6af;font-weight:700}
+.ae-activity-grid strong{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(27px,2.5vw,36px);line-height:1.1}
+.ae-activity-grid span:not(.activity-arrow){font-size:13px;color:#b7c0b8;line-height:1.6}
+.ae-activity-grid .activity-arrow{margin-top:auto;font-size:22px;align-self:flex-end}
+html[data-theme=light] .ae-intro{background:#fffdf8}
+html[data-theme=light] .ae-shop{background:#f1f2eb}
+html[data-theme=light] .home-product-grid article{background:#fff}
+html[data-theme=light] .ae-activity-grid a{background:#fffaf083;border-color:#7f8c784d;color:#1b3024}
+html[data-theme=light] .ae-activity-grid a:hover{background:#fff}
+html[data-theme=light] .ae-activity-grid small,html[data-theme=light] .ae-activity-grid span:not(.activity-arrow){color:#475a4b}
+@media(max-width:760px){.home-intro-grid{grid-template-columns:1fr;gap:12px}.home-work-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.home-product-grid{grid-template-columns:1fr;gap:14px}.home-product-grid article{display:grid;grid-template-columns:125px minmax(0,1fr)}.home-product-grid img{height:100%;min-height:170px;aspect-ratio:auto}.ae-activity-grid{grid-template-columns:1fr;gap:12px}.ae-activity-grid a{min-height:160px;gap:11px}.ae-intro,.ae-shop{padding:69px 22px}}
+@media(max-width:360px){.home-product-grid article{grid-template-columns:105px minmax(0,1fr)}.home-product-body{padding:14px}.home-product-body h3{font-size:26px}.home-work-gallery figcaption{font-size:11px}}
+
+
+/* Owner-approved homepage framing and readability, 2026-10-12 */
+.hero::before{inset:auto;left:50%;top:-92px;width:min(560px,100vw);height:auto;aspect-ratio:1110/1536;background:#090b0a url("assets/eternal-sun-canonical-1110x1536.jpg") center/contain no-repeat;transform:translateX(-52%);}
+.hero::after{background:linear-gradient(180deg,rgba(9,11,10,.08) 0%,rgba(9,11,10,.05) 40%,rgba(9,11,10,.50) 59%,#090b0a 83%);}
+.header,html[data-theme="light"] .header{border-radius:0;box-shadow:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.header .menu-toggle,.header .language-toggle{font-weight:600;color:#fff;text-shadow:0 1px 5px #000;}
+.brand-mark{filter:brightness(1.45) drop-shadow(0 1px 5px #000);}
+.hero .kicker{width:auto;max-width:100%;padding:0;border:0;border-radius:0;background:none;font-size:clamp(12px,1.05vw,16px);letter-spacing:.12em;margin-bottom:16px;color:#f7f5ee;}
+.hero h1{font-size:clamp(52px,5.4vw,82px);font-weight:600;line-height:.99;letter-spacing:-.035em;}
+.hero-subtitle{font-size:clamp(22px,2vw,28px);font-weight:500;}
+html[data-theme="light"] .hero::before{background-color:#f7f5ee;}
+html[data-theme="light"] .hero::after{background:linear-gradient(180deg,rgba(247,245,238,.02) 0%,rgba(247,245,238,.04) 40%,rgba(247,245,238,.6) 61%,#f7f5ee 83%);}
+html[data-theme="light"] .header .menu-toggle,html[data-theme="light"] .header .language-toggle{color:#243d2d;text-shadow:0 1px 5px #fff;}
+html[data-theme="light"] .brand-mark{filter:drop-shadow(0 1px 3px #fff);}
+html[data-theme="light"] .hero .kicker{padding:0;background:none;border:0;color:#2a4839;}
+@media(max-width:849px){.hero::before{top:-68px;width:min(460px,100vw);}.hero h1{font-size:clamp(44px,8vw,64px);}}
+@media(max-width:520px){.hero::before{top:-45px;width:100vw;}.hero h1{font-size:clamp(35px,10.4vw,47px);font-weight:600;line-height:1.04;}.hero .kicker{font-size:11px;margin-bottom:9px;letter-spacing:.1em;}.hero-subtitle{font-size:20px;margin-top:11px;}.hero-copy{width:100%;}.hero-inner{padding-bottom:18px;}.header{padding:18px 20px 12px;}.brand-mark{width:68px;height:42px;}.nav-choices{margin-top:14px;}}
+@media(max-width:355px){.hero h1{font-size:35px;}.hero-subtitle{font-size:18px;}.header{padding:16px 16px 10px;}}
+
+</style>
+<link rel="stylesheet" href="/ae-home-light.css">
+<link rel="stylesheet" href="/ae-visual-system.css">
+<style id="ae-light-readability">html[data-theme="light"] .hero-copy{position:relative;isolation:isolate;}html[data-theme="light"] .hero-copy::before{content:"";position:absolute;inset:-16px -12px -12px;z-index:-1;pointer-events:none;border-radius:18px;background:rgba(250,248,241,.97);box-shadow:0 4px 28px rgba(31,49,36,.08);border:1px solid rgba(70,89,69,.16);}html[data-theme="light"] .hero .kicker,html[data-theme="light"] .hero h1,html[data-theme="light"] .hero-subtitle{color:#21372a;text-shadow:none;}html[data-theme="light"] .hero .rainbow{background:linear-gradient(95deg,#664618,#803449 24%,#325725 49%,#14545f 74%,#5b3878);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}html[data-theme="light"] .header .menu-toggle,html[data-theme="light"] .header .language-toggle{background:#faf8f1;color:#21372a;text-shadow:none;border-radius:999px;padding:10px 8px;min-height:44px;min-width:44px;white-space:nowrap;flex-shrink:0;}html[data-theme="light"] .hero .scroll-hint{color:#435748;}@media(max-width:520px){html[data-theme="light"] .hero-copy::before{inset:-12px -10px -10px;border-radius:16px;}}</style><style id="ae-lower-light-controls">.hero-copy .ae-light-dock{position:relative;top:auto;left:auto;margin:14px 0 0;gap:10px;flex-wrap:wrap;}.hero-copy .ae-light-dock button{width:44px;min-width:44px;height:44px;padding:0;font-size:0;letter-spacing:0;}.hero-copy .ae-light-dock button::before{display:block;font-size:20px;line-height:42px;}.hero-copy #aeMusicButton::before{content:"♫";}.hero-copy #aeMusicButton[aria-pressed="true"]::before{content:"Ⅱ";}.hero-copy #aeLightButton::before{content:"✦";}.hero-copy #aeTapButton::before{content:"◌";}.hero-copy .ae-light-status{position:absolute;width:1px;max-width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;} </style><link rel="stylesheet" href="/ae-surface-polish.css"></head>
+<body class="ae-polish">
+<main>
+<section class="hero" id="top" aria-label="AE Universe Creation homepage hero">
+<div class="hero-grid" aria-hidden="true"></div>
+<canvas id="ae-home-light" aria-hidden="true"></canvas>
+<audio id="ae-home-audio" src="/media/aurelia-techno-eternal-148bpm.m4a" preload="none" loop></audio>
+<header class="header">
+<button id="menuButton" class="menu-toggle" aria-label="Open menu" aria-controls="siteMenu" aria-expanded="false" data-i18n="menu">MENU</button>
+<a href="/" aria-label="AE Universe Creation — home"><img class="brand-mark" src="assets/ae-three-rings-transparent.webp" alt="AE Universe Creation three-ring logo"></a>
+<div class="header-right"><button id="languageButton" class="language-toggle" aria-label="Switch language">中文</button><button id="themeButton" class="theme-toggle" aria-label="Toggle light and dark appearance" aria-pressed="false">◐</button></div>
+</header>
+<div class="hero-inner"><div class="hero-copy">
+<p class="kicker">AE UNIVERSE CREATION</p>
+<h1 data-i18n="hero_title">Hand-painted art.<br>Digital sensation.</h1>
+<p class="hero-subtitle" data-i18n="hero_sub">Inspired by nature.</p>
+<span class="rainbow" data-i18n="rainbow">Feel art in your everyday life.</span>
+<nav class="nav-choices" aria-label="Main site areas">
+<a class="feature" id="mainWorks" href="/works" data-i18n-link="works"><span class="feature-emblem" aria-hidden="true">✦</span><span><span class="feature-heading" data-i18n="works">View works</span><span class="feature-sub" data-i18n="works_sub">See original paintings and selected works</span></span><span class="feature-end" aria-hidden="true">→</span></a>
+<div class="secondary"><a href="/experience" data-i18n="experience">Interactive experience</a><a href="/about" data-i18n="story">About us</a><a href="/shop" data-i18n="shop">Buy art</a></div>
+</nav>
+<p class="scroll-hint" data-i18n="scroll">SCROLL TO EXPLORE</p>
+<div class="ae-light-dock" role="group" aria-label="Music and light"><button type="button" id="aeMusicButton" title="音樂 · Music" aria-pressed="false">♫ Play music</button><button type="button" id="aeLightButton" title="光效 · Light" aria-pressed="true">✦ Light on</button><button type="button" id="aeTapButton" title="敲擊聲 · Tap sound" aria-pressed="false">◌ Tap sound off</button><span id="aeLightStatus" class="ae-light-status" role="status"></span></div>
+</div></div>
+</section>
+<section class="ae-intro" id="ae-intro"><div class="home-intro-grid">
+<div><p class="section-kicker" data-i18n="who_top">WHO WE ARE</p><h2 data-i18n="who_title">Meet AE Universe Creation.</h2></div>
+<div class="ae-intro-copy"><p data-i18n="who_body">AE Universe Creation brings together 13th Aurelia and 14th Elion. We create original hand-painted artworks and develop digital editions and interactive experiences from selected works.</p><a class="text-link" href="/about" data-i18n="who_link">Read our story →</a></div>
+</div></section>
+<section class="ivory" id="works"><div class="container">
+<p class="section-kicker" data-i18n="enter">ORIGINAL ARTWORKS</p>
+<h2 data-i18n="enter_title">Selected paintings.</h2>
+<p class="section-lead" data-i18n="enter_sub">Explore original hand-painted works by AE Universe Creation.</p>
+<div class="discover"><div class="discover-visual" role="img" aria-label="Infinite Love Strength, AE original hand-painted artwork"></div><div class="discover-copy"><p class="section-kicker" data-i18n="original">FEATURED WORK</p><h3>Infinite Love Strength</h3><p data-i18n="original_desc">An original painting from AE's selected works gallery.</p><a class="text-link" href="/works" data-i18n="see_art">View selected works</a></div></div>
+<div class="home-work-gallery" aria-label="Selected AE artworks">
+<figure><img src="assets/4e0991885a9649ea.webp" loading="lazy" decoding="async" alt="Eternal Sun original artwork"><figcaption>Eternal Sun｜盛明</figcaption></figure>
+<figure><img src="assets/b46ca2328e93f1f4.webp" loading="lazy" decoding="async" alt="Infinity Core original artwork"><figcaption>Infinity Core</figcaption></figure>
+<figure><img src="assets/2ee9aa3b017652d9.webp" loading="lazy" decoding="async" alt="Infinite Love original artwork"><figcaption>Infinite Love</figcaption></figure>
+<figure><img src="assets/bb5c9cf38f67af5b.webp" loading="lazy" decoding="async" alt="Universe Heart Bloom original artwork"><figcaption>Universe Heart Bloom</figcaption></figure>
+</div>
+</div></section>
+<section class="ae-shop" id="home-shop"><div class="container">
+<p class="section-kicker" data-i18n="products_top">AVAILABLE DIGITAL ART</p>
+<h2 data-i18n="products_title">What you can collect.</h2>
+<p class="ae-shop-lead" data-i18n="products_body">Three digital art products are currently offered for personal use through Ko-fi. See each product's formats and current price on the shop page.</p>
+<div class="home-product-grid">
+<article><img src="assets/eternal-sun-edition-original.webp" loading="lazy" decoding="async" alt="Eternal Sun digital edition artwork"><div class="home-product-body"><h3>Eternal Sun｜盛明</h3><p data-i18n="product_one">Four digital formats</p><a href="/eternal-sun" data-i18n="product_details">Artwork &amp; editions →</a></div></article>
+<article><img src="assets/selected-works-v2/flower-heart-bloom.webp" loading="lazy" decoding="async" alt="Flower and Heart Cosmos digital artwork"><div class="home-product-body"><h3>Flower &amp; Heart Cosmos</h3><p data-i18n="product_two">Digital art collection</p><a href="/shop" data-i18n="product_shop">See in shop →</a></div></article>
+<article><img src="assets/2ee9aa3b017652d9.webp" loading="lazy" decoding="async" alt="Night Bloom Cosmos digital artwork"><div class="home-product-body"><h3>Night Bloom Cosmos</h3><p data-i18n="product_three">Digital art collection</p><a href="/shop" data-i18n="product_shop">See in shop →</a></div></article>
+</div>
+<a class="ae-shop-link" href="/shop" data-i18n="products_link">View available digital products →</a>
+</div></section>
+<section class="dark-section" id="experience"><div class="container">
+<p class="section-kicker" data-i18n="activity_top">ONLINE EXPERIENCES &amp; EXHIBITION</p>
+<h2 data-i18n="activity_title">Experience AE online.</h2>
+<p data-i18n="activity_intro">Play Touch Moment, explore AE Soul Cards, or visit the online exhibition. All three are available through the website.</p>
+<div class="ae-activity-grid">
+<a href="/experience"><small data-i18n="activity_touch_kicker">20-SECOND INTERACTIVE ART</small><strong>Touch Moment｜心動時刻</strong><span data-i18n="activity_touch_body">Tap the glowing symbols for 20 seconds, then view your result card.</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
+<a href="/soul-cards"><small data-i18n="activity_soul_kicker">SOUL CARDS</small><strong>AE Soul Cards｜心靈卡牌</strong><span data-i18n="activity_soul_body">Discover artwork, colour and a short message.</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
+<a href="/ex1.html"><small data-i18n="activity_exh_kicker">ONLINE EXHIBITION</small><strong data-i18n="activity_exh_title">The Work Reveals Itself</strong><span data-i18n="activity_exh_body">Explore original works in the online exhibition.</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
+</div>
+</div></section>
+<section class="manifesto"><div class="manifesto-inner"><div class="label">AE Universe Creation</div><blockquote><span data-i18n="better_world">Make it a better world.</span><br><span id="sloganChoice">Action Creates Infinity</span></blockquote><div class="slogan-review" aria-label="Slogan preview comparison"><span class="review-label">NONPROD A/B</span><button type="button" data-slogan="A" aria-pressed="true">A · Action</button><button type="button" data-slogan="B" aria-pressed="false">B · Actions</button></div><div class="links"><a href="/collections" data-i18n="editions">Digital Editions</a><a href="/about" data-i18n="story">Our story</a><a href="/shop" data-i18n="shop">Shop</a></div></div></section>
+</main>
+<footer class="footer">AE UNIVERSE CREATION · ACTION CREATES INFINITY</footer>
+<div id="siteMenu" class="drawer" aria-hidden="true"><div class="drawer-scrim" id="menuScrim"></div><nav class="drawer-panel" aria-label="Primary navigation"><div class="drawer-head"><span>AE UNIVERSE CREATION</span><button id="menuClose" class="drawer-close" aria-label="Close menu">×</button></div><div class="drawer-list"><a href="/" data-i18n="home">Home</a><a href="/experience" data-i18n="experience">Experience</a><a href="/works" data-i18n="works">Works</a><a href="/collections" data-i18n="editions">Digital Editions</a><a href="/ex1.html" data-i18n="exhibition">Exhibition</a><a href="/about" data-i18n="story">Our story</a><a href="/soul-cards" data-i18n="soul_cards">Soul Cards</a><a href="/shop" data-i18n="shop">Shop</a></div><div class="drawer-bottom" data-i18n="drawer_note">Feel art in your everyday life.</div></nav></div>
+<script>
+(()=>{
+'use strict';
+const dict={
+ en:{who_top:"WHO WE ARE",who_title:"Meet AE Universe Creation.",who_body:"AE Universe Creation brings together 13th Aurelia and 14th Elion. We create original hand-painted artworks and develop digital editions and interactive experiences from selected works.",who_link:"Read our story →",original_desc:"An original painting from AE's selected works gallery.",products_top:"AVAILABLE DIGITAL ART",products_title:"What you can collect.",products_body:"Three digital art products are currently offered for personal use through Ko-fi. See each product's formats and current price on the shop page.",product_one:"Four digital formats",product_two:"Digital art collection",product_three:"Digital art collection",product_details:"Artwork &amp; editions →",product_shop:"See in shop →",products_link:"View available digital products →",activity_top:"ONLINE EXPERIENCES &amp; EXHIBITION",activity_title:"Experience AE online.",activity_intro:"Play Touch Moment, explore AE Soul Cards, or visit the online exhibition. All three are available through the website.",activity_touch_kicker:"20-SECOND INTERACTIVE ART",activity_touch_body:"Tap the glowing symbols for 20 seconds, then view your result card.",activity_soul_kicker:"SOUL CARDS",activity_soul_body:"Discover artwork, colour and a short message.",activity_exh_kicker:"ONLINE EXHIBITION",activity_exh_title:"The Work Reveals Itself",activity_exh_body:"Explore original works in the online exhibition.",menu:'MENU',hero_title:'Hand-painted art.<br>Digital sensation.',hero_sub:'Inspired by nature.',rainbow:'Feel art in your everyday life.',experience:'Interactive experience',experience_sub:'Start with a 20-second art experience',experience_top:'20-SECOND INTERACTIVE ART',works:'View works',works_sub:'See original paintings and selected works',editions:'Digital Editions',exhibition:'Exhibition',scroll:'SCROLL TO EXPLORE',enter:'ORIGINAL ARTWORKS',enter_title:'Selected paintings.',enter_sub:'Explore original hand-painted works by AE Universe Creation.',original:'FEATURED WORK',original_desc:'See this painting in the selected works gallery.',see_art:'View selected works',experience_title:'Touch Moment.',experience_body:'Tap the glowing symbols for 20 seconds, then view your result card.',open_game:'Open Touch Moment →',editions_top:'DIGITAL EXPANSION',editions_card:'Art for everyday life.',exhibition_top:'EXHIBITION',exhibition_card:'Explore the universe.',better_world:'Make it a better world.',home:'Home',story:'About us',shop:'Buy art',soul_cards:'Soul Cards',drawer_note:'Feel art in your everyday life.'},
+ zh:{who_top:"我們是誰",who_title:"認識 AE Universe Creation。",who_body:"AE Universe Creation 連結 13th Aurelia 與 14th Elion 的創作。我們創作原創手繪作品，並將部分作品發展成數位藝術版本與互動體驗。",who_link:"認識我們的故事 →",original_desc:"來自 AE 精選作品畫廊的原創手繪作品。",products_top:"目前販售",products_title:"可以收藏的數位作品。",products_body:"目前有三款數位藝術商品透過 Ko-fi 提供個人使用。實際格式、內容與價格請以商店頁面為準。",product_one:"四種數位版本",product_two:"數位藝術系列",product_three:"數位藝術系列",product_details:"認識作品與版本 →",product_shop:"前往商店查看 →",products_link:"查看數位商品與購買方式 →",activity_top:"線上互動與展覽",activity_title:"現在可以參與的體驗。",activity_intro:"在網站玩《心動時刻》、探索 AE 心靈卡牌，或欣賞《作品自己顯現》線上展覽。",activity_touch_kicker:"20 秒互動藝術",activity_touch_body:"在 20 秒內點擊亮起的符號，結束後查看結果卡。",activity_soul_kicker:"心靈卡牌",activity_soul_body:"探索原創畫作、色彩與一句心靈小語。",activity_exh_kicker:"線上展覽",activity_exh_title:"《作品自己顯現》",activity_exh_body:"走進原創作品的線上展覽。",menu:'選單',hero_title:'手繪藝術。<br>數位感官體驗。',hero_sub:'靈感源自自然。',rainbow:'在日常生活中，感受藝術。',experience:'互動體驗',experience_sub:'從 20 秒的藝術體驗開始',experience_top:'20 秒互動藝術',works:'看作品',works_sub:'看原創手繪與精選作品',editions:'數位藝術',exhibition:'線上展覽',scroll:'向下探索',enter:'原創畫作',enter_title:'精選畫作。',enter_sub:'探索 AE Universe Creation 的原創手繪作品。',original:'精選作品',original_desc:'在精選作品集裡欣賞這幅畫。',see_art:'看精選作品',experience_title:'心動時刻。',experience_body:'在 20 秒內點擊亮起的符號，結束後查看結果卡。',open_game:'進入心動時刻 →',editions_top:'DIGITAL EXPANSION',editions_card:'讓藝術陪伴日常。',exhibition_top:'線上展覽',exhibition_card:'探索這個藝術宇宙。',better_world:'讓世界更美好。',home:'首頁',story:'關於我們',shop:'購買作品',soul_cards:'靈魂卡',drawer_note:'在日常生活中，感受藝術。'}
+};
+let lang='en';try{lang=localStorage.getItem('ae-language-home')||localStorage.getItem('ae-language')||'en'}catch{}const requestedLang=new URLSearchParams(location.search).get('lang');if(requestedLang==='zh'||requestedLang==='en')lang=requestedLang;if(!dict[lang])lang='en';
+function setLang(next){lang=next;document.title=next==='zh'?'AE Universe Creation — 手繪藝術。數位感官體驗。':'AE Universe Creation — Hand-painted Art. Digital Sensation.';document.documentElement.lang=next==='zh'?'zh-Hant':'en';document.querySelectorAll('[data-i18n]').forEach(el=>{const value=dict[next][el.dataset.i18n];if(value!==undefined)el.innerHTML=value});document.getElementById('languageButton').textContent=next==='zh'?'EN':'中文';document.getElementById('menuButton').setAttribute('aria-label',next==='zh'?'開啟選單':'Open menu');try{localStorage.setItem('ae-language-home',next);localStorage.setItem('ae-language',next)}catch{}}
+setLang(lang);document.getElementById('languageButton').addEventListener('click',()=>setLang(lang==='en'?'zh':'en'));
+const themeBtn=document.getElementById('themeButton');let theme='dark';try{theme=localStorage.getItem('ae-theme')||'dark'}catch{}function setTheme(next){theme=next;document.documentElement.dataset.theme=next;themeBtn.setAttribute('aria-pressed',String(next==='light'));themeBtn.textContent=next==='light'?'◑':'◐';try{localStorage.setItem('ae-theme',next)}catch{}}setTheme(theme);themeBtn.addEventListener('click',()=>setTheme(theme==='light'?'dark':'light'));
+const drawer=document.getElementById('siteMenu'),menuBtn=document.getElementById('menuButton');function openMenu(open){drawer.classList.toggle('open',open);drawer.setAttribute('aria-hidden',String(!open));menuBtn.setAttribute('aria-expanded',String(open));document.body.style.overflow=open?'hidden':'';if(open)document.getElementById('menuClose').focus()}menuBtn.addEventListener('click',()=>openMenu(true));document.getElementById('menuClose').addEventListener('click',()=>openMenu(false));document.getElementById('menuScrim').addEventListener('click',()=>openMenu(false));drawer.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>openMenu(false)));document.addEventListener('keydown',event=>{if(event.key==='Escape'&&drawer.classList.contains('open'))openMenu(false)});
+const slogan=document.getElementById('sloganChoice'),buttons=[...document.querySelectorAll('[data-slogan]')];function setSlogan(choice){slogan.textContent=choice==='B'?'Actions Create Infinity':'Action Creates Infinity';buttons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.slogan===choice)));try{localStorage.setItem('ae-slogan-preview',choice)}catch{}}buttons.forEach(button=>button.addEventListener('click',()=>setSlogan(button.dataset.slogan)));setSlogan(localStorage.getItem('ae-slogan-preview')==='B'?'B':'A');
+})();
+</script>
+<script src="/ae-home-light-energy.js"></script>
+<script src="/ae-home-beats.js"></script>
+<script src="/ae-home-light.js"></script>
+</body>
+</html>
+
+

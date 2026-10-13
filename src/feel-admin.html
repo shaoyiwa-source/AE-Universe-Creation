@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="ae-version" content="v2454">
+<title>感受留言 · Admin · AE Universe Creation</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ivory:#FBF8F1;--ink:#2E2A24;--muted:#6B655A;--gold:rgb(151,118,60);--sage:#7D8B6A;--sage-soft:#EEF1E8;--line:#E7DDC9;--card:#FFFDF8;--warn:#9A4B3C}
+*{box-sizing:border-box}body{margin:0;background:var(--ivory);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Segoe UI",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:32px 20px 60px}
+h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:32px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 24px}
+form.key{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+input{flex:1;min-width:220px;font:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+button{font:inherit;font-size:14px;letter-spacing:.06em;padding:12px 18px;border:0;border-radius:12px;cursor:pointer;background:var(--gold);color:#fff}
+button.alt{background:var(--sage-soft);color:var(--ink)}button.del{background:transparent;color:var(--warn);padding:4px 6px;font-size:12px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 16px;color:var(--muted);font-size:13px}
+.bar .sp{flex:1}
+.banner{display:none;padding:12px 14px;border-radius:12px;background:#FFF3E6;color:#7A4A1E;font-size:13px;line-height:1.6;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 12px}
+.card .h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.card .w{color:var(--gold);letter-spacing:.06em}.card .n{color:var(--ink);font-weight:600}
+.tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--sage-soft);color:var(--sage)}
+.card .x{white-space:pre-wrap;line-height:1.75;font-size:15px;word-break:break-word}
+.empty{color:var(--muted);text-align:center;padding:40px 0}
+.err{color:var(--warn);font-size:13px;min-height:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>感受留言</h1>
+  <p class="sub">LINE「留下你的感受」與 /feel 收到的私人留言 · 僅限管理者 · 不公開</p>
+  <form class="key" id="kf"><input type="password" id="key" placeholder="管理金鑰 Admin key" autocomplete="current-password"><button type="submit">讀取</button><button type="button" class="alt" id="forget">登出</button></form>
+  <p class="err" id="err"></p>
+  <div class="banner" id="banner"></div>
+  <div class="bar" id="bar" hidden><span id="sum"></span><span class="sp"></span><button type="button" class="alt" id="reload">重新整理</button><button type="button" id="csv">下載 CSV</button></div>
+  <div id="list"></div>
+</div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);let data=null;
+const fmt=new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+const tpe=s=>{try{return fmt.format(new Date(s)).replace(/\//g,'-')}catch(e){return s}};
+const key=()=>sessionStorage.getItem('ae-feel-key')||'';
+async function load(){
+  $('err').textContent='';if(!key())return;
+  try{const r=await fetch('/api/feel',{headers:{'x-feel-key':key()},cache:'no-store'});const j=await r.json().catch(()=>({}));
+    if(r.status===401){$('err').textContent='金鑰不正確。';sessionStorage.removeItem('ae-feel-key');return}
+    if(!r.ok||!j.ok){$('err').textContent='讀取失敗（'+r.status+'）';return}
+    data=j;draw()}catch(e){$('err').textContent='網路錯誤，請再試一次。'}
+}
+function draw(){
+  const L=$('list');L.innerHTML='';$('bar').hidden=false;
+  $('sum').textContent='共 '+data.count+' 則 · 儲存：'+data.storage+' · 時間為台北時間';
+  const b=$('banner');if(!data.durable){b.style.display='block';b.textContent='注意：目前使用暫存（'+data.storage+'），尚未連接 Vercel Blob 永久儲存。正式上線前請連接 Blob store，否則留言可能遺失。'}else b.style.display='none';
+  if(!data.entries.length){L.innerHTML='<p class="empty">還沒有留言。</p>';return}
+  for(const e of data.entries){
+    const c=document.createElement('article');c.className='card';
+    const h=document.createElement('div');h.className='h';
+    const add=(cls,t)=>{const s=document.createElement('span');s.className=cls;s.textContent=t;h.append(s);return s};
+    add('w',(data.works&&data.works[e.work])||e.work);
+    add('n',e.nickname||e.displayName||'匿名');
+    if(e.nickname&&e.displayName)add('',`LINE：${e.displayName}`);
+    add('',tpe(e.createdAt));
+    add('tag',e.verified?'LINE 已驗證':(e.source==='web'?'網頁':'LINE 未驗證'));
+    const d=document.createElement('button');d.className='del';d.type='button';d.textContent='刪除';
+    d.onclick=async()=>{if(!confirm('確定刪除這則留言？'))return;const r=await fetch('/api/feel?id='+encodeURIComponent(e.id),{method:'DELETE',headers:{'x-feel-key':key()}});if(r.ok)load();else alert('刪除失敗')};
+    h.append(d);
+    const x=document.createElement('div');x.className='x';x.textContent=e.text;
+    c.append(h,x);L.append(c);
+  }
+}
+function csv(){
+  if(!data)return;const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=[['id','work','時間(台北)','createdAt(UTC)','nickname','displayName','verified','lineUserId','source','lang','text','ua']];
+  for(const e of data.entries)rows.push([e.id,e.work,tpe(e.createdAt),e.createdAt,e.nickname,e.displayName,e.verified,e.lineUserId,e.source,e.lang,e.text,e.ua]);
+  const blob=new Blob(['\ufeff'+rows.map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ae-feel-'+new Date().toISOString().slice(0,10)+'.csv';document.body.append(a);a.click();a.remove();
+}
+$('kf').addEventListener('submit',e=>{e.preventDefault();const v=$('key').value.trim();if(!v)return;sessionStorage.setItem('ae-feel-key',v);$('key').value='';load()});
+$('forget').onclick=()=>{sessionStorage.removeItem('ae-feel-key');data=null;$('list').innerHTML='';$('bar').hidden=true;$('banner').style.display='none'};
+$('reload').onclick=load;$('csv').onclick=csv;
+load();
+})();
+</script>
+</body>
+</html>
