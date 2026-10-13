@@ -36,7 +36,7 @@ for (const product of shop.products) {
   assert.ok(!/<a[^>]*ko-fi\.com[^>]*class="button"/i.test(card));
   assert.ok(card.includes('data-add-sku="' + product.sku + '"'));
   assert.ok(card.includes('href="checkout.html"'));
-  if (product.kofi) assert.ok(card.includes('Ko-fi 備用結帳'));
+  assert.ok(!card.includes('Ko-fi 備用結帳'));
 }
 assert.strictEqual(shop.productBySku('ES-ORIGINAL'), null);
 assert.throws(() => shop.quoteLines([{ sku: 'ES-ORIGINAL', qty: 1 }]), /UNKNOWN_SKU/);
@@ -117,3 +117,8 @@ assert.ok(vercel.includes('"/checkout"'));
 assert.ok(vercel.includes('"/checkout.html"'));
 
 console.log('PASS public shop NT$ cart catalog');
+
+// ECPay review: no Ko-fi redirects anywhere in shop/cart/checkout
+for (const f of ['public/shop.html','public/shop/catalog.js','public/cart.html','public/checkout.html']) {
+  assert.ok(!require('fs').readFileSync(require('path').join(__dirname,'..',f),'utf8').includes('ko-fi.com'), f + ' must not contain ko-fi.com');
+}

@@ -20,7 +20,7 @@
       detailEn: 'A nine-piece digital collection. Hand-painted flowers and hearts for everyday screens.',
       image: 'assets/d9416a6d494ad899.webp',
       eyebrow: '九宮格 · Nine-piece',
-      kofi: 'https://ko-fi.com/s/9b9703d58b',
+      kofi: '',
     },
     {
       sku: 'GRID-NIGHT',
@@ -44,7 +44,7 @@
       detailEn: 'Four digital editions of Eternal Sun: original, gallery, phone, and square.',
       image: 'assets/4e0991885a9649ea.webp',
       eyebrow: '盛明 · Eternal Sun',
-      kofi: 'https://ko-fi.com/s/e3991964e5',
+      kofi: '',
     },
   ];
 
@@ -139,7 +139,6 @@
         '<button type="button" class="button" data-add-sku="' + product.sku + '">加入購物車 · Add to cart</button>' +
         '<a class="text-link" href="cart.html">購物車 · Cart</a>' +
         '<a class="text-link" href="checkout.html">結帳 · Checkout</a>' +
-        backupLink(product) +
       '</div>' +
       '<p class="ae-toast" data-toast hidden></p>' +
       contactHtml() +
