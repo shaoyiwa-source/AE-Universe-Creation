@@ -1,0 +1,14 @@
+/* AE-HOME-SOUNDLIGHT-15S-20261014-0730 — 15-second homepage sound-and-light opening.
+   The light layer never takes pointer events; only the two small controls are interactive. */
+#ae-home-opening-fx{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:1;transition:opacity .45s ease}
+#ae-home-opening-fx[data-state="ended"]{opacity:0}
+.ae-opening-side{position:absolute;z-index:7;top:calc(108px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px;max-width:min(58vw,230px);pointer-events:none}
+.ae-opening-side[hidden]{display:none}
+.ae-opening-side button{pointer-events:auto;min-height:44px;min-width:44px;padding:10px 15px;border:1px solid rgba(240,215,161,.66);border-radius:999px;background:linear-gradient(125deg,rgba(16,30,22,.86),rgba(20,41,38,.84));color:#fff4dc;font:600 13px/1.2 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC",sans-serif;letter-spacing:.02em;box-shadow:0 6px 22px rgba(0,0,0,.32);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);white-space:nowrap;touch-action:manipulation}
+.ae-opening-side button:hover{border-color:#f6e0a3;background:linear-gradient(125deg,rgba(100,80,53,.88),rgba(20,81,71,.86))}
+.ae-opening-side button:focus-visible{outline:2px solid #f4d78a;outline-offset:3px}
+.ae-opening-side small{display:block;text-align:right;font:500 11px/1.45 Inter,-apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif;color:#f6e7cb;text-shadow:0 1px 4px #000,0 0 10px rgba(0,0,0,.55);letter-spacing:.02em}
+html[data-theme="light"] .ae-opening-side button{background:rgba(255,249,236,.94);color:#273e30;border-color:#a79776;box-shadow:0 4px 16px rgba(29,51,32,.14)}
+html[data-theme="light"] .ae-opening-side small{color:#294032;text-shadow:0 1px 5px #fff,0 0 8px #fff}
+@media(max-width:520px){.ae-opening-side{top:calc(78px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));max-width:62vw}.ae-opening-side button{font-size:12.5px;padding:10px 13px}.ae-opening-side small{font-size:10.5px}}
+@media(prefers-reduced-motion:reduce){#ae-home-opening-fx{transition:none}}
