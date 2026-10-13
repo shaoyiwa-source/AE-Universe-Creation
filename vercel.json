@@ -13,8 +13,20 @@
       "destination": "/experience.html"
     },
     {
+      "source": "/together",
+      "destination": "/together.html"
+    },
+    {
       "source": "/checkout-stage",
       "destination": "/checkout-stage.html"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/checkout.html"
+    },
+    {
+      "source": "/cart",
+      "destination": "/cart.html"
     },
     {
       "source": "/collections",
