@@ -3034,7 +3034,17 @@
       cardEl.insertBefore(artwork, cardEl.querySelector('.cm-card-body'));
     }
     artwork.hidden = !activeArt;
-    if (activeArt) artwork.src = activeArt;
+    artwork.onerror = function () {
+      const fb = 'assets/selected-works-v2/love-energy-field.webp';
+      if (!artwork.dataset.fallbackTried && !artwork.src.endsWith(fb)) {
+        artwork.dataset.fallbackTried = '1';
+        artwork.src = fb;
+        if (cardBg) cardBg.style.backgroundImage = `url("${fb}")`;
+      } else {
+        artwork.hidden = true;
+      }
+    };
+    if (activeArt) { delete artwork.dataset.fallbackTried; artwork.src = activeArt; }
     cardEyebrow.textContent = L === 'zh' ? 'AE 心靈卡' : 'AE SOUL CARD';
     cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
     cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
