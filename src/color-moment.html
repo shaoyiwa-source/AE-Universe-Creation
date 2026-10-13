@@ -637,7 +637,7 @@
 #cmCard .cm-echo,#cmCard .cm-mem-label,#cmCard .cm-epithet,#cmCard .cm-epithet-en,#cmCard .cm-lore,#cmCard .cm-figure-mood,#cmCard .cm-discover,#cmCard .cm-mini-tip,#cmCard .cm-capture-note{display:none!important}
 #cmCard [hidden]{display:none!important}
 @media(max-width:360px){#cmCard{padding:12px}#cmCard .cm-card-body{padding:23px 16px 20px}#cmCard .cm-reading{font-size:16px}}
-</style><meta name="ae-card-repair" content="v78-5-readable-soul-card"><style id="ae-line-footer">.ae-line-link{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.ae-line-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#06C755;box-shadow:0 0 0 3px rgba(6,199,85,.14)}.ae-line-id{font-size:.78em;letter-spacing:.06em;color:var(--muted);opacity:.85;transition:color .2s ease}.ae-line-link:hover .ae-line-id,.ae-line-link:focus-visible .ae-line-id{color:inherit}html[data-theme=dark] .ae-line-dot{box-shadow:0 0 0 3px rgba(6,199,85,.22)}.ae-line-tiny{margin-top:10px}.ae-line-tiny .ae-line-dot{margin-left:3px}.ae-line-tiny .ae-line-link{text-decoration:none}.ae-line-tiny .ae-line-id{font-size:1em}</style><style id="ae-soul-visible-art">#cmCard .cm-card-artwork{position:relative;z-index:2;display:block;width:100%;height:clamp(200px,40vw,350px);object-fit:contain;background:var(--sc-paper);border-radius:11px 11px 0 0;}#cmCard .cm-card-artwork[hidden]{display:none;}#cmCard .cm-card-body{position:relative;z-index:2;}#cmHint span{background:rgba(255,252,246,.94);color:#25382c;padding:10px 14px;border-radius:10px;}:root[data-theme="dark"] #cmHint span{background:rgba(20,27,22,.94);color:#f7f4eb;}</style><link rel="stylesheet" href="/ae-surface-polish.css"></head>
+</style><meta name="ae-card-repair" content="v78-5-readable-soul-card"><style id="ae-line-footer">.ae-line-link{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.ae-line-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#06C755;box-shadow:0 0 0 3px rgba(6,199,85,.14)}.ae-line-id{font-size:.78em;letter-spacing:.06em;color:var(--muted);opacity:.85;transition:color .2s ease}.ae-line-link:hover .ae-line-id,.ae-line-link:focus-visible .ae-line-id{color:inherit}html[data-theme=dark] .ae-line-dot{box-shadow:0 0 0 3px rgba(6,199,85,.22)}.ae-line-tiny{margin-top:10px}.ae-line-tiny .ae-line-dot{margin-left:3px}.ae-line-tiny .ae-line-link{text-decoration:none}.ae-line-tiny .ae-line-id{font-size:1em}</style><style id="ae-soul-visible-art">#cmCard .cm-card-artwork{position:relative;z-index:2;display:block;width:100%;height:clamp(220px,72vw,360px);object-fit:cover;background:var(--sc-paper);border-radius:11px 11px 0 0;}#cmCard .cm-card-artwork[hidden]{display:none;}#cmCard .cm-card-body{position:relative;z-index:2;}#cmHint span{background:rgba(255,252,246,.94);color:#25382c;padding:10px 14px;border-radius:10px;}:root[data-theme="dark"] #cmHint span{background:rgba(20,27,22,.94);color:#f7f4eb;}</style><link rel="stylesheet" href="/ae-surface-polish.css"></head>
 <body class="ae-polish">
 <a class="skip-link" href="#main" data-en="Skip to content" data-zh="跳至內容">Skip to content</a>
 <header class="site-header">
@@ -1735,6 +1735,8 @@
   let saveSheetFilename = '';
   let saveSheetFile = null;
   let captureBusy = false;
+  let captureBusyAt = 0;
+  let lastSnapTouch = 0;
 
   const saveSheet = document.getElementById('cmSaveSheet');
   const saveFrame = document.getElementById('cmSaveFrame');
@@ -3605,10 +3607,12 @@
     });
     const ritualY = yCursor + 28;
     measure.font = cardType(18, { cjk: isZh });
-    const ritualBlock = 6 + 28 + measureWrapped(measure, ritualBody, textWidth, 25);
-    const lpPad = lpLabel ? 28 : 0;
-    const artworkH = activeArt ? Math.round(cardEl.querySelector('.cm-card-artwork')?.getBoundingClientRect().height || Math.min(350, Math.max(200, w * 0.62))) : 0;
-    const h = artworkH + Math.max(420, Math.ceil(ritualY + ritualBlock + 36 + lpPad));
+    const ritualBlock = ritualBody ? (6 + 28 + measureWrapped(measure, ritualBody, textWidth, 25)) : -14;
+    const lpPad = lpLabel ? 18 : 0;
+    // Artwork slot: fixed 4:3-ish ratio of card width (object-fit: cover), independent of DOM quirks.
+    const artworkH = activeArt ? Math.round(Math.min(360, Math.max(220, w * 0.72))) : 0;
+    // Tight height: exactly content + bottom padding (no fixed minimum → no blank bottom).
+    const h = artworkH + Math.ceil(ritualY + ritualBlock + 26 + lpPad);
 
     const scale = Math.max(2, 1200 / w);
     const imageCanvas = document.createElement('canvas');
@@ -3628,47 +3632,29 @@
       });
     }
 
+    // Clean card: rounded rect only (transparent outside corners), solid paper, no page/art wash.
     roundedPath(imageContext, w, h, 18);
     imageContext.save();
     imageContext.clip();
     imageContext.fillStyle = paper;
     imageContext.fillRect(0, 0, w, h);
-    if (image) {
-      try { drawCover(imageContext, image, w, h, 1.24); }
-      catch (err) { /* tainted or decode issue — keep paper card */ }
-    }
-    // Soft memorial wash behind the keepsake (gesture as atmosphere).
     if (memorialBmp) {
       try {
-        imageContext.globalAlpha = 0.22;
-        drawCover(imageContext, memorialBmp, w, h, 1.08);
+        imageContext.globalAlpha = 0.10;
+        drawCover(imageContext, memorialBmp, w, h, 1.0);
         imageContext.globalAlpha = 1;
       } catch (err) { /* ignore */ }
     }
-    const veil = imageContext.createLinearGradient(0, 0, 0, h);
-    /* SHARED pale — same stops as --cm-pale-veil-* / early wash */
-    veil.addColorStop(0, dark ? 'rgba(20,17,15,.18)' : 'rgba(247,241,232,.20)');
-    veil.addColorStop(.42, dark ? 'rgba(20,17,15,.12)' : 'rgba(247,241,232,.14)');
-    veil.addColorStop(1, dark ? 'rgba(20,17,15,.20)' : 'rgba(247,241,232,.22)');
-    imageContext.fillStyle = veil;
-    imageContext.fillRect(0, 0, w, h);
-    imageContext.restore();
-    imageContext.save();
-    imageContext.translate(12,artworkH+12);
-    roundedPath(imageContext,w-24,h-artworkH-24,12);
-    imageContext.fillStyle=dark?'rgba(25,30,27,.97)':'rgba(255,252,246,.97)';
-    imageContext.fill();
-    imageContext.restore();
-
+    // Artwork fills its slot edge-to-edge (object-fit: cover), clipped by the card's rounded top.
     if (image && artworkH) {
       imageContext.save();
-      imageContext.fillStyle = paper;
-      imageContext.fillRect(12, 12, w-24, artworkH);
-      const fit = Math.min((w-24)/image.naturalWidth, artworkH/image.naturalHeight);
-      const iw = image.naturalWidth*fit, ih = image.naturalHeight*fit;
-      imageContext.drawImage(image, (w-iw)/2, 12+(artworkH-ih)/2, iw, ih);
+      imageContext.beginPath();
+      imageContext.rect(0, 0, w, artworkH);
+      imageContext.clip();
+      try { drawCover(imageContext, image, w, artworkH, 1); } catch (err) { /* keep paper */ }
       imageContext.restore();
     }
+    imageContext.restore();
     imageContext.save();
     imageContext.translate(0, artworkH);
     imageContext.fillStyle = muted;
@@ -3744,11 +3730,13 @@
     imageContext.fillStyle = muted;
     imageContext.textAlign = 'center';
     imageContext.font = cardType(12.5, { cjk: true });
-    imageContext.fillText(ritualLabelText, w / 2, ritualY + 6);
-    imageContext.fillStyle = ink;
-    imageContext.font = cardType(18, { cjk: isZh });
-    imageContext.textAlign = 'left';
-    drawWrapped(imageContext, ritualBody, 24, ritualY + 34, textWidth, 25, null);
+    if (ritualBody) {
+      imageContext.fillText(ritualLabelText, w / 2, ritualY + 6);
+      imageContext.fillStyle = ink;
+      imageContext.font = cardType(18, { cjk: isZh });
+      imageContext.textAlign = 'left';
+      drawWrapped(imageContext, ritualBody, 24, ritualY + 34, textWidth, 25, null);
+    }
 
     // Quiet watermark corner mark — pale, small (Owner lock).
     if (lpLabel) {
@@ -3917,6 +3905,9 @@
       updateShareButtonVisibility(null, saveSheetFilename);
     }
 
+    // Escape any transformed/clipped ancestor so the fixed overlay is always on top & tappable.
+    if (saveSheet.parentNode !== document.body) document.body.appendChild(saveSheet);
+    saveSheet.style.zIndex = '2147483000';
     saveSheet.hidden = false;
     saveSheet.setAttribute('aria-hidden', 'false');
     requestAnimationFrame(() => {
@@ -4030,8 +4021,10 @@
     if (cardEl.hidden) {
       renderCard();
     }
-    if (captureBusy) return;
+    // Watchdog: a stuck earlier build must never make the button dead.
+    if (captureBusy && (Date.now() - captureBusyAt) < 12000) return;
     captureBusy = true;
+    captureBusyAt = Date.now();
     if (snap) snap.disabled = true;
     cardEl.classList.remove('cm-card-flash');
     void cardEl.offsetWidth;
@@ -4040,8 +4033,13 @@
     const L = lang();
     try {
       if (isAppleTouch()) {
-        // First tap MUST open the sheet immediately — warm must not block.
+        // First tap MUST act immediately — warm must not block.
         const ready = warmBlob || null;
+        // Clean card already built → native share sheet (Save Image) inside this same gesture.
+        if (ready && navigator.canShare) {
+          const shared = await tryShareImageFile(ready, filename);
+          if (shared === true || shared === 'aborted') return;
+        }
         const opened = openSaveSheet(ready, filename);
         if (!opened) {
           showToast(L === 'zh'
@@ -4263,7 +4261,20 @@
     sealBtn.addEventListener('selectstart', (e) => { e.preventDefault(); });
     sealBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); });
   }
-  snap?.addEventListener('click', captureMoment);
+  snap?.addEventListener('click', (e) => {
+    if (Date.now() - lastSnapTouch < 800) { try { e.preventDefault(); } catch {} return; }
+    captureMoment(e);
+  });
+  // iOS: some layers swallow the synthetic click after touch — fire on touchend directly.
+  snap?.addEventListener('touchend', (e) => {
+    if (e.changedTouches && e.changedTouches.length) {
+      const t = e.changedTouches[0], r = snap.getBoundingClientRect();
+      if (t.clientX < r.left || t.clientX > r.right || t.clientY < r.top || t.clientY > r.bottom) return;
+    }
+    lastSnapTouch = Date.now();
+    captureMoment(e);
+  }, { passive: false });
+  if (snap) snap.style.touchAction = 'manipulation';
   share?.addEventListener('click', shareMoment);
   saveShareBtn?.addEventListener('click', shareFromSaveSheet);
   saveCloseBtn?.addEventListener('click', closeSaveSheet);
