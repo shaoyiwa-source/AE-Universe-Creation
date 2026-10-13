@@ -140,3 +140,8 @@ html[data-theme=dark] .intro-grid h2.intro-lead-title{
 .product-panel .shop-card{max-width:760px}
 @media(max-width:1000px){.shop-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.shop-grid{grid-template-columns:1fr}.shop-card img{height:240px}.checkout-actions .button{width:100%}}
+
+/* ECPay review: NT$ prices slightly more readable, same elegant style */
+.price .ae-price{color:var(--ink);font-size:20px}
+.ae-price{color:var(--ink)}
+.ae-currency,.price .ae-currency{color:var(--ink);opacity:.75}
