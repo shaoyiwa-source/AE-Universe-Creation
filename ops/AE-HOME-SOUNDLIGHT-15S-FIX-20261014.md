@@ -66,4 +66,43 @@ Mobile 390×844, cue through both climaxes (to 138 s): frame 16.7 / 16.7, clock 
 
 15 s opening: autostart at 58.49 s (build), hard stop at 15.2 s wall / audio 73.35 s, reason `complete`, track = audio. 「▶ 重播聲光」 restarts at the cue. Language, theme, and the nav drawer still toggle. No page errors. 0 AudioContexts.
 
+## Live Preview (this commit, headful Chrome against the deployed bytes)
+
+Homepage preview (src root, the light script and the 7,678,098-byte m4a, `Accept-Ranges: bytes`):
+
+- URL: https://temporary-snappy-plateau-noji7lz.vercel.app/?lang=zh
+- Deployment: `dpl_CNgpMwqVfMhCBme9ebpjuU85ZZV4`
+- Branch: `cursor/home-soundlight-continuous-sync-522d` @ `08918c804eb483c593cc1dcb2d68218b7831ed61`
+- Draft PR: https://github.com/shaoyiwa-source/AE-Universe-Creation/pull/30 (base `preview/20261014-home-soundlight-fix`)
+
+This is an anonymous temporary deployment of `src/` (`vercel deploy --temporary`, no `--prod`). It is not a production alias. Unclaimed, it expires at 2026-10-14 02:41 UTC. Claim: https://vercel.com/claim-deployment?code=d6d9ac6b-2a4a-418e-a6ac-8cfd4cd80d29
+
+The GitHub integration Preview for this commit (`https://ae-universe-creation-gze820in9-ae-universe-creation.vercel.app`) publishes the repository-root historical page. `/ae-home-light.js` is absent there. Use the temporary URL above for the homepage.
+
+Deployed `ae-home-light.js` matches this commit (includes `liteLatch`, the post-seek `moved` gate, and the 40 ms `currentTime` clamp).
+
+Desktop 1440×900, 「播放音樂」 from cue 58.30 through the loop (7892 frames, end 8.00 s into the next pass). `playbackRate=1`, `paused=false`, 0 AudioContexts until tap sound is switched on.
+
+| point | audio s | same-frame light−audio | clock (audio−track) | frame med / p90 |
+| --- | --- | --- | --- | --- |
+| build before drop 1 | 59.996 | −16.1 ms | 0 | 16.7 / 16.7 |
+| drop 1 | 64.863 | −16.6 ms | 0 | 16.7 / 16.7 |
+| opening end / groove | 73.296 | −17.1 ms | 0 | 16.7 / 16.7 |
+| QA zone (was ~81.83 vs 80.89) | 81.829 vs light 81.846 | −16.9 ms | 0 | 16.7 / 16.7 |
+| second QA sample | 86.978 vs light 86.995 | −16.6 ms | 0 | 16.6 / 16.7 |
+| build before drop 2 | 116.794 | −16.0 ms | 0 | 16.6 / 16.7 |
+| drop 2 | 129.393 vs light 129.409 | −16.4 ms | 0 | 16.7 / 16.7 |
+| tail | 181.208 | −16.4 ms | 0 | 16.7 / 16.7 |
+| loop seam, next pass | 0.204 and 4.003 | −16.6 / −16.7 ms | 0 | 16.7 / 16.7 |
+
+Whole desktop run, same frame: clock median / p90 / p99 = 0 ms, one frame at the cue-in and one frame at the loop wrap reach −33 ms (then the 40 ms clamp). Displayed light (`currentTime − musicTime`): median −16.6 ms, p90 −16.1 ms, p99 −16.0 ms, max lead 39.6 ms on that same wrap frame. QA-style reads outside the frame: median −6.3 ms, p90 −4.3 ms, worst −16.6 ms. At 82.22 s the outside gap is −8.1 ms (the failing Preview was about −935 ms).
+
+Rendered kick vs timeline event, both drops included: the paint frame's audio time is median 8.6 ms before the event (p90 2.1 ms before); the time actually drawn is median 8.0 ms after the event, p90 14 ms, max 17 ms. Drop 1 event 64.871 s drawn at light 64.880 (+9 ms). Drop 2 event 129.385 s drawn at light 129.393 (+8 ms). 148 BPM grid unchanged (flux residual std 1.6 ms, both groove halves).
+
+Mobile 390×844 through drop 2 (end 143.2 s, 5101 frames): frame 16.7 / 16.7, clock median 0 (one cue-in frame −33 ms), light median −16.6 ms, p90 −16.2 ms, max lead 39.8 ms. Outside gap median −9.2 ms, worst −11.3 ms.
+
+`?lite=1` through 103 s (includes drop 1 and the 82 s zone): frame 16.7 / 16.7, clock median 0, light median −16.5 ms, p90 −16.2 ms, max lead 39.6 ms. Outside gap median −8.2 ms, worst −10.1 ms.
+
+Opening on this URL: autostart 58.503 s build, hard stop wall 15.2 s / audio 73.352 s, reason `complete`, track = audio. 「▶ 重播聲光」 restarts the opening (59.12 s). Language switches to en, theme to light, nav drawer opens and closes. 「◌ 敲擊聲」 turns on, creates one AudioContext, and the music clock stays locked (58.566 = 58.566, rate 1). No page errors.
+
 Real-ear phone verification was not done.
