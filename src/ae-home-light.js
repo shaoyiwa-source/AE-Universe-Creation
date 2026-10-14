@@ -94,9 +94,7 @@
       if(playing){
       // One frame of lead so the kick is the one on screen when the frame presents.
       // Never more than 40ms ahead of the media clock the ear is compared against.
-      const ctNow=audio.currentTime;
-      let tt=trackTime()+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));
-      if(isFinite(ctNow))tt=Math.min(tt,ctNow+.04);
+      const tt=displayTime();
       bass=window.aeHomeAudioEnergy.energyAt(timeline,tt);
       beat=rhythm.update(bass,tt);
       musicFrame=beat;
@@ -262,7 +260,17 @@
     if(!moved||now-lastCTP>500)return ct; // not started, or decoder stalled
     return anchorT+(now-anchorP)/1000*rate;
   }
-  const lightTime=()=>trackTime()+DISPLAY_LEAD; // opening frames: one frame of display lead
+  // One display clock for both the opening and the continuous section: re-anchored track time
+  // plus one presented frame of lead, never more than 40ms ahead of audio.currentTime.
+  function displayTime(){
+    let tt=trackTime()+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));
+    const ctNow=audio.currentTime;
+    if(!P.lightAnchor&&isFinite(ctNow))tt=Math.min(tt,ctNow+.04);
+    return tt;
+  }
+  const lightTime=displayTime;
+  // The audible opening plays the whole track once (no 15 s cap); light-only fallback keeps 15 s.
+  const trackEnd=()=>isFinite(audio.duration)&&audio.duration>0?audio.duration:Infinity;
   function publish(){
     hero.dataset.playerPhase=P.phase;hero.dataset.playerSound=P.sound;hero.dataset.playerReason=P.reason;
     playing=P.phase==='music'&&!audio.paused;
@@ -288,20 +296,21 @@
   function stopTick(){clearInterval(tick);tick=0;clearTimeout(loadTimer);loadTimer=0;}
   function openingTick(){
     if(P.phase!=='opening')return;
+    if(P.sound!=='light')P.openingEnd=trackEnd();
     const t=trackTime(),left=P.openingEnd-t;
     if(P.sound==='audio'){try{audio.volume=Math.max(0,Math.min(VOL,VOL*left/FADE));}catch(e){}}
-    if(left<=0)endOpening('complete');
+    if(left<=0&&P.sound!=='audio')endOpening('complete');
   }
   // Must be called synchronously inside a click/tap (or at load for autoplay).
   function play(from,phase,source){
-    const my=++P.seq;stopTick();P.lightAnchor=null;
+    const my=++P.seq;stopTick();P.lightAnchor=null;audio.loop=true;
     try{audio.volume=VOL;}catch(e){}
     // play() first: on a never-loaded element it runs the load algorithm, which would reset an
     // earlier seek to 0. Seeking right after keeps the cue (applied at loadedmetadata if needed).
     let pr;try{pr=audio.play();}catch(e){pr=Promise.reject(e);}
     if(from!=null)seek(from);
     busy=true;setPhase(phase,'loading',source);stamp('play-request',{from,source});
-    if(phase==='opening'){P.openingEnd=(from==null?audio.currentTime:from)+OPENING;tick=setInterval(openingTick,50);
+    if(phase==='opening'){audio.loop=false;P.openingEnd=Infinity;tick=setInterval(openingTick,50);
       loadTimer=setTimeout(()=>{if(my===P.seq&&P.sound==='loading'){++P.seq;audio.pause();busy=false;lightOnly(from==null?CUE:from,'slow-network');}},6000);}
     return Promise.resolve(pr).then(()=>{
       if(my!==P.seq)return false;
@@ -315,9 +324,9 @@
       setPhase(P.heard?'paused':'idle','none','refused');message=zh()?'音樂未能播放，請再試一次。':'Music could not play. Please try again.';labels();return false;
     });
   }
-  function lightOnly(from,why){P.lightAnchor={t:from,p:performance.now()};P.openingEnd=from+OPENING;P.sound='light';P.reason=why;if(!tick)tick=setInterval(openingTick,50);stamp('light-only',{why});publish();}
+  function lightOnly(from,why){P.lightAnchor={t:from,p:performance.now()};P.openingEnd=from+OPENING;P.sound='light';P.reason=why;if(!tick)tick=setInterval(openingTick,50);stamp('light-only',{why});if(why==='autoplay-blocked')armGesture();publish();}
   function endOpening(reason){
-    if(P.phase!=='opening')return;
+    if(P.phase!=='opening')return;audio.loop=true;
     ++P.seq;stopTick();busy=false;
     if(P.lightAnchor){P.lightAnchor=null;}else{audio.pause();}
     try{audio.volume=VOL;}catch(e){}
@@ -331,7 +340,7 @@
   // Mid-opening ♫ with sound already running: the opening simply becomes the full song. No seek,
   // no restart, no second source — the same track keeps playing on the same clock.
   function openingToMusic(source){
-    stopTick();try{audio.volume=VOL;}catch(e){}
+    stopTick();audio.loop=true;try{audio.volume=VOL;}catch(e){}
     setPhase('music','audio',source);stamp('opening-to-music',{source});
   }
   function dockPressed(){
@@ -347,6 +356,7 @@
     get phase(){return P.phase},get sound(){return P.sound},get reason(){return P.reason},get heard(){return P.heard},
     startOpening:source=>play(CUE,'opening',source),endOpening,pauseMusic,dockPressed,
     subscribe:f=>{subs.add(f);return()=>subs.delete(f);},
+    get openingEnd(){return P.openingEnd},
     snapshot:()=>({phase:P.phase,sound:P.sound,reason:P.reason,heard:P.heard,busy,track:+trackTime().toFixed(3),openingEnd:+P.openingEnd.toFixed(3),
       audio:{paused:audio.paused,currentTime:+audio.currentTime.toFixed(3),playbackRate:audio.playbackRate,defaultPlaybackRate:audio.defaultPlaybackRate,preservesPitch:audio.preservesPitch,volume:+audio.volume.toFixed(3),readyState:audio.readyState,loop:audio.loop},
       audioContexts:audioContext?1:0,musicLights:playing}),
@@ -355,6 +365,17 @@
   musicBtn.addEventListener('click',dockPressed);
   lightBtn.addEventListener('click',()=>{lights=!lights;spots=[];musicSpots=[];bolts=[];focus=null;needsStatic=true;hero.querySelectorAll('.ae-gold-burst').forEach(el=>el.remove());labels();clear();schedule();});
   audio.addEventListener('error',()=>{stamp('audio-error');if(P.phase==='opening')lightOnly(CUE,'audio-error');else{pauseMusic('error');}message=zh()?'音樂載入失敗，請再試一次。':'Music could not load. Please try again.';labels();});
+  audio.addEventListener('ended',()=>{if(P.phase==='opening'){try{audio.currentTime=CUE;}catch(e){}endOpening('complete');}});
+  // Sound on at entry: if the browser refused unmuted autoplay, the first user gesture anywhere
+  // on the page starts the opening with sound (browsers only allow audio after a gesture).
+  const GESTURES=['pointerdown','pointerup','touchend','click','keydown'];
+  function onFirstGesture(e){
+    if(P.phase!=='opening'||P.sound!=='light'||P.reason!=='autoplay-blocked'){dropGesture();return;}
+    if(e.target&&e.target.closest&&e.target.closest('#aeOpeningStop,#aeOpeningSound,#aeMusicButton'))return;
+    dropGesture();play(CUE,'opening','first-gesture');
+  }
+  function armGesture(){for(const g of GESTURES)document.addEventListener(g,onFirstGesture,{capture:true,passive:true});}
+  function dropGesture(){for(const g of GESTURES)document.removeEventListener(g,onFirstGesture,{capture:true});}
   audio.addEventListener('waiting',()=>{waiting=true;});
   audio.addEventListener('playing',()=>{waiting=false;lastCT=-1;publish();});
   // A pause we did not ask for (OS audio interruption, headphones unplugged, media keys).

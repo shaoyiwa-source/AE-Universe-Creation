@@ -46,11 +46,11 @@
   }
   let resizeQueued=0;const queueResize=()=>{if(state!=='running'||resizeQueued)return;resizeQueued=requestAnimationFrame(()=>{resizeQueued=0;resize();});};
   function add(x,y,n){if(gentle)return;for(let i=0;i<n;i++){const a=Math.random()*6.283,s=15+Math.random()*28;specks.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,age:0,life:.4+Math.random()*.45,color:[45,170,195,330][i%4]})}specks=specks.slice(-60);}
-  function envelope(t){return Math.max(0,Math.min(1,t/FADE_IN,(DURATION-t)/FADE_OUT));}
+  function envelope(t,track){const end=player.openingEnd;return Math.max(0,Math.min(1,t/FADE_IN,isFinite(end)?(end-track)/FADE_OUT:1));}
   function draw(now){
     raf=0;if(state!=='running')return;
     const dt=Math.min(.05,(now-prev)/1000)||.016;prev=now;
-    const track=player.lightTime(),t=Math.max(0,track-CUE),env=envelope(t);
+    const track=player.lightTime(),t=Math.max(0,track-CUE),env=envelope(t,track);
     ctx.clearRect(0,0,W,H);ctx.save();ctx.globalCompositeOperation='screen';
     const b=rhythm.update(0,track);
     // Real-track arc: build (snare roll) → drop flash → groove at night-light strength → fade.

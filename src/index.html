@@ -216,10 +216,10 @@ const drawer=document.getElementById('siteMenu'),menuBtn=document.getElementById
 const slogan=document.getElementById('sloganChoice'),buttons=[...document.querySelectorAll('[data-slogan]')];function setSlogan(choice){slogan.textContent=choice==='B'?'Actions Create Infinity':'Action Creates Infinity';buttons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.slogan===choice)));try{localStorage.setItem('ae-slogan-preview',choice)}catch{}}buttons.forEach(button=>button.addEventListener('click',()=>setSlogan(button.dataset.slogan)));setSlogan(localStorage.getItem('ae-slogan-preview')==='B'?'B':'A');
 })();
 </script>
-<script src="/ae-home-light-energy.js?v=20261014-sync2"></script>
-<script src="/ae-home-beats.js?v=20261014-sync2"></script>
-<script src="/ae-home-light.js?v=20261014-sync2"></script>
-<script src="/ae-home-opening.js?v=20261014-sync2"></script>
+<script src="/ae-home-light-energy.js?v=20261014-fullplay1"></script>
+<script src="/ae-home-beats.js?v=20261014-fullplay1"></script>
+<script src="/ae-home-light.js?v=20261014-fullplay1"></script>
+<script src="/ae-home-opening.js?v=20261014-fullplay1"></script>
 </body>
 </html>
 
