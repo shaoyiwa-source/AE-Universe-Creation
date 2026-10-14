@@ -1,3 +1,10 @@
+/* AE-HOME-SOUNDLIGHT-15S-FIX-20261014-0817
+   ONE homepage player: one <audio> element (the real 148 BPM track, played natively — no
+   MediaElementSource, no second AudioContext), ONE track clock, ONE state machine shared by
+   the 15 s opening, the dock ♫ button, replay and stop. Lights are a pure function of the track
+   clock + the measured beat timeline (ae-home-beats.js), so pause/seek/resize/tab-switch can
+   never leave light and sound on different clocks.
+   phase: idle → opening(sound: audio|light|loading) → ended | music ⇄ paused */
 (()=>{
   'use strict';
   const hero=document.querySelector('.hero'),canvas=document.getElementById('ae-home-light');
@@ -6,9 +13,9 @@
   const musicBtn=document.getElementById('aeMusicButton'),lightBtn=document.getElementById('aeLightButton'),status=document.getElementById('aeLightStatus');
   const timeline=window.aeHomeBeatTimeline;
   const tapBtn=document.getElementById('aeTapButton'),rhythm=window.aeHomeAudioEnergy.createRhythm(timeline?.events,timeline?.accents,timeline?.sections);
-  let tapSound=false,lastTap=-1,noiseBuffer,tapAnalyser,tapSamples,started=false;
+  let tapSound=false,lastTap=-1,noiseBuffer,tapAnalyser,tapSamples;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  let lights=true,playing=false,busy=false,audioContext,analyser,source,bins,frame=0,lastPaint=0,energy=0,viewable=true;
+  let lights=true,playing=false,busy=false,audioContext,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
   const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
@@ -27,22 +34,27 @@
   const zh=()=>document.documentElement.lang==='zh-Hant';
   let message='';
   function labels(){
-    musicBtn.textContent=busy?(zh()?'音樂載入中':'Loading…'):playing?(zh()?'♫ 暫停音樂':'♫ Pause music'):(zh()?'♫ 播放音樂':'♫ Play music');
+    const ph=window.aeHomePlayer?window.aeHomePlayer.phase:'idle',snd=window.aeHomePlayer?window.aeHomePlayer.sound:'none';
+    musicBtn.textContent=busy?(zh()?'音樂載入中':'Loading…'):ph==='music'?(zh()?'♫ 暫停音樂':'♫ Pause music'):(ph==='opening'&&snd==='audio')?(zh()?'♫ 繼續聽完整音樂':'♫ Keep the full music playing'):(zh()?'♫ 播放音樂':'♫ Play music');
+    musicBtn.title=musicBtn.textContent;
     lightBtn.textContent=lights?(zh()?'✦ 光效開':'✦ Light on'):(zh()?'✦ 光效關':'✦ Light off');
-    musicBtn.setAttribute('aria-pressed',String(playing));lightBtn.setAttribute('aria-pressed',String(lights));
-    musicBtn.disabled=busy;
+    musicBtn.setAttribute('aria-pressed',String(ph==='music'));lightBtn.setAttribute('aria-pressed',String(lights));
+    musicBtn.disabled=busy&&ph!=='opening';
     tapBtn.textContent=tapSound?(zh()?'◌ 敲擊聲開':'◌ Tap sound on'):(zh()?'◌ 敲擊聲關':'◌ Tap sound off');
     tapBtn.setAttribute('aria-pressed',String(tapSound));hero.dataset.tapSound=tapSound?'on':'off';
     status.textContent=message||(reduced.matches?(zh()?'減少動態模式':'Reduced motion'):(zh()?'輕點畫作，讓光與聲音回應你':'Tap the painting. Let light and sound respond.'));
-    hero.dataset.musicState=busy?'loading':playing?'playing':'paused';hero.dataset.lightState=lights?'on':'off';
+    hero.dataset.musicState=busy?'loading':ph==='music'?'playing':'paused';hero.dataset.lightState=lights?'on':'off';
   }
+  let resizeQueued=0,lastW=-1,lastH=-1;
+  // Coalesce ResizeObserver/MutationObserver bursts into one canvas reallocation per frame.
+  function queueResize(){if(resizeQueued)return;resizeQueued=requestAnimationFrame(()=>{resizeQueued=0;resize();schedule();});}
   function resize(){
     const r=hero.getBoundingClientRect(),title=hero.querySelector('.hero-copy').getBoundingClientRect();
     width=r.width;height=r.height;artBottom=Math.max(0,title.top-r.top-12);
     const pseudo=getComputedStyle(hero,'::before'),paintWidth=Number.parseFloat(pseudo.width),paintTop=Number.parseFloat(pseudo.top);
     sunX=width/2;sunY=Math.min(artBottom-20,paintTop+paintWidth*1536/1110*.522);
-    const ratio=Math.min(devicePixelRatio||1,2);
-    canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);
+    const ratio=Math.min(devicePixelRatio||1,2),cw=Math.round(width*ratio),ch=Math.round(height*ratio);
+    if(cw!==lastW||ch!==lastH){canvas.width=cw;canvas.height=ch;lastW=cw;lastH=ch;}ctx.setTransform(ratio,0,0,ratio,0,0);
     hero.dataset.artLightBottom=String(Math.round(artBottom));needsStatic=true;
   }
   function schedule(){if(!frame&&lights&&!document.hidden&&viewable&&(playing||spots.length||musicSpots.length||bolts.length||needsStatic||(focus&&focus.until>performance.now())))frame=requestAnimationFrame(draw);}
@@ -64,13 +76,13 @@
     needsStatic=false;ctx.clearRect(0,0,width,height);ctx.save();ctx.beginPath();ctx.rect(0,0,width,artBottom);ctx.clip();
     if(!reduced.matches){
       let bass=0,beat={beat:false,count:Number(hero.dataset.beatCount)||0,pulse:0,phase:0,interval:60/148,stage:'groove',dropPulse:0,buildProgress:0,accentCount:0};
-      if(playing&&analyser){
-      analyser.getByteFrequencyData(bins);
-      bass=window.aeHomeAudioEnergy(bins.subarray(1,7));
-      beat=rhythm.update(bass,audio.currentTime);
+      if(playing){
+      const tt=lightTime();
+      bass=window.aeHomeAudioEnergy.energyAt(timeline,tt);
+      beat=rhythm.update(bass,tt);
       musicFrame=beat;
       hero.dataset.beatCount=String(beat.count);hero.dataset.beatPulse=beat.pulse.toFixed(3);hero.dataset.beatInterval=beat.interval.toFixed(3);
-      hero.dataset.musicTime=audio.currentTime.toFixed(3);hero.dataset.musicStage=beat.stage;
+      hero.dataset.musicTime=tt.toFixed(3);hero.dataset.musicStage=beat.stage;
       hero.dataset.accentCount=String(beat.accentCount);hero.dataset.dropPulse=beat.dropPulse.toFixed(3);
       if((beat.beat&&beat.stage!=='build')||(beat.accentBeat&&beat.stage==='build')){
         if(beat.stage!=='build')launchDepth(null,null,now,beat.count);
@@ -79,7 +91,6 @@
       }
       }
       energy=Math.max(bass,energy*.84);hero.dataset.audioEnergy=energy.toFixed(3);
-      const t=audio.currentTime;
       const shade=ctx.createLinearGradient(0,Math.max(0,artBottom-100),0,artBottom);shade.addColorStop(0,'rgba(2,5,4,.40)');shade.addColorStop(1,'rgba(2,5,4,0)');ctx.fillStyle=shade;ctx.fillRect(0,0,width,artBottom);
       const glow=ctx.createRadialGradient(sunX,sunY,3,sunX,sunY,Math.min(width*.42,190));
       glow.addColorStop(0,`rgba(255,223,115,${energy*.16+beat.pulse*.35})`);glow.addColorStop(.45,`rgba(243,178,48,${energy*.08+beat.pulse*.18})`);glow.addColorStop(1,'rgba(240,170,45,0)');
@@ -177,12 +188,12 @@
     hero.appendChild(burst);setTimeout(()=>burst.remove(),reduced.matches?240:1650);
   },{passive:true});
   let lastTrail=0;hero.addEventListener('pointermove',event=>{if(!playing&&event.pointerType==='mouse'&&performance.now()-lastTrail>80){lastTrail=performance.now();touch(event);}},{passive:true});
-  function pause(){audio.pause();playing=false;energy=0;rhythm.reset();musicSpots=[];bolts=[];musicFrame={stage:'groove',dropPulse:0,buildProgress:0};hero.dataset.musicStage='paused';hero.dataset.beatPulse='0';hero.dataset.dropPulse='0';needsStatic=true;message='';labels();clear();schedule();}
-  function ensureAudio(){
+  function stopMusicVisuals(){energy=0;rhythm.reset();musicSpots=[];bolts=[];musicFrame={stage:'groove',dropPulse:0,buildProgress:0};hero.dataset.musicStage='paused';hero.dataset.beatPulse='0';hero.dataset.dropPulse='0';needsStatic=true;clear();schedule();}
+  // The only AudioContext on the page, created lazily and only for the optional tap sound.
+  function ensureTapAudio(){
     if(audioContext)return;
     const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)throw new Error('Audio unavailable');
-    audioContext=new Audio();analyser=audioContext.createAnalyser();analyser.fftSize=1024;analyser.smoothingTimeConstant=.08;
-    source=audioContext.createMediaElementSource(audio);source.connect(analyser);analyser.connect(audioContext.destination);bins=new Uint8Array(analyser.frequencyBinCount);
+    audioContext=new Audio();
     tapAnalyser=audioContext.createAnalyser();tapAnalyser.fftSize=256;tapSamples=new Uint8Array(256);tapAnalyser.connect(audioContext.destination);
     noiseBuffer=audioContext.createBuffer(1,Math.ceil(audioContext.sampleRate*.16),audioContext.sampleRate);
     const samples=noiseBuffer.getChannelData(0);for(let i=0;i<samples.length;i++)samples[i]=(Math.random()*2-1)*(1-i/samples.length);
@@ -200,29 +211,120 @@
   }
   tapBtn.addEventListener('click',async()=>{
     if(tapSound){tapSound=false;message='';labels();return;}
-    try{ensureAudio();await audioContext.resume();tapSound=true;message='';}
+    try{ensureTapAudio();await audioContext.resume();tapSound=true;message='';}
     catch(error){message=zh()?'敲擊聲未能開啟，請再試一次。':'Tap sound could not start. Please try again.';}
     labels();
   });
-  musicBtn.addEventListener('click',async()=>{
-    if(playing){pause();return;}
-    busy=true;message='';labels();
-    try{
-      ensureAudio();
-      await audioContext.resume();
-      if(!started){audio.currentTime=window.aeHomeAudioEnergy.openingTime(timeline);started=true;hero.dataset.musicOpening=audio.currentTime.toFixed(2);}
-      audio.volume=.55;await audio.play();playing=true;rhythm.reset();spots=[];hero.querySelectorAll('.ae-gold-burst').forEach(el=>el.remove());resize();schedule();
-    }catch(error){audio.pause();playing=false;message=zh()?'音樂未能播放，請再試一次。':'Music could not play. Please try again.';}
-    finally{busy=false;labels();}
-  });
+  // ================= ONE PLAYER =================
+  const CUE=window.aeHomeAudioEnergy.openingTime(timeline),OPENING=15,FADE=.8,VOL=.55,DISPLAY_LEAD=.012;
+  const P={phase:'idle',sound:'none',reason:'',heard:false,seq:0,lightAnchor:null,openingEnd:0,log:[]};
+  const subs=new Set();
+  let waiting=false,anchorT=0,anchorP=0,lastCT=-1,lastCTP=0,tick=0,loadTimer=0;
+  function stamp(ev,extra){const e={ev,phase:P.phase,sound:P.sound,track:+trackTime().toFixed(3),perf:+performance.now().toFixed(1),...(extra||{})};P.log.push(e);if(P.log.length>300)P.log.shift();return e;}
+  // Track clock: native media time, smoothed between coarse currentTime updates; a performance.now
+  // clock mapped onto the same track time only when the browser refused sound (light-only).
+  function trackTime(){
+    const now=performance.now();
+    if(P.lightAnchor)return P.lightAnchor.t+(now-P.lightAnchor.p)/1000;
+    const ct=audio.currentTime;
+    if(audio.paused||waiting){lastCT=ct;anchorT=ct;anchorP=now;lastCTP=now;return ct;}
+    if(ct!==lastCT){const pred=anchorT+(now-anchorP)/1000;if(lastCT<0||Math.abs(ct-pred)>.05){anchorT=ct;anchorP=now;}else{anchorT=pred+(ct-pred)*.2;anchorP=now;}lastCT=ct;lastCTP=now;}
+    if(now-lastCTP>300)return ct; // decoder stalled: never run ahead of the sound
+    return anchorT+(now-anchorP)/1000;
+  }
+  const lightTime=()=>trackTime()+DISPLAY_LEAD; // a painted frame is shown ~1 frame after rAF
+  function publish(){
+    hero.dataset.playerPhase=P.phase;hero.dataset.playerSound=P.sound;hero.dataset.playerReason=P.reason;
+    playing=P.phase==='music'&&!audio.paused;
+    labels();for(const f of subs){try{f(P.phase,P.sound,P.reason);}catch(e){}}schedule();
+  }
+  function setPhase(phase,sound,reason){const was=P.phase;P.phase=phase;if(sound!==undefined)P.sound=sound;if(reason!==undefined)P.reason=reason;if(was==='music'&&phase!=='music')stopMusicVisuals();if(phase==='music'&&was!=='music'){rhythm.reset();spots=[];hero.querySelectorAll('.ae-gold-burst').forEach(el=>el.remove());resize();}publish();}
+  function seek(t){
+    try{audio.currentTime=t;}catch(e){}
+    if(audio.readyState<1){const my=P.seq;audio.addEventListener('loadedmetadata',()=>{if(my===P.seq&&Math.abs(audio.currentTime-t)>.25){try{audio.currentTime=t;}catch(e){}}},{once:true});}
+    lastCT=-1;
+  }
+  function stopTick(){clearInterval(tick);tick=0;clearTimeout(loadTimer);loadTimer=0;}
+  function openingTick(){
+    if(P.phase!=='opening')return;
+    const t=trackTime(),left=P.openingEnd-t;
+    if(P.sound==='audio'){try{audio.volume=Math.max(0,Math.min(VOL,VOL*left/FADE));}catch(e){}}
+    if(left<=0)endOpening('complete');
+  }
+  // Must be called synchronously inside a click/tap (or at load for autoplay).
+  function play(from,phase,source){
+    const my=++P.seq;stopTick();P.lightAnchor=null;
+    try{audio.volume=VOL;}catch(e){}
+    // play() first: on a never-loaded element it runs the load algorithm, which would reset an
+    // earlier seek to 0. Seeking right after keeps the cue (applied at loadedmetadata if needed).
+    let pr;try{pr=audio.play();}catch(e){pr=Promise.reject(e);}
+    if(from!=null)seek(from);
+    busy=true;setPhase(phase,'loading',source);stamp('play-request',{from,source});
+    if(phase==='opening'){P.openingEnd=(from==null?audio.currentTime:from)+OPENING;tick=setInterval(openingTick,50);
+      loadTimer=setTimeout(()=>{if(my===P.seq&&P.sound==='loading'){++P.seq;audio.pause();busy=false;lightOnly(from==null?CUE:from,'slow-network');}},6000);}
+    return Promise.resolve(pr).then(()=>{
+      if(my!==P.seq)return false;
+      clearTimeout(loadTimer);busy=false;P.heard=true;P.sound='audio';
+      if(!hero.dataset.musicOpening)hero.dataset.musicOpening=CUE.toFixed(2);
+      stamp('playing',{source});publish();return true;
+    },err=>{
+      if(my!==P.seq)return false;
+      busy=false;stamp('play-refused',{source,err:String(err&&err.name||err)});
+      if(phase==='opening'){lightOnly(from==null?CUE:from,'autoplay-blocked');return false;}
+      setPhase(P.heard?'paused':'idle','none','refused');message=zh()?'音樂未能播放，請再試一次。':'Music could not play. Please try again.';labels();return false;
+    });
+  }
+  function lightOnly(from,why){P.lightAnchor={t:from,p:performance.now()};P.openingEnd=from+OPENING;P.sound='light';P.reason=why;if(!tick)tick=setInterval(openingTick,50);stamp('light-only',{why});publish();}
+  function endOpening(reason){
+    if(P.phase!=='opening')return;
+    ++P.seq;stopTick();busy=false;
+    if(P.lightAnchor){P.lightAnchor=null;}else{audio.pause();}
+    try{audio.volume=VOL;}catch(e){}
+    setPhase('ended','none',reason);stamp('opening-end',{reason});
+  }
+  function pauseMusic(reason){
+    if(P.phase==='opening'){endOpening(reason);return;}
+    if(P.phase!=='music'){return;}
+    ++P.seq;busy=false;audio.pause();setPhase('paused','none',reason);stamp('pause',{reason});
+  }
+  // Mid-opening ♫ with sound already running: the opening simply becomes the full song. No seek,
+  // no restart, no second source — the same track keeps playing on the same clock.
+  function openingToMusic(source){
+    stopTick();try{audio.volume=VOL;}catch(e){}
+    setPhase('music','audio',source);stamp('opening-to-music',{source});
+  }
+  function dockPressed(){
+    if(busy&&P.phase!=='opening')return; // double-tap while ♫ is still loading the track
+    message='';
+    if(P.phase==='music'){pauseMusic('dock');return;}
+    if(P.phase==='opening'&&P.sound==='audio'){openingToMusic('dock-during-opening');return;}
+    if(P.phase==='opening'){play(CUE,'music',P.sound==='loading'?'dock-during-opening-load':'dock-during-light-opening');return;} // sound blocked or not started yet: music+light start together from the cue
+    play(P.heard?audio.currentTime:CUE,'music','dock');
+  }
+  window.aeHomePlayer={
+    CUE,OPENING,trackTime,lightTime,timeline,
+    get phase(){return P.phase},get sound(){return P.sound},get reason(){return P.reason},get heard(){return P.heard},
+    startOpening:source=>play(CUE,'opening',source),endOpening,pauseMusic,dockPressed,
+    subscribe:f=>{subs.add(f);return()=>subs.delete(f);},
+    snapshot:()=>({phase:P.phase,sound:P.sound,reason:P.reason,heard:P.heard,busy,track:+trackTime().toFixed(3),openingEnd:+P.openingEnd.toFixed(3),
+      audio:{paused:audio.paused,currentTime:+audio.currentTime.toFixed(3),playbackRate:audio.playbackRate,defaultPlaybackRate:audio.defaultPlaybackRate,preservesPitch:audio.preservesPitch,volume:+audio.volume.toFixed(3),readyState:audio.readyState,loop:audio.loop},
+      audioContexts:audioContext?1:0,musicLights:playing}),
+    log:()=>P.log.slice()
+  };
+  musicBtn.addEventListener('click',dockPressed);
   lightBtn.addEventListener('click',()=>{lights=!lights;spots=[];musicSpots=[];bolts=[];focus=null;needsStatic=true;hero.querySelectorAll('.ae-gold-burst').forEach(el=>el.remove());labels();clear();schedule();});
-  audio.addEventListener('error',()=>{pause();message=zh()?'音樂載入失敗，請再試一次。':'Music could not load. Please try again.';labels();});
-  audio.addEventListener('pause',()=>{playing=false;labels();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else schedule();});
-  window.addEventListener('pagehide',pause);
-  new ResizeObserver(()=>{resize();schedule();}).observe(hero);
-  new IntersectionObserver(entries=>{viewable=entries[0].isIntersecting;if(!viewable)pause();else schedule();},{threshold:.03}).observe(hero);
-  new MutationObserver(()=>{labels();resize();schedule();}).observe(document.documentElement,{attributes:true,attributeFilter:['lang','data-theme']});
+  audio.addEventListener('error',()=>{stamp('audio-error');if(P.phase==='opening')lightOnly(CUE,'audio-error');else{pauseMusic('error');}message=zh()?'音樂載入失敗，請再試一次。':'Music could not load. Please try again.';labels();});
+  audio.addEventListener('waiting',()=>{waiting=true;});
+  audio.addEventListener('playing',()=>{waiting=false;lastCT=-1;publish();});
+  // A pause we did not ask for (OS audio interruption, headphones unplugged, media keys).
+  audio.addEventListener('pause',()=>{if(P.phase==='music'){++P.seq;setPhase('paused','none','system');stamp('pause',{reason:'system'});}else if(P.phase==='opening'&&P.sound==='audio')endOpening('system');});
+  audio.addEventListener('play',()=>{if(P.phase==='paused'||P.phase==='ended'||P.phase==='idle'){/* media keys */setPhase('music','audio','system');P.heard=true;}});
+  // Same rule for every "you are not looking" signal: stop sound, keep the position; ♫ resumes it.
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseMusic('hidden');else{lastCT=-1;schedule();}});
+  window.addEventListener('pagehide',()=>pauseMusic('pagehide'));
+  new ResizeObserver(queueResize).observe(hero);
+  new IntersectionObserver(entries=>{viewable=entries[0].isIntersecting;if(!viewable)pauseMusic('scrolled-away');else schedule();},{threshold:.03}).observe(hero);
+  new MutationObserver(()=>{labels();queueResize();}).observe(document.documentElement,{attributes:true,attributeFilter:['lang','data-theme']});
   reduced.addEventListener('change',()=>{labels();clear();schedule();});
-  document.fonts.ready.then(()=>{resize();schedule();});resize();labels();
+  document.fonts.ready.then(()=>{resize();schedule();});resize();publish();
 })();

@@ -6,7 +6,10 @@
     for(let i=0;i<bins.length;i++)sum+=(bins[i]/255)**2;
     return Math.min(1,Math.sqrt(sum/bins.length));
   }
-  energy.openingTime=timeline=>timeline?.sections?.[0]?.start||0;
+  // One cue for the 15 s opening AND the first ♫ play: they are the same piece of the same track.
+  energy.openingTime=timeline=>(typeof timeline?.cue==='number'?timeline.cue:timeline?.sections?.[0]?.start)||0;
+  // Pre-measured 40-180 Hz energy of the real track (no live WebAudio analyser needed).
+  energy.energyAt=(timeline,time)=>{const e=timeline?.energy;if(!e||!e.data)return 0;const i=Math.floor(time/e.hop);if(i<0||i>=e.data.length)return 0;const c=e.data.charCodeAt(i);return (c<58?c-48:c-87)/35;};
   energy.flightPower=age=>Math.exp(-Math.max(0,age)/.065);
   energy.createRhythm=function(events,accents=[],sections=[]){
     let average=0,previous=0,last=-10,count=0,interval=60/148,accentCount=0,lastTime=-10;
