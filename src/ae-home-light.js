@@ -1,9 +1,12 @@
-/* AE-HOME-SOUNDLIGHT-15S-FIX-20261014-0817
+/* AE-HOME-SOUNDLIGHT continuous sync 20261014
    ONE homepage player: one <audio> element (the real 148 BPM track, played natively — no
    MediaElementSource, no second AudioContext), ONE track clock, ONE state machine shared by
    the 15 s opening, the dock ♫ button, replay and stop. Lights are a pure function of the track
    clock + the measured beat timeline (ae-home-beats.js), so pause/seek/resize/tab-switch can
    never leave light and sound on different clocks.
+   The track clock re-anchors to media.currentTime whenever it moves (no low-pass). While the
+   full-power laser frame is too slow to present on the beat, the expensive passes stay off
+   for the rest of that playback so the kick drawn is the kick being heard.
    phase: idle → opening(sound: audio|light|loading) → ended | music ⇄ paused */
 (()=>{
   'use strict';
@@ -15,7 +18,10 @@
   const tapBtn=document.getElementById('aeTapButton'),rhythm=window.aeHomeAudioEnergy.createRhythm(timeline?.events,timeline?.accents,timeline?.sections);
   let tapSound=false,lastTap=-1,noiseBuffer,tapAnalyser,tapSamples;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  let lite=false,frameEma=16.7,lights=true,playing=false,busy=false,audioContext,frame=0,lastPaint=0,energy=0,viewable=true;
+  const forceLite=new URLSearchParams(location.search).get('lite')==='1';
+  // liteLatch sticks for the rest of a playback once a frame misses the beat. Exiting early
+  // brought shadowBlur back and the next kicks landed a whole frame late.
+  let lite=forceLite,liteLatch=forceLite,frameEma=16.7,presentMs=12,lights=true,playing=false,busy=false,audioContext,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
   const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
@@ -72,23 +78,32 @@
   function draw(now){
     frame=0;
     if(!lights||document.hidden||!viewable){clear();return;}
-    if(now-lastPaint<16){schedule();return;}
-    // Audio first: when frames get slow (screen recording, window drag, weak GPU) drop the costly
-    // blur/ray passes. Light stays on the track clock, so a lighter frame never shifts the beat.
-    const fd=now-lastPaint;lastPaint=now;if(fd<250)frameEma=frameEma*.9+fd*.1;
-    if(!lite&&frameEma>33)lite=true;else if(lite&&frameEma<22)lite=false;hero.dataset.lightLite=lite?'1':'0';
+    if(now-lastPaint>0&&now-lastPaint<8){schedule();return;}
+    // presentMs is how long the previous frame took to come back. The beat is drawn for that
+    // far ahead so a slow frame still lands on the kick that is playing when it appears.
+    const fd=now-lastPaint;lastPaint=now;
+    if(fd>0&&fd<250){frameEma=frameEma*.8+fd*.2;presentMs=presentMs*.5+Math.min(fd,80)*.5;}
+    if(playing&&fd<250&&(fd>28||frameEma>22))liteLatch=true;
+    if(!playing&&!forceLite)liteLatch=false;
+    lite=forceLite||liteLatch;
+    const bare=lite&&frameEma>45;
+    hero.dataset.lightLite=lite?'1':'0';hero.dataset.lightBare=bare?'1':'0';
     needsStatic=false;ctx.clearRect(0,0,width,height);ctx.save();ctx.beginPath();ctx.rect(0,0,width,artBottom);ctx.clip();
     if(!reduced.matches){
       let bass=0,beat={beat:false,count:Number(hero.dataset.beatCount)||0,pulse:0,phase:0,interval:60/148,stage:'groove',dropPulse:0,buildProgress:0,accentCount:0};
       if(playing){
-      const tt=lightTime();
+      // One frame of lead so the kick is the one on screen when the frame presents.
+      // Never more than 40ms ahead of the media clock the ear is compared against.
+      const ctNow=audio.currentTime;
+      let tt=trackTime()+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));
+      if(isFinite(ctNow))tt=Math.min(tt,ctNow+.04);
       bass=window.aeHomeAudioEnergy.energyAt(timeline,tt);
       beat=rhythm.update(bass,tt);
       musicFrame=beat;
       hero.dataset.beatCount=String(beat.count);hero.dataset.beatPulse=beat.pulse.toFixed(3);hero.dataset.beatInterval=beat.interval.toFixed(3);
       hero.dataset.musicTime=tt.toFixed(3);hero.dataset.musicStage=beat.stage;
       hero.dataset.accentCount=String(beat.accentCount);hero.dataset.dropPulse=beat.dropPulse.toFixed(3);
-      if((beat.beat&&beat.stage!=='build')||(beat.accentBeat&&beat.stage==='build')){
+      if(!bare&&((beat.beat&&beat.stage!=='build')||(beat.accentBeat&&beat.stage==='build'))){
         if(beat.stage!=='build')launchDepth(null,null,now,beat.count);
         for(let i=0;i<3;i++){const hit=destination(i*2,beat.sweep,now);musicSpots.push({...hit,born:now});}
         if(musicSpots.length>9)musicSpots.splice(0,musicSpots.length-9);
@@ -125,9 +140,11 @@
         }
         // Soft light pools sit on the unchanged painted surface, fading outward.
         ctx.globalAlpha=1;ctx.shadowBlur=0;
-        const pool=ctx.createRadialGradient(targetX,targetY,1,targetX,targetY,38+beat.pulse*48);
-        pool.addColorStop(0,`rgba(255,249,218,${power*.60})`);pool.addColorStop(.18,colors[i]+Math.round(power*75).toString(16).padStart(2,'0'));pool.addColorStop(1,colors[i]+'00');
-        ctx.fillStyle=pool;ctx.fillRect(targetX-90,targetY-90,180,180);
+        if(!bare){
+          const pool=ctx.createRadialGradient(targetX,targetY,1,targetX,targetY,38+beat.pulse*48);
+          pool.addColorStop(0,`rgba(255,249,218,${power*.60})`);pool.addColorStop(.18,colors[i]+Math.round(power*75).toString(16).padStart(2,'0'));pool.addColorStop(1,colors[i]+'00');
+          ctx.fillStyle=pool;ctx.fillRect(targetX-90,targetY-90,180,180);
+        }
         ctx.strokeStyle=colors[i];ctx.lineWidth=.7;ctx.globalAlpha=beat.pulse*.6;ctx.beginPath();ctx.arc(targetX,targetY,8+beat.phase*28,0,Math.PI*2);ctx.stroke();
       }
       hero.dataset.laserTargets=JSON.stringify(targets);if(focus&&focus.until-now>600){hero.dataset.lastFocusTargets=JSON.stringify(targets);hero.dataset.lastFocusPaintTime=now.toFixed(1);}
@@ -223,20 +240,29 @@
   const CUE=window.aeHomeAudioEnergy.openingTime(timeline),OPENING=15,FADE=.8,VOL=.55,DISPLAY_LEAD=.012;
   const P={phase:'idle',sound:'none',reason:'',heard:false,seq:0,lightAnchor:null,openingEnd:0,log:[]};
   const subs=new Set();
-  let waiting=false,anchorT=0,anchorP=0,lastCT=-1,lastCTP=0,tick=0,loadTimer=0;
+  let waiting=false,anchorT=0,anchorP=0,lastCT=-1,lastCTP=0,moved=false,tick=0,loadTimer=0;
   function stamp(ev,extra){const e={ev,phase:P.phase,sound:P.sound,track:+trackTime().toFixed(3),perf:+performance.now().toFixed(1),...(extra||{})};P.log.push(e);if(P.log.length>300)P.log.shift();return e;}
-  // Track clock: native media time, smoothed between coarse currentTime updates; a performance.now
-  // clock mapped onto the same track time only when the browser refused sound (light-only).
+  // Track clock: native media time. Between coarse currentTime updates, advance with the
+  // wall clock at playbackRate. Light-only opening uses performance.now mapped onto the cue.
   function trackTime(){
     const now=performance.now();
-    if(P.lightAnchor)return P.lightAnchor.t+(now-P.lightAnchor.p)/1000;
+    const rate=audio.playbackRate>0&&isFinite(audio.playbackRate)?audio.playbackRate:1;
+    if(P.lightAnchor)return P.lightAnchor.t+(now-P.lightAnchor.p)/1000*rate;
     const ct=audio.currentTime;
-    if(audio.paused||waiting){lastCT=ct;anchorT=ct;anchorP=now;lastCTP=now;return ct;}
-    if(ct!==lastCT){const pred=anchorT+(now-anchorP)/1000;if(lastCT<0||Math.abs(ct-pred)>.05){anchorT=ct;anchorP=now;}else{anchorT=pred+(ct-pred)*.2;anchorP=now;}lastCT=ct;lastCTP=now;}
-    if(now-lastCTP>300)return ct; // decoder stalled: never run ahead of the sound
-    return anchorT+(now-anchorP)/1000;
+    if(!isFinite(ct))return 0;
+    if(audio.paused||waiting){lastCT=ct;anchorT=ct;anchorP=now;lastCTP=now;moved=false;return ct;}
+    // Hard re-anchor. The old 20% blend kept a lag whenever currentTime stepped by
+    // less than the 50ms snap, and the 300ms stall then painted that stale time.
+    if(ct!==lastCT){
+      // Don't run the wall clock ahead of a currentTime that has not started
+      // moving yet (seek just landed, decoder not ticking). Once it ticks, bridge
+      // the coarse gaps.
+      moved=lastCT>=0;anchorT=ct;anchorP=now;lastCT=ct;lastCTP=now;
+    }
+    if(!moved||now-lastCTP>500)return ct; // not started, or decoder stalled
+    return anchorT+(now-anchorP)/1000*rate;
   }
-  const lightTime=()=>trackTime()+DISPLAY_LEAD; // a painted frame is shown ~1 frame after rAF
+  const lightTime=()=>trackTime()+DISPLAY_LEAD; // opening frames: one frame of display lead
   function publish(){
     hero.dataset.playerPhase=P.phase;hero.dataset.playerSound=P.sound;hero.dataset.playerReason=P.reason;
     playing=P.phase==='music'&&!audio.paused;
@@ -244,9 +270,20 @@
   }
   function setPhase(phase,sound,reason){const was=P.phase;P.phase=phase;if(sound!==undefined)P.sound=sound;if(reason!==undefined)P.reason=reason;if(was==='music'&&phase!=='music')stopMusicVisuals();if(phase==='music'&&was!=='music'){rhythm.reset();spots=[];hero.querySelectorAll('.ae-gold-burst').forEach(el=>el.remove());resize();}publish();}
   function seek(t){
-    try{audio.currentTime=t;}catch(e){}
-    if(audio.readyState<1){const my=P.seq;audio.addEventListener('loadedmetadata',()=>{if(my===P.seq&&Math.abs(audio.currentTime-t)>.25){try{audio.currentTime=t;}catch(e){}}},{once:true});}
-    lastCT=-1;
+    const my=P.seq;let tries=0,applying=false;
+    const apply=()=>{try{audio.currentTime=t;}catch(e){}lastCT=-1;};
+    // play() on an unloaded element seeks back to 0 when metadata arrives. A seek issued
+    // before that reset is discarded; re-apply when the reset's seeked event lands.
+    const onSeeked=()=>{
+      if(applying)return;
+      if(my!==P.seq){audio.removeEventListener('seeked',onSeeked);return;}
+      if(Math.abs(audio.currentTime-t)<=.25){audio.removeEventListener('seeked',onSeeked);return;}
+      if(++tries>4){audio.removeEventListener('seeked',onSeeked);return;}
+      applying=true;apply();applying=false;
+    };
+    audio.addEventListener('seeked',onSeeked);
+    apply();
+    if(audio.readyState<1)audio.addEventListener('loadedmetadata',()=>{if(my===P.seq)setTimeout(()=>{if(my===P.seq&&Math.abs(audio.currentTime-t)>.25)apply();},0);},{once:true});
   }
   function stopTick(){clearInterval(tick);tick=0;clearTimeout(loadTimer);loadTimer=0;}
   function openingTick(){
