@@ -2,13 +2,13 @@
   'use strict';
   const hero=document.querySelector('.hero'),canvas=document.getElementById('ae-home-light');
   if(!hero||!canvas)return;
-  const ctx=canvas.getContext('2d'),audio=document.getElementById('ae-home-audio');
+  const ctx=canvas.getContext('2d');
   const musicBtn=document.getElementById('aeMusicButton'),lightBtn=document.getElementById('aeLightButton'),status=document.getElementById('aeLightStatus');
   const timeline=window.aeHomeBeatTimeline;
   const tapBtn=document.getElementById('aeTapButton'),rhythm=window.aeHomeAudioEnergy.createRhythm(timeline?.events,timeline?.accents,timeline?.sections);
   let tapSound=false,lastTap=-1,noiseBuffer,tapAnalyser,tapSamples,started=false;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  let lights=true,playing=false,busy=false,audioContext,analyser,source,bins,frame=0,lastPaint=0,energy=0,viewable=true;
+  let lights=true,playing=false,busy=false,audioContext,analyser,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
   const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
@@ -65,12 +65,15 @@
     if(!reduced.matches){
       let bass=0,beat={beat:false,count:Number(hero.dataset.beatCount)||0,pulse:0,phase:0,interval:60/148,stage:'groove',dropPulse:0,buildProgress:0,accentCount:0};
       if(playing&&analyser){
-      analyser.getByteFrequencyData(bins);
-      bass=window.aeHomeAudioEnergy(bins.subarray(1,7));
-      beat=rhythm.update(bass,audio.currentTime);
+      const heard=window.aeHomeAudio.readBass();
+      bass=window.aeHomeAudioEnergy(heard.subarray(1,7));
+      const trackTime=window.aeHomeAudio.audibleTime();
+      beat=rhythm.update(bass,trackTime);
       musicFrame=beat;
       hero.dataset.beatCount=String(beat.count);hero.dataset.beatPulse=beat.pulse.toFixed(3);hero.dataset.beatInterval=beat.interval.toFixed(3);
-      hero.dataset.musicTime=audio.currentTime.toFixed(3);hero.dataset.musicStage=beat.stage;
+      hero.dataset.musicTime=trackTime.toFixed(3);hero.dataset.musicStage=beat.stage;
+      hero.dataset.musicSource='buffer';hero.dataset.musicLatency=window.aeHomeAudio.latency().toFixed(4);
+      hero.dataset.musicSampleRate=String(audioContext.sampleRate);hero.dataset.musicRate='1';
       hero.dataset.accentCount=String(beat.accentCount);hero.dataset.dropPulse=beat.dropPulse.toFixed(3);
       if((beat.beat&&beat.stage!=='build')||(beat.accentBeat&&beat.stage==='build')){
         if(beat.stage!=='build')launchDepth(null,null,now,beat.count);
@@ -79,7 +82,6 @@
       }
       }
       energy=Math.max(bass,energy*.84);hero.dataset.audioEnergy=energy.toFixed(3);
-      const t=audio.currentTime;
       const shade=ctx.createLinearGradient(0,Math.max(0,artBottom-100),0,artBottom);shade.addColorStop(0,'rgba(2,5,4,.40)');shade.addColorStop(1,'rgba(2,5,4,0)');ctx.fillStyle=shade;ctx.fillRect(0,0,width,artBottom);
       const glow=ctx.createRadialGradient(sunX,sunY,3,sunX,sunY,Math.min(width*.42,190));
       glow.addColorStop(0,`rgba(255,223,115,${energy*.16+beat.pulse*.35})`);glow.addColorStop(.45,`rgba(243,178,48,${energy*.08+beat.pulse*.18})`);glow.addColorStop(1,'rgba(240,170,45,0)');
@@ -177,12 +179,11 @@
     hero.appendChild(burst);setTimeout(()=>burst.remove(),reduced.matches?240:1650);
   },{passive:true});
   let lastTrail=0;hero.addEventListener('pointermove',event=>{if(!playing&&event.pointerType==='mouse'&&performance.now()-lastTrail>80){lastTrail=performance.now();touch(event);}},{passive:true});
-  function pause(){audio.pause();playing=false;energy=0;rhythm.reset();musicSpots=[];bolts=[];musicFrame={stage:'groove',dropPulse:0,buildProgress:0};hero.dataset.musicStage='paused';hero.dataset.beatPulse='0';hero.dataset.dropPulse='0';needsStatic=true;message='';labels();clear();schedule();}
+  function pause(reason){if(window.aeHomeAudio)window.aeHomeAudio.pause();playing=false;energy=0;rhythm.reset();musicSpots=[];bolts=[];musicFrame={stage:'groove',dropPulse:0,buildProgress:0};hero.dataset.musicStage='paused';hero.dataset.musicPause=reason||'toggle';hero.dataset.beatPulse='0';hero.dataset.dropPulse='0';needsStatic=true;message='';labels();clear();schedule();}
   function ensureAudio(){
-    if(audioContext)return;
-    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)throw new Error('Audio unavailable');
-    audioContext=new Audio();analyser=audioContext.createAnalyser();analyser.fftSize=1024;analyser.smoothingTimeConstant=.08;
-    source=audioContext.createMediaElementSource(audio);source.connect(analyser);analyser.connect(audioContext.destination);bins=new Uint8Array(analyser.frequencyBinCount);
+    if(noiseBuffer)return;
+    const engine=window.aeHomeAudio;if(!engine)throw new Error('Audio unavailable');
+    audioContext=engine.context();analyser=engine;
     tapAnalyser=audioContext.createAnalyser();tapAnalyser.fftSize=256;tapSamples=new Uint8Array(256);tapAnalyser.connect(audioContext.destination);
     noiseBuffer=audioContext.createBuffer(1,Math.ceil(audioContext.sampleRate*.16),audioContext.sampleRate);
     const samples=noiseBuffer.getChannelData(0);for(let i=0;i<samples.length;i++)samples[i]=(Math.random()*2-1)*(1-i/samples.length);
@@ -205,23 +206,29 @@
     labels();
   });
   musicBtn.addEventListener('click',async()=>{
-    if(playing){pause();return;}
+    if(playing){pause('toggle');return;}
+    if(busy)return;
     busy=true;message='';labels();
+    const engine=window.aeHomeAudio;
+    const resumeP=engine.unlock();
     try{
       ensureAudio();
-      await audioContext.resume();
-      if(!started){audio.currentTime=window.aeHomeAudioEnergy.openingTime(timeline);started=true;hero.dataset.musicOpening=audio.currentTime.toFixed(2);}
-      audio.volume=.55;await audio.play();playing=true;rhythm.reset();spots=[];hero.querySelectorAll('.ae-gold-burst').forEach(el=>el.remove());resize();schedule();
-    }catch(error){audio.pause();playing=false;message=zh()?'音樂未能播放，請再試一次。':'Music could not play. Please try again.';}
+      await resumeP;
+      await engine.load();
+      const from=started?engine.transportTime():window.aeHomeAudioEnergy.openingTime(timeline);
+      engine.play(from);
+      if(!started){started=true;hero.dataset.musicOpening=from.toFixed(2);}
+      playing=true;rhythm.reset();spots=[];hero.querySelectorAll('.ae-gold-burst').forEach(el=>el.remove());
+      hero.dataset.musicTime=engine.audibleTime().toFixed(3);hero.dataset.musicSource='buffer';
+      resize();schedule();
+    }catch(error){try{engine.pause();}catch(e){}playing=false;message=zh()?'音樂未能播放，請再試一次。':'Music could not play. Please try again.';}
     finally{busy=false;labels();}
   });
   lightBtn.addEventListener('click',()=>{lights=!lights;spots=[];musicSpots=[];bolts=[];focus=null;needsStatic=true;hero.querySelectorAll('.ae-gold-burst').forEach(el=>el.remove());labels();clear();schedule();});
-  audio.addEventListener('error',()=>{pause();message=zh()?'音樂載入失敗，請再試一次。':'Music could not load. Please try again.';labels();});
-  audio.addEventListener('pause',()=>{playing=false;labels();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else schedule();});
-  window.addEventListener('pagehide',pause);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)pause('hidden');else schedule();});
+  window.addEventListener('pagehide',()=>pause('pagehide'));
   new ResizeObserver(()=>{resize();schedule();}).observe(hero);
-  new IntersectionObserver(entries=>{viewable=entries[0].isIntersecting;if(!viewable)pause();else schedule();},{threshold:.03}).observe(hero);
+  new IntersectionObserver(entries=>{viewable=entries[0].isIntersecting;if(!viewable)pause('offscreen');else schedule();},{threshold:.03}).observe(hero);
   new MutationObserver(()=>{labels();resize();schedule();}).observe(document.documentElement,{attributes:true,attributeFilter:['lang','data-theme']});
   reduced.addEventListener('change',()=>{labels();clear();schedule();});
   document.fonts.ready.then(()=>{resize();schedule();});resize();labels();

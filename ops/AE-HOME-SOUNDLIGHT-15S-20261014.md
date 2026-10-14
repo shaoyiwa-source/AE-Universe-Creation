@@ -11,3 +11,7 @@
 - `?opening=off` skips the automatic opening (QA / other agents).
 - The opening yields if the visitor starts the existing ♫ music dock, and pauses the dock music when the opening/replay starts.
 - Production: not touched.
+
+## Fix AE-HOME-SOUNDLIGHT-15S-FIX-20261014-0817
+
+The opening synth and the ♫ dock now share one AudioContext. The Aurelia track is decoded once and played with an AudioBufferSourceNode; lasers follow that context clock (speaker latency latched at start), not `<audio>.currentTime`. Pressing ♫ during the opening stops the 112 BPM synth without suspending the shared context, then starts the track at the measured build. A window move does not retune the buffer source. The `<audio>` element stays in the page only as the file URL and is not routed through MediaElementSourceNode.
