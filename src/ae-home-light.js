@@ -15,7 +15,7 @@
   const tapBtn=document.getElementById('aeTapButton'),rhythm=window.aeHomeAudioEnergy.createRhythm(timeline?.events,timeline?.accents,timeline?.sections);
   let tapSound=false,lastTap=-1,noiseBuffer,tapAnalyser,tapSamples;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  let lights=true,playing=false,busy=false,audioContext,frame=0,lastPaint=0,energy=0,viewable=true;
+  let lite=false,frameEma=16.7,lights=true,playing=false,busy=false,audioContext,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
   const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
@@ -72,7 +72,11 @@
   function draw(now){
     frame=0;
     if(!lights||document.hidden||!viewable){clear();return;}
-    if(now-lastPaint<16){schedule();return;}lastPaint=now;
+    if(now-lastPaint<16){schedule();return;}
+    // Audio first: when frames get slow (screen recording, window drag, weak GPU) drop the costly
+    // blur/ray passes. Light stays on the track clock, so a lighter frame never shifts the beat.
+    const fd=now-lastPaint;lastPaint=now;if(fd<250)frameEma=frameEma*.9+fd*.1;
+    if(!lite&&frameEma>33)lite=true;else if(lite&&frameEma<22)lite=false;hero.dataset.lightLite=lite?'1':'0';
     needsStatic=false;ctx.clearRect(0,0,width,height);ctx.save();ctx.beginPath();ctx.rect(0,0,width,artBottom);ctx.clip();
     if(!reduced.matches){
       let bass=0,beat={beat:false,count:Number(hero.dataset.beatCount)||0,pulse:0,phase:0,interval:60/148,stage:'groove',dropPulse:0,buildProgress:0,accentCount:0};
@@ -105,13 +109,13 @@
         const originX=i%3===0?-width*.08:i%3===1?width*1.08:width*(.15+i*.12),originY=i%3===2?-20:artBottom*(.15+(i%4)*.20);
         const target=destination(i,sweep,now),targetX=target.x,targetY=target.y;targets.push({x:Math.round(targetX),y:Math.round(targetY)});
         const power=Math.min(1,(beat.stage==='build'?.06+beat.buildProgress*.06:.07)+energy*.035+beat.pulse*.85+beat.dropPulse*.12);
-        ctx.shadowColor=colors[i];ctx.shadowBlur=14+beat.pulse*25;
+        ctx.shadowColor=colors[i];ctx.shadowBlur=lite?0:14+beat.pulse*25;
         ctx.strokeStyle=colors[i];ctx.globalAlpha=power;ctx.lineWidth=.8+beat.pulse*2.2;
         ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
         // Narrow pale core and prismatic rays give the beam a refracted edge.
-        ctx.shadowBlur=4;ctx.strokeStyle='#fff9df';ctx.lineWidth=.65;ctx.globalAlpha=power*.72;
+        ctx.shadowBlur=lite?0:4;ctx.strokeStyle='#fff9df';ctx.lineWidth=.65;ctx.globalAlpha=power*.72;
         ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
-        for(let j=-1;j<=1;j++){
+        if(!lite)for(let j=-1;j<=1;j++){
           const angle=Math.atan2(targetY-originY,targetX-originX)+j*(pattern===0?.12:pattern===1?.34:.52)+Math.sin(sweep)*.18;
           const reach=Math.min(width*.24,150)*(1+beat.pulse*.22);
           const endX=targetX+Math.cos(angle)*reach,endY=targetY+Math.sin(angle)*reach;
@@ -139,7 +143,7 @@
         const opacity=b.musical?window.aeHomeAudioEnergy.flightPower((now-b.born)/1000):Math.sin(Math.PI*p);
         const tipX=b.x+(b.ox-b.x)*near,tipY=b.y+(b.oy-b.y)*near,startX=b.x+(b.ox-b.x)*back,startY=b.y+(b.oy-b.y)*back;
         const streak=ctx.createLinearGradient(startX,startY,tipX,tipY);streak.addColorStop(0,b.color+'00');streak.addColorStop(1,b.color);
-        ctx.strokeStyle=streak;ctx.lineWidth=1.4+(1-p)*7;ctx.shadowColor=b.color;ctx.shadowBlur=20;ctx.globalAlpha=opacity*.95;
+        ctx.strokeStyle=streak;ctx.lineWidth=1.4+(1-p)*7;ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:20;ctx.globalAlpha=opacity*.95;
         ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();
         ctx.strokeStyle='#fff9e9';ctx.lineWidth=.7+(1-p)*1.5;ctx.globalAlpha=opacity*.85;
         ctx.beginPath();ctx.moveTo(startX+(tipX-startX)*.5,startY+(tipY-startY)*.5);ctx.lineTo(tipX,tipY);ctx.stroke();

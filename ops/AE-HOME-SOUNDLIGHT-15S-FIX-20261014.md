@@ -20,3 +20,8 @@
   ♫ during opening = keep the same song playing (no seek/restart); ♫ in light-only opening = start
   sound+light together from the cue; ♫ after end/pause = continue from the last heard position;
   replay = cue, 15 s; ■ stop during opening; tab hidden / pagehide / hero scrolled away = pause, ♫ resumes.
+- Audio first under load (screen recording / native window drag): when the light canvas frame time
+  EMA > 33 ms it drops shadowBlur and prismatic rays (exit < 22 ms). Light stays on the track clock.
+  Headful test (DISPLAY :2, ffmpeg x11grab 30 fps recording + xdotool window drag 5 s):
+  old micoia71p frames 83 ms median, light lag 80 ms (p90 120), 2 AudioContexts + 1 MediaElementSource;
+  new 16.7 ms median, light lag −1 ms (p90 56), 0 AudioContexts. No blur/visibility events on drag.
