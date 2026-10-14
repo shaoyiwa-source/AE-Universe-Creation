@@ -8,6 +8,17 @@
   }
   energy.openingTime=timeline=>timeline?.sections?.[0]?.start||0;
   energy.flightPower=age=>Math.exp(-Math.max(0,age)/.065);
+  // Position heard at the speakers. elapsed is AudioContext time since the buffer
+  // was scheduled; latency is outputLatency. A late animation frame must pass the
+  // real elapsed time — the position is absolute, so dropped frames cannot accumulate.
+  energy.audiblePosition=function(offset,elapsed,latency,duration){
+    const lat=Math.max(0,+latency||0);
+    const start=+offset||0;
+    if(!(elapsed>lat))return start;
+    let heard=start+elapsed-lat;
+    if(duration>0){heard%=duration;if(heard<0)heard+=duration;}
+    return heard;
+  };
   energy.createRhythm=function(events,accents=[],sections=[]){
     let average=0,previous=0,last=-10,count=0,interval=60/148,accentCount=0,lastTime=-10;
     function passed(list,time){

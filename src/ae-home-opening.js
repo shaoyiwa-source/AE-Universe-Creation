@@ -55,8 +55,8 @@
   // ---- prototype audio (verbatim voice design) ----
   function ensureAudio(){
     if(audio)return audio;
-    const A=window.AudioContext||window.webkitAudioContext;if(!A){noAudio=true;return null;}
-    try{audio=new A();master=audio.createGain();master.gain.value=0;meter=audio.createAnalyser();meter.fftSize=512;meterBuf=new Float32Array(512);master.connect(meter);meter.connect(audio.destination);}catch(e){noAudio=true;audio=null;}
+    if(!window.aeHomeAudio){noAudio=true;return null;}
+    try{audio=window.aeHomeAudio.context();master=audio.createGain();master.gain.value=0;meter=audio.createAnalyser();meter.fftSize=512;meterBuf=new Float32Array(512);master.connect(meter);meter.connect(audio.destination);}catch(e){noAudio=true;audio=null;}
     return audio;
   }
   function osc(time,bass){
@@ -110,12 +110,15 @@
   }
   // ---- lifecycle ----
   function stopNodes(hard){
-    if(!audio)return;
+    if(!audio||!master)return;
     const now=audio.currentTime;
-    try{master.gain.cancelScheduledValues(now);master.gain.setValueAtTime(master.gain.value,now);master.gain.linearRampToValueAtTime(0,now+(hard?.04:.08));}catch(e){}
+    try{master.gain.cancelScheduledValues(now);master.gain.setValueAtTime(hard?0:master.gain.value,now);if(!hard)master.gain.linearRampToValueAtTime(0,now+.08);}catch(e){}
     const list=[...nodes];
-    setTimeout(()=>{for(const o of list){try{o.stop(0);o.disconnect();}catch(e){}nodes.delete(o);}
-      if(audio&&state!=='running'&&audio.state==='running')audio.suspend().then(()=>stamp('audio-suspended',{ctxState:audio.state})).catch(()=>{});},hard?60:120);
+    const kill=()=>{for(const o of list){try{o.stop(0);o.disconnect();}catch(e){}nodes.delete(o);}};
+    // Never suspend the shared context here. Suspending on the music handoff
+    // reconfigures the output device under the track that is about to start.
+    if(hard){kill();return;}
+    setTimeout(kill,90);
   }
   function halt(){
     clearInterval(tick);tick=0;if(raf)cancelAnimationFrame(raf);raf=0;specks=[];
@@ -127,6 +130,7 @@
     canvas.dataset.state='ended';hero.dataset.openingState='ended';hero.dataset.openingEndReason=reason;
     stamp('end',{reason,elapsed:+at.toFixed(3)});
     showReplay();
+    if(reason!=='dock-music')setTimeout(()=>{if(state!=='running'&&window.aeHomeAudio&&!window.aeHomeAudio.isPlaying())window.aeHomeAudio.suspendIfIdle();},180);
   }
   function begin(nextMode){
     if(state==='running'){state='restarting';halt();stopNodes(true);}
