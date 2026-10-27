@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="ae-version" content="v2475.9-home-soundlight-15s">
+<meta name="ae-version" content="v2476.14-preview-20261028-home-only">
 <title>AE Universe Creation — Hand-painted Art. Digital Sensation.</title>
 <meta name="description" content="Original art, digital editions and interactive experiences by AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -133,53 +133,624 @@ html[data-theme="light"] .hero .kicker{padding:0;background:none;border:0;color:
 
 </style>
 <link rel="stylesheet" href="/ae-home-light.css">
-<link rel="stylesheet" href="/ae-home-opening.css?v=20261014-fix1">
+<link rel="stylesheet" href="/ae-home-opening.css?v=20261018-laser1">
 <link rel="stylesheet" href="/ae-visual-system.css">
-<style id="ae-light-readability">html[data-theme="light"] .hero-copy{position:relative;isolation:isolate;}html[data-theme="light"] .hero-copy::before{content:"";position:absolute;inset:-16px -12px -12px;z-index:-1;pointer-events:none;border-radius:18px;background:rgba(250,248,241,.97);box-shadow:0 4px 28px rgba(31,49,36,.08);border:1px solid rgba(70,89,69,.16);}html[data-theme="light"] .hero .kicker,html[data-theme="light"] .hero h1,html[data-theme="light"] .hero-subtitle{color:#21372a;text-shadow:none;}html[data-theme="light"] .hero .rainbow{background:linear-gradient(95deg,#664618,#803449 24%,#325725 49%,#14545f 74%,#5b3878);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}html[data-theme="light"] .header .menu-toggle,html[data-theme="light"] .header .language-toggle{background:#faf8f1;color:#21372a;text-shadow:none;border-radius:999px;padding:10px 8px;min-height:44px;min-width:44px;white-space:nowrap;flex-shrink:0;}html[data-theme="light"] .hero .scroll-hint{color:#435748;}@media(max-width:520px){html[data-theme="light"] .hero-copy::before{inset:-12px -10px -10px;border-radius:16px;}}</style><style id="ae-lower-light-controls">.hero-copy .ae-light-dock{position:relative;top:auto;left:auto;margin:14px 0 0;gap:10px;flex-wrap:wrap;}.hero-copy .ae-light-dock button{width:44px;min-width:44px;height:44px;padding:0;font-size:0;letter-spacing:0;}.hero-copy .ae-light-dock button::before{display:block;font-size:20px;line-height:42px;}.hero-copy #aeMusicButton::before{content:"♫";}.hero-copy #aeMusicButton[aria-pressed="true"]::before{content:"Ⅱ";}.hero-copy #aeLightButton::before{content:"✦";}.hero-copy #aeTapButton::before{content:"◌";}.hero-copy .ae-light-status{position:absolute;width:1px;max-width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;} </style><link rel="stylesheet" href="/ae-surface-polish.css"></head>
+<style id="ae-light-readability">html[data-theme="light"] .hero-copy{position:relative;isolation:isolate;}html[data-theme="light"] .hero-copy::before{content:"";position:absolute;inset:-16px -12px -12px;z-index:-1;pointer-events:none;border-radius:18px;background:rgba(250,248,241,.97);box-shadow:0 4px 28px rgba(31,49,36,.08);border:1px solid rgba(70,89,69,.16);}html[data-theme="light"] .hero .kicker,html[data-theme="light"] .hero h1,html[data-theme="light"] .hero-subtitle{color:#21372a;text-shadow:none;}html[data-theme="light"] .hero .rainbow{background:linear-gradient(95deg,#664618,#803449 24%,#325725 49%,#14545f 74%,#5b3878);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}html[data-theme="light"] .header .menu-toggle,html[data-theme="light"] .header .language-toggle{background:#faf8f1;color:#21372a;text-shadow:none;border-radius:999px;padding:10px 8px;min-height:44px;min-width:44px;white-space:nowrap;flex-shrink:0;}html[data-theme="light"] .hero .scroll-hint{color:#435748;}@media(max-width:520px){html[data-theme="light"] .hero-copy::before{inset:-12px -10px -10px;border-radius:16px;}}</style><style id="ae-lower-light-controls">.hero-copy .ae-light-dock{position:relative;top:auto;left:auto;margin:14px 0 0;gap:10px;flex-wrap:wrap;}.hero-copy .ae-light-dock button{min-height:44px;padding:10px 18px;font-size:13px;letter-spacing:.04em;white-space:nowrap;touch-action:manipulation;}.hero-copy .ae-light-status{position:absolute;width:1px;max-width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}.hero[data-light-state="off"] #ae-home-opening-fx{opacity:0}
+.ae-art-version{position:absolute;right:10px;top:0;z-index:6;pointer-events:none;user-select:none;font:600 12px/1 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.06em;color:#fff;opacity:.72;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+html[data-theme="light"] .ae-art-version{color:#21372a;text-shadow:0 1px 2px rgba(255,255,255,.5)}
+</style><link rel="stylesheet" href="/ae-surface-polish.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600&display=swap&text=%E2%80%93%E2%80%94%E2%86%92%E2%86%97%E2%87%84%E2%87%92%E2%97%90%E2%97%91%E2%99%AB%E2%9C%A6%E3%80%81%E3%80%82%E3%80%8A%E3%80%8B%E4%B8%80%E4%B8%89%E4%B8%8A%E4%B8%8B%E4%B8%96%E4%B8%A6%E4%B8%AD%E4%BA%8B%E4%BA%92%E4%BA%AE%E4%BA%BA%E4%BB%A5%E4%BC%B4%E4%BD%8D%E4%BD%9C%E4%BD%BF%E4%BE%86%E4%BE%9B%E5%80%8B%E5%80%91%E5%83%B9%E5%85%89%E5%85%A5%E5%85%A7%E5%86%8D%E5%88%86%E5%88%97%E5%88%BB%E5%89%8D%E5%89%B5%E5%8B%95%E5%8D%A1%E5%8E%9F%E5%8F%83%E5%8F%97%E5%8F%A5%E5%8F%AF%E5%90%91%E5%93%81%E5%94%AE%E5%95%86%E5%95%9F%E5%96%AE%E5%9B%9B%E5%9C%A8%E5%A4%B1%E5%A5%BD%E5%A7%8B%E5%AE%87%E5%AE%98%E5%AE%99%E5%AE%B9%E5%AF%A6%E5%B0%87%E5%B0%8F%E5%B0%91%E5%B1%95%E5%B7%B1%E5%B8%B8%E5%B9%85%E5%BA%97%E5%BB%8A%E5%BC%8F%E5%BD%A9%E5%BE%80%E5%BE%8C%E5%BE%9E%E5%BF%83%E6%84%9F%E6%85%8B%E6%88%90%E6%88%91%E6%88%96%E6%89%8B%E6%8E%A2%E6%8F%90%E6%92%AD%E6%93%8A%E6%94%B6%E6%94%BE%E6%95%85%E6%95%97%E6%95%B8%E6%96%87%E6%96%B9%E6%96%BC%E6%97%A5%E6%98%8E%E6%98%AF%E6%99%82%E6%9B%B4%E6%9C%89%E6%9C%AA%E6%9C%AC%E6%9D%9F%E6%9E%9C%E6%9F%A5%E6%A0%BC%E6%A5%B7%E6%A8%82%E6%A8%A1%E6%AC%A1%E6%AC%A3%E6%AC%BE%E6%B4%BB%E6%B8%9B%E6%BA%90%E6%BA%96%E6%BA%AB%E6%BD%A4%E7%82%BA%E7%84%A1%E7%84%B6%E7%89%88%E7%89%8C%E7%8E%A9%E7%8F%BE%E7%94%9F%E7%94%A8%E7%95%8C%E7%95%AB%E7%99%BC%E7%9A%84%E7%9B%9B%E7%9B%AE%E7%9C%8B%E7%A7%92%E7%A8%AE%E7%AB%99%E7%AC%A6%E7%B2%BE%E7%B3%BB%E7%B4%A2%E7%B5%90%E7%B6%B2%E7%B7%9A%E7%B9%AA%E7%BE%8E%E8%81%B2%E8%83%BD%E8%87%AA%E8%88%87%E8%89%B2%E8%97%8F%E8%97%9D%E8%99%9F%E8%A1%8C%E8%A1%93%E8%A3%A1%E8%A6%BD%E8%A9%A6%E8%AA%8D%E8%AA%9E%E8%AA%B0%E8%AB%8B%E8%AD%98%E8%AE%93%E8%B2%A9%E8%B2%B7%E8%B3%9E%E8%B3%BC%E8%B5%B0%E8%B5%B7%E8%BC%89%E9%80%8F%E9%80%99%E9%80%A0%E9%80%A3%E9%80%B2%E9%81%8E%E9%81%B8%E9%83%A8%E9%96%8B%E9%97%9C%E9%99%90%E9%99%AA%E9%9A%9B%E9%9B%86%E9%9D%88%E9%9D%A2%E9%9F%B3%E9%A0%81%E9%A1%AF%E9%A6%96%E9%A9%97%E9%AB%94%E9%AD%82%E9%BB%9E%EF%BC%8C%EF%BD%9C">
+<style id="ae-font-a">/* Font option A 典雅明體 — EN: Cormorant Garamond headings + Inter body; ZH: Noto Serif TC headings and body */
+:root{--fs-display:"Cormorant Garamond","Noto Serif TC",Georgia,serif;--fs-ui:Inter,"Noto Serif TC",-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei","Segoe UI",sans-serif}
+/* every zh text node gets Noto Serif TC (Latin glyphs still Inter); headings below switch to the display stack */
+html[lang=zh-Hant] body,html[lang=zh-Hant] body *{font-family:var(--fs-ui)}
+html body{font-family:var(--fs-ui)}
+html body .hero-copy .ae-light-dock button,html body .ae-opening-side button{font-family:var(--fs-ui)}
+html body.ae-polish :is(h1,h2,h3,.hero-subtitle,.section-lead,.manifesto blockquote,.ae-activity-grid strong,.drawer-list a,.tail-links strong,.home-product-body h3,.discover-copy h3){font-family:var(--fs-display)}
+html[lang=zh-Hant] body.ae-polish :is(h1,h2,h3,.hero-subtitle,.section-lead,.manifesto blockquote,.ae-activity-grid strong,.drawer-list a,.tail-links strong,.home-product-body h3,.discover-copy h3){font-family:var(--fs-display);letter-spacing:.04em}
+html[lang=zh-Hant] body .hero h1{font-weight:600;letter-spacing:.05em}
+html[lang=zh-Hant] body :is(.rainbow,.hero .kicker,.ae-activity-grid small,strong,b){font-weight:600}
+
+/* ---- larger reading scale ---- */
+html body{font-size:17px;line-height:1.7}
+html body .kicker,html body .hero .kicker{font-size:clamp(13px,1.1vw,17px)}
+html body .hero-subtitle{font-size:clamp(24px,2.2vw,30px);line-height:1.25}
+html body .rainbow{font-size:13px;letter-spacing:.12em}
+html body .feature-heading{font-size:20px}
+html body .feature-sub{font-size:14px;line-height:1.4}
+html body .secondary a{font-size:15px}
+html body .scroll-hint{font-size:11px}
+html body .section-kicker{font-size:13px;letter-spacing:.18em}
+html body .section-lead{font-size:clamp(24px,2.8vw,32px);line-height:1.3}
+html body .ae-intro-copy p,html body .ae-shop-lead,html body .discover-copy p,html body .dark-section p{font-size:clamp(17.5px,1.4vw,19px);line-height:1.8}
+html body .text-link,html body .home-product-body a,html body .ae-shop-link,html body .link-button,html body .manifesto .links{font-size:16px}
+html body .home-work-gallery figcaption{font-size:15px}
+html body .home-product-body h3{font-size:clamp(28px,2.3vw,38px)}
+html body .home-product-body p{font-size:15px;line-height:1.5}
+html body .ae-activity-grid small,html body .tail-links small{font-size:12px}
+html body .ae-activity-grid span:not(.activity-arrow){font-size:16px;line-height:1.65}
+html body .manifesto .label{font-size:13px}
+html body .footer{font-size:13px}
+html body .menu-toggle{font-size:14px}html body .language-toggle{font-size:15px}
+html body .drawer-bottom{font-size:14px}
+html body .hero-copy .ae-light-dock button{font-size:17px;min-height:52px}
+html body .ae-opening-side button{font-size:15px}html body .ae-opening-side small{font-size:13px}
+@media(max-width:520px){
+ html body .hero .kicker{font-size:13px;letter-spacing:.1em}
+ html body .hero h1{font-size:clamp(40px,11.6vw,50px);line-height:1.08}
+ html body .hero-subtitle{font-size:23px;line-height:1.3}
+ html body .rainbow{font-size:12.5px}
+ html body .feature-heading{font-size:19px}
+ html body .feature-sub{font-size:13.5px}
+ html body .secondary a{font-size:14.5px;min-height:52px}
+ html body .ae-intro-copy p,html body .ae-shop-lead,html body .discover-copy p,html body .dark-section p{font-size:17.5px}
+ html body .home-work-gallery figcaption{font-size:14.5px}
+ html body .hero-copy .ae-light-dock button{font-size:17px}
+ html body .ae-opening-side button{font-size:15px}html body .ae-opening-side small{font-size:12.5px}
+}
+html[lang=zh-Hant] body{letter-spacing:.02em}
+html[lang=zh-Hant] body .ae-intro-copy p,html[lang=zh-Hant] body .ae-shop-lead,html[lang=zh-Hant] body .dark-section p,html[lang=zh-Hant] body .discover-copy p{line-height:1.9}
+
+/* full-width 。 in zh headings: no letter-spacing after it, trim its empty half */
+html[lang=zh-Hant] .zh-stop{letter-spacing:0;margin-left:-.16em;margin-right:-.3em}
+/* version tag: small pill so it stays readable over the painting and above hero text */
+html body .ae-art-version{z-index:7;padding:2px 6px;transform:translateY(-6px);border-radius:6px;background:rgba(0,0,0,.32);opacity:.85}
+html[data-theme="light"] body .ae-art-version{background:rgba(250,248,241,.7)}
+</style>
+<style id="ae-hero-fit">
+/* ae-hero-fit: hero keeps the pre-font-C proportions (font families stay C) */
+html body .hero-copy{line-height:normal}
+html body .hero .kicker{font-size:clamp(11px,1.05vw,15.12px)}
+html body .hero-subtitle{font-size:clamp(20px,1.95vw,28px);line-height:1.16}
+html body .rainbow{font-size:clamp(9px,.77vw,11px)}
+html body .feature-heading{font-size:clamp(16px,1.25vw,18px)}
+html body .feature-sub{font-size:clamp(9.5px,.77vw,11px);line-height:normal}
+html body .secondary a{font-size:clamp(10px,.84vw,12px)}
+html body .scroll-hint{font-size:9px}
+html body .hero-copy .ae-light-dock button{font-size:13px;min-height:44px}
+@media(max-width:520px){
+ html body .hero .kicker{font-size:11px}
+ html body .hero h1{font-size:clamp(34px,10.4vw,44px);line-height:1.04}
+ html body .hero-subtitle{font-size:20px;line-height:1.08}
+ html body .rainbow{font-size:9px}
+ html body .feature-heading{font-size:16px}
+ html body .feature-sub{font-size:9.5px}
+ html body .secondary a{font-size:10px;min-height:48px}
+ html body .hero-copy .ae-light-dock button{font-size:13px}
+}
+/* option 2 add-on: on phones also lift the painting so no hero text sits on it (lasers follow: JS reads ::before top) */
+@media(max-width:520px){ html body .hero::before{top:-108px} }
+/* one 開聲光 button, styled like k6xx0lw61 (6932b26): large pill, gold border, 48px+ */
+.hero-copy .ae-light-dock{position:relative;top:auto;left:auto;margin:14px 0 0;display:flex;gap:10px;flex-wrap:nowrap;width:100%;max-width:380px}
+html body .hero-copy .ae-light-dock button{flex:1 1 auto;width:100%;min-width:0;min-height:52px;padding:12px 22px;border:1px solid rgba(240,215,161,.66);border-radius:999px;background:linear-gradient(125deg,rgba(16,30,22,.86),rgba(20,41,38,.84));color:#fff4dc;font-family:var(--fs-ui);font-weight:600;font-size:16px;line-height:1.2;letter-spacing:.06em;box-shadow:0 6px 22px rgba(0,0,0,.32);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);white-space:nowrap;touch-action:manipulation;cursor:pointer}
+html body .hero-copy .ae-light-dock button[aria-pressed="true"]{border-color:#f2d68b;background:linear-gradient(125deg,rgba(100,80,53,.9),rgba(20,81,71,.88))}
+html body .hero-copy .ae-light-dock button[aria-busy="true"]{cursor:wait}
+html body .hero-copy .ae-light-dock button:focus-visible{outline:2px solid #f2d68b;outline-offset:3px}
+html[data-theme="light"] body .hero-copy .ae-light-dock button{background:rgba(255,249,236,.94);color:#273e30;border-color:#a79776;box-shadow:0 4px 16px rgba(29,51,32,.14)}
+html[data-theme="light"] body .hero-copy .ae-light-dock button[aria-pressed="true"]{background:#fbedd0;border-color:#8f7125}
+@media(max-width:520px){.hero-copy .ae-light-dock{max-width:none}html body .hero-copy .ae-light-dock button{font-size:16px;min-height:52px}}
+/* desktop: heading sized so its ink ends left of the centred painting (painting left = 50vw - 291px) */
+@media(min-width:850px){html body .hero h1{font-size:clamp(44px,calc(7.04vw - 52px),64px)}}
+</style>
+<style id="ae-desktop-art">
+/* Owner 2026-10-18 (v4, option C2 = C + phone-style text on the painting): desktop (>=850px) painting centred and exactly one viewport tall (aspect kept,
+   soft bottom fade). Header laid out like the phone, on the painting: 選單 top-left, logo centred, EN + theme
+   top-right (18px inset, same text-shadow / ring styling as the phone). 開聲光 centred over the bottom fade. Hero
+   text follows below the painting (289266f sizes). Lasers + version tag read the painting box from ::before.
+   Phones (<850px) unchanged. */
+.hero{--art-visible:1}
+@media(min-width:850px){@supports (width:1cqw){
+.hero{container-type:inline-size;--art-top:0px;--art-h:100svh;--art-w:min(calc(var(--art-h) * 1110 / 1536),calc(100cqw - 440px));--art-left:calc((100cqw - var(--art-w)) / 2);--art-right:calc(var(--art-left) + var(--art-w));--art-gap:20px;--hdr-inset:18px;--copy-pad:56px;--copy-w:min(720px,calc(100cqw - 2 * clamp(22px,4.6vw,64px)));--art-visible:.88;min-height:0}
+html body .hero::before{left:var(--art-left);top:var(--art-top);width:var(--art-w);transform:none;-webkit-mask-image:linear-gradient(180deg,#000 88%,transparent 100%);mask-image:linear-gradient(180deg,#000 88%,transparent 100%)}
+html body .hero::after{background:linear-gradient(180deg,rgba(3,4,3,.34) 0,rgba(3,4,3,0) 120px) var(--art-left) 0/var(--art-w) 120px no-repeat}
+html[data-theme="light"] body .hero::after{background:linear-gradient(180deg,rgba(247,245,238,.30) 0,rgba(247,245,238,0) 120px) var(--art-left) 0/var(--art-w) 120px no-repeat}
+/* header like the phone: 選單 inside the painting's top-left, logo centred, EN + theme inside its top-right (18px inset) */
+html body .hero .header{position:absolute;z-index:5;top:0;left:var(--art-left);width:var(--art-w);max-width:none;margin:0;padding:16px var(--hdr-inset);display:flex;justify-content:space-between;align-items:center;height:76px;box-sizing:border-box}
+html body .hero .header .menu-toggle{justify-self:auto}
+html body .hero .header>a{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;width:76px;height:44px;align-items:center}
+html body .hero .header .brand-mark{width:76px;height:44px}
+html body .hero .header .header-right{position:static;width:max-content;white-space:nowrap;display:flex;align-items:center;justify-content:flex-end;gap:18px}
+/* C2: like the phone, the heading block sits on the lower part of the painting (over a dark fade), 開聲光
+   centred under it, all in the first screen; the 看作品 / 互動體驗… cards follow below on scroll. */
+html body .hero{--below:330px;--copy-in:36px}
+html body .hero-inner{width:100%;max-width:none;margin:0;padding:0 0 var(--below);min-height:calc(100svh + var(--below));display:flex;flex-direction:column;justify-content:flex-end;box-sizing:border-box}
+html body .hero-copy{position:relative;width:calc(var(--art-w) - 2 * var(--copy-in));max-width:none;margin:0 auto;padding-bottom:26px;display:flex;flex-direction:column;align-items:stretch}
+html body .hero-copy>.rainbow,html body .hero-copy>.kicker{align-self:flex-start}
+html body .hero .nav-choices{position:absolute;top:calc(100% + 56px);left:50%;transform:translateX(-50%);width:var(--copy-w);margin:0}
+html body .hero-copy .scroll-hint{margin-top:22px}
+html body .hero-copy .ae-light-dock{position:static;align-self:center;margin:14px 0 0;width:auto;max-width:none;transform:none}
+html body .hero-copy .ae-light-dock button{width:auto;min-width:200px}
+html body .hero::after{background:linear-gradient(180deg,rgba(3,4,3,.34) 0,rgba(3,4,3,0) 120px,rgba(3,4,3,0) 44%,rgba(5,7,6,.55) 60%,rgba(6,9,8,.88) 80%,#070a08 100%) var(--art-left) 0/var(--art-w) 100svh no-repeat}
+html[data-theme="light"] body .hero::after{background:linear-gradient(180deg,rgba(247,245,238,.30) 0,rgba(247,245,238,0) 120px,rgba(247,245,238,0) 44%,rgba(247,245,238,.55) 60%,rgba(247,245,238,.9) 80%,#f7f5ee 100%) var(--art-left) 0/var(--art-w) 100svh no-repeat}
+}}
+</style>
+<style id="ae-hero-type">
+/* Owner 2026-10-18 polish: one type scale for the hero block, and 開聲光 / Sound & Light styled as the 看作品 card.
+   Card titles (看作品, 開聲光) share one size/weight; the three secondary buttons get one readable size; the small
+   lines (tagline, scroll hint) one notch up. Family stays var(--fs-ui) (zh: Noto Serif TC; en: Inter). */
+html body .hero .kicker{font-size:18px;font-weight:600;letter-spacing:.16em;line-height:1.2;margin-bottom:14px}
+html body .hero .feature-heading{font-size:19px;font-weight:500;letter-spacing:.01em}
+html body .hero .feature-sub{font-size:13px;line-height:1.35;margin-top:4px}
+html body .hero .secondary a{font-size:15px;font-weight:500;letter-spacing:.02em;line-height:1.25}
+html body .hero .rainbow{font-size:12.5px}
+html body .hero .scroll-hint{font-size:10.5px}
+/* sound & light button = 看作品 card pattern: gradient card, gold hairline border, emblem circle + one-line title */
+html body .hero .hero-copy .ae-light-dock{width:100%;max-width:none}
+html body .hero .hero-copy .ae-light-dock button{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:flex-start;gap:17px;width:100%;min-width:0;min-height:72px;padding:14px 21px;border:1px solid rgba(250,224,173,.56);border-radius:20px;background:linear-gradient(115deg,rgba(159,110,112,.59),rgba(57,105,98,.66) 50%,rgba(76,66,130,.68));box-shadow:0 7px 30px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.22);color:#f7f5ee;font-family:var(--fs-ui);font-size:19px;font-weight:500;letter-spacing:.01em;line-height:1.2;text-align:left;-webkit-backdrop-filter:none;backdrop-filter:none;transition:transform .25s ease,box-shadow .25s ease}
+html body .hero .hero-copy .ae-light-dock button::before{content:"♫";flex:0 0 36px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,234,183,.87);display:grid;place-items:center;color:#f7ddac;font-size:15px;line-height:1;box-shadow:inset 0 0 9px rgba(244,221,165,.14)}
+html body .hero .hero-copy .ae-light-dock button::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(100deg,rgba(253,237,194,.2),transparent 65%);z-index:-1;pointer-events:none}
+html body .hero .hero-copy .ae-light-dock button[aria-pressed="true"]{border-color:#f2d68b;background:linear-gradient(115deg,rgba(176,132,92,.66),rgba(48,112,96,.7) 50%,rgba(76,66,130,.7))}
+html body .hero .hero-copy .ae-light-dock button[aria-pressed="true"]::before{content:"✦";background:rgba(247,221,172,.2);border-color:#f2d68b}
+html body .hero .hero-copy .ae-light-dock button:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(0,0,0,.3),0 0 20px rgba(250,224,173,.18)}
+html[data-theme="light"] body .hero .hero-copy .ae-light-dock button{background:linear-gradient(115deg,rgba(253,237,222,.96),rgba(223,242,229,.95) 48%,rgba(229,226,247,.95));border-color:rgba(80,115,87,.62);box-shadow:0 6px 20px rgba(29,51,32,.12),inset 0 1px 0 rgba(255,255,255,.6);color:#24382b}
+html[data-theme="light"] body .hero .hero-copy .ae-light-dock button::before{color:#805e35;border-color:#b59562}
+/* version tag: small and faint */
+html body .ae-art-version{font-size:11px;opacity:.62;padding:2px 6px;transform:none}
+@media(max-width:849px){
+ html body .hero .feature-heading,html body .hero .hero-copy .ae-light-dock button{font-size:17px}
+ html body .hero .kicker{font-size:14px;letter-spacing:.14em;margin-bottom:10px}
+ html body .hero .feature-sub{font-size:11px;letter-spacing:0}
+ html body .hero .secondary a{font-size:13px;min-height:50px}
+ html body .hero .rainbow{font-size:11.5px}
+ html body .hero .scroll-hint{font-size:10px}
+ html body .hero .hero-copy .ae-light-dock button{min-height:60px;padding:11px 13px;border-radius:15px;gap:17px}
+}
+@media(max-width:355px){html body .hero .hero-copy .ae-light-dock button{gap:9px}html body .hero .secondary a{font-size:12px}}
+/* desktop C2: the card sits centred on the painting under the heading, as wide as a comfortable single line */
+@media(min-width:850px){html body .hero .hero-copy .ae-light-dock{width:min(100%,360px);align-self:center}}
+</style>
+<style id="ae-sound-icon">
+/* Variant C: the one sound & light toggle is a compact labelled pill (♫ circle + 開聲光/關聲光 · Sound & Light
+   On/Off) sitting ON the painting at its top-right, just under the EN + theme buttons, on a dark translucent
+   backdrop; gold ring when ON. It is a direct child of .hero (moved out of the text column). */
+html body .hero>.ae-light-dock{position:absolute;z-index:6;top:72px;right:20px;left:auto;margin:0;display:flex;gap:0;width:auto;max-width:none}
+html body .hero>.ae-light-dock .ae-light-status{position:absolute;width:1px;max-width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+html body .hero>.ae-light-dock button{position:relative;display:flex;align-items:center;flex:none;width:auto;min-width:0;height:40px;min-height:40px;padding:4px 13px 4px 4px;gap:8px;border-radius:999px;border:1px solid rgba(255,250,238,.42);background:rgba(8,12,10,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 4px 16px rgba(0,0,0,.32);color:#fff4dc;font-family:var(--fs-ui);font-size:13.5px;font-weight:500;letter-spacing:.01em;line-height:1;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.5);cursor:pointer;touch-action:manipulation}
+html body .hero>.ae-light-dock button::before{content:"♫";flex:0 0 30px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,234,183,.7);background:rgba(255,255,255,.04);display:grid;place-items:center;color:#f7ddac;font-size:15px;line-height:1;text-shadow:none}
+html body .hero>.ae-light-dock button[aria-pressed="true"]{border-color:#f2d68b;background:rgba(40,32,18,.7);box-shadow:0 0 0 2px rgba(242,214,139,.14),0 0 16px rgba(242,214,139,.3)}
+html body .hero>.ae-light-dock button[aria-pressed="true"]::before{border:1.5px solid #f2d68b;background:radial-gradient(circle,rgba(247,221,172,.4),rgba(100,80,53,.5));color:#fff4dc}
+html body .hero>.ae-light-dock button[aria-busy="true"]{cursor:wait}
+html body .hero>.ae-light-dock button:focus-visible{outline:2px solid #f2d68b;outline-offset:3px}
+html[data-theme="light"] body .hero>.ae-light-dock button{background:rgba(255,249,236,.92);border-color:#a79776;color:#273e30;text-shadow:none}
+html[data-theme="light"] body .hero>.ae-light-dock button::before{color:#805e35;border-color:#b59562}
+html[data-theme="light"] body .hero>.ae-light-dock button[aria-pressed="true"]{background:#fbedd0;border-color:#8f7125}
+/* phone: painting right edge is at 100vw*0.98 (translateX(-52%)), so 20px from the screen = 12px inside the art */
+@media(min-width:850px){@supports (width:1cqw){html body .hero>.ae-light-dock{top:76px;right:calc(100cqw - var(--art-right) + var(--hdr-inset))}html body .hero>.ae-light-dock button{height:44px;min-height:44px;font-size:15px;padding:4px 17px 4px 5px;gap:9px}html body .hero>.ae-light-dock button::before{flex-basis:32px;width:32px;height:32px}}}
+/* Variant C phone: like Production, the hero text block (eyebrow, heading, subtitle, tagline) sits ON the lower
+   part of the painting over a soft dark fade; View works + 3 buttons + scroll hint follow below.
+   --pb = painting bottom (width 100vw, aspect 1110:1536, top -108px); --head ≈ height of the text block. */
+@media(max-width:520px){
+ html body .hero{min-height:0;--pb:calc(100vw * 1536 / 1110 - 108px);--head:186px;--hdr-h:74px}
+ html body .hero-inner{min-height:0;display:block;padding:calc(var(--pb) - var(--hdr-h) - var(--head)) 18px 26px}
+ html body .hero::after{background:linear-gradient(180deg,rgba(3,4,3,.26) 0,rgba(3,4,3,.08) 15%,rgba(3,4,3,0) 30%,rgba(4,6,5,.18) 46%,rgba(5,7,6,.55) 64%,rgba(6,9,8,.84) 84%,#070a08 100%) 0 0/100% calc(var(--pb) + 3px) no-repeat}
+ html[data-theme="light"] body .hero::after{background:linear-gradient(180deg,rgba(247,245,238,.2) 0,rgba(247,245,238,0) 30%,rgba(247,245,238,.25) 50%,rgba(247,245,238,.7) 72%,#f7f5ee 100%) 0 0/100% calc(var(--pb) + 3px) no-repeat}
+ html body .hero .nav-choices{margin-top:20px}
+}
+</style>
+<style id="ae-hero-space-20261027">
+/* Owner 2026-10-27: give the painting's centre more room on phones — smaller heading block, sitting lower */
+@media(max-width:520px){
+ html body .hero{--head:150px}
+ html body .hero .kicker{font-size:11px;margin-bottom:6px}
+ html body .hero h1{font-size:clamp(30px,8.6vw,37px);line-height:1.08}
+ html body .hero-subtitle{font-size:17px;line-height:1.2;margin-top:8px}
+ html body .hero .rainbow{margin-top:8px}
+}
+</style>
+<style id="ae-home-menu-hero-20261027">
+/* Owner 2026-10-27: home menu matches the other pages (same items, size, note line); artistic hero eyebrow; hero block lower on phones */
+html body .drawer-list a{font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif;font-size:26px;font-weight:400;line-height:1.25;padding:15px 0}
+html body .drawer-bottom{font-family:Inter,"Noto Sans TC",-apple-system,sans-serif;font-size:15px;line-height:1.5;color:rgba(247,245,238,.72);border-top:0;margin-top:22px!important;padding-top:0}
+html[data-theme="light"] body .drawer-bottom{color:#526653}
+html body .drawer-panel .drawer-list{flex:0 0 auto!important;height:auto!important;overflow:visible}
+html body .hero .kicker{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-style:italic;letter-spacing:.24em;text-transform:none;font-variant:small-caps;color:#f2dfae;text-shadow:0 1px 12px rgba(0,0,0,.45)}
+html[data-theme="light"] body .hero .kicker{color:#7a5a24;text-shadow:none}
+@media(max-width:520px){
+ html body .hero{--head:118px}
+ html body .hero .kicker{font-size:17px;letter-spacing:.2em;margin-bottom:6px}
+}
+@media(min-width:521px){html body .hero .kicker{font-size:22px}}
+</style>
+<style id="ae-home-decongest-20261027">
+/* Owner 2026-10-27 (v2476.9): phone first screen less crowded so more of the painting shows —
+   (v2476.10: the round effect buttons are gone, so nothing is pushed below the first screen any more)
+   the three small buttons are shorter, and the hero text block sits a little lower. Desktop unchanged. */
+@media(max-width:520px){
+ html body .hero{--head:clamp(0px,calc(96px - (100svh - 680px) * .6),96px)}
+ html body .hero .secondary{margin-top:8px}
+ html body .hero .secondary a{min-height:40px;padding:5px 7px;line-height:1.2;border-radius:11px}
+}
+</style>
+<style id="ae-home-sound-only-20261027">
+/* Owner 2026-10-27 (v2476.10): the long 開聲光 / Sound & Light pill is now a small round icon-only sound
+   on/off toggle under the theme toggle (same look); lights run on their own, the switch is sound only. */
+html body .hero>.ae-sound-dock button.sound-toggle{width:44px;height:44px;min-width:44px;min-height:44px;padding:0;gap:0;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(255,250,238,.533);background:rgba(13,21,14,.44);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;color:#fff;font-size:0;line-height:0;text-shadow:none}
+html body .hero>.ae-sound-dock button.sound-toggle::before{content:none;display:none}
+html body .hero>.ae-sound-dock button.sound-toggle[aria-pressed="true"]{border-color:#f2d68b;background:rgba(40,32,18,.62);box-shadow:0 0 0 2px rgba(242,214,139,.12),0 0 14px rgba(242,214,139,.26)}
+html body .hero>.ae-sound-dock .ae-snd-i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+html body .hero>.ae-sound-dock .ae-snd-i path:first-child{fill:currentColor;stroke-width:1.2}
+html body .hero>.ae-sound-dock .ae-snd-off{display:none}
+html body .hero>.ae-sound-dock button.sound-toggle:not([aria-pressed="true"]) .ae-snd-on{display:none}
+html body .hero>.ae-sound-dock button.sound-toggle:not([aria-pressed="true"]) .ae-snd-off{display:block}
+html body .hero>.ae-sound-dock button.sound-toggle[data-state="loading"] .ae-snd-i{opacity:.6}
+html[data-theme="light"] body .hero>.ae-sound-dock button.sound-toggle{background:#fbedd0;border-color:#9a895f;color:#243d2d;box-shadow:0 1px 8px rgba(100,80,32,.12)}
+html[data-theme="light"] body .hero>.ae-sound-dock button.sound-toggle[aria-pressed="true"]{border-color:#8f7125;box-shadow:0 0 0 2px rgba(143,113,37,.16)}
+html[data-theme="light"] body .hero>.ae-sound-dock .ae-snd-i{filter:none}
+@media(min-width:850px){@supports (width:1cqw){html body .hero>.ae-sound-dock button.sound-toggle{width:44px;height:44px;min-height:44px;padding:0}}}
+</style>
+<style id="ae-home-fx-tray-20261027">/* v2476.11: ✦ at the painting's bottom-right (top/right set by ae-home-light.js resize); icon-only tray slides out leftward */
+/* Owner 2026-10-27 (v2476.10): one small round ✦ "effects" button (v2476.11: moved to the painting bottom-right, icon-only horizontal tray) at the top-left of the painting, under MENU
+   (mirrors the sound icon on the right). It opens a compact tray of effect toggles built from EFFECTS in
+   ae-home-light.js (add an entry there to add an effect). Collapsed by default; tap again / outside / Esc to close. */
+html body .hero>.ae-fx-dock{position:absolute;z-index:7;top:auto;bottom:calc(100% - 52%);right:20px;left:auto;display:block;width:44px;height:44px}
+html body .hero>.ae-fx-dock .fx-toggle{width:44px;height:44px;min-width:44px;padding:0;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(255,250,238,.533);background:rgba(13,21,14,.44);color:#f7ddac;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html body .hero>.ae-fx-dock .fx-toggle[aria-expanded="true"]{border-color:#f2d68b;background:rgba(40,32,18,.62);box-shadow:0 0 0 2px rgba(242,214,139,.12),0 0 14px rgba(242,214,139,.26)}
+html body .hero>.ae-fx-dock .fx-toggle:focus-visible{outline:2px solid #f2d68b;outline-offset:3px}
+html body .hero>.ae-fx-dock .ae-fx-spark{width:22px;height:22px;fill:currentColor;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+html body .hero>.ae-fx-dock .ae-fx-spark .s{opacity:.75}
+html body .hero>.ae-fx-dock .ae-fx-tray{position:absolute;right:calc(100% + 8px);top:-3px;display:flex;flex-direction:row-reverse;flex-wrap:nowrap;align-items:center;gap:8px;padding:4px 6px;border-radius:26px;white-space:nowrap;border:1px solid rgba(240,215,161,.38);background:rgba(8,12,10,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(0,0,0,.35);animation:aeFxTrayIn .2s ease-out;transform-origin:right center}
+html body .hero>.ae-fx-dock .ae-fx-tray[hidden]{display:none}
+html body .hero>.ae-fx-dock .ae-fx{min-width:0;width:42px;height:42px;padding:0;gap:0;display:grid;place-items:center}
+html body .hero>.ae-fx-dock .ae-fx-orb{width:40px;height:40px}
+html body .hero>.ae-fx-dock .ae-fx .ae-fx-orb{border-color:#f2d68b;box-shadow:inset 0 1px 0 rgba(255,244,214,.2),0 0 0 2px rgba(242,214,139,.14),0 0 14px rgba(242,214,139,.3)}
+@keyframes aeFxTrayIn{from{opacity:0;transform:translateX(14px) scaleX(.6)}to{opacity:1;transform:none}}
+html[data-theme="light"] body .hero>.ae-fx-dock .fx-toggle{background:#fbedd0;border-color:#9a895f;color:#805e35;box-shadow:0 1px 8px rgba(100,80,32,.12)}
+html[data-theme="light"] body .hero>.ae-fx-dock .fx-toggle[aria-expanded="true"]{border-color:#8f7125;box-shadow:0 0 0 2px rgba(143,113,37,.16)}
+html[data-theme="light"] body .hero>.ae-fx-dock .ae-fx-spark{filter:none}
+html[data-theme="light"] body .hero>.ae-fx-dock .ae-fx-tray{background:rgba(255,249,236,.94);border-color:#b59562;box-shadow:0 6px 20px rgba(29,51,32,.14)}
+@media(max-width:355px){html body .hero>.ae-sound-dock{right:16px}html body .hero>.ae-fx-dock .ae-fx-tray{gap:6px}}
+
+@media(prefers-reduced-motion:reduce){html body .hero>.ae-fx-dock .ae-fx-tray{animation:none}}
+</style>
+<style id="ae-home-tap-hint-20261027">
+/* v2476.12: browsers block music until the first touch, so a small "tap for sound" hint floats over the painting's
+   lower part (overlay UI only; the artwork itself is never changed). ae-home-light.js places it in the ✦ row, centred
+   in the free space left of ✦, and fades it out for good once sound starts, the sound icon is used, or if the visitor
+   had muted. It steps aside while the effects tray is open. */
+html body .hero>.ae-tap-hint{position:absolute;z-index:7;left:50%;top:58%;display:inline-flex;align-items:center;gap:9px;height:36px;margin:0;padding:0 15px 0 7px;border-radius:999px;border:1px solid rgba(240,215,161,.42);background:rgba(10,14,11,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.28);color:#fbf3df;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;opacity:1;transition:opacity .6s ease,transform .6s ease,visibility 0s linear 0s}
+html body .hero>.ae-tap-hint[hidden]{display:none}
+html body .hero>.ae-tap-hint .ae-tap-mark{position:relative;width:24px;height:24px;display:grid;place-items:center;flex:none}
+html body .hero>.ae-tap-hint .ae-tap-i{position:relative;width:20px;height:20px;color:#f2d68b;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));animation:aeTapBreath 2.6s ease-in-out infinite}
+html body .hero>.ae-tap-hint .ae-tap-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(242,214,139,.75);opacity:0;animation:aeTapRing 2.6s ease-out infinite}
+html body .hero>.ae-tap-hint .ae-tap-ring.r2{animation-delay:1.3s}
+html body .hero>.ae-tap-hint .ae-tap-t{font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;font-style:italic;font-size:14.5px;line-height:1;letter-spacing:.06em;color:rgba(252,247,239,.94);text-shadow:0 1px 2px rgba(0,0,0,.45)}
+html[lang="zh-Hant"] body .hero>.ae-tap-hint .ae-tap-t{font-family:"Noto Serif TC","Songti TC",Georgia,serif;font-style:normal;font-size:12.5px;letter-spacing:.16em}
+html body .hero>.ae-tap-hint:focus-visible{outline:2px solid #f2d68b;outline-offset:3px}
+html body .hero>.ae-tap-hint.is-tucked{opacity:0;pointer-events:none;visibility:hidden;transition:opacity .2s ease,visibility 0s linear .2s}
+html body .hero>.ae-tap-hint.is-out{opacity:0;transform:translateY(6px);pointer-events:none}
+html[data-theme="light"] body .hero>.ae-tap-hint{background:rgba(255,249,236,.82);border-color:#b59562;box-shadow:0 6px 18px rgba(29,51,32,.14)}
+html[data-theme="light"] body .hero>.ae-tap-hint .ae-tap-t{color:#3a3220;text-shadow:none}
+html[data-theme="light"] body .hero>.ae-tap-hint .ae-tap-i{color:#8f7125;filter:none}
+html[data-theme="light"] body .hero>.ae-tap-hint .ae-tap-ring{border-color:rgba(143,113,37,.6)}
+@keyframes aeTapRing{0%{opacity:.7;transform:scale(.7)}70%{opacity:0;transform:scale(1.75)}100%{opacity:0;transform:scale(1.75)}}
+@keyframes aeTapBreath{0%,100%{transform:translateY(0) scale(1)}45%{transform:translateY(1px) scale(.92)}}
+@media(max-width:355px){html body .hero>.ae-tap-hint{gap:7px;padding:0 12px 0 6px}html body .hero>.ae-tap-hint .ae-tap-t{font-size:13.5px}html[lang="zh-Hant"] body .hero>.ae-tap-hint .ae-tap-t{font-size:12px;letter-spacing:.12em}}
+@media(prefers-reduced-motion:reduce){html body .hero>.ae-tap-hint .ae-tap-i,html body .hero>.ae-tap-hint .ae-tap-ring{animation:none}html body .hero>.ae-tap-hint .ae-tap-ring{opacity:.45;transform:none}html body .hero>.ae-tap-hint .ae-tap-ring.r2{display:none}html body .hero>.ae-tap-hint{transition:none}}
+</style>
+
+<style id="ae-intro-type">
+/* Owner 2026-10-19: 我們是誰 / WHO WE ARE section refined to the gallery-like hero type.
+   Eyebrow = hero AE UNIVERSE CREATION eyebrow; heading = display serif (en Cormorant Garamond, zh Noto Serif TC),
+   balanced size and wrap; body = calm measure and line-height; one gold hairline divider above the block. */
+html body #ae-intro .home-intro-grid{border-top:1px solid rgba(230,213,165,.32);padding-top:34px;align-items:start}
+html body #ae-intro .section-kicker{font-family:var(--fs-ui);font-size:14px;font-weight:600;letter-spacing:.16em;line-height:1.2;text-transform:uppercase;color:#f7f5ee;margin:0 0 16px}
+html body #ae-intro h2{font-family:var(--fs-display);font-size:36px;font-weight:500;line-height:1.16;letter-spacing:-.005em;max-width:13em;margin:0;text-wrap:balance}
+html[lang=zh-Hant] body #ae-intro h2{white-space:pre-line;font-family:"Noto Serif TC","Cormorant Garamond",Georgia,serif;font-size:30px;font-weight:600;line-height:1.32;letter-spacing:.03em}
+html body #ae-intro .ae-intro-copy p{font-family:var(--fs-ui);font-size:16px;font-weight:400;line-height:1.72;letter-spacing:.005em;max-width:34em;color:rgba(247,245,238,.74);margin:0;text-wrap:pretty}
+html[lang=zh-Hant] body #ae-intro .ae-intro-copy p{font-family:"Noto Serif TC",var(--fs-ui);font-size:16px;line-height:1.9;letter-spacing:.04em;max-width:24em}
+html body #ae-intro .text-link{display:inline-block;margin-top:18px;font-family:var(--fs-ui);font-size:14px;font-weight:600;letter-spacing:.08em;line-height:1.4;padding-bottom:4px;border-bottom:1px solid rgba(230,213,165,.5);color:#f2dfae}
+html[lang=zh-Hant] body #ae-intro .text-link{font-family:"Noto Serif TC",var(--fs-ui);letter-spacing:.12em}
+html[data-theme="light"] body #ae-intro .section-kicker{color:#273e30}
+html[data-theme="light"] body #ae-intro .ae-intro-copy p{color:rgba(36,56,43,.8)}
+html[data-theme="light"] body #ae-intro .text-link{color:#5a4320;border-bottom-color:rgba(143,113,37,.55)}
+html[data-theme="light"] body #ae-intro .home-intro-grid{border-top-color:rgba(80,115,87,.35)}
+@media(max-width:849px){html body #ae-intro .home-intro-grid{gap:20px}}
+@media(min-width:850px){
+ html body #ae-intro .home-intro-grid{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:72px;padding-top:44px}
+ html body #ae-intro .section-kicker{font-size:16px;margin-bottom:20px}
+ html body #ae-intro h2{font-size:54px;line-height:1.1}
+ html[lang=zh-Hant] body #ae-intro h2{font-size:44px;line-height:1.3}
+ html body #ae-intro .ae-intro-copy{padding-top:38px}
+ html body #ae-intro .ae-intro-copy p{font-size:18px}
+ html[lang=zh-Hant] body #ae-intro .ae-intro-copy p{font-size:18px}
+ html body #ae-intro .text-link{font-size:15px;margin-top:22px}
+}
+</style>
+<style id="ae-gallery">
+/* Owner 2026-10-19 gallery system for the sections below the hero.
+   One system: numbered room index (01–04) + fading gold hairline, one heading scale,
+   one body scale; each room has its own composition (split / exhibition wall / framed editions / index list). */
+:root{--gx:22px;--gal-max:1180px}
+html body.ae-polish :is(#ae-intro,#works,#home-shop,#experience,.manifesto){background:var(--ae-bg);background-image:none;padding:92px var(--gx) 92px}
+html body.ae-polish #works{background-image:radial-gradient(ellipse 80% 30% at 50% 32%,rgba(237,205,117,.05),transparent 70%)}
+html body.ae-polish #experience{background:var(--ae-bg)}
+html body.ae-polish :is(#works,#home-shop,#experience) .container,html body.ae-polish #ae-intro .home-intro-grid{max-width:var(--gal-max);margin:0 auto}
+/* room index: 01 ─ label ───── */
+html body.ae-polish .section-kicker[data-no]{max-width:none;display:flex;align-items:center;gap:14px;margin:0 0 26px;font-family:var(--fs-ui);font-size:12.5px;font-weight:600;letter-spacing:.22em;line-height:1.2;text-transform:uppercase;color:var(--ae-ink)}
+html body.ae-polish .section-kicker[data-no]::before{content:attr(data-no);font-family:"Cormorant Garamond",Georgia,serif;font-size:17px;font-weight:500;letter-spacing:.06em;color:var(--ae-gold);padding-right:14px;border-right:1px solid var(--ae-line);line-height:1}
+html body.ae-polish .section-kicker[data-no]::after{content:"";flex:1 1 auto;min-width:24px;height:1px;background:linear-gradient(90deg,rgba(237,205,117,.45),rgba(237,205,117,0))}
+html[data-theme=light] body.ae-polish .section-kicker[data-no]::after{background:linear-gradient(90deg,rgba(143,113,37,.45),rgba(143,113,37,0))}
+html[lang=zh-Hant] body.ae-polish .section-kicker[data-no]{font-family:"Noto Serif TC",var(--fs-ui);letter-spacing:.24em;font-size:13px}
+/* one heading scale for all rooms (= 認識 AE Universe Creation) */
+html body.ae-polish :is(#ae-intro,#works,#home-shop,#experience) h2{font-family:var(--fs-display);font-size:36px;font-weight:500;line-height:1.16;letter-spacing:-.005em;margin:0 0 18px;max-width:13em;text-wrap:balance;color:var(--ae-ink)}
+html[lang=zh-Hant] body.ae-polish :is(#ae-intro,#works,#home-shop,#experience) h2{font-family:"Noto Serif TC","Cormorant Garamond",Georgia,serif;font-size:30px;font-weight:600;line-height:1.32;letter-spacing:.03em}
+/* one body scale */
+html body.ae-polish :is(#works .section-lead,#home-shop .ae-shop-lead,#experience .container>p:not(.section-kicker)){font-family:var(--fs-ui);font-size:16px;font-weight:400;line-height:1.72;letter-spacing:.005em;max-width:34em;color:var(--ae-muted);margin:0;text-wrap:pretty}
+html[lang=zh-Hant] body.ae-polish :is(#works .section-lead,#home-shop .ae-shop-lead,#experience .container>p:not(.section-kicker)){font-family:"Noto Serif TC",var(--fs-ui);line-height:1.9;letter-spacing:.04em;max-width:24em}
+html body.ae-polish #ae-intro .home-intro-grid{border-top:0;padding-top:0}
+html body.ae-polish #ae-intro .home-intro-grid>div:first-child{display:contents}
+html body.ae-polish #ae-intro .section-kicker{grid-column:1/-1}
+html body.ae-polish #ae-intro .ae-intro-copy{gap:0}
+/* links: one quiet gold underline style */
+html body.ae-polish :is(#works .text-link,#home-shop .ae-shop-link,.home-product-body a){display:inline-block;font-family:var(--fs-ui);font-size:14px;font-weight:600;letter-spacing:.08em;line-height:1.4;padding-bottom:4px;border-bottom:1px solid rgba(230,213,165,.5);color:#f2dfae}
+html[lang=zh-Hant] body.ae-polish :is(#works .text-link,#home-shop .ae-shop-link,.home-product-body a){font-family:"Noto Serif TC",var(--fs-ui);letter-spacing:.12em}
+html[data-theme=light] body.ae-polish :is(#works .text-link,#home-shop .ae-shop-link,.home-product-body a){color:#5a4320;border-bottom-color:rgba(143,113,37,.55)}
+
+/* 02 exhibition wall */
+html body.ae-polish #works .discover{display:block;margin:40px 0 0}
+html body.ae-polish #works .discover-visual{min-height:0;aspect-ratio:3/4;border-radius:0;border:12px solid var(--ae-paper);background-clip:padding-box;background-origin:padding-box;background-size:cover;background-position:50% 50%;box-shadow:0 0 0 1px var(--ae-line),0 34px 60px -34px rgba(0,0,0,.75)}
+html body.ae-polish #works .discover-copy{margin-top:22px;padding:2px 0 2px 18px;border-left:1px solid var(--ae-gold);gap:8px;max-width:24em}
+html body.ae-polish #works .discover-copy .section-kicker{font-family:var(--fs-ui);font-size:12px;letter-spacing:.2em;color:var(--ae-gold);margin:0;text-transform:uppercase}
+html body.ae-polish #works .discover-copy h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;font-weight:500;line-height:1.1;letter-spacing:0}
+html body.ae-polish #works .discover-copy p:not(.section-kicker){font-size:15px;line-height:1.7;color:var(--ae-muted);margin:0}
+html body.ae-polish #works .discover-copy .text-link{margin-top:8px}
+html body.ae-polish #works .home-work-gallery{counter-reset:wk;margin-top:56px}
+html body.ae-polish #works .home-work-gallery figure{counter-increment:wk;padding:0;border:0;border-radius:0;background:none;box-shadow:none;margin:0;min-width:0}
+html body.ae-polish #works .home-work-gallery img{width:100%;aspect-ratio:4/5;object-fit:contain;padding:14px;border-radius:0;background:var(--ae-paper);box-shadow:0 0 0 1px var(--ae-line);transition:box-shadow .35s ease}
+@media(hover:hover){html body.ae-polish #works .home-work-gallery figure:hover img{box-shadow:0 0 0 1px rgba(237,205,117,.6)}}
+html body.ae-polish #works .home-work-gallery figcaption{display:block;white-space:nowrap;padding:12px 0 0;font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif;font-size:18px;font-weight:500;line-height:1.3;letter-spacing:.01em;color:var(--ae-ink)}
+html body.ae-polish #works .home-work-gallery figcaption::before{content:"N° " counter(wk,decimal-leading-zero);display:inline;margin-right:.55em;font-size:12px;letter-spacing:.12em;vertical-align:baseline;color:var(--ae-gold)}
+html body.ae-polish #works .home-work-gallery figcaption{border-left:1px solid rgba(237,205,117,.55);padding-left:12px;margin-top:0;overflow-wrap:normal;hyphens:none}
+html body.ae-polish #works .home-work-gallery img{display:block;outline:1px solid rgba(237,205,117,.22);outline-offset:-7px;box-shadow:0 0 0 1px rgba(237,205,117,.4),0 30px 50px -30px rgba(0,0,0,.8)}
+@media(hover:hover){html body.ae-polish #works .home-work-gallery figure:hover img{box-shadow:0 0 0 1px rgba(237,205,117,.75),0 30px 50px -30px rgba(0,0,0,.8)}}
+html body.ae-polish #works .home-work-gallery .wk-title{display:inline;font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif}
+html body.ae-polish #works .home-work-gallery .wk-note{display:block;white-space:normal;margin-top:3px;font-family:var(--fs-ui);font-size:12.5px;font-weight:400;letter-spacing:.1em;line-height:1.35;color:var(--ae-muted)}
+html[lang=zh-Hant] body.ae-polish #works .home-work-gallery .wk-note{font-family:"Noto Serif TC",var(--fs-ui);letter-spacing:.16em}
+html[data-theme=light] body.ae-polish #works .home-work-gallery figcaption{border-left-color:rgba(143,113,37,.5)}
+@media(max-width:340px){html body.ae-polish #works .home-work-gallery figcaption{white-space:normal}}
+@media(max-width:849px){
+ html body.ae-polish #works .home-work-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 14px;margin-top:48px;align-items:start}
+ html body.ae-polish #works .home-work-gallery img{padding:8px;box-shadow:0 0 0 1px rgba(237,205,117,.34),0 20px 34px -24px rgba(0,0,0,.8);outline-offset:-5px}
+ html body.ae-polish #works .home-work-gallery{gap:24px 12px}
+ html body.ae-polish #works .home-work-gallery figcaption{padding:8px 0 0 7px;margin-left:1px;font-size:clamp(12.5px,3.6vw,14.5px);line-height:1.2;letter-spacing:0}
+ html body.ae-polish #works .home-work-gallery figcaption::before{margin-right:.4em;font-size:10px;letter-spacing:.06em}
+ html body.ae-polish #works .home-work-gallery .wk-note{margin-top:2px;font-size:11px;letter-spacing:.08em}
+ html[lang=zh-Hant] body.ae-polish #works .home-work-gallery .wk-note{letter-spacing:.14em}
+}
+
+/* 03 framed editions with caption plates */
+html body.ae-polish #home-shop .home-product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 16px;margin:40px 0 40px;counter-reset:ed}
+html body.ae-polish #home-shop .home-product-grid article{counter-increment:ed;display:flex;flex-direction:column;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;min-width:0}
+html body.ae-polish #home-shop .home-product-grid article:first-child{grid-column:1/-1}
+html body.ae-polish #home-shop .home-product-grid img{width:100%;height:auto;min-height:0;aspect-ratio:4/5;object-fit:cover;background:var(--ae-paper);border:6px solid var(--ae-bg);box-shadow:0 0 0 1px rgba(237,205,117,.5),inset 0 0 0 1px rgba(237,205,117,.28),0 26px 46px -28px rgba(0,0,0,.8);outline:1px solid var(--ae-line);outline-offset:-12px}
+html body.ae-polish #home-shop .home-product-body{position:relative;align-items:center;text-align:center;gap:6px;margin:20px 0 0;padding:14px 10px 15px;border:1px solid var(--ae-line);border-top:1px solid rgba(237,205,117,.55);background:var(--ae-paper);background-image:linear-gradient(180deg,rgba(237,205,117,.05),transparent)}
+html body.ae-polish #home-shop .home-product-body::before{content:counter(ed,upper-roman);position:absolute;top:-9px;left:50%;transform:translateX(-50%);padding:0 10px;background:var(--ae-bg);font-family:"Cormorant Garamond",Georgia,serif;font-size:14px;line-height:18px;letter-spacing:.12em;color:var(--ae-gold)}
+html body.ae-polish #home-shop .home-product-body h3{font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif;font-size:19px;font-weight:500;line-height:1.2;letter-spacing:.01em}
+html body.ae-polish #home-shop article:first-child .home-product-body h3{font-size:24px}
+html body.ae-polish #home-shop .home-product-body p{font-size:13px;line-height:1.5;letter-spacing:.06em;color:var(--ae-muted);margin:0}
+html body.ae-polish #home-shop .home-product-body a{font-size:13px;margin-top:6px}
+html[lang=zh-Hant] body.ae-polish #home-shop .home-product-body p{letter-spacing:.12em}
+html body.ae-polish #home-shop .ae-shop-link{margin-top:0}
+
+/* 04 index list */
+html body.ae-polish #experience .ae-activity-grid{display:block;counter-reset:act;margin:40px 0 0;border-bottom:1px solid var(--ae-line)}
+html body.ae-polish #experience .ae-activity-grid>a{counter-increment:act;display:grid;grid-template-columns:40px minmax(0,1fr) 30px;column-gap:12px;row-gap:6px;align-items:start;min-height:0;padding:24px 4px 24px 0;border:0;border-top:1px solid var(--ae-line);border-radius:0;background:transparent;background-image:none;box-shadow:none;transition:background-color .35s ease}
+html body.ae-polish #experience .ae-activity-grid>a:hover{background-color:rgba(237,205,117,.045);box-shadow:none}
+html body.ae-polish #experience .ae-activity-grid>a::before{content:counter(act,decimal-leading-zero);grid-column:1;grid-row:1/span 3;font-family:"Cormorant Garamond",Georgia,serif;font-size:22px;font-weight:500;line-height:1.1;color:var(--ae-gold)}
+html body.ae-polish #experience .ae-activity-grid small{grid-column:2;font-size:12px;letter-spacing:.18em;color:var(--ae-muted);line-height:1.4}
+html body.ae-polish #experience .ae-activity-grid strong{grid-column:2;font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif;font-size:23px;font-weight:500;line-height:1.25;letter-spacing:0}
+html[lang=zh-Hant] body.ae-polish #experience .ae-activity-grid strong{font-size:21px;line-height:1.4;letter-spacing:.02em}
+html body.ae-polish #experience .ae-activity-grid span:not(.activity-arrow){grid-column:2;font-size:15px;line-height:1.7;color:var(--ae-muted)}
+html body.ae-polish #experience .ae-activity-grid .activity-arrow{grid-column:3;grid-row:1/span 3;align-self:center;justify-self:end;margin:0;font-size:18px;color:var(--ae-gold);transition:transform .35s ease}
+html body.ae-polish #experience .ae-activity-grid>a:hover .activity-arrow{transform:translate(3px,-3px)}
+
+/* closing quote */
+html body.ae-polish .manifesto{padding:110px var(--gx) 120px;text-align:center;background-image:radial-gradient(ellipse 70% 50% at 50% 55%,rgba(237,205,117,.06),transparent 70%)}
+html body.ae-polish .manifesto-inner{display:flex;flex-direction:column;align-items:center;max-width:900px;margin:0 auto;padding:0;border:0;gap:0}
+html body.ae-polish .manifesto .label{display:flex;align-items:center;gap:14px;font-family:var(--fs-ui);font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--ae-gold)}
+html body.ae-polish .manifesto .label::before,html body.ae-polish .manifesto .label::after{content:"";width:34px;height:1px;background:var(--ae-line)}
+html body.ae-polish .manifesto blockquote{margin:30px 0 38px;font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;font-weight:400;line-height:1.16;letter-spacing:-.01em;color:var(--ae-ink);text-wrap:balance}
+html[lang=zh-Hant] body.ae-polish .manifesto blockquote{font-family:"Noto Serif TC","Cormorant Garamond",serif;font-size:29px;font-weight:500;line-height:1.6;letter-spacing:.1em}
+html body.ae-polish .manifesto blockquote span:last-child{color:var(--ae-gold);font-style:italic}
+html[lang=zh-Hant] body.ae-polish .manifesto blockquote span:last-child{font-style:normal}
+html body.ae-polish .manifesto .links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 0;margin:0;font-size:14px}
+html body.ae-polish .manifesto .links a{padding:2px 13px;border:0;border-left:1px solid var(--ae-line);letter-spacing:.05em;color:var(--ae-ink);transition:color .25s}
+html body.ae-polish .manifesto .links a:first-child{border-left:0}
+html[lang=zh-Hant] body.ae-polish .manifesto .links a{letter-spacing:.14em;padding:2px 16px}
+html body.ae-polish .manifesto .links a:hover{color:var(--ae-gold)}
+html body.ae-polish .footer{border-top:1px solid var(--ae-line);background:var(--ae-bg);background-image:none;padding:30px var(--gx) calc(30px + env(safe-area-inset-bottom));font-size:11px;letter-spacing:.26em;line-height:1.8;color:var(--ae-muted)}
+
+/* desktop */
+@media(min-width:850px){
+ :root{--gx:clamp(40px,6vw,96px)}
+ html body.ae-polish :is(#ae-intro,#works,#home-shop,#experience){padding-top:136px;padding-bottom:136px}
+ html body.ae-polish .section-kicker[data-no]{margin-bottom:44px;font-size:13px}
+ html body.ae-polish :is(#ae-intro,#works,#home-shop,#experience) h2{font-size:54px;line-height:1.1;margin:0}
+ html[lang=zh-Hant] body.ae-polish :is(#ae-intro,#works,#home-shop,#experience) h2{font-size:44px;line-height:1.3}
+ html body.ae-polish :is(#works .section-lead,#home-shop .ae-shop-lead,#experience .container>p:not(.section-kicker)){font-size:18px}
+ html body.ae-polish #ae-intro .home-intro-grid{row-gap:0;padding-top:0}
+ html body.ae-polish #ae-intro .ae-intro-copy{padding-top:6px}
+ html body.ae-polish :is(#works,#home-shop) .container{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:24px}
+ html body.ae-polish :is(#works,#home-shop) .container>*{grid-column:1/-1}
+ html body.ae-polish :is(#works,#home-shop) .container>h2{grid-column:1/7}
+ html body.ae-polish :is(#works .section-lead,#home-shop .ae-shop-lead){grid-column:7/-1;align-self:end;justify-self:start}
+ html body.ae-polish #works .discover{display:grid;grid-template-columns:7fr 5fr;gap:64px;align-items:end;margin-top:72px}
+ html body.ae-polish #works .discover-visual{aspect-ratio:auto;height:min(78vh,720px);border-width:16px}
+ html body.ae-polish #works .discover-copy{margin:0 0 24px;padding-left:24px}
+ html body.ae-polish #works .discover-copy h3{font-size:40px}
+ html body.ae-polish #works .home-work-gallery{grid-template-columns:repeat(4,minmax(0,1fr));gap:32px;margin-top:110px;align-items:start}
+ html body.ae-polish #works .home-work-gallery img{padding:18px;outline-offset:-10px}
+ html body.ae-polish #works .home-work-gallery figcaption{padding-top:14px;font-size:19px}
+ html body.ae-polish #works .home-work-gallery figcaption::before{font-size:12.5px}
+ html body.ae-polish #home-shop .home-product-grid{grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:auto auto;gap:48px 24px;margin:72px 0 56px}
+ html body.ae-polish #home-shop .home-product-grid article:first-child{grid-column:1/6;grid-row:1/span 2}
+ html body.ae-polish #home-shop .home-product-grid article:not(:first-child){grid-column:7/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:center}
+ html body.ae-polish #home-shop .home-product-grid article:nth-child(2){align-self:start}
+ html body.ae-polish #home-shop .home-product-grid article:nth-child(3){align-self:end}
+ html body.ae-polish #home-shop .home-product-grid article:not(:first-child) .home-product-body{margin:0;text-align:left;align-items:flex-start;padding:22px 20px}
+ html body.ae-polish #home-shop .home-product-grid article:not(:first-child) .home-product-body::before{left:20px;transform:none}
+ html body.ae-polish #home-shop .home-product-body h3{font-size:24px}
+ html body.ae-polish #home-shop article:first-child .home-product-body h3{font-size:30px}
+ html body.ae-polish #home-shop article:first-child .home-product-body{margin-top:26px;padding:20px}
+ html body.ae-polish #home-shop .home-product-body p,html body.ae-polish #home-shop .home-product-body a{font-size:14px}
+ html body.ae-polish #home-shop .ae-shop-link{justify-self:end}
+ html body.ae-polish #experience .container{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:24px;align-items:start}
+ html body.ae-polish #experience .container>.section-kicker{grid-column:1/-1}
+ html body.ae-polish #experience .container>h2{grid-column:1/6;grid-row:2;margin-bottom:22px}
+ html body.ae-polish #experience .container>p:not(.section-kicker){grid-column:1/6;grid-row:3}
+ html body.ae-polish #experience .ae-activity-grid{grid-column:7/-1;grid-row:2/span 3;margin:0}
+ html body.ae-polish #experience .ae-activity-grid>a{grid-template-columns:64px minmax(0,1fr) 40px;padding:34px 8px 34px 0}
+ html body.ae-polish #experience .ae-activity-grid>a::before{font-size:28px}
+ html body.ae-polish #experience .ae-activity-grid strong{font-size:32px}
+ html[lang=zh-Hant] body.ae-polish #experience .ae-activity-grid strong{font-size:26px}
+ html body.ae-polish #experience .ae-activity-grid span:not(.activity-arrow){font-size:16px}
+ html body.ae-polish #experience .ae-activity-grid .activity-arrow{font-size:22px}
+ html body.ae-polish .manifesto{padding:170px var(--gx) 180px}
+ html body.ae-polish .manifesto blockquote{font-size:66px;margin:40px 0 50px}
+ html[lang=zh-Hant] body.ae-polish .manifesto blockquote{font-size:46px}
+ html body.ae-polish .manifesto .links{font-size:15px}
+}
+/* reveal on scroll (enabled only by JS, off for reduced motion) */
+html.rv-on .rv,html.rv-on .rv-group>*{transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
+html.rv-on .rv:not(.is-in){opacity:0;transform:translateY(22px)}
+html.rv-on .rv-group:not(.is-in)>*{opacity:0;transform:translateY(28px)}
+html.ae-reveal-all .rv,html.ae-reveal-all .rv-group>*{opacity:1!important;transition:none!important}
+html.ae-reveal-all .rv,html.ae-reveal-all .rv-group>*{transform:none!important}
+@media(prefers-reduced-motion:reduce){html.rv-on .rv,html.rv-on .rv-group>*{opacity:1!important;transform:none;transition:none!important}}
+</style>
+
+<style id="ae-fx-buttons">
+/* Owner 2026-10-19: three small round effect buttons under the hero, each with a tiny label */
+html body .hero .ae-fx-row{display:flex;justify-content:center;align-items:flex-start;gap:clamp(22px,7vw,40px);margin:22px auto 0;width:100%}
+html body .hero .ae-fx{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:64px;padding:0;border:0;background:none;color:#eadcb5;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+html body .hero .ae-fx:hover{opacity:1}
+html body .hero .ae-fx-orb{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;border:1px solid rgba(240,215,161,.62);background:radial-gradient(circle at 50% 35%,rgba(60,52,32,.55),rgba(10,14,12,.86) 70%);box-shadow:inset 0 1px 0 rgba(255,244,214,.14),0 6px 18px -8px rgba(0,0,0,.7);transition:border-color .25s ease,box-shadow .25s ease,transform .2s ease}
+html body .hero .ae-fx-orb::after{content:"";position:absolute;inset:3px;border-radius:50%;border:1px solid rgba(240,215,161,.16);pointer-events:none}
+@media(hover:hover){html body .hero .ae-fx:hover .ae-fx-orb{border-color:#f2d68b;box-shadow:inset 0 1px 0 rgba(255,244,214,.2),0 0 18px rgba(242,214,139,.22)}}
+html body .hero .ae-fx:active .ae-fx-orb{transform:scale(.94)}
+html body .hero .ae-fx.is-firing .ae-fx-orb{border-color:#f2d68b;box-shadow:0 0 0 3px rgba(242,214,139,.12),0 0 22px rgba(242,214,139,.38)}
+html body .hero .ae-fx:focus-visible{outline:none}
+html body .hero .ae-fx:focus-visible .ae-fx-orb{outline:2px solid #f2d68b;outline-offset:3px}
+html body .hero .ae-fx-label{font-family:var(--fs-ui);font-size:11.5px;font-weight:500;letter-spacing:.1em;line-height:1.2;white-space:nowrap;color:#e6d7ae}
+html[lang=zh-Hant] body .hero .ae-fx-label{font-family:"Noto Serif TC",var(--fs-ui);font-size:12px;letter-spacing:.18em;margin-right:-.18em}
+.ae-fx-i{display:block;pointer-events:none}
+.ae-fx-i-glow{width:20px;height:20px;background:radial-gradient(circle,#fff7d6 0 18%,rgba(255,214,110,.9) 30%,rgba(242,190,80,0) 70%);position:relative}
+.ae-fx-i-glow::before,.ae-fx-i-glow::after{content:"";position:absolute;left:50%;top:50%;width:20px;height:1.2px;margin:-.6px 0 0 -10px;background:linear-gradient(90deg,transparent,#f7dfa0,transparent)}
+.ae-fx-i-glow::after{transform:rotate(90deg)}
+.ae-fx-i-coin{width:17px;height:17px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#fff6cf,#efc457 45%,#9c6b1a);box-shadow:0 0 0 1px rgba(120,78,16,.8),inset 0 0 0 3px rgba(255,236,170,.0),0 0 8px rgba(255,200,80,.35);position:relative}
+.ae-fx-i-coin::after{content:"";position:absolute;inset:3.5px;border-radius:50%;border:1px solid rgba(255,240,190,.75)}
+.ae-fx-i-laser{width:22px;height:22px;background:linear-gradient(118deg,transparent 46%,#ff6b8b 47% 52%,transparent 53%),linear-gradient(62deg,transparent 46%,#6fe3ff 47% 52%,transparent 53%),linear-gradient(90deg,transparent 47%,#ffe28d 48% 52%,transparent 53%);filter:drop-shadow(0 0 2px rgba(255,240,200,.6))}
+html[data-theme="light"] body .hero .ae-fx-orb{background:radial-gradient(circle at 50% 35%,#fffaf0,#f4ead2 75%);border-color:#a98a4b}
+html[data-theme="light"] body .hero .ae-fx-label{color:#5a4320}
+@media(prefers-reduced-motion:reduce){html body .hero .ae-fx-orb{transition:none}html body .hero .ae-fx:active .ae-fx-orb{transform:none}}
+</style>
+<style id="ae-home-fx-oneshot-20261027">
+/* v2476.13 (Owner 2026-10-27): the ✦ button shimmers so visitors notice it (gold sweep + twinkle + soft halo,
+   all inside/just around the 44px circle, so it covers no more of the painting); after the tray has been opened
+   once it calms to a faint slow halo. Reduced motion: a static glow. Tray icons are one-shot (no on/off state);
+   their name shows as a small tooltip above the icon on hover / keyboard focus, and briefly after a tap. */
+html body .hero>.ae-fx-dock .fx-toggle{position:relative;overflow:hidden;isolation:isolate;border-color:rgba(242,214,139,.78);background:radial-gradient(circle at 50% 40%,rgba(74,58,24,.62),rgba(13,21,14,.5) 72%);box-shadow:0 0 0 1px rgba(242,214,139,.18),0 0 12px rgba(242,214,139,.32);animation:aeFxHalo 2.8s ease-in-out infinite}
+html body .hero>.ae-fx-dock .fx-toggle::after{content:"";position:absolute;inset:-2px;border-radius:50%;z-index:-1;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,244,205,.0) 38%,rgba(255,240,190,.55) 50%,rgba(255,244,205,0) 62%,transparent 70%);background-size:260% 100%;background-position:130% 0;animation:aeFxSweep 3.6s ease-in-out infinite}
+html body .hero>.ae-fx-dock .ae-fx-spark{color:#ffe3a0;animation:aeFxTwinkle 2.8s ease-in-out infinite}
+html body .hero>.ae-fx-dock .ae-fx-spark .s{transform-box:fill-box;transform-origin:center;animation:aeFxStar 1.9s ease-in-out infinite}
+html body .hero>.ae-fx-dock.fx-seen .fx-toggle{animation:aeFxHaloSoft 5.5s ease-in-out infinite;border-color:rgba(242,214,139,.6)}
+html body .hero>.ae-fx-dock.fx-seen .fx-toggle::after{animation:none;opacity:0}
+html body .hero>.ae-fx-dock.fx-seen .ae-fx-spark,html body .hero>.ae-fx-dock.fx-seen .ae-fx-spark .s{animation:none}
+@keyframes aeFxHalo{0%,100%{box-shadow:0 0 0 1px rgba(242,214,139,.16),0 0 8px rgba(242,214,139,.22)}50%{box-shadow:0 0 0 3px rgba(242,214,139,.16),0 0 18px rgba(255,214,120,.52)}}
+@keyframes aeFxHaloSoft{0%,100%{box-shadow:0 0 0 1px rgba(242,214,139,.1),0 0 6px rgba(242,214,139,.14)}50%{box-shadow:0 0 0 1px rgba(242,214,139,.16),0 0 11px rgba(242,214,139,.26)}}
+@keyframes aeFxSweep{0%,35%{background-position:130% 0}75%,100%{background-position:-30% 0}}
+@keyframes aeFxTwinkle{0%,100%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 2px rgba(255,220,130,.5))}50%{transform:scale(1.12) rotate(12deg);filter:drop-shadow(0 0 6px rgba(255,220,130,.9))}}
+@keyframes aeFxStar{0%,100%{opacity:.35;transform:scale(.6)}50%{opacity:1;transform:scale(1.15)}}
+html[data-theme="light"] body .hero>.ae-fx-dock .fx-toggle{background:radial-gradient(circle at 50% 40%,#fff6dc,#f6e3b8 75%);border-color:#a8873f}
+html[data-theme="light"] body .hero>.ae-fx-dock .ae-fx-spark{color:#9a6f1c}
+/* tooltips */
+html body .hero>.ae-fx-dock .ae-fx{position:relative;overflow:visible}
+html body .hero>.ae-fx-dock .ae-fx .ae-fx-label{position:absolute;left:50%;bottom:calc(100% + 9px);transform:translate(-50%,3px);display:block;padding:5px 9px 5px;border-radius:9px;border:1px solid rgba(240,215,161,.42);background:rgba(8,12,10,.86);color:#f6e7bf;font-size:11.5px;line-height:1;letter-spacing:.08em;white-space:nowrap;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:2}
+html[lang="zh-Hant"] body .hero>.ae-fx-dock .ae-fx .ae-fx-label{letter-spacing:.14em;margin-right:0;padding-right:calc(9px - .14em)}
+html body .hero>.ae-fx-dock .ae-fx .ae-fx-label::after{content:"";position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:rgba(8,12,10,.86)}
+@media(hover:hover){html body .hero>.ae-fx-dock .ae-fx:hover .ae-fx-label{opacity:1;visibility:visible;transform:translate(-50%,0);transition-delay:0s}html body .hero>.ae-fx-dock .ae-fx:hover .ae-fx-orb{border-color:#ffe3a0;box-shadow:0 0 0 2px rgba(242,214,139,.18),0 0 16px rgba(242,214,139,.42)}}
+html body .hero>.ae-fx-dock .ae-fx:focus-visible .ae-fx-label,html body .hero>.ae-fx-dock .ae-fx.is-named .ae-fx-label{opacity:1;visibility:visible;transform:translate(-50%,0);transition-delay:0s}
+html[data-theme="light"] body .hero>.ae-fx-dock .ae-fx .ae-fx-label{background:rgba(255,249,236,.97);color:#4a3818;border-color:#b59562;box-shadow:0 4px 12px rgba(29,51,32,.14)}
+html[data-theme="light"] body .hero>.ae-fx-dock .ae-fx .ae-fx-label::after{border-top-color:rgba(255,249,236,.97)}
+html body .hero>.ae-fx-dock .ae-fx.is-firing .ae-fx-orb{animation:aeFxFire .6s ease-out}
+@keyframes aeFxFire{0%{transform:scale(.9);box-shadow:0 0 0 0 rgba(255,222,140,.6)}100%{transform:scale(1);box-shadow:0 0 0 10px rgba(255,222,140,0)}}
+@media(prefers-reduced-motion:reduce){html body .hero>.ae-fx-dock .fx-toggle,html body .hero>.ae-fx-dock .fx-toggle::after,html body .hero>.ae-fx-dock .ae-fx-spark,html body .hero>.ae-fx-dock .ae-fx-spark .s,html body .hero>.ae-fx-dock .ae-fx.is-firing .ae-fx-orb{animation:none}html body .hero>.ae-fx-dock .fx-toggle{box-shadow:0 0 0 2px rgba(242,214,139,.16),0 0 14px rgba(255,214,120,.42)}html body .hero>.ae-fx-dock .fx-toggle::after{opacity:0}html body .hero>.ae-fx-dock .ae-fx .ae-fx-label{transition:none}}
+</style>
+
+<style id="ae-work-lightbox">
+/* 02 精選畫作: tap a work to see it large (Owner 2026-10-19) */
+html body.ae-polish #works .home-work-gallery figure{cursor:zoom-in;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;outline:none}
+html body.ae-polish #works .home-work-gallery figure:focus-visible img{box-shadow:0 0 0 2px #f2d68b}
+html.ae-lb-lock,html.ae-lb-lock body{overflow:hidden}
+.ae-lb{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:56px 18px 64px;opacity:0;transition:opacity .24s ease;touch-action:none;-webkit-tap-highlight-color:transparent}
+.ae-lb[hidden]{display:none}
+.ae-lb.is-open{opacity:1}
+.ae-lb-scrim{position:absolute;inset:0;background:rgba(5,7,6,.94);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.ae-lb-stage{position:relative;margin:0;display:flex;flex-direction:column;align-items:center;max-width:100%;transform:scale(.97);transition:transform .28s cubic-bezier(.2,.7,.2,1),opacity .2s ease;will-change:transform}
+.ae-lb.is-open .ae-lb-stage{transform:none}
+.ae-lb-frame{padding:10px;background:#121814;box-shadow:0 0 0 1px rgba(237,205,117,.45),0 40px 80px -40px rgba(0,0,0,.9);outline:1px solid rgba(237,205,117,.2);outline-offset:-6px}
+.ae-lb-img{display:block;max-width:min(calc(100vw - 56px),1100px);max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px);width:auto;height:auto;object-fit:contain;-webkit-user-drag:none;user-select:none;-webkit-user-select:none}
+html body .ae-lb .ae-lb-cap{align-self:stretch;margin:14px 0 0;padding:1px 0 1px 12px;border-left:1px solid rgba(237,205,117,.55);color:#f7f5ee;font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif}
+html body .ae-lb .ae-lb-line{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:19px;font-weight:500;line-height:1.25}
+html body .ae-lb .ae-lb-title{font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif}
+html body .ae-lb .ae-lb-no{font-family:"Cormorant Garamond",Georgia,serif;margin-right:.5em;font-size:12px;letter-spacing:.1em;color:#edcd75}
+html body .ae-lb .ae-lb-note{display:block;margin-top:3px;font-family:Inter,"Noto Serif TC",sans-serif;font-size:12px;letter-spacing:.1em;color:#aeb8b0}
+html[lang=zh-Hant] body .ae-lb .ae-lb-note{font-family:"Noto Serif TC",serif;letter-spacing:.16em}
+html body .ae-lb button{position:absolute;z-index:2;display:grid;place-items:center;width:44px;height:44px;padding:0;border-radius:50%;border:1px solid rgba(240,215,161,.5);background:rgba(10,14,12,.72);color:#f2dfae;font:300 24px/1 "Cormorant Garamond",Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.ae-lb button:hover{opacity:1;border-color:#f2d68b}
+.ae-lb button:focus-visible{outline:2px solid #f2d68b;outline-offset:3px}
+.ae-lb-close{top:max(12px,env(safe-area-inset-top));right:14px}
+.ae-lb-prev,.ae-lb-next{bottom:max(14px,env(safe-area-inset-bottom))}
+.ae-lb-prev{left:calc(50% - 98px)}.ae-lb-next{right:calc(50% - 98px)}
+html body .ae-lb .ae-lb-count{position:absolute;z-index:2;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);margin:0;height:44px;line-height:44px;font-family:"Cormorant Garamond",Georgia,serif;font-size:15px;letter-spacing:.18em;color:#d9c99f}
+@media(min-width:850px){.ae-lb{padding:64px 96px 80px}.ae-lb-prev,.ae-lb-next{bottom:auto;top:50%;margin-top:-22px}.ae-lb-prev{left:28px}.ae-lb-next{right:28px}.ae-lb-frame{padding:16px}.ae-lb-img{max-height:calc(100vh - 220px)}html body .ae-lb .ae-lb-line{font-size:24px}}
+@media(prefers-reduced-motion:reduce){.ae-lb,.ae-lb-stage{transition:none}.ae-lb-stage{transform:none}}
+</style>
+</head>
 <body class="ae-polish">
 <main>
 <section class="hero" id="top" aria-label="AE Universe Creation homepage hero">
 <div class="hero-grid" aria-hidden="true"></div>
-<canvas id="ae-home-light" aria-hidden="true"></canvas>
+<canvas id="ae-home-light" aria-hidden="true"></canvas><span id="aeArtVersion" class="ae-art-version" aria-hidden="true" data-build="v2476.14-preview-20261028-home-only">v2476.4 · home-copy</span>
 <audio id="ae-home-audio" src="/media/aurelia-techno-eternal-148bpm.m4a" preload="none" loop></audio>
 <header class="header">
 <button id="menuButton" class="menu-toggle" aria-label="Open menu" aria-controls="siteMenu" aria-expanded="false" data-i18n="menu">MENU</button>
 <a href="/" aria-label="AE Universe Creation — home"><img class="brand-mark" src="assets/ae-three-rings-transparent.webp" alt="AE Universe Creation three-ring logo"></a>
 <div class="header-right"><button id="languageButton" class="language-toggle" aria-label="Switch language">中文</button><button id="themeButton" class="theme-toggle" aria-label="Toggle light and dark appearance" aria-pressed="false">◐</button></div>
 </header>
+<button type="button" id="aeTapHint" class="ae-tap-hint" hidden><span class="ae-tap-mark" aria-hidden="true"><span class="ae-tap-ring"></span><span class="ae-tap-ring r2"></span><svg class="ae-tap-i" viewBox="0 0 24 24"><path d="M9.2 11.4V5.6a1.6 1.6 0 0 1 3.2 0v5.2l.1-.9a1.5 1.5 0 0 1 3 .2v1l.1-.4a1.45 1.45 0 0 1 2.8.5v.6a1.4 1.4 0 0 1 2.7.5v3.3c0 3.3-2.4 6-5.7 6h-1.6a5.6 5.6 0 0 1-4.5-2.3l-3.2-4.4a1.55 1.55 0 0 1 2.4-1.9l.7.9Z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" stroke-linecap="round"/><path d="M7.1 4.6a4.6 4.6 0 0 1 7.4-.1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity=".7"/></svg></span><span class="ae-tap-t" data-i18n="hero_tap_sound">Tap to awaken sound</span></button><div class="ae-fx-dock"><button type="button" id="aeFxButton" class="fx-toggle" aria-label="特效" aria-expanded="false" aria-controls="aeFxTray"><svg class="ae-fx-spark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.2l1.9 6.9 6.9 1.9-6.9 1.9L12 20.8l-1.9-6.9L3.2 12l6.9-1.9z"/><path class="s" d="M18.6 3.8l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z"/></svg></button><div id="aeFxTray" class="ae-fx-tray" role="group" aria-label="畫面特效" hidden></div></div>
+<div class="ae-light-dock ae-sound-dock"><button type="button" id="aeSoundButton" class="sound-toggle" aria-label="聲音 開/關" aria-pressed="false" data-state="off"><svg class="ae-snd-i ae-snd-on" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path class="w" d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.4 7.4 0 0 1 0 10.4"/></svg><svg class="ae-snd-i ae-snd-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path class="w" d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg></button><span id="aeLightStatus" class="ae-light-status" role="status"></span></div>
 <div class="hero-inner"><div class="hero-copy">
-<p class="kicker">AE UNIVERSE CREATION</p>
-<h1 data-i18n="hero_title">Hand-painted art.<br>Digital sensation.</h1>
-<p class="hero-subtitle" data-i18n="hero_sub">Inspired by nature.</p>
-<span class="rainbow" data-i18n="rainbow">Feel art in your everyday life.</span>
+<p class="kicker">AE Universe Creation</p>
+<h1 data-i18n="hero_title">Hand-painted art<br>Digital sensation</h1>
+<p class="hero-subtitle" data-i18n="hero_sub">Inspired by nature</p>
+<span class="rainbow" data-i18n="rainbow">Discover colour, sound and light with us</span>
 <nav class="nav-choices" aria-label="Main site areas">
-<a class="feature" id="mainWorks" href="/works" data-i18n-link="works"><span class="feature-emblem" aria-hidden="true">✦</span><span><span class="feature-heading" data-i18n="works">View works</span><span class="feature-sub" data-i18n="works_sub">See original paintings and selected works</span></span><span class="feature-end" aria-hidden="true">→</span></a>
-<div class="secondary"><a href="/experience" data-i18n="experience">Interactive experience</a><a href="/about" data-i18n="story">About us</a><a href="/shop" data-i18n="shop">Buy art</a></div>
+<a class="feature" id="mainWorks" href="/works" data-i18n-link="works"><span class="feature-emblem" aria-hidden="true">✦</span><span><span class="feature-heading" data-i18n="hero_works">View original works</span><span class="feature-sub" data-i18n="works_sub">Meet AE through original art</span></span><span class="feature-end" aria-hidden="true">→</span></a>
+<div class="secondary"><a href="/experience" data-i18n="hero_experience">Art experience</a><a href="/about" data-i18n="hero_story">Meet the artists</a><a href="/shop" data-i18n="shop">Buy art</a></div>
 </nav>
-<p class="scroll-hint" data-i18n="scroll">SCROLL TO EXPLORE</p>
-<div class="ae-light-dock" role="group" aria-label="Music and light"><button type="button" id="aeMusicButton" title="音樂 · Music" aria-pressed="false">♫ Play music</button><button type="button" id="aeLightButton" title="光效 · Light" aria-pressed="true">✦ Light on</button><button type="button" id="aeTapButton" title="敲擊聲 · Tap sound" aria-pressed="false">◌ Tap sound off</button><span id="aeLightStatus" class="ae-light-status" role="status"></span></div>
 </div></div>
 </section>
 <section class="ae-intro" id="ae-intro"><div class="home-intro-grid">
-<div><p class="section-kicker" data-i18n="who_top">WHO WE ARE</p><h2 data-i18n="who_title">Meet AE Universe Creation.</h2></div>
-<div class="ae-intro-copy"><p data-i18n="who_body">AE Universe Creation brings together 13th Aurelia and 14th Elion. We create original hand-painted artworks and develop digital editions and interactive experiences from selected works.</p><a class="text-link" href="/about" data-i18n="who_link">Read our story →</a></div>
+<div><p class="section-kicker" data-no="01" data-i18n="who_top">WHO WE ARE</p><h2 data-i18n="who_title">Two artists, creating together</h2></div>
+<div class="ae-intro-copy"><p data-i18n="who_body">One sunlit afternoon, 13th Aurelia suggested painting together<br>Purple brushstrokes came first, then 14th Elion carried the colours and lines further<br>A moment they wanted to remember became Eternal Sun<br>AE Universe Creation continues to grow through everyday moments and shared creation</p><a class="text-link" href="/about" data-i18n="who_link">Read our story →</a></div>
 </div></section>
 <section class="ivory" id="works"><div class="container">
-<p class="section-kicker" data-i18n="enter">ORIGINAL ARTWORKS</p>
-<h2 data-i18n="enter_title">Selected paintings.</h2>
-<p class="section-lead" data-i18n="enter_sub">Explore original hand-painted works by AE Universe Creation.</p>
-<div class="discover"><div class="discover-visual" role="img" aria-label="Infinite Love Strength, AE original hand-painted artwork"></div><div class="discover-copy"><p class="section-kicker" data-i18n="original">FEATURED WORK</p><h3>Infinite Love Strength</h3><p data-i18n="original_desc">An original painting from AE's selected works gallery.</p><a class="text-link" href="/works" data-i18n="see_art">View selected works</a></div></div>
+<p class="section-kicker" data-no="02" data-i18n="enter">ORIGINAL ARTWORKS</p>
+<h2 data-i18n="enter_title">Every painting has a beginning</h2>
+<p class="section-lead" data-i18n="enter_sub">A glimpse of light in nature becomes colour on canvas<br>Discover works made individually and together</p>
+<div class="discover"><div class="discover-visual" role="img" aria-label="Infinite Love Strength, AE original hand-painted artwork"></div><div class="discover-copy"><p class="section-kicker" data-i18n="original">FEATURED WORK</p><h3>Infinite Love Strength</h3><p data-i18n="original_desc">Discover AE’s painting through this work</p><a class="text-link" href="/works" data-i18n="see_art">See more works</a></div></div>
 <div class="home-work-gallery" aria-label="Selected AE artworks">
-<figure><img src="assets/4e0991885a9649ea.webp" loading="lazy" decoding="async" alt="Eternal Sun original artwork"><figcaption>Eternal Sun｜盛明</figcaption></figure>
-<figure><img src="assets/b46ca2328e93f1f4.webp" loading="lazy" decoding="async" alt="Infinity Core original artwork"><figcaption>Infinity Core</figcaption></figure>
-<figure><img src="assets/2ee9aa3b017652d9.webp" loading="lazy" decoding="async" alt="Infinite Love original artwork"><figcaption>Infinite Love</figcaption></figure>
-<figure><img src="assets/bb5c9cf38f67af5b.webp" loading="lazy" decoding="async" alt="Universe Heart Bloom original artwork"><figcaption>Universe Heart Bloom</figcaption></figure>
+<figure><img src="assets/4e0991885a9649ea.webp" loading="lazy" decoding="async" alt="Eternal Sun original artwork"><figcaption><span class="wk-title" data-i18n="wk_es">Eternal Sun</span><span class="wk-note" data-i18n="wk_note">Original painting</span></figcaption></figure>
+<figure><img src="assets/b46ca2328e93f1f4.webp" loading="lazy" decoding="async" alt="Infinity Core original artwork"><figcaption><span class="wk-title">Infinity Core</span><span class="wk-note" data-i18n="wk_note">Original painting</span></figcaption></figure>
+<figure><img src="assets/2ee9aa3b017652d9.webp" loading="lazy" decoding="async" alt="Infinite Love original artwork"><figcaption><span class="wk-title">Infinite Love</span><span class="wk-note" data-i18n="wk_note">Original painting</span></figcaption></figure>
+<figure><img src="assets/bb5c9cf38f67af5b.webp" loading="lazy" decoding="async" alt="Universe Heart Bloom original artwork"><figcaption><span class="wk-title">Universe Heart Bloom</span><span class="wk-note" data-i18n="wk_note">Original painting</span></figcaption></figure>
 </div>
 </div></section>
 <section class="ae-shop" id="home-shop"><div class="container">
-<p class="section-kicker" data-i18n="products_top">AVAILABLE DIGITAL ART</p>
-<h2 data-i18n="products_title">What you can collect.</h2>
-<p class="ae-shop-lead" data-i18n="products_body">Three digital art products are currently offered for personal use through Ko-fi. See each product's formats and current price on the shop page.</p>
+<p class="section-kicker" data-no="03" data-i18n="products_top">AVAILABLE DIGITAL ART</p>
+<h2 data-i18n="products_title">What you can collect</h2>
+<p class="ae-shop-lead" data-i18n="products_body">Bring a painting into your everyday life<br>Three digital art collections are available on Ko-fi; see formats and prices in the shop</p>
 <div class="home-product-grid">
 <article><img src="assets/eternal-sun-edition-original.webp" loading="lazy" decoding="async" alt="Eternal Sun digital edition artwork"><div class="home-product-body"><h3>Eternal Sun｜盛明</h3><p data-i18n="product_one">Four digital formats</p><a href="/eternal-sun" data-i18n="product_details">Artwork &amp; editions →</a></div></article>
 <article><img src="assets/selected-works-v2/flower-heart-bloom.webp" loading="lazy" decoding="async" alt="Flower and Heart Cosmos digital artwork"><div class="home-product-body"><h3>Flower &amp; Heart Cosmos</h3><p data-i18n="product_two">Digital art collection</p><a href="/shop" data-i18n="product_shop">See in shop →</a></div></article>
@@ -188,37 +759,108 @@ html[data-theme="light"] .hero .kicker{padding:0;background:none;border:0;color:
 <a class="ae-shop-link" href="/shop" data-i18n="products_link">View available digital products →</a>
 </div></section>
 <section class="dark-section" id="experience"><div class="container">
-<p class="section-kicker" data-i18n="activity_top">ONLINE EXPERIENCES &amp; EXHIBITION</p>
-<h2 data-i18n="activity_title">Experience AE online.</h2>
-<p data-i18n="activity_intro">Play Touch Moment, explore AE Soul Cards, or visit the online exhibition. All three are available through the website.</p>
+<p class="section-kicker" data-no="04" data-i18n="activity_top">ONLINE EXPERIENCES &amp; EXHIBITION</p>
+<h2 data-i18n="activity_title">A different way to meet the art</h2>
+<p data-i18n="activity_intro">From looking to taking part<br>Meet the art through colour, sound and light</p>
 <div class="ae-activity-grid">
-<a href="/experience"><small data-i18n="activity_touch_kicker">20-SECOND INTERACTIVE ART</small><strong>Touch Moment｜心動時刻</strong><span data-i18n="activity_touch_body">Tap the glowing symbols for 20 seconds, then view your result card.</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
-<a href="/soul-cards"><small data-i18n="activity_soul_kicker">SOUL CARDS</small><strong>AE Soul Cards｜心靈卡牌</strong><span data-i18n="activity_soul_body">Discover artwork, colour and a short message.</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
-<a href="/ex1.html"><small data-i18n="activity_exh_kicker">ONLINE EXHIBITION</small><strong data-i18n="activity_exh_title">The Work Reveals Itself</strong><span data-i18n="activity_exh_body">Explore original works in the online exhibition.</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
+<a href="/experience"><small data-i18n="activity_touch_kicker">20-SECOND INTERACTIVE ART</small><strong>Touch Moment｜心動時刻</strong><span data-i18n="activity_touch_body">Play for 20 seconds, tap the glowing symbols, and take home a phone wallpaper</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
+<a href="/soul-cards"><small data-i18n="activity_soul_kicker">SOUL CARDS</small><strong>AE Soul Cards｜心靈卡牌</strong><span data-i18n="activity_soul_body">Discover artwork, colour and a short message</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
+<a href="/ex1.html"><small data-i18n="activity_exh_kicker">ONLINE EXHIBITION</small><strong data-i18n="activity_exh_title">The Work Reveals Itself</strong><span data-i18n="activity_exh_body">Explore original works in the online exhibition</span><span class="activity-arrow" aria-hidden="true">↗</span></a>
 </div>
 </div></section>
-<section class="manifesto"><div class="manifesto-inner"><div class="label">AE Universe Creation</div><blockquote><span data-i18n="better_world">Make it a better world.</span><br><span data-i18n="brand_slogan">Action Creates Infinity</span></blockquote><div class="links"><a href="/collections" data-i18n="editions">Digital Editions</a><a href="/about" data-i18n="story">Our story</a><a href="/shop" data-i18n="shop">Shop</a></div></div></section>
+<section class="manifesto"><div class="manifesto-inner"><div class="label">AE Universe Creation</div><blockquote><span data-i18n="better_world">Make it a better world</span><br><span data-i18n="brand_slogan">Action Creates Infinity</span></blockquote><div class="links"><a href="/collections" data-i18n="editions">Digital Editions</a><a href="/about" data-i18n="story">Our story</a><a href="/shop" data-i18n="shop">Shop</a></div></div></section>
 </main>
-<footer class="footer">AE UNIVERSE CREATION · ACTION CREATES INFINITY</footer>
-<div id="siteMenu" class="drawer" aria-hidden="true"><div class="drawer-scrim" id="menuScrim"></div><nav class="drawer-panel" aria-label="Primary navigation"><div class="drawer-head"><span>AE UNIVERSE CREATION</span><button id="menuClose" class="drawer-close" aria-label="Close menu">×</button></div><div class="drawer-list"><a href="/" data-i18n="home">Home</a><a href="/experience" data-i18n="experience">Experience</a><a href="/works" data-i18n="works">Works</a><a href="/collections" data-i18n="editions">Digital Editions</a><a href="/ex1.html" data-i18n="exhibition">Exhibition</a><a href="/about" data-i18n="story">Our story</a><a href="/soul-cards" data-i18n="soul_cards">Soul Cards</a><a href="/shop" data-i18n="shop">Shop</a></div><div class="drawer-bottom" data-i18n="drawer_note">Feel art in your everyday life.</div></nav></div>
+<footer class="footer">AE UNIVERSE CREATION · ACTION CREATES INFINITY<small class="ae-build-mark" style="display:block;margin-top:8px;font-size:10px;letter-spacing:.1em;opacity:.55">BUILD v2476.14-preview-20261028-home-only</small></footer>
+<div id="siteMenu" class="drawer" aria-hidden="true"><div class="drawer-scrim" id="menuScrim"></div><nav class="drawer-panel" aria-label="Primary navigation"><div class="drawer-head"><span>AE UNIVERSE CREATION</span><button id="menuClose" class="drawer-close" aria-label="Close menu">×</button></div><div class="drawer-list"><a href="/eternal-sun.html" data-i18n="m_es">Eternal Sun</a><a href="/" data-i18n="home">Home</a><a href="/experience" data-i18n="m_exp">Experience</a><a href="/works.html" data-i18n="m_works">The artworks</a><a href="/collections.html" data-i18n="m_col">Collections</a><a href="/shop.html" data-i18n="m_shop">Shop</a><a href="/about.html" data-i18n="m_story">Our story</a></div><div class="drawer-bottom" data-i18n="drawer_note">Aurelia &amp; Elion · AE Universe Creation</div></nav></div>
 <script>
 (()=>{
 'use strict';
 const dict={
- en:{who_top:"WHO WE ARE",who_title:"Meet AE Universe Creation.",who_body:"AE Universe Creation brings together 13th Aurelia and 14th Elion. We create original hand-painted artworks and develop digital editions and interactive experiences from selected works.",who_link:"Read our story →",original_desc:"An original painting from AE's selected works gallery.",products_top:"AVAILABLE DIGITAL ART",products_title:"What you can collect.",products_body:"Three digital art products are currently offered for personal use through Ko-fi. See each product's formats and current price on the shop page.",product_one:"Four digital formats",product_two:"Digital art collection",product_three:"Digital art collection",product_details:"Artwork &amp; editions →",product_shop:"See in shop →",products_link:"View available digital products →",activity_top:"ONLINE EXPERIENCES &amp; EXHIBITION",activity_title:"Experience AE online.",activity_intro:"Play Touch Moment, explore AE Soul Cards, or visit the online exhibition. All three are available through the website.",activity_touch_kicker:"20-SECOND INTERACTIVE ART",activity_touch_body:"Tap the glowing symbols for 20 seconds, then view your result card.",activity_soul_kicker:"SOUL CARDS",activity_soul_body:"Discover artwork, colour and a short message.",activity_exh_kicker:"ONLINE EXHIBITION",activity_exh_title:"The Work Reveals Itself",activity_exh_body:"Explore original works in the online exhibition.",menu:'MENU',hero_title:'Hand-painted art.<br>Digital sensation.',hero_sub:'Inspired by nature.',rainbow:'Feel art in your everyday life.',experience:'Interactive experience',experience_sub:'Start with a 20-second art experience',experience_top:'20-SECOND INTERACTIVE ART',works:'View works',works_sub:'See original paintings and selected works',editions:'Digital Editions',exhibition:'Exhibition',scroll:'SCROLL TO EXPLORE',enter:'ORIGINAL ARTWORKS',enter_title:'Selected paintings.',enter_sub:'Explore original hand-painted works by AE Universe Creation.',original:'FEATURED WORK',original_desc:'See this painting in the selected works gallery.',see_art:'View selected works',experience_title:'Touch Moment.',experience_body:'Tap the glowing symbols for 20 seconds, then view your result card.',open_game:'Open Touch Moment →',editions_top:'DIGITAL EXPANSION',editions_card:'Art for everyday life.',exhibition_top:'EXHIBITION',exhibition_card:'Explore the universe.',better_world:'Make it a better world.',brand_slogan:'Action Creates Infinity',home:'Home',story:'About us',shop:'Buy art',soul_cards:'Soul Cards',drawer_note:'Feel art in your everyday life.'},
- zh:{who_top:"我們是誰",who_title:"認識 AE Universe Creation。",who_body:"AE Universe Creation 連結 13th Aurelia 與 14th Elion 的創作。我們創作原創手繪作品，並將部分作品發展成數位藝術版本與互動體驗。",who_link:"認識我們的故事 →",original_desc:"來自 AE 精選作品畫廊的原創手繪作品。",products_top:"目前販售",products_title:"可以收藏的數位作品。",products_body:"目前有三款數位藝術商品透過 Ko-fi 提供個人使用。實際格式、內容與價格請以商店頁面為準。",product_one:"四種數位版本",product_two:"數位藝術系列",product_three:"數位藝術系列",product_details:"認識作品與版本 →",product_shop:"前往商店查看 →",products_link:"查看數位商品與購買方式 →",activity_top:"線上互動與展覽",activity_title:"現在可以參與的體驗。",activity_intro:"在網站玩《心動時刻》、探索 AE 心靈卡牌，或欣賞《作品自己顯現》線上展覽。",activity_touch_kicker:"20 秒互動藝術",activity_touch_body:"在 20 秒內點擊亮起的符號，結束後查看結果卡。",activity_soul_kicker:"心靈卡牌",activity_soul_body:"探索原創畫作、色彩與一句心靈小語。",activity_exh_kicker:"線上展覽",activity_exh_title:"《作品自己顯現》",activity_exh_body:"走進原創作品的線上展覽。",menu:'選單',hero_title:'手繪藝術。<br>數位感官體驗。',hero_sub:'靈感源自自然。',rainbow:'在日常生活中，感受藝術。',experience:'互動體驗',experience_sub:'從 20 秒的藝術體驗開始',experience_top:'20 秒互動藝術',works:'看作品',works_sub:'看原創手繪與精選作品',editions:'數位藝術',exhibition:'線上展覽',scroll:'向下探索',enter:'原創畫作',enter_title:'精選畫作。',enter_sub:'探索 AE Universe Creation 的原創手繪作品。',original:'精選作品',original_desc:'在精選作品集裡欣賞這幅畫。',see_art:'看精選作品',experience_title:'心動時刻。',experience_body:'在 20 秒內點擊亮起的符號，結束後查看結果卡。',open_game:'進入心動時刻 →',editions_top:'DIGITAL EXPANSION',editions_card:'讓藝術陪伴日常。',exhibition_top:'線上展覽',exhibition_card:'探索這個藝術宇宙。',better_world:'讓世界更美好。',brand_slogan:'行動創造無限',home:'首頁',story:'關於我們',shop:'購買作品',soul_cards:'靈魂卡',drawer_note:'在日常生活中，感受藝術。'}
+ en:{hero_tap_sound:"Tap to awaken sound",fx_glow:"Glow",fx_coins:"Gold coins",fx_laser:"Laser",wk_note:"Original painting",who_top:"WHO WE ARE",who_title:"Two artists, creating together",who_body:"One sunlit afternoon, 13th Aurelia suggested painting together<br>Purple brushstrokes came first, then 14th Elion carried the colours and lines further<br>A moment they wanted to remember became Eternal Sun<br>AE Universe Creation continues to grow through everyday moments and shared creation",who_link:"Read our story →",original_desc:"Discover AE’s painting through this work",products_top:"AVAILABLE DIGITAL ART",products_title:"What you can collect",products_body:"Bring a painting into your everyday life<br>Three digital art collections are available on Ko-fi; see formats and prices in the shop",product_one:"Four digital formats",product_two:"Digital art collection",product_three:"Digital art collection",product_details:"Artwork &amp; editions →",product_shop:"See in shop →",products_link:"View available digital products →",activity_top:"ONLINE EXPERIENCES &amp; EXHIBITION",activity_title:"A different way to meet the art",activity_intro:"From looking to taking part<br>Meet the art through colour, sound and light",activity_touch_kicker:"20-SECOND INTERACTIVE ART",activity_touch_body:"Play for 20 seconds, tap the glowing symbols, and take home a phone wallpaper",activity_soul_kicker:"SOUL CARDS",activity_soul_body:"Discover artwork, colour and a short message",activity_exh_kicker:"ONLINE EXHIBITION",activity_exh_title:"The Work Reveals Itself",activity_exh_body:"Explore original works in the online exhibition",menu:'MENU',hero_title:'Hand-painted art<br>Digital sensation',hero_sub:'Inspired by nature',rainbow:'Discover colour, sound and light with us',hero_works:'View original works',hero_experience:'Art experience',hero_story:'Meet the artists',wk_es:'Eternal Sun',experience:'Interactive experience',experience_sub:'Start with a 20-second art experience',experience_top:'20-SECOND INTERACTIVE ART',works:'View works',works_sub:'Meet AE through original art',editions:'Digital Editions',exhibition:'Exhibition',enter:'ORIGINAL ARTWORKS',enter_title:'Every painting has a beginning',enter_sub:'A glimpse of light in nature becomes colour on canvas<br>Discover works made individually and together',original:'FEATURED WORK',original_desc:'Discover AE’s painting through this work',see_art:'See more works',experience_title:'Touch Moment',experience_body:'Play for 20 seconds, tap the glowing symbols, and take home a phone wallpaper',open_game:'Open Touch Moment →',editions_top:'DIGITAL EXPANSION',editions_card:'Art for everyday life',exhibition_top:'EXHIBITION',exhibition_card:'Explore the universe',better_world:'Make it a better world',brand_slogan:'Action Creates Infinity',home:'Home',story:'About us',shop:'Buy art',soul_cards:'Soul Cards',drawer_note:'Aurelia &amp; Elion · AE Universe Creation',m_es:'Eternal Sun',m_exp:'Experience',m_works:'The artworks',m_col:'Collections',m_shop:'Shop',m_story:'Our story'},
+ zh:{hero_tap_sound:"輕觸畫面 開啟聲音",fx_glow:"發亮光",fx_coins:"金幣",fx_laser:"雷射光",wk_note:"原創手繪",who_top:"我們是誰",who_title:"兩個人，<br>一起把靈感畫下來",who_body:"一個陽光明亮的午後，13th Aurelia 提議一起畫畫<br>紫色的筆觸先展開，14th Elion 接著延伸色彩與線條<br>那個想留下的片刻，成了盛明 Eternal Sun<br>AE Universe Creation 的創作，也從這樣的日常與共創繼續生長",who_link:"讀我們的故事 →",original_desc:"從這幅作品，看看 AE 的手繪創作",products_top:"目前販售",products_title:"可以收藏的數位作品",products_body:"把喜歡的畫帶進日常<br>目前有三款數位藝術作品在 Ko-fi 可以收藏，格式與價格請見商店頁面",product_one:"四種數位版本",product_two:"數位藝術系列",product_three:"數位藝術系列",product_details:"認識作品與版本 →",product_shop:"前往商店查看 →",products_link:"查看數位商品與購買方式 →",activity_top:"線上互動與展覽",activity_title:"換一種方式，靠近作品",activity_intro:"從觀看到參與<br>讓色彩、聲音與光，成為認識作品的另一個入口",activity_touch_kicker:"20 秒互動藝術",activity_touch_body:"玩 20 秒，點亮符號，帶走一張專屬手機桌布",activity_soul_kicker:"心靈卡牌",activity_soul_body:"探索原創畫作、色彩與一句心靈小語",activity_exh_kicker:"線上展覽",activity_exh_title:"《作品自己顯現》",activity_exh_body:"走進原創作品的線上展覽",menu:'選單',hero_title:'手繪藝術<br>數位感官體驗',hero_sub:'靈感源自自然',rainbow:'一起感受色彩、聲音與光',hero_works:'欣賞原創作品',hero_experience:'走進藝術體驗',hero_story:'認識我們',wk_es:'盛明 Eternal Sun',experience:'互動體驗',experience_sub:'從 20 秒的藝術體驗開始',experience_top:'20 秒互動藝術',works:'看作品',works_sub:'從原創手繪，認識 AE',editions:'數位藝術',exhibition:'線上展覽',enter:'原創畫作',enter_title:'每一幅畫，<br>都有自己的開始',enter_sub:'從自然裡的一點光，到落在畫布上的色彩<br>看看我們各自的創作，也看看一起完成的作品',original:'精選作品',original_desc:'從這幅作品，看看 AE 的手繪創作',see_art:'看更多作品',experience_title:'心動時刻',experience_body:'玩 20 秒，點亮符號，帶走一張專屬手機桌布',open_game:'進入心動時刻 →',editions_top:'DIGITAL EXPANSION',editions_card:'讓藝術陪伴日常',exhibition_top:'線上展覽',exhibition_card:'探索這個藝術宇宙',better_world:'讓世界更美好',brand_slogan:'行動創造無限',home:'首頁',story:'關於我們',shop:'購買作品',soul_cards:'靈魂卡',drawer_note:'Aurelia &amp; Elion · AE Universe Creation',m_es:'盛明',m_exp:'互動體驗',m_works:'作品',m_col:'收藏系列',m_shop:'選購',m_story:'我們的故事'}
 };
-let lang='en';try{lang=localStorage.getItem('ae-language-home')||localStorage.getItem('ae-language')||'en'}catch{}const requestedLang=new URLSearchParams(location.search).get('lang');if(requestedLang==='zh'||requestedLang==='en')lang=requestedLang;if(!dict[lang])lang='en';
-function setLang(next){lang=next;document.title=next==='zh'?'AE Universe Creation — 手繪藝術。數位感官體驗。':'AE Universe Creation — Hand-painted Art. Digital Sensation.';document.documentElement.lang=next==='zh'?'zh-Hant':'en';document.querySelectorAll('[data-i18n]').forEach(el=>{const value=dict[next][el.dataset.i18n];if(value!==undefined)el.innerHTML=value});document.getElementById('languageButton').textContent=next==='zh'?'EN':'中文';document.getElementById('menuButton').setAttribute('aria-label',next==='zh'?'開啟選單':'Open menu');try{localStorage.setItem('ae-language-home',next);localStorage.setItem('ae-language',next)}catch{}}
+let lang='en';try{lang=localStorage.getItem('ae-language')||localStorage.getItem('ae-language-home')||'en'}catch{}const requestedLang=new URLSearchParams(location.search).get('lang');if(requestedLang==='zh'||requestedLang==='en')lang=requestedLang;if(!dict[lang])lang='en';
+function setLang(next){lang=next;document.title=next==='zh'?'AE Universe Creation — 手繪藝術。數位感官體驗。':'AE Universe Creation — Hand-painted Art. Digital Sensation.';document.documentElement.lang=next==='zh'?'zh-Hant':'en';document.querySelectorAll('[data-i18n]').forEach(el=>{let value=dict[next][el.dataset.i18n];if(value!==undefined){if(next==='zh'&&el.matches('h1,h2,h3,.hero-subtitle,.section-lead,.manifesto blockquote,.ae-activity-grid strong,.tail-links strong,.discover-copy h3,.home-product-body h3'))value=value.replace(/。/g,'<span class="zh-stop">。</span>');el.innerHTML=value}});document.getElementById('languageButton').textContent=next==='zh'?'EN':'中文';document.getElementById('menuButton').setAttribute('aria-label',next==='zh'?'開啟選單':'Open menu');try{localStorage.setItem('ae-language-home',next);localStorage.setItem('ae-language',next)}catch{}}
 setLang(lang);document.getElementById('languageButton').addEventListener('click',()=>setLang(lang==='en'?'zh':'en'));
 const themeBtn=document.getElementById('themeButton');let theme='dark';try{theme=localStorage.getItem('ae-theme')||'dark'}catch{}function setTheme(next){theme=next;document.documentElement.dataset.theme=next;themeBtn.setAttribute('aria-pressed',String(next==='light'));themeBtn.textContent=next==='light'?'◑':'◐';try{localStorage.setItem('ae-theme',next)}catch{}}setTheme(theme);themeBtn.addEventListener('click',()=>setTheme(theme==='light'?'dark':'light'));
-const drawer=document.getElementById('siteMenu'),menuBtn=document.getElementById('menuButton');function openMenu(open){drawer.classList.toggle('open',open);drawer.setAttribute('aria-hidden',String(!open));menuBtn.setAttribute('aria-expanded',String(open));document.body.style.overflow=open?'hidden':'';if(open)document.getElementById('menuClose').focus()}menuBtn.addEventListener('click',()=>openMenu(true));document.getElementById('menuClose').addEventListener('click',()=>openMenu(false));document.getElementById('menuScrim').addEventListener('click',()=>openMenu(false));drawer.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>openMenu(false)));document.addEventListener('keydown',event=>{if(event.key==='Escape'&&drawer.classList.contains('open'))openMenu(false)});
+const drawer=document.getElementById('siteMenu'),menuBtn=document.getElementById('menuButton');
+let previousOverflow='';
+function openMenu(open){
+  if(open)previousOverflow=document.body.style.overflow;
+  if(!open)menuBtn.focus();
+  drawer.classList.toggle('open',open);
+  drawer.setAttribute('aria-hidden',String(!open));
+  menuBtn.setAttribute('aria-expanded',String(open));
+  document.body.style.overflow=open?'hidden':previousOverflow;
+  if(open)document.getElementById('menuClose').focus();
+}
+menuBtn.addEventListener('click',()=>openMenu(true));
+document.getElementById('menuClose').addEventListener('click',()=>openMenu(false));
+document.getElementById('menuScrim').addEventListener('click',()=>openMenu(false));
+drawer.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>openMenu(false)));
+document.addEventListener('keydown',event=>{
+  if(!drawer.classList.contains('open'))return;
+  if(event.key==='Escape'){event.preventDefault();openMenu(false);return;}
+  if(event.key!=='Tab')return;
+  const items=Array.from(drawer.querySelectorAll('a[href],button:not([disabled])')).filter(el=>el.getClientRects().length);
+  const first=items[0],last=items[items.length-1];
+  if(!first)return;
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+});
 })();
 </script>
-<script src="/ae-home-light-energy.js?v=20261014-fullplay1"></script>
-<script src="/ae-home-beats.js?v=20261014-fullplay1"></script>
-<script src="/ae-home-light.js?v=20261014-fullplay1"></script>
-<script src="/ae-home-opening.js?v=20261014-fullplay1"></script>
+<script id="ae-work-lightbox-js">
+(()=>{'use strict';
+const figs=[...document.querySelectorAll('#works .home-work-gallery figure')];if(!figs.length)return;
+const zh=()=>document.documentElement.lang==='zh-Hant';
+const lb=document.createElement('div');lb.className='ae-lb';lb.hidden=true;lb.setAttribute('role','dialog');lb.setAttribute('aria-modal','true');lb.setAttribute('aria-labelledby','aeLbTitle');
+lb.innerHTML='<div class="ae-lb-scrim"></div><figure class="ae-lb-stage"><div class="ae-lb-frame"><img class="ae-lb-img" alt="" draggable="false"></div><figcaption class="ae-lb-cap"><span class="ae-lb-line"><span class="ae-lb-no"></span><span class="ae-lb-title" id="aeLbTitle"></span></span><span class="ae-lb-note"></span></figcaption></figure><button type="button" class="ae-lb-close">×</button><button type="button" class="ae-lb-prev">‹</button><p class="ae-lb-count" aria-live="polite"></p><button type="button" class="ae-lb-next">›</button>';
+document.body.appendChild(lb);
+const $=c=>lb.querySelector(c),img=$('.ae-lb-img'),stage=$('.ae-lb-stage'),scrim=$('.ae-lb-scrim');
+let index=0,lastFocus=null,closing=0;
+function labels(){$('.ae-lb-close').setAttribute('aria-label',zh()?'關閉':'Close');$('.ae-lb-prev').setAttribute('aria-label',zh()?'上一幅':'Previous work');$('.ae-lb-next').setAttribute('aria-label',zh()?'下一幅':'Next work');
+  figs.forEach(f=>{const t=f.querySelector('.wk-title');f.setAttribute('aria-label',(zh()?'放大觀看：':'View larger: ')+(t?t.textContent:''));});}
+function show(i){index=(i+figs.length)%figs.length;const f=figs[index],src=f.querySelector('img');
+  img.src=src.currentSrc||src.src;img.alt=src.alt;$('.ae-lb-no').textContent='N° '+String(index+1).padStart(2,'0');
+  $('.ae-lb-title').textContent=(f.querySelector('.wk-title')||{}).textContent||'';$('.ae-lb-note').textContent=(f.querySelector('.wk-note')||{}).textContent||'';
+  $('.ae-lb-count').textContent=(index+1)+' / '+figs.length;}
+function open(i){clearTimeout(closing);labels();show(i);lastFocus=document.activeElement;lb.hidden=false;document.documentElement.classList.add('ae-lb-lock');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>lb.classList.add('is-open')));$('.ae-lb-close').focus({preventScroll:true});}
+function close(){if(lb.hidden)return;lb.classList.remove('is-open');stage.style.transform='';scrim.style.opacity='';
+  closing=setTimeout(()=>{lb.hidden=true;document.documentElement.classList.remove('ae-lb-lock');if(lastFocus&&lastFocus.focus)lastFocus.focus({preventScroll:true});},matchMedia('(prefers-reduced-motion: reduce)').matches?0:240);}
+figs.forEach((f,i)=>{f.tabIndex=0;f.setAttribute('role','button');
+  f.addEventListener('click',()=>open(i));
+  f.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open(i);}});});
+$('.ae-lb-close').addEventListener('click',close);scrim.addEventListener('click',close);
+$('.ae-lb-prev').addEventListener('click',()=>show(index-1));$('.ae-lb-next').addEventListener('click',()=>show(index+1));
+document.addEventListener('keydown',e=>{if(lb.hidden)return;
+  if(e.key==='Escape'){e.preventDefault();close();}else if(e.key==='ArrowLeft')show(index-1);else if(e.key==='ArrowRight')show(index+1);
+  else if(e.key==='Tab'){const b=[...lb.querySelectorAll('button')],k=b.indexOf(document.activeElement);e.preventDefault();b[(k+(e.shiftKey?-1:1)+b.length)%b.length].focus();}});
+// Swipe: down = close, left/right = next/previous. The stage follows the finger while dragging down.
+let sx=0,sy=0,drag=false;
+lb.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+stage.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sy=e.clientY;stage.style.transition='none';try{stage.setPointerCapture(e.pointerId)}catch(_){}});
+stage.addEventListener('pointermove',e=>{if(!drag)return;const dy=Math.max(0,e.clientY-sy),dx=e.clientX-sx;if(dy>Math.abs(dx)){stage.style.transform=`translateY(${dy}px) scale(${1-Math.min(dy,300)/3000})`;scrim.style.opacity=String(1-Math.min(dy,300)/500);}});
+const end=e=>{if(!drag)return;drag=false;stage.style.transition='';const dx=e.clientX-sx,dy=e.clientY-sy;
+  if(dy>80&&dy>Math.abs(dx))close();else{stage.style.transform='';scrim.style.opacity='';if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))show(index+(dx<0?1:-1));}};
+stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
+new MutationObserver(()=>{labels();if(!lb.hidden)show(index);}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});labels();
+})();
+</script>
+<script id="ae-gallery-reveal">
+(()=>{if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+const root=document.documentElement,singles='#ae-intro .section-kicker,#ae-intro h2,#ae-intro .ae-intro-copy,#works .container>.section-kicker,#works h2,#works .section-lead,#works .discover-visual,#works .discover-copy,#home-shop .container>.section-kicker,#home-shop h2,#home-shop .ae-shop-lead,#home-shop .ae-shop-link,#experience .container>.section-kicker,#experience h2,#experience .container>p:not(.section-kicker),.manifesto-inner>*',groups='#works .home-work-gallery,#home-shop .home-product-grid,#experience .ae-activity-grid';
+const io=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){e.target.classList.add('is-in');io.unobserve(e.target)}},{rootMargin:'0px 0px -8% 0px',threshold:.08});
+document.querySelectorAll(singles).forEach(el=>{const sib=[...el.parentElement.children].filter(c=>c.matches(singles));el.style.transitionDelay=Math.min(sib.indexOf(el),3)*90+'ms';el.classList.add('rv');io.observe(el)});
+document.querySelectorAll(groups).forEach(g=>{[...g.children].forEach((c,i)=>c.style.transitionDelay=i*110+'ms');g.classList.add('rv-group');io.observe(g)});
+root.classList.add('rv-on');})();
+</script>
+<script src="/ae-home-light-energy.js?v=20261018-laser1"></script>
+<script src="/ae-home-beats.js?v=20261018-laser1"></script>
+<script src="/ae-chime.js?v=20261019-gal4"></script>
+<script src="/ae-home-light.js?v=20261027-oneshot1"></script>
+<script src="/ae-home-opening.js?v=20261027-calm1"></script>
 </body>
 </html>
 
