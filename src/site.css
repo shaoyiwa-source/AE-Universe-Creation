@@ -346,3 +346,6 @@ html[data-theme=light] .site-footer{background:#f1f2ee}
   .brand-mark{width:42px}
 }
 
+
+/* ae-no-visible-build: build/version markers are for vercel curl only, never shown to visitors */
+.ae-art-version,.ae-build-mark,.ae-version-mark,#aeArtVersion{display:none!important}
