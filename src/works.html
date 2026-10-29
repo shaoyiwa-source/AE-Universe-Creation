@@ -63,6 +63,8 @@ html[data-theme="light"] .ae-art-bloom{mix-blend-mode:normal;background:radial-g
       const x=event.detail===0?rect.width/2:event.clientX-rect.left;
       const y=event.detail===0?rect.height/2:event.clientY-rect.top;
       bloom(button,Math.max(0,Math.min(rect.width,x)),Math.max(0,Math.min(rect.height,y)),index);
+      // Soft synthesized chime, same family as the homepage tap (ae-chime.js). Only for real taps, not the invitation glow.
+      if(enabled&&window.aeChime)window.aeChime.tap(Math.max(0,Math.min(1,x/Math.max(rect.width,1))));
       start=null;
     });
     button.addEventListener('blur',()=>{start=null;});
@@ -89,5 +91,5 @@ html[data-theme="light"] .ae-art-bloom{mix-blend-mode:normal;background:radial-g
     }
   }
 })();
-</script></body></html>
+</script><script src="/ae-chime.js?v=20261019-gal4"></script></body></html>
 <script async data-explicit-opt-in="true" data-deployment-id="dpl_6XUQLVi8RmYPo3bmd9uUUBiiMKbQ" src="https://vercel.live/_next-live/feedback/feedback.js"></script>
