@@ -437,6 +437,9 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
 
 </script>
 <style id="ae-tap-sound-style">
+/* v2476.23: no double-tap-zoom delay or swallowed taps on the board (iOS) */
+#board,#board .cell,#startBtn,#replayBtn,.ae-sound-toggle{touch-action:manipulation}
+#board .cell{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .ae-sound-toggle{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;min-height:40px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:inherit;font:inherit;font-size:13px;letter-spacing:.04em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .ae-sound-toggle:hover,.ae-sound-toggle:focus-visible{border-color:var(--warm,#e7bd67)}
 .ae-sound-toggle .ae-sound-icon{font-size:15px;line-height:1}
@@ -448,14 +451,21 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
 }
 </style>
 <script id="ae-tap-sound-script">
-/* AE Touch Moment — tap sound (v2476.19 preview; v2476.22: lit-cell sound is now a grace note
- * into a quick ascending 3-note celesta arpeggio, ~0.3 s, root/pitch varies per tap).
- * Sound only: a short self-synthesised Web Audio chime per tap on the board while the
- * 20-second game runs (bright note on a lit cell, softer tick elsewhere). No audio files,
- * no third-party audio. Voices are capped (oldest stopped) and taps closer than 40 ms
- * are merged, so fast tapping never piles up into noise. Audio is unlocked on the first
- * user gesture (touchend/pointerup/click/keydown) for iOS Safari. Mute choice is
- * remembered in localStorage. Does not touch scoring, timer, artwork or cards.
+/* AE Touch Moment — tap sound (v2476.19 preview; v2476.22 flourish; v2476.23 latency fix).
+ * Lit cell: grace note into a quick ascending 3-note celesta arpeggio (C pentatonic, ~0.3 s),
+ * starting note walks per tap, +-8 cents. Empty cell: short tick. Self-synthesised, no files.
+ * v2476.23:
+ *  - Taps register on pointerdown (finger touch), not on click (finger lift): the game's own
+ *    click handler is invoked right away with a synthetic click, and the later native click of
+ *    the same tap is swallowed, so nothing is counted twice. Keyboard clicks work as before.
+ *  - touch-action: manipulation on the board (no iOS double-tap-zoom delay / swallowed taps).
+ *  - The grid updates first, the sound is started right after.
+ *  - Flourishes and tick are pre-rendered once into AudioBuffers (OfflineAudioContext); each
+ *    tap is one BufferSource + one gain, started at once. No tap is merged or dropped: when 4
+ *    voices are sounding the oldest is faded out (stolen).
+ *  - If iOS suspends/interrupts the AudioContext, it is resumed on the tap and the sound plays
+ *    as soon as it is running again.
+ * Mute choice is remembered in localStorage. Scoring, timer, artwork and cards are untouched.
  */
 (() => {
   'use strict';
@@ -465,27 +475,82 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
   if (!board || !shell) return;
   const KEY = 'ae_experience_tap_sound_v1';
   const AC = window.AudioContext || window.webkitAudioContext;
+  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   let muted = false;
   try { muted = localStorage.getItem(KEY) === 'off'; } catch (e) {}
-  let ctx = null, master = null, unlocked = false, lastAt = -1e9, step = 0;
+  let ctx = null, master = null, unlocked = false, step = 0, buffers = null, rendering = false;
   const voices = [];
+  const stats = { hit: 0, tick: 0, buffered: 0, live: 0, deferred: 0 };
   const MAX_VOICES = 4, VOLUME = 0.28;
-  // C major pentatonic in semitones above C6 (1046.5 Hz). Every figure stays in this scale,
-  // so any run of taps is consonant.
   const PENTA = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
   const C6 = 1046.5;
-  const ROOTS = [1, 2, 3, 2, 4, 1, 3, 0]; // walk of starting degrees, so taps don't repeat one figure
-  const hz = (deg, cents) => C6 * Math.pow(2, (PENTA[deg] + cents / 100) / 12);
+  const ROOTS = [1, 2, 3, 2, 4, 1, 3, 0]; // walk of starting degrees
+  const hz = (deg) => C6 * Math.pow(2, PENTA[deg] / 12);
+  const now = () => (window.performance && performance.now()) || Date.now();
+
+  // ---- sound design (used both for pre-rendering and as live fallback) ----
+  function note(c, dest, t, f, peak, decay) {
+    const ng = c.createGain();
+    ng.connect(dest);
+    ng.gain.setValueAtTime(0.0001, t);
+    ng.gain.exponentialRampToValueAtTime(peak, t + 0.003);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    [[f, 1], [f * 2, 0.22], [f * 2.76, 0.1]].forEach(([fr, amp], i) => {
+      const x = c.createOscillator(), xg = c.createGain();
+      x.type = 'sine'; x.frequency.value = fr; xg.gain.value = amp;
+      if (i === 2) { xg.gain.setValueAtTime(amp, t); xg.gain.exponentialRampToValueAtTime(0.0001, t + decay * 0.4); }
+      x.connect(xg); xg.connect(ng);
+      x.start(t); x.stop(t + decay + 0.02);
+    });
+  }
+  function flourish(c, dest, t, r) { // grace note (one step below) + 3 rising notes
+    note(c, dest, t, hz(Math.max(0, r - 1)), 0.28, 0.05);
+    note(c, dest, t + 0.03, hz(r), 0.5, 0.14);
+    note(c, dest, t + 0.09, hz(r + 2), 0.48, 0.15);
+    note(c, dest, t + 0.15, hz(r + 4), 0.55, 0.17);
+  }
+  function tick(c, dest, t) {
+    const a = c.createOscillator(), g = c.createGain();
+    a.type = 'triangle'; a.frequency.value = 1046.5;
+    a.connect(g); g.connect(dest);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.28, t + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+    a.start(t); a.stop(t + 0.09);
+  }
+  const FLOURISH_LEN = 0.36, TICK_LEN = 0.1;
+
+  function renderOne(len, draw) {
+    return new Promise((res, rej) => {
+      try {
+        const rate = ctx.sampleRate || 44100;
+        const oc = new OAC(1, Math.ceil(len * rate), rate);
+        draw(oc, oc.destination, 0);
+        const p = oc.startRendering();
+        if (p && p.then) p.then(res, rej);
+        else oc.oncomplete = e => res(e.renderedBuffer);
+      } catch (e) { rej(e); }
+    });
+  }
+  function prerender() {
+    if (buffers || rendering || !ctx || !OAC) return;
+    rendering = true;
+    const roots = [...new Set(ROOTS)];
+    Promise.all([renderOne(TICK_LEN, tick), ...roots.map(r => renderOne(FLOURISH_LEN, (c, d, t) => flourish(c, d, t, r)))])
+      .then(([tk, ...fl]) => { const m = {}; roots.forEach((r, i) => { m[r] = fl[i]; }); buffers = { tick: tk, flourish: m }; })
+      .catch(() => { rendering = false; }); // keep live synthesis as fallback
+  }
 
   function ensureCtx() {
     if (ctx || !AC) return ctx;
     try {
-      ctx = new AC();
+      try { ctx = new AC({ latencyHint: 'interactive' }); } catch (e) { ctx = new AC(); }
       master = ctx.createGain();
       master.gain.value = VOLUME;
       const comp = ctx.createDynamicsCompressor && ctx.createDynamicsCompressor();
       if (comp) { comp.threshold.value = -14; comp.ratio.value = 6; master.connect(comp); comp.connect(ctx.destination); }
       else master.connect(ctx.destination);
+      prerender();
     } catch (e) { ctx = null; }
     return ctx;
   }
@@ -502,84 +567,109 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
   }
   ['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(t =>
     document.addEventListener(t, unlock, { capture: true, passive: true }));
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && ctx && ctx.state !== 'running' && unlocked && !muted) { try { ctx.resume(); } catch (e) {} }
+  });
 
   function retire(v, when, tc) {
     const k = tc || 0.008;
     try { v.g.gain.cancelScheduledValues(when); v.g.gain.setValueAtTime(v.g.gain.value, when); v.g.gain.setTargetAtTime(0, when, k); } catch (e) {}
-    v.o.forEach(o => { try { o.stop(when + k * 6); } catch (e) {} });
+    v.src.forEach(o => { try { o.stop(when + k * 6); } catch (e) {} });
   }
-  // One celesta-like note: sine fundamental, a soft octave and a short glassy bell partial.
-  function note(dest, o, t, f, peak, decay) {
-    const ng = ctx.createGain();
-    ng.connect(dest);
-    ng.gain.setValueAtTime(0.0001, t);
-    ng.gain.exponentialRampToValueAtTime(peak, t + 0.003);
-    ng.gain.exponentialRampToValueAtTime(0.0001, t + decay);
-    [[f, 1, 'sine'], [f * 2, 0.22, 'sine'], [f * 2.76, 0.1, 'sine']].forEach(([fr, amp, type], i) => {
-      const x = ctx.createOscillator(), xg = ctx.createGain();
-      x.type = type; x.frequency.value = fr; xg.gain.value = amp;
-      if (i === 2) { xg.gain.setValueAtTime(amp, t); xg.gain.exponentialRampToValueAtTime(0.0001, t + decay * 0.4); }
-      x.connect(xg); xg.connect(ng);
-      x.start(t); x.stop(t + decay + 0.02);
-      o.push(x);
-    });
+  function start(hit) {
+    const t = ctx.currentTime;
+    while (voices.length >= MAX_VOICES) retire(voices.shift(), t); // steal oldest, never drop
+    if (hit) voices.forEach(v => { if (v.hit && !v.fading) { v.fading = true; retire(v, t, 0.03); } });
+    const g = ctx.createGain();
+    g.connect(master);
+    const v = { g, src: [], hit };
+    const r = ROOTS[step % ROOTS.length];
+    if (hit) step++;
+    const rate = hit ? Math.pow(2, ((Math.random() * 16) - 8) / 1200) : 1; // +-8 cents
+    const buf = buffers && (hit ? buffers.flourish[r] : buffers.tick);
+    if (buf) {
+      const s = ctx.createBufferSource();
+      s.buffer = buf; s.playbackRate.value = rate;
+      s.connect(g); s.start(0);
+      v.src.push(s); stats.buffered++;
+      s.onended = () => done(v);
+    } else {
+      // Fallback before the buffers are ready: synthesise live on the same graph.
+      if (hit) flourish(ctx, g, t, r); else tick(ctx, g, t);
+      stats.live++;
+      setTimeout(() => done(v), ((hit ? FLOURISH_LEN : TICK_LEN) + 0.05) * 1000);
+    }
+    voices.push(v);
+    if (hit) stats.hit++; else stats.tick++;
+  }
+  function done(v) {
+    const i = voices.indexOf(v);
+    if (i >= 0) voices.splice(i, 1);
+    setTimeout(() => { try { v.g.disconnect(); } catch (e) {} }, 300);
   }
   function play(hit) {
     if (muted) return;
-    unlock();
+    if (!ctx) unlock();
     if (!ctx || ctx.state === 'closed') return;
-    const now = (window.performance && performance.now()) || Date.now();
-    if (now - lastAt < 40) return; // merge near-simultaneous taps
-    lastAt = now;
-    const t = ctx.currentTime;
-    while (voices.length >= MAX_VOICES) retire(voices.shift(), t);
-    // A new figure gently fades any figure still ringing (30 ms), so fast taps stay clean.
-    if (hit) voices.forEach(v => { if (v.hit && !v.fading) { v.fading = true; retire(v, t, 0.03); } });
-    const g = ctx.createGain();
-    g.gain.value = 1;
-    g.connect(master);
-    const o = [];
-    let end;
-    if (hit) {
-      // Grace note (one scale step below) into a quick ascending 3-note arpeggio
-      // (every other pentatonic degree). Root walks per tap, +-8 cents of random tuning.
-      const r = ROOTS[step++ % ROOTS.length], cents = (Math.random() * 16) - 8;
-      const grace = Math.max(0, r - 1);
-      note(g, o, t, hz(grace, cents), 0.28, 0.05);
-      note(g, o, t + 0.03, hz(r, cents), 0.5, 0.14);
-      note(g, o, t + 0.09, hz(r + 2, cents), 0.48, 0.15);
-      note(g, o, t + 0.15, hz(r + 4, cents), 0.55, 0.17);
-      end = t + 0.34;
-    } else {
-      const a = ctx.createOscillator();
-      a.type = 'triangle'; a.frequency.value = 1046.5;
-      a.connect(g);
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.28, t + 0.003);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-      o.push(a);
-      end = t + 0.09;
-      a.start(t); a.stop(end);
-    }
-    const v = { g, o, hit };
-    voices.push(v);
-    o[o.length - 1].onended = () => { const i = voices.indexOf(v); if (i >= 0) voices.splice(i, 1); try { g.disconnect(); } catch (e) {} };
+    if (ctx.state === 'running') { start(hit); return; }
+    // iOS 'suspended' / 'interrupted': resume and play as soon as it runs (if still timely).
+    const asked = now();
+    stats.deferred++;
+    try {
+      const p = ctx.resume();
+      if (p && p.then) p.then(() => { if (ctx.state === 'running' && now() - asked < 400) start(hit); }).catch(() => {});
+    } catch (e) {}
   }
+
   const isRunning = () => shell.classList.contains('is-running') ||
     !!(window.__AE_TEST__ && window.__AE_TEST__.getState && window.__AE_TEST__.getState().running);
-  // Capture phase: read the cell's state before the game's own handler moves the light.
-  board.addEventListener('click', e => {
+
+  // ---- input: register on pointerdown ----
+  let dispatching = false, pending = 0, lastDown = -1e9;
+  board.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     const cell = e.target.closest && e.target.closest('.cell');
     if (!cell || !board.contains(cell) || !isRunning()) return;
-    play(cell.classList.contains('active'));
+    const hit = cell.classList.contains('active');
+    const t = now();
+    if (t - lastDown > 1000) pending = 0;
+    lastDown = t; pending++;
+    dispatching = true;
+    try {
+      // Run the game's own click path now (bloom, chase light, score, next cell), same order.
+      cell.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window, detail: 1,
+        clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY }));
+    } finally { dispatching = false; }
+    play(hit); // after the grid has updated
+  }, { capture: true, passive: true });
+  // Swallow the native click that follows a tap already handled on pointerdown.
+  window.addEventListener('click', e => {
+    if (!e.isTrusted || e.detail === 0 || pending <= 0) return;
+    if (!(e.target instanceof Element) || !board.contains(e.target) || !e.target.closest('.cell')) return;
+    if (now() - lastDown > 1000) { pending = 0; return; }
+    pending--;
+    e.stopImmediatePropagation();
+    e.preventDefault();
   }, true);
+  // Keyboard / assistive clicks (no pointerdown): read the cell before the game moves the light,
+  // play after the game has updated (bubble listener on the board runs after the cell's handler).
+  let keyHit = null;
+  board.addEventListener('click', e => {
+    if (dispatching) return;
+    const cell = e.target.closest && e.target.closest('.cell');
+    keyHit = (cell && board.contains(cell) && isRunning()) ? cell.classList.contains('active') : null;
+  }, true);
+  board.addEventListener('click', () => {
+    if (dispatching || keyHit === null) return;
+    const h = keyHit; keyHit = null; play(h);
+  });
   // Start / replay presses also chime, so the very first tap on a phone is audible.
   document.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('#startBtn,#replayBtn,#aeEventStart');
     if (b) play(true);
   }, true);
 
-  // Visible mute toggle (remembered).
+  // ---- visible mute toggle (remembered) ----
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.id = 'aeSoundToggle';
@@ -606,7 +696,8 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
   if (startBtn && startBtn.parentNode) startBtn.insertAdjacentElement('afterend', btn);
   else shell.appendChild(btn);
   new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-  window.__AE_TAP_SOUND__ = { play, isMuted: () => muted, state: () => (ctx ? ctx.state : 'none') };
+  window.__AE_TAP_SOUND__ = { play, isMuted: () => muted, state: () => (ctx ? ctx.state : 'none'),
+    ready: () => !!buffers, stats: () => Object.assign({}, stats) };
 })();
 </script>
 </body></html>
