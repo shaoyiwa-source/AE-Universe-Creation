@@ -53,12 +53,12 @@
 <div class="artlife-group">
 <h3 data-en="Digital wallpapers" data-zh="數位桌布">Digital wallpapers</h3>
 
-<div class="wallgrid wallgrid-phone"><figure class="wall"><img alt="Heart Fly lockscreen mock" src="assets/eff1f49dd5d2ba0e.webp" loading="lazy"><figcaption>Heart Fly</figcaption></figure><figure class="wall"><img alt="Eternal Sun lockscreen mock" src="assets/e4e318e48fb936ea.webp" loading="lazy"><figcaption>盛明｜Eternal Sun</figcaption></figure><figure class="wall"><img alt="Infinity Core-01 lockscreen mock" src="assets/1e93d5cbab71795e.webp" loading="lazy"><figcaption>Infinity Core-01</figcaption></figure><figure class="wall"><img alt="Universe Heart Flow lockscreen mock" src="assets/1bcfd3552e13287b.webp" loading="lazy"><figcaption>Universe Heart Flow</figcaption></figure></div>
+<div class="wallgrid wallgrid-phone"><figure class="wall"><img alt="AE hand-painted wallpaper 1" data-alt-en="AE hand-painted wallpaper 1" data-alt-zh="AE 手繪桌布 1" src="assets/eff1f49dd5d2ba0e.webp" loading="lazy"></figure><figure class="wall"><img alt="AE hand-painted wallpaper 2" data-alt-en="AE hand-painted wallpaper 2" data-alt-zh="AE 手繪桌布 2" src="assets/e4e318e48fb936ea.webp" loading="lazy"></figure><figure class="wall"><img alt="AE hand-painted wallpaper 3" data-alt-en="AE hand-painted wallpaper 3" data-alt-zh="AE 手繪桌布 3" src="assets/1e93d5cbab71795e.webp" loading="lazy"></figure><figure class="wall"><img alt="AE hand-painted wallpaper 4" data-alt-en="AE hand-painted wallpaper 4" data-alt-zh="AE 手繪桌布 4" src="assets/1bcfd3552e13287b.webp" loading="lazy"></figure></div>
 </div>
 <div class="artlife-group">
 <h3 data-en="Beautiful fragments" data-zh="美麗片段">Beautiful fragments</h3>
 
-<div class="wallgrid wallgrid-clean"><figure class="wall"><img alt="Flower Heart Bloom wallpaper" src="assets/d9416a6d494ad899.webp" loading="lazy"><figcaption>Flower Heart Bloom</figcaption></figure><figure class="wall"><img alt="Infinity Core-02 wallpaper" src="assets/5ce439fc589e42ed.webp" loading="lazy"><figcaption>Infinity Core-02</figcaption></figure><figure class="wall"><img alt="Infinity Heart Fly wallpaper" src="assets/9170b9cef25ad59f.webp" loading="lazy"><figcaption>Infinity Heart Fly</figcaption></figure><figure class="wall"><img alt="Heart Rebuild wallpaper" src="assets/8e7b4e97db3ba342.webp" loading="lazy"><figcaption>Heart Rebuild</figcaption></figure><figure class="wall"><img alt="Flower Flow wallpaper" src="assets/14e11ff3ee5ffb77.webp" loading="lazy"><figcaption>Flower Flow</figcaption></figure></div>
+<div class="wallgrid wallgrid-clean"><figure class="wall"><img alt="AE artwork fragment 1" data-alt-en="AE artwork fragment 1" data-alt-zh="AE 精選片段 1" src="assets/d9416a6d494ad899.webp" loading="lazy"></figure><figure class="wall"><img alt="AE artwork fragment 2" data-alt-en="AE artwork fragment 2" data-alt-zh="AE 精選片段 2" src="assets/5ce439fc589e42ed.webp" loading="lazy"></figure><figure class="wall"><img alt="AE artwork fragment 3" data-alt-en="AE artwork fragment 3" data-alt-zh="AE 精選片段 3" src="assets/9170b9cef25ad59f.webp" loading="lazy"></figure><figure class="wall"><img alt="AE artwork fragment 4" data-alt-en="AE artwork fragment 4" data-alt-zh="AE 精選片段 4" src="assets/8e7b4e97db3ba342.webp" loading="lazy"></figure><figure class="wall"><img alt="AE artwork fragment 5" data-alt-en="AE artwork fragment 5" data-alt-zh="AE 精選片段 5" src="assets/14e11ff3ee5ffb77.webp" loading="lazy"></figure></div>
 </div>
 
 <div class="artlife-group" id="cosmos-packs">
@@ -199,6 +199,7 @@
   new MutationObserver(() => { if (dlg.open) render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
 })();
 </script>
+<script id="ae-wall-alt">(function(){function a(){var zh=(document.documentElement.lang||'').toLowerCase().indexOf('zh')===0;document.querySelectorAll('img[data-alt-en][data-alt-zh]').forEach(function(i){i.alt=zh?i.dataset.altZh:i.dataset.altEn})}a();new MutationObserver(a).observe(document.documentElement,{attributes:true,attributeFilter:['lang']})})();</script>
 <script src="/ae-version.js" defer></script>
 </body></html>
 <script async data-explicit-opt-in="true" data-deployment-id="dpl_6XUQLVi8RmYPo3bmd9uUUBiiMKbQ" src="https://vercel.live/_next-live/feedback/feedback.js"></script>
