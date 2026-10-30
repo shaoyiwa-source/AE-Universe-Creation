@@ -13,7 +13,7 @@ const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const ease=t=>1-Math.pow(1-clamp(t),3);
 function create({canvas,dpr=1,vibrate=null}){
  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas unavailable');
- let W=0,H=0,ratio=1,dead=false,lite=false,slowSince=0,fastSince=0,ema=16.7,lastNow=0;
+ let W=0,H=0,ratio=1,dead=false,lite=false,slowSince=0,fastSince=0,ema=16.7,lastNow=0,recoverMs=6000,liteAt=0;
  let bolts=[],rings=[],orbs=[],motes=[],trail=[],flash=0,lastDrop=0,lastBeat=-1,lastTouch=-1e9,lastIdleSweep=0,idleSweeps=[],held=null,stats={};
  function resize(){const w=Math.max(1,canvas.clientWidth||1),h=Math.max(1,canvas.clientHeight||1);const r=Math.min(lite?1:dpr,2);if(w===W&&h===H&&r===ratio)return;W=w;H=h;ratio=r;canvas.width=Math.round(W*r);canvas.height=Math.round(H*r);ctx.setTransform(r,0,0,r,0,0);}
  // Beam origins all sit on the screen edges / corners, outside the painting.
@@ -26,10 +26,10 @@ function create({canvas,dpr=1,vibrate=null}){
   ctx.lineCap='round';
   if(!lite){ctx.strokeStyle=`rgba(${c},${.13*power})`;ctx.lineWidth=width*4.2;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(ex,ey);ctx.stroke();}
   ctx.strokeStyle=`rgba(${c},${.55*power})`;ctx.lineWidth=width*1.9;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(ex,ey);ctx.stroke();
-  const g=ctx.createLinearGradient(x0,y0,ex,ey);g.addColorStop(0,`rgba(255,255,248,${.95*power})`);g.addColorStop(.82,`rgba(255,253,236,${.92*power})`);g.addColorStop(1,'rgba(255,253,236,0)');
+  let g;if(lite)g=`rgba(255,255,246,${.92*power})`;else{g=ctx.createLinearGradient(x0,y0,ex,ey);g.addColorStop(0,`rgba(255,255,248,${.95*power})`);g.addColorStop(.82,`rgba(255,253,236,${.92*power})`);g.addColorStop(1,'rgba(255,253,236,0)');}
   ctx.strokeStyle=g;ctx.lineWidth=Math.max(1.2,width*.62);ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(ex,ey);ctx.stroke();
  }
- function hit(x,y,rgb,power,r){if(power<=.02)return;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(255,255,245,${.95*power})`);g.addColorStop(.25,`rgba(${rgb.join(',')},${.55*power})`);g.addColorStop(1,`rgba(${rgb.join(',')},0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+ function hit(x,y,rgb,power,r){if(power<=.02)return;if(lite){ctx.fillStyle=`rgba(${rgb.join(',')},${.4*power})`;ctx.beginPath();ctx.arc(x,y,r*.45,0,6.283);ctx.fill();ctx.fillStyle=`rgba(255,255,245,${.9*power})`;ctx.beginPath();ctx.arc(x,y,r*.18,0,6.283);ctx.fill();return;}const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(255,255,245,${.95*power})`);g.addColorStop(.25,`rgba(${rgb.join(',')},${.55*power})`);g.addColorStop(1,`rgba(${rgb.join(',')},0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
  function goldRing(x,y,radius,alpha,lw=2){if(alpha<=.01||radius<=0)return;
   ctx.strokeStyle=`rgba(255,214,110,${.28*alpha})`;ctx.lineWidth=lw*4;ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.stroke();
   ctx.strokeStyle=`rgba(255,226,140,${alpha})`;ctx.lineWidth=lw;ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.stroke();
@@ -60,10 +60,10 @@ function create({canvas,dpr=1,vibrate=null}){
  function draw(f){
   if(dead)return stats;const{now,art,playing,beat={},reduced}=f;
   const fd=lastNow?now-lastNow:16.7;lastNow=now;
-  // P0-1: hysteresis, never latch on one hitch. lite after 2 s slow, recover after 3 s smooth.
+  // P0-1: hysteresis, never latch on one hitch. lite after 2 s slow, recover after 6 s smooth (back-off up to 48 s if it keeps falling back).
   if(fd>0&&fd<500)ema=ema*.9+fd*.1;
-  if(ema>22){fastSince=0;slowSince=slowSince||now;if(!lite&&now-slowSince>2000){lite=true;resize();}}
-  else if(ema<18){slowSince=0;fastSince=fastSince||now;if(lite&&now-fastSince>3000){lite=false;resize();}}
+  if(ema>22){fastSince=0;slowSince=slowSince||now;if(!lite&&now-slowSince>2000){lite=true;if(liteAt&&now-liteAt<recoverMs+4000)recoverMs=Math.min(recoverMs*2,48000);liteAt=now;resize();}}
+  else if(ema<18){slowSince=0;fastSince=fastSince||now;if(lite&&now-fastSince>recoverMs){lite=false;liteAt=now;resize();}}
   else{slowSince=0;fastSince=0;}
   resize();ctx.clearRect(0,0,W,H);
   for(let i=later.length-1;i>=0;i--)if(now>=later[i].at){const j=later.splice(i,1)[0];j.fn(now);}
@@ -71,7 +71,7 @@ function create({canvas,dpr=1,vibrate=null}){
   const ax=art.x,ay=art.y,aw=art.w,ah=art.h,cx=ax+aw*.52,cy=ay+ah*.522;
   const stage=beat.stage||'groove',pulse=playing?clamp(beat.pulse||0):0,drop=playing?clamp(beat.dropPulse||0):0;
   const idle=!playing&&!held&&now-lastTouch>1500;
-  ctx.globalCompositeOperation='lighter';
+  ctx.globalCompositeOperation=lite?'source-over':'lighter';
   // --- ambient laser show ---
   let count=0;
   if(playing){count=stage==='build'?8:(drop>.15?12:6);}
@@ -122,7 +122,7 @@ function create({canvas,dpr=1,vibrate=null}){
   for(const m of motes){m.x+=m.vx*dt;m.y+=m.vy*dt;const t=(now-m.born)/m.life,a=Math.sin(Math.PI*clamp(t));ctx.fillStyle=`rgba(255,232,150,${.9*a})`;ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,6.283);ctx.fill();}
   ctx.globalCompositeOperation='source-over';
   const particles=orbs.length+motes.length+trail.length;
-  stats={beams,bolts:bolts.length,rings:rings.length,orbs:orbs.length,particles,lite,ema:+ema.toFixed(1),idle,held:!!held};
+  stats={recoverMs,beams,bolts:bolts.length,rings:rings.length,orbs:orbs.length,particles,lite,ema:+ema.toFixed(1),idle,held:!!held};
   canvas.dataset.beams=String(beams);canvas.dataset.particles=String(particles);canvas.dataset.lite=lite?'1':'0';canvas.dataset.rings=String(rings.length);
   return stats;
  }
