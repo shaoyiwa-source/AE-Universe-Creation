@@ -4,8 +4,8 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生共創 Twin Flame · AE Universe Creation</title>
-<meta name="description" content="兩個人，各在 AE 原作上點一道光。兩道光相遇，生成一張只屬於你們的雙生光紋卡。Two people, two lights, one Twin Flame card."/>
-<meta name="ae-preview-version" content="together-v20-twinflame"/>
+<meta name="description" content="兩個人在同一幅 AE 原作上輪流畫光、各帶一個字、一起按住，把兩道光融成一張雙生光紋卡。Two people draw light in turns, each bring a word, and hold together to fuse one Twin Flame card."/>
+<meta name="ae-preview-version" content="together-v21-cocreate"/>
 <meta name="theme-color" content="#0d0b09"/>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="icon" type="image/png" href="/favicon.png"/>
@@ -14,23 +14,55 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet"/>
 <link rel="preload" as="image" href="/assets/selected-works-v2/love-embrace.webp"/>
-<link rel="stylesheet" href="/ae-games.css?v=2"/>
+<link rel="stylesheet" href="/ae-games.css?v=3"/>
 <style>
 .stage-wrap{max-width:760px;margin:6px auto 0}
-.stage{position:relative;margin:0 auto;border-radius:6px;touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:crosshair}
-.stage img{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 22px 60px rgba(0,0,0,.55),0 0 0 1px rgba(231,189,103,.3);pointer-events:none}
+.stage{position:relative;margin:0 auto;border-radius:6px;user-select:none;-webkit-user-select:none}
+.stage.drawing{touch-action:none;cursor:crosshair}
+.stage img{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 22px 60px rgba(0,0,0,.55),0 0 0 1px rgba(231,189,103,.3);pointer-events:none;-webkit-user-drag:none}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:6px}
-.stage.locked{cursor:default}
-.stage .tap-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 16px;border-radius:999px;background:rgba(13,11,9,.72);border:1px solid var(--line);font-size:14px;letter-spacing:.08em;color:var(--warm);pointer-events:none;white-space:nowrap;animation:hint 2.2s ease-in-out infinite}
+.stage .tap-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 16px;border-radius:999px;background:rgba(13,11,9,.78);border:1px solid var(--line);font-size:14px;letter-spacing:.06em;color:var(--warm);pointer-events:none;white-space:nowrap;animation:hint 2.2s ease-in-out infinite}
 .stage .tap-hint[hidden]{display:none}
-@keyframes hint{0%,100%{box-shadow:0 0 0 0 rgba(231,189,103,.0)}50%{box-shadow:0 0 0 8px rgba(231,189,103,.18)}}
+.stage .turn{position:absolute;left:10px;top:10px;padding:6px 12px;border-radius:999px;font:600 13px/1 system-ui,sans-serif;letter-spacing:.06em;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.stage .turn[hidden]{display:none}
+.turn.g{background:var(--gold);color:#1a140c}.turn.b{background:var(--blue);color:#0c1426}
+@keyframes hint{0%,100%{box-shadow:0 0 0 0 rgba(231,189,103,0)}50%{box-shadow:0 0 0 8px rgba(231,189,103,.18)}}
 .cap{margin:10px 0 0;text-align:center;font-size:12px;color:var(--muted);letter-spacing:.06em}
-.prompt{margin:14px auto 0;max-width:560px;text-align:center;font-size:17px;line-height:1.6;min-height:3.4em}
+.prompt{margin:14px auto 0;max-width:580px;text-align:center;font-size:17px;line-height:1.6;min-height:3.2em}
+.prompt:empty{display:none}
+.hold{padding-bottom:12px}
 .prompt .gold{color:var(--gold)}.prompt .blue{color:var(--blue)}
-.aside{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 0}
+.dots{display:flex;justify-content:center;gap:8px;margin:6px 0 0}
+.dots i{width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,.25)}
+.dots i.g{background:var(--gold);border-color:var(--gold)}.dots i.b{background:var(--blue);border-color:var(--blue)}
+.dots i.now{box-shadow:0 0 0 3px rgba(141,255,228,.45)}
+.aside{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:6px 0 0}
 .aside[hidden]{display:none}
 .textbtn{background:none;border:0;min-height:44px;padding:0 10px;color:var(--soft);text-decoration:underline;text-underline-offset:4px;cursor:pointer;font-size:14px}
-@media(min-width:860px){.stage-wrap{max-width:820px}}
+.textbtn[hidden]{display:none}
+.wcol{margin-top:6px}
+.wcol .who{font-size:14px;margin:12px 0 8px;text-align:center}
+.wcol .who.g{color:var(--gold)}.wcol .who.b{color:var(--blue)}
+.wcol .who .en{display:inline;margin-left:6px}
+.wcol .g-field{max-width:260px;margin:10px auto 0}
+.hold{max-width:640px;margin:16px auto 0;text-align:center}
+.hold[hidden]{display:none}
+.pads{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0 0}
+.pad{width:min(30vw,128px);aspect-ratio:1;border-radius:50%;border:2px solid;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;display:grid;place-items:center;align-content:center;gap:4px;font-size:22px;font-weight:600;transition:transform .15s ease,box-shadow .2s ease}
+.pad small{font:500 12px/1.2 system-ui,sans-serif;letter-spacing:.08em;opacity:.85}
+.pad.g{border-color:var(--gold);color:var(--gold);background:radial-gradient(circle,rgba(231,189,103,.18),rgba(231,189,103,.04))}
+.pad.b{border-color:var(--blue);color:var(--blue);background:radial-gradient(circle,rgba(122,168,255,.18),rgba(122,168,255,.04))}
+.pad.both{width:min(46vw,170px);border-color:var(--teal);color:var(--teal);background:radial-gradient(circle,rgba(141,255,228,.16),rgba(141,255,228,.03))}
+.pad.on{transform:scale(.94)}
+.pad.g.on{box-shadow:0 0 0 6px rgba(231,189,103,.25),0 0 40px rgba(231,189,103,.5)}
+.pad.b.on{box-shadow:0 0 0 6px rgba(122,168,255,.25),0 0 40px rgba(122,168,255,.5)}
+.pad.both.on{box-shadow:0 0 0 6px rgba(141,255,228,.25),0 0 40px rgba(141,255,228,.5)}
+.pad[hidden]{display:none}
+.meter{width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--teal) calc(var(--p,0)*360deg),rgba(255,255,255,.1) 0);display:grid;place-items:center;flex:none}
+.meter span{width:52px;height:52px;border-radius:50%;background:var(--night);display:grid;place-items:center;font:600 13px system-ui,sans-serif;color:var(--teal)}
+.support{margin:18px 0 0;padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:13px;line-height:1.7;color:var(--muted)}
+.support a{color:var(--gold);text-underline-offset:3px}
+@media(min-width:860px){.stage-wrap{max-width:700px}}
 </style>
 </head>
 <body>
@@ -42,26 +74,55 @@
   <div class="g-head">
     <p class="g-eyebrow">AE Universe Creation · 互動體驗</p>
     <h1>雙生共創<small>Twin Flame</small></h1>
-    <p class="g-lead">兩個人，各在畫上點一道光。<br>兩道光相遇，生成一張只屬於你們的<b style="color:var(--gold)">雙生光紋卡</b>。
-      <span class="en">Two people each tap one light onto the painting. Where they meet, your own Twin Flame card is born.</span></p>
+    <p class="g-lead">兩個人，在同一幅原作上<b style="color:var(--gold)">輪流畫光</b>、各帶一個字、<b style="color:var(--teal)">一起按住</b>，<br>把兩道光融成一張只屬於你們的<b style="color:var(--gold)">雙生光紋卡</b>。
+      <span class="en">Two people take turns drawing light on one painting, each bring a word, then hold together — and fuse one Twin Flame card that is only yours.</span></p>
     <ol class="g-steps" id="steps" aria-label="步驟 Steps">
-      <li data-s="1">① 金色的光</li><li data-s="2">② 藍色的光</li><li data-s="3">③ 光紋卡</li>
+      <li data-s="1">① 輪流畫光</li><li data-s="2">② 各帶一個字</li><li data-s="3">③ 一起按住</li><li data-s="4">④ 光紋卡</li>
     </ol>
   </div>
 
-  <section class="stage-wrap" aria-label="原作 Love Embrace">
-    <div class="stage" id="stage" role="button" tabindex="0" aria-label="點畫面留下一道光 Tap the painting to leave a light">
-      <img id="art" src="/assets/selected-works-v2/love-embrace.webp" alt="AE 原作 Love Embrace（原畫，未經修改）" width="1536" height="1120">
+  <section class="stage-wrap" id="stageWrap" aria-label="原作 Love Embrace">
+    <div class="stage" id="stage" role="application" tabindex="0" aria-label="在畫上拖曳，畫一道光 Drag on the painting to draw a light (Enter draws one for you)">
+      <img id="art" src="/assets/selected-works-v2/love-embrace.webp" alt="AE 原作 Love Embrace（原畫，未經修改）" width="1536" height="1120" draggable="false">
       <canvas id="ov" aria-hidden="true"></canvas>
-      <span class="tap-hint" id="hint">點一下 · Tap</span>
+      <span class="turn" id="turnTag" hidden></span>
+      <span class="tap-hint" id="hint" hidden></span>
     </div>
-    <p class="cap">原作《Love Embrace》· 光只在畫的上方，畫作保持原樣 · Original painting, unaltered</p>
+    <p class="cap">原作《Love Embrace》· 光只畫在畫的上方，畫作保持原樣 · Original painting, unaltered</p>
+    <div class="dots" id="dots" aria-hidden="true"></div>
     <p class="prompt" id="prompt" aria-live="polite"></p>
     <div class="aside" id="aside" hidden>
-      <button class="textbtn" id="sendA" type="button">對方不在身邊？把連結傳給他 · Send a link instead</button>
+      <button class="textbtn" id="undo" type="button">收回上一筆 · Undo</button>
+      <button class="textbtn" id="sendMode" type="button">對方不在身邊？先畫你的，再傳給他 · Not together? Draw yours, then send</button>
       <button class="textbtn" id="reset1" type="button">重來 · Start over</button>
     </div>
     <p class="g-note" id="note" aria-live="polite"></p>
+  </section>
+
+  <section class="g-panel" id="words" hidden aria-labelledby="wTitle">
+    <h3 id="wTitle">② 各帶一個字<span class="en">Each of you brings one word</span></h3>
+    <div class="wcol" id="colA">
+      <p class="who g">金色的人，你帶來什麼？<span class="en">Gold, what do you bring?</span></p>
+      <div class="g-chips" id="chipsA" role="group" aria-label="金色的人選一個字"></div>
+      <label class="g-field">名字（選填）· Name<input id="n1" maxlength="12" autocomplete="off" placeholder="例：Aurelia"></label>
+    </div>
+    <div class="wcol" id="colB">
+      <p class="who b">藍色的人，你帶來什麼？<span class="en">Blue, what do you bring?</span></p>
+      <div class="g-chips" id="chipsB" role="group" aria-label="藍色的人選一個字"></div>
+      <label class="g-field">名字（選填）· Name<input id="n2" maxlength="12" autocomplete="off" placeholder="例：Elion"></label>
+    </div>
+    <div class="g-nav"><button class="g-btn" id="toHold" type="button" disabled>下一步：一起按住 <small>Next</small></button></div>
+    <div class="g-nav" id="sendBox" hidden><button class="g-btn" id="sendLink" type="button" disabled>把我的光傳給他 <small>Send my light</small></button></div>
+  </section>
+
+  <section class="hold" id="hold" hidden aria-labelledby="hTitle">
+    <p class="prompt" id="hTitle" style="min-height:0"></p>
+    <div class="pads">
+      <button class="pad g" id="padA" type="button">金<small>按住 HOLD</small></button>
+      <div class="meter" id="meter"><span id="meterTxt">0%</span></div>
+      <button class="pad b" id="padB" type="button">藍<small>按住 HOLD</small></button>
+      <button class="pad both" id="padBoth" type="button" hidden>✦<small id="padBothTxt">一起按住 HOLD</small></button>
+    </div>
   </section>
 
   <section class="g-result" id="result" hidden aria-labelledby="rTitle">
@@ -69,26 +130,23 @@
       <img class="g-card-img" id="cardImg" alt="你們的雙生光紋卡 Your Twin Flame card" width="1080" height="1920">
       <div>
         <p class="g-got" id="rGot">你們得到了 · YOU RECEIVED</p>
-        <h2 id="rTitle">一張雙生光紋卡<span class="en">A Twin Flame Lightprint card</span></h2>
+        <h2 id="rTitle">一張你們一起畫出的雙生光紋卡<span class="en">A Twin Flame Lightprint you made together</span></h2>
         <div class="g-reward" id="reward"></div>
-        <div class="g-names">
-          <label>你的名字（選填）<input id="n1" maxlength="12" autocomplete="off" placeholder="例：Aurelia"></label>
-          <label>對方的名字（選填）<input id="n2" maxlength="12" autocomplete="off" placeholder="例：Elion"></label>
-        </div>
         <div class="g-actions">
           <button class="g-btn" id="save" type="button">儲存成手機桌布 <small>Save wallpaper</small></button>
           <div class="row">
             <button class="g-btn ghost" id="shareCard" type="button">傳給對方 <small>Send</small></button>
-            <button class="g-btn quiet" id="again" type="button">再做一張 <small>Again</small></button>
+            <button class="g-btn quiet" id="again" type="button">再畫一張 <small>Again</small></button>
           </div>
         </div>
         <p class="g-note" id="rNote" aria-live="polite"></p>
+        <p class="support" id="support">如果這段體驗對你有意義，你可以從 US$1 開始支持；無論金額多少，你得到的體驗都一樣。<br><span class="en" style="display:inline">If this experience meant something to you, you can support it from US$1. The experience stays the same at every amount.</span> <a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
         <nav class="g-next" aria-label="接下來 What's next">
           <h3>接下來<span class="en">What's next</span></h3>
           <div class="g-links">
             <a class="g-link" href="/works"><img src="/assets/selected-works-v2/love-embrace.webp" alt="" loading="lazy"><span><b>看這道光的原作</b><span>《Love Embrace》與更多 AE 手繪原作 · See the original</span></span></a>
             <a class="g-link" href="https://ko-fi.com/s/92c2647120" target="_blank" rel="noopener"><span class="ic">♡</span><span><b>HEART LAYERS 手機桌布</b><span>五款層層交疊的心，原作局部 · Five wallpapers on Ko-fi</span></span></a>
-            <a class="g-link" href="/dream-giver"><img src="/assets/selected-works-v2/heart-fly.webp" alt="" loading="lazy"><span><b>下一個：夢想給予</b><span>抽一張希望卡，送給自己或一個人 · Dream Giver</span></span></a>
+            <a class="g-link" href="/dream-giver"><img src="/assets/selected-works-v2/heart-fly.webp" alt="" loading="lazy"><span><b>下一個：夢想給予</b><span>寫下一個人的夢，封成一張夢想卡送給他 · Dream Giver</span></span></a>
           </div>
           <p class="cap" style="text-align:left"><a href="/color-moment">光紋心卡 Lightprint Card</a> · <a href="/touch-moment">觸動指尖 Touch Moment</a> · <a href="/experience">全部體驗 All experiences</a></p>
         </nav>
@@ -104,350 +162,8 @@
 </main>
 <canvas id="cardCanvas" width="1080" height="1920" hidden></canvas>
 <script src="/ae-chime.js" defer></script>
-<script src="/ae-games-kit.js?v=1"></script>
-<script>
-(() => {
-'use strict';
-const G = window.aeGames;
-const ART_SRC = '/assets/selected-works-v2/love-embrace.webp';
-const ART_TITLE = 'Love Embrace';
-const LINES = [
-  ['兩道光，不必一樣亮。', 'Two lights need not shine the same.'],
-  ['你往前一步，我也往前一步。', 'You take a step; so do I.'],
-  ['相遇的地方，就是新的光。', 'Where we meet, a new light begins.'],
-  ['一個人是光，兩個人是火。', 'One is a light; two make a flame.'],
-  ['兩種顏色，一起變成第三種。', 'Two colours become a third, together.'],
-  ['遠也好，近也好，光都找得到你。', 'Far or near, the light will find you.'],
-  ['先靠近，答案會自己來。', 'Come closer; the answer will follow.'],
-  ['我們各畫一筆，這幅畫就完整了。', 'One stroke each, and the picture is whole.'],
-  ['光碰到光，不會變少，只會變多。', 'Light meeting light never lessens — it grows.'],
-  ['謝謝你，走進這幅畫裡。', 'Thank you for stepping into this painting.'],
-  ['兩顆心，同一個方向。', 'Two hearts, one direction.'],
-  ['這一刻，由我們一起創造。', 'This moment, created together.']
-];
-const ABC = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-const FLAME_D = 'M80 16C108 48 104 86 92 112C86 132 84 156 80 176C76 156 74 132 68 112C56 86 52 48 80 16Z';
-const $ = (id) => document.getElementById(id);
-const stage = $('stage'), art = $('art'), ov = $('ov'), octx = ov.getContext('2d');
-const S = { a: null, b: null, d: '', n1: '', n2: '', mode: 'local', lp: '', phase: 'a', merge: 0, flame: 0, t0: performance.now() };
-
-/* ---------- URL in ---------- */
-const enc = (p) => String(Math.round(p.x * 99)).padStart(2, '0') + String(Math.round(p.y * 99)).padStart(2, '0');
-const dec = (s) => /^\d{4}$/.test(s || '') ? { x: Number(s.slice(0, 2)) / 99, y: Number(s.slice(2)) / 99 } : null;
-const q = new URLSearchParams(location.search);
-S.a = dec(q.get('a')); S.b = S.a ? dec(q.get('b')) : null;
-S.n1 = G.cleanName(q.get('n1')); S.n2 = G.cleanName(q.get('n2'));
-S.d = /^\d{8}$/.test(q.get('d') || '') ? q.get('d') : '';
-const lp = q.get('lp') || '';
-if (!S.a && /^LP-[23456789A-HJ-NP-Z]{8}$/.test(lp)) {
-  const h = G.hash32(lp);
-  S.a = { x: (12 + (h % 76)) / 99, y: (14 + (G.mix(h, 1) % 70)) / 99 };
-  S.lp = lp; S.mode = 'lp';
-} else if (S.a && S.b) S.mode = 'view';
-else if (S.a) S.mode = 'remote';
-
-/* ---------- helpers ---------- */
-function cardId(a, b) {
-  let h = G.hash32('tf|' + enc(a) + '|' + enc(b)), out = '';
-  for (let i = 0; i < 8; i++) { h = G.mix(h, i); out += ABC[h % ABC.length]; }
-  return 'TF-' + out.slice(0, 4) + '-' + out.slice(4);
-}
-function lineFor(a, b) { return LINES[G.hash32('line|' + enc(a) + enc(b)) % LINES.length]; }
-function dateLabel() {
-  if (S.d) return S.d.slice(0, 4) + '.' + S.d.slice(4, 6) + '.' + S.d.slice(6);
-  return G.today();
-}
-function setSteps(n) {
-  document.querySelectorAll('#steps li').forEach((li) => {
-    const s = Number(li.dataset.s);
-    li.className = s < n ? 'done' : (s === n ? 'on' : '');
-  });
-}
-function say(html) { $('prompt').innerHTML = html; }
-function note(t) { $('note').textContent = t || ''; }
-
-/* ---------- overlay drawing (glow only — the painting <img> is never touched) ---------- */
-function sizeOv() {
-  const r = art.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
-  ov.width = Math.max(1, Math.round(r.width * d)); ov.height = Math.max(1, Math.round(r.height * d));
-  octx.setTransform(d, 0, 0, d, 0, 0);
-}
-function orb(ctx, x, y, r, rgb, alpha) {
-  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, `rgba(255,255,255,${alpha})`);
-  g.addColorStop(.18, `rgba(${rgb},${alpha})`);
-  g.addColorStop(1, `rgba(${rgb},0)`);
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-}
-function liveOrb(ctx, x, y, r, rgb, a) {
-  ctx.save();
-  ctx.globalAlpha = a;
-  const halo = ctx.createRadialGradient(x, y, r * .2, x, y, r * 1.5);
-  halo.addColorStop(0, `rgba(${rgb},.75)`); halo.addColorStop(.55, `rgba(${rgb},.28)`); halo.addColorStop(1, `rgba(${rgb},0)`);
-  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x, y, r * 1.5, 0, Math.PI * 2); ctx.fill();
-  ctx.shadowColor = 'rgba(25,15,5,.6)'; ctx.shadowBlur = 8;
-  ctx.lineWidth = 3; ctx.strokeStyle = `rgb(${rgb})`; ctx.beginPath(); ctx.arc(x, y, r * .55, 0, Math.PI * 2); ctx.stroke();
-  ctx.shadowColor = `rgb(${rgb})`; ctx.shadowBlur = r * .8;
-  ctx.fillStyle = '#fffdf6'; ctx.beginPath(); ctx.arc(x, y, r * .3, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-}
-function flamePath(ctx, cx, cy, h, a) {
-  const k = h / 160;
-  ctx.save(); ctx.translate(cx - 80 * k, cy - 96 * k); ctx.scale(k, k);
-  const p = new Path2D(FLAME_D);
-  const fill = ctx.createLinearGradient(0, 16, 0, 176);
-  fill.addColorStop(0, `rgba(244,255,251,${a})`); fill.addColorStop(.45, `rgba(141,255,228,${a})`); fill.addColorStop(1, `rgba(20,201,164,${a})`);
-  const edge = ctx.createLinearGradient(52, 0, 108, 0);
-  edge.addColorStop(0, `rgba(231,189,103,${a})`); edge.addColorStop(.5, `rgba(125,255,240,${a})`); edge.addColorStop(1, `rgba(91,141,239,${a})`);
-  ctx.shadowColor = `rgba(120,255,220,${a * .9})`; ctx.shadowBlur = 24;
-  ctx.fillStyle = fill; ctx.fill(p);
-  ctx.lineWidth = 5; ctx.strokeStyle = edge; ctx.stroke(p);
-  ctx.restore();
-}
-function ctrlFor(A, B, h) {
-  const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2, dx = B.x - A.x, dy = B.y - A.y;
-  const sgn = (h & 1) ? 1 : -1, k = .35;
-  return { x: mx - dy * k * sgn, y: my + dx * k * sgn };
-}
-function qpt(A, C, B, t) { const u = 1 - t; return { x: u * u * A.x + 2 * u * t * C.x + t * t * B.x, y: u * u * A.y + 2 * u * t * C.y + t * t * B.y }; }
-function meetPoint(A, B) { return qpt(A, ctrlFor(A, B, G.hash32(enc(A) + enc(B))), B, .5); }
-
-function frame(now) {
-  const r = art.getBoundingClientRect(), W = r.width, H = r.height;
-  octx.clearRect(0, 0, W, H);
-  const pulse = G.reduce ? 1 : 1 + Math.sin((now - S.t0) / 420) * .12;
-  const R = Math.max(18, Math.min(W, H) * .075);
-  const A = S.a && { x: S.a.x * W, y: S.a.y * H }, B = S.b && { x: S.b.x * W, y: S.b.y * H };
-  octx.globalCompositeOperation = 'lighter';
-  if (A && B) {
-    const C = ctrlFor(A, B, G.hash32(enc(S.a) + enc(S.b)));
-    const m = S.merge;
-    // light thread
-    octx.lineCap = 'round';
-    const steps = 40;
-    for (let i = 0; i < steps; i++) {
-      const t1 = i / steps, t2 = (i + 1) / steps;
-      const shown = t1 < m * .5 || t2 > 1 - m * .5;
-      if (!shown) continue;
-      const p1 = qpt(A, C, B, t1), p2 = qpt(A, C, B, t2);
-      const gold = 1 - t1;
-      octx.strokeStyle = `rgba(${Math.round(255 * gold + 122 * (1 - gold))},${Math.round(214 * gold + 168 * (1 - gold))},${Math.round(130 * gold + 255 * (1 - gold))},.85)`;
-      octx.globalCompositeOperation = 'source-over';
-      octx.shadowColor = 'rgba(20,12,4,.55)'; octx.shadowBlur = 6;
-      octx.lineWidth = 4; octx.beginPath(); octx.moveTo(p1.x, p1.y); octx.lineTo(p2.x, p2.y); octx.stroke();
-      octx.shadowBlur = 0;
-    }
-    const pa = qpt(A, C, B, m * .5), pb = qpt(A, C, B, 1 - m * .5);
-    octx.globalCompositeOperation = 'source-over';
-    liveOrb(octx, A.x, A.y, R * .5, '255,214,130', .5);
-    liveOrb(octx, B.x, B.y, R * .5, '122,168,255', .5);
-    if (S.flame < 1) { liveOrb(octx, pa.x, pa.y, R * pulse, '255,214,130', 1); liveOrb(octx, pb.x, pb.y, R * pulse, '122,168,255', 1); }
-    if (S.flame > 0) {
-      const M = qpt(A, C, B, .5);
-      octx.globalCompositeOperation = 'lighter';
-      orb(octx, M.x, M.y, R * 3.2 * S.flame * pulse, '140,255,226', .55 * S.flame);
-      octx.globalCompositeOperation = 'source-over';
-      flamePath(octx, M.x, M.y, R * 2.6, S.flame);
-    }
-  } else {
-    octx.globalCompositeOperation = 'source-over';
-    if (A) liveOrb(octx, A.x, A.y, R * pulse, '255,214,130', 1);
-    if (B) liveOrb(octx, B.x, B.y, R * pulse, '122,168,255', 1);
-  }
-  octx.globalCompositeOperation = 'source-over';
-  requestAnimationFrame(frame);
-}
-
-/* ---------- flow ---------- */
-function render() {
-  const hint = $('hint');
-  $('aside').hidden = true;
-  stage.classList.toggle('locked', S.phase === 'done' || S.phase === 'merging');
-  if (S.phase === 'a') {
-    setSteps(1); hint.hidden = false; hint.textContent = '第一個人：點一下 · Tap';
-    say('<b>① 第一個人</b>：在畫上點一下，留下<span class="gold">金色</span>的光。<span class="en">Person one: tap the painting to leave a gold light.</span>');
-  } else if (S.phase === 'b') {
-    setSteps(2); hint.hidden = false; hint.textContent = '第二個人：點一下 · Tap';
-    if (S.mode === 'remote') say('有人在這幅畫上，為你留了一道<span class="gold">金色</span>的光。<br><b>② 輪到你</b>：點一下，用<span class="blue">藍色</span>的光回應。<span class="en">Someone left a gold light for you. Tap to answer with a blue light.</span>');
-    else if (S.mode === 'lp') say('你的光紋心卡 <b>' + S.lp + '</b> 化成了第一道<span class="gold">金光</span>。<br><b>② 換另一個人</b>：點一下，留下<span class="blue">藍色</span>的光。<span class="en">Your Lightprint became the first gold light. Now someone else taps a blue light.</span>');
-    else say('金色的光留下了。<br><b>② 把手機交給另一個人</b>：點一下，留下<span class="blue">藍色</span>的光。<span class="en">Hand the phone over — person two taps a blue light.</span>');
-    $('aside').hidden = S.mode === 'remote';
-    $('sendA').hidden = S.mode === 'remote';
-  } else if (S.phase === 'merging') {
-    setSteps(3); hint.hidden = true;
-    say('兩道光相遇了……<span class="en">The two lights meet…</span>');
-  } else {
-    setSteps(3); hint.hidden = true;
-    say(S.mode === 'view' ? '這是一張別人與你分享的雙生光紋卡。<span class="en">Someone shared their Twin Flame card with you.</span>'
-                          : '完成。往下看你們的光紋卡。<span class="en">Done — your card is below.</span>');
-  }
-}
-
-function placeAt(clientX, clientY) {
-  if (S.phase !== 'a' && S.phase !== 'b') return;
-  const r = art.getBoundingClientRect();
-  const p = { x: Math.min(1, Math.max(0, (clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (clientY - r.top) / r.height)) };
-  const color = S.phase === 'a' ? ['gold', 'white'] : ['blue', 'white'];
-  G.burst(clientX, clientY, { n: 22, colors: color, speed: 2.6 });
-  G.chime('tap', p.x); G.buzz(14);
-  if (S.phase === 'a') { S.a = p; S.phase = 'b'; render(); return; }
-  if (Math.hypot(p.x - S.a.x, p.y - S.a.y) < .06) { p.x = Math.min(1, S.a.x + .12); }
-  S.b = p; S.phase = 'merging'; render(); merge();
-}
-stage.addEventListener('click', (e) => { if (e.detail === 0) return; placeAt(e.clientX, e.clientY); });
-stage.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault();
-  const r = art.getBoundingClientRect();
-  placeAt(r.left + r.width * (S.phase === 'a' ? .32 : .68), r.top + r.height * (S.phase === 'a' ? .4 : .6));
-});
-
-function animate(dur, fn) {
-  return new Promise((ok) => {
-    if (G.reduce) { fn(1); return ok(); }
-    const t0 = performance.now();
-    const step = (now) => { const t = Math.min(1, (now - t0) / dur); fn(t); if (t < 1) requestAnimationFrame(step); else ok(); };
-    requestAnimationFrame(step);
-  });
-}
-async function merge() {
-  const ease = (t) => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-  await animate(1500, (t) => { S.merge = ease(t); });
-  const r = art.getBoundingClientRect(), M = meetPoint(S.a, S.b);
-  const mx = r.left + M.x * r.width, my = r.top + M.y * r.height;
-  G.burst(mx, my, { n: 60, colors: ['teal', 'gold', 'blue', 'white'], speed: 4.6, size: 2.8, decay: .012 });
-  G.chime('glow'); G.buzz([20, 40, 30]);
-  await animate(700, (t) => { S.flame = t; });
-  if (!S.d) { const d = new Date(); S.d = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); }
-  S.phase = 'done'; render();
-  await showResult(true);
-}
-
-/* ---------- the card (1080×1920 phone wallpaper) ---------- */
-let artImg = null;
-function drawSigil(ctx, cx, cy, size, A0, B0) {
-  const h = G.hash32(enc(A0) + enc(B0));
-  const half = size / 2;
-  ctx.save();
-  const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, half);
-  bg.addColorStop(0, '#1f1912'); bg.addColorStop(1, 'rgba(13,11,9,0)');
-  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(cx, cy, half, 0, Math.PI * 2); ctx.fill();
-  let ux = B0.x - A0.x, uy = B0.y - A0.y; const len = Math.hypot(ux, uy) || 1; ux /= len; uy /= len;
-  const L = size * .62, ox = cx + ((h % 41) - 20) / 400 * size, oy = cy + ((G.mix(h, 3) % 41) - 20) / 400 * size;
-  const A = { x: ox - ux * L / 2, y: oy - uy * L / 2 }, B = { x: ox + ux * L / 2, y: oy + uy * L / 2 };
-  const C = ctrlFor(A, B, h), M = qpt(A, C, B, .5);
-  // rings around the meeting point — unique per pair
-  const rings = 2 + (h % 3);
-  for (let i = 0; i < rings; i++) {
-    ctx.strokeStyle = i % 2 ? 'rgba(122,168,255,.38)' : 'rgba(231,189,103,.42)';
-    ctx.lineWidth = 2; ctx.setLineDash(i === rings - 1 ? [4, 10] : []);
-    ctx.beginPath(); ctx.arc(M.x, M.y, size * (.14 + i * .09 + (G.mix(h, i) % 30) / 1000), 0, Math.PI * 2); ctx.stroke();
-  }
-  ctx.setLineDash([]);
-  const rays = 6 + (G.mix(h, 9) % 7);
-  for (let i = 0; i < rays; i++) {
-    const ang = (i / rays) * Math.PI * 2 + (h % 100) / 100;
-    const r1 = size * .07, r2 = size * (.1 + (G.mix(h, 20 + i) % 40) / 1000);
-    ctx.strokeStyle = 'rgba(141,255,228,.45)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(M.x + Math.cos(ang) * r1, M.y + Math.sin(ang) * r1); ctx.lineTo(M.x + Math.cos(ang) * r2, M.y + Math.sin(ang) * r2); ctx.stroke();
-  }
-  // the thread
-  const grad = ctx.createLinearGradient(A.x, A.y, B.x, B.y);
-  grad.addColorStop(0, '#ffd682'); grad.addColorStop(.5, '#bfffee'); grad.addColorStop(1, '#7aa8ff');
-  ctx.shadowColor = 'rgba(160,255,230,.7)'; ctx.shadowBlur = 18;
-  ctx.strokeStyle = grad; ctx.lineWidth = 6; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.quadraticCurveTo(C.x, C.y, B.x, B.y); ctx.stroke();
-  ctx.shadowBlur = 0;
-  ctx.globalCompositeOperation = 'lighter';
-  orb(ctx, A.x, A.y, size * .07, '255,214,130', .95);
-  orb(ctx, B.x, B.y, size * .07, '122,168,255', .95);
-  orb(ctx, M.x, M.y, size * .2, '140,255,226', .4);
-  ctx.globalCompositeOperation = 'source-over';
-  flamePath(ctx, M.x, M.y, size * .26, 1);
-  ctx.restore();
-}
-async function drawCard() {
-  const c = $('cardCanvas'), ctx = c.getContext('2d'), W = 1080, H = 1920;
-  await G.fontsReady();
-  if (!artImg) artImg = await G.loadImg(ART_SRC);
-  const ZH = G.FONT_ZH, EN = G.FONT_EN;
-  G.cardBackground(ctx, W, H);
-  G.text(ctx, 'AE UNIVERSE CREATION', W / 2, 112, { font: '500 26px ' + EN, color: '#e7bd67', spacing: 8 });
-  G.text(ctx, '雙生光紋卡', W / 2, 205, { font: '600 76px ' + ZH, spacing: 10 });
-  G.text(ctx, 'Twin Flame Lightprint', W / 2, 262, { font: 'italic 500 42px ' + EN, color: '#d9cfc0' });
-  G.text(ctx, cardId(S.a, S.b) + '  ·  ' + dateLabel(), W / 2, 326, { font: '500 28px ' + EN, color: '#9a8f80', spacing: 4 });
-  drawSigil(ctx, W / 2, 730, 780, S.a, S.b);
-  let y = 1150;
-  const n1 = G.cleanName($('n1').value), n2 = G.cleanName($('n2').value);
-  if (n1 || n2) { G.text(ctx, (n1 || '·') + '   ✦   ' + (n2 || '·'), W / 2, y, { font: '600 48px ' + ZH, color: '#e7bd67' }); y += 80; }
-  else y += 20;
-  const [zh, en] = lineFor(S.a, S.b);
-  y = G.text(ctx, zh, W / 2, y, { font: '600 50px ' + ZH, maxW: 900, lh: 68 });
-  y = G.text(ctx, en, W / 2, y + 58, { font: 'italic 500 34px ' + EN, color: '#d9cfc0', maxW: 900, lh: 44 });
-  const top = Math.max(y + 50, 1430);
-  G.paintingInBox(ctx, artImg, (W - 600) / 2, top, 600, Math.min(320, 1790 - top));
-  G.text(ctx, '光留在原作《' + ART_TITLE + '》上  ·  The light rests on the original', W / 2, 1838, { font: '500 24px ' + ZH, color: '#9a8f80' });
-  return c;
-}
-function shareUrl() {
-  const p = new URLSearchParams({ a: enc(S.a), b: enc(S.b), d: S.d });
-  const n1 = G.cleanName($('n1').value), n2 = G.cleanName($('n2').value);
-  if (n1) p.set('n1', n1); if (n2) p.set('n2', n2);
-  return location.origin + '/together?' + p.toString();
-}
-async function refreshCard() {
-  const c = await drawCard();
-  $('cardImg').src = c.toDataURL('image/png');
-}
-async function showResult(scroll) {
-  const id = cardId(S.a, S.b);
-  $('reward').innerHTML = '<b>得到：</b>一張只屬於你們的光紋卡，編號 <b>' + id + '</b>。同樣兩道光，永遠生成同一張卡。'
-    + '<br>可以<b>存成手機桌布</b>，也可以<b>傳連結給對方</b>，他點開就會看到同一張。'
-    + '<span class="en">Yours: a one-of-a-kind card, ID ' + id + '. Save it as a phone wallpaper, or send the link — they will see the same card.</span>';
-  if (S.mode === 'view') {
-    $('rGot').textContent = '你收到了 · YOU RECEIVED';
-    $('again').innerHTML = '也做一張 <small>Make yours</small>';
-  }
-  $('result').hidden = false;
-  try { await refreshCard(); } catch (e) { $('rNote').textContent = '卡片圖片沒有生成，請重新整理。Card image failed — please reload.'; }
-  if (scroll) setTimeout(() => $('result').scrollIntoView({ behavior: G.reduce ? 'auto' : 'smooth', block: 'start' }), 250);
-  history.replaceState(null, '', shareUrl().replace(location.origin, ''));
-}
-let nameTimer = 0;
-['n1', 'n2'].forEach((id) => $(id).addEventListener('input', () => {
-  clearTimeout(nameTimer);
-  nameTimer = setTimeout(() => { refreshCard(); history.replaceState(null, '', shareUrl().replace(location.origin, '')); }, 250);
-}));
-$('save').addEventListener('click', async (e) => {
-  G.burstAt(e.currentTarget, { n: 18 }); G.chime('tap', .8);
-  const c = await drawCard();
-  const ok = await G.saveCanvas(c, 'AE-TwinFlame-' + cardId(S.a, S.b) + '.png');
-  $('rNote').textContent = ok ? '已儲存。設成手機桌布，讓這道光每天陪你。Saved — set it as your wallpaper.' : '';
-});
-$('shareCard').addEventListener('click', async () => {
-  const r = await G.shareLink(shareUrl(), '雙生共創 Twin Flame · ' + cardId(S.a, S.b), '我們的雙生光紋卡 Our Twin Flame card');
-  $('rNote').textContent = r === 'copied' ? '連結已複製，貼給對方吧。Link copied.' : (r === 'manual' ? shareUrl() : '');
-});
-$('again').addEventListener('click', () => { location.href = '/together'; });
-$('sendA').addEventListener('click', async () => {
-  const url = location.origin + '/together?a=' + enc(S.a);
-  const r = await G.shareLink(url, '雙生共創 Twin Flame', '我在畫上為你留了一道光，點開回應我 · I left a light for you');
-  note(r === 'copied' ? '連結已複製。對方點開，就能留下第二道光。Link copied — they add the second light.' : (r === 'manual' ? url : '連結已送出。Sent.'));
-});
-$('reset1').addEventListener('click', () => { S.a = null; S.b = null; S.mode = 'local'; S.lp = ''; S.phase = 'a'; note(''); history.replaceState(null, '', '/together'); render(); });
-
-/* ---------- boot ---------- */
-function boot() {
-  sizeOv();
-  new ResizeObserver(sizeOv).observe(art);
-  if (S.n1) $('n1').value = S.n1;
-  if (S.n2) $('n2').value = S.n2;
-  if (S.mode === 'view') { S.merge = 1; S.flame = 1; S.phase = 'done'; render(); showResult(false); }
-  else { S.phase = S.a ? 'b' : 'a'; render(); }
-  requestAnimationFrame(frame);
-}
-if (art.complete && art.naturalWidth) boot(); else { art.addEventListener('load', boot, { once: true }); art.addEventListener('error', () => { note('畫作沒有載入，請重新整理。The painting did not load — please reload.'); boot(); }, { once: true }); }
-})();
-</script>
+<script src="/ae-games-kit.js?v=2"></script>
+<script src="/together-app.js?v=2"></script>
 <script src="/ae-version.js" defer></script>
 </body>
 </html>
