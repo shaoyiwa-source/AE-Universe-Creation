@@ -77,7 +77,7 @@ html[lang="zh-Hant"] .game h1{line-height:1.15;letter-spacing:.01em}
 const files=window.AE_EXPERIENCE_FILES;document.getElementById('aeSunArtwork').src=window.AE_EXPERIENCE_SUN;const symbols=["♥","∞","☀","☾","✦","❀","☁","◌","⌁"];
 const heroNine=document.getElementById('heroNine'),mini9=document.getElementById('mini9'),collectionGrid=document.getElementById('collectionGrid'),board=document.getElementById('board'),timeEl=document.getElementById('time'),scoreEl=document.getElementById('score'),gameShell=document.getElementById('gameShell'),result=document.getElementById('result'),aeCard=document.getElementById('aeCard'),cardSymbol=document.getElementById('cardSymbol'),cardName=document.getElementById('cardName'),cardLine=document.getElementById('cardLine'),resultCopy=document.getElementById('resultCopy'),visitProgress=document.getElementById('visitProgress'),companionPanel=document.getElementById('companionPanel'),companionSwatches=document.getElementById('companionSwatches'),companionCue=document.getElementById('companionCue'),saveStatus=document.getElementById('saveStatus');
 const artHTML=files.map((f,i)=>`<img src="${f}" alt="AE Touch Moment Artwork ${i+1}">`).join('');if(heroNine)heroNine.innerHTML=artHTML;if(mini9)mini9.innerHTML=artHTML;if(collectionGrid)collectionGrid.innerHTML=artHTML;board.innerHTML=files.map((f,i)=>`<button class="cell" data-i="${i}" aria-label="Artwork ${i+1}"><img src="${f}" alt=""><span></span></button>`).join('');const cells=[...document.querySelectorAll('.cell')];
-let running=false,ended=false,left=20,score=0,timer=null,spawnCount=0,active=-1,counts=Array(9).fill(0),symbolCounts=Array(9).fill(0),current={art:0,symbol:2};let goldenReady=false,goldenShown=false;const AE_EVENTS=[];function trace(event,detail={}){const row={time:new Date().toISOString(),event,...detail};AE_EVENTS.push(row);try{localStorage.setItem('ae_experience_events_v1',JSON.stringify(AE_EVENTS))}catch(e){}return row}window.__AE_EVENTS__=AE_EVENTS;
+let running=false,ended=false,left=20,score=0,timer=null,spawnCount=0,active=-1,counts=Array(9).fill(0),symbolCounts=Array(9).fill(0),current={art:0,symbol:2};let goldenReady=false,goldenShown=false;let targetId=0,hitTarget=0;function aeTargetEvent(d){try{board.dispatchEvent(new CustomEvent('ae:target',{detail:d}))}catch(e){}}const AE_EVENTS=[];function trace(event,detail={}){const row={time:new Date().toISOString(),event,...detail};AE_EVENTS.push(row);try{localStorage.setItem('ae_experience_events_v1',JSON.stringify(AE_EVENTS))}catch(e){}return row}window.__AE_EVENTS__=AE_EVENTS;
 const PROGRESS_KEY='ae_experience_progress_v1',SESSION_VISIT_KEY='ae_experience_session_visit_v1';
 function readProgress(){try{const p=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return{visitCount:Math.max(0,Math.min(3,Number(p.visitCount)||0)),history:Array.isArray(p.history)?p.history.slice(-3):[],companionUnlocked:!!p.companionUnlocked}}catch(e){return{visitCount:0,history:[],companionUnlocked:false}}}
 function writeProgress(p){try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(p))}catch(e){}}
@@ -99,13 +99,13 @@ function clearPending(){cells.forEach(c=>{c.classList.remove('active');c.classLi
 function clearStuck(){cells.forEach(c=>c.querySelectorAll('.stuck').forEach(n=>n.remove()))}
 function setPlayNote(en,zh){const el=document.getElementById('playNote');if(!el)return;el.dataset.en=en||'';el.dataset.zh=zh||'';el.textContent=(en||zh)?aeT(en,zh):''}
 function stickSymbol(cell,symbol){const el=document.createElement('i');el.className='stuck';el.setAttribute('aria-hidden','true');el.textContent=symbol;const n=cell.querySelectorAll('.stuck').length;const spot=STUCK_SPOTS[n%STUCK_SPOTS.length];el.style.left=spot[0]+'%';el.style.top=spot[1]+'%';const glow=cell.style.getPropertyValue('--glow');if(glow)el.style.setProperty('--glow',glow);cell.appendChild(el)}
-function spawn(){if(!running)return;pinArt();clearPending();active=Math.floor(Math.random()*9);spawnCount++;const s=Math.floor(Math.random()*symbols.length);const c=cells[active];c.dataset.symbol=symbols[s];c.dataset.s=String(s);c.style.setProperty('--glow',palettes[active][1]);c.classList.add('active');labelArt();clearTimeout(spawnTimer);spawnTimer=setTimeout(()=>{if(running)spawn()},1500)}
+function spawn(){if(!running)return;const prevCell=spawnCount>0?active:-1,prevHit=prevCell>=0&&hitTarget===targetId;pinArt();clearPending();active=Math.floor(Math.random()*9);spawnCount++;targetId++;const s=Math.floor(Math.random()*symbols.length);const c=cells[active];c.dataset.symbol=symbols[s];c.dataset.s=String(s);c.style.setProperty('--glow',palettes[active][1]);c.classList.add('active');c.dataset.target=String(targetId);labelArt();aeTargetEvent({id:targetId,cell:active,prevCell,prevHit,same:prevCell===active});clearTimeout(spawnTimer);spawnTimer=setTimeout(()=>{if(running)spawn()},1500)}
 let aeStarting=0;function aeBoardFit(){const r=board.getBoundingClientRect();const hh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ae-hdr-h'))||0;const room=innerHeight-hh;return {r,hh,room,full:r.top>=hh-1&&r.bottom<=innerHeight+1,fits:r.height<=room+1}}function aeBringBoardIntoView(){const f=aeBoardFit();if(f.full)return;const target=f.fits?scrollY+f.r.top-f.hh-Math.max(0,(f.room-f.r.height)/2):scrollY+f.r.top-f.hh-8;try{scrollTo({top:Math.max(0,Math.round(target)),behavior:'instant'})}catch(_){scrollTo(0,Math.max(0,Math.round(target)))}}function aeWhenBoardReady(cb){const t0=performance.now();let last=null,stable=0;const imgs=[...board.querySelectorAll('img')];const imgsDone=()=>imgs.every(i=>i.complete);const tick=()=>{const f=aeBoardFit();const y=Math.round(scrollY*2)/2;stable=(last===y)?stable+1:0;last=y;const el=performance.now()-t0;if(((f.full||(!f.fits&&f.r.top>=f.hh-1))&&stable>=2&&imgsDone())||el>2500){cb();return}if(!f.full&&stable>=2&&el<2000)aeBringBoardIntoView();requestAnimationFrame(tick)};requestAnimationFrame(tick)}function startGame(e){if(e)e.preventDefault();if(aeStarting)return;clearInterval(timer);clearTimeout(spawnTimer);running=false;result.classList.remove('show');gameShell.style.display='';gameShell.classList.remove('is-running');timeEl.textContent='20';scoreEl.textContent='0';setPlayNote('Get ready…','準備…');aeStarting=1;aeBringBoardIntoView();aeWhenBoardReady(()=>{requestAnimationFrame(()=>requestAnimationFrame(()=>{aeStarting=0;aeStartGameNow()}))})}function aeStartGameNow(){clearInterval(timer);clearTimeout(spawnTimer);running=true;ended=false;left=20;score=0;spawnCount=0;goldenReady=false;goldenShown=false;counts.fill(0);symbolCounts.fill(0);clearStuck();trace('entered_play');timeEl.textContent='20';scoreEl.textContent='0';setPlayNote('','');result.classList.remove('show');gameShell.style.display='';gameShell.classList.remove('is-running');pinArt();if(typeof closeSunOverlay==='function')closeSunOverlay();void gameShell.offsetWidth;gameShell.classList.add('is-running');spawn();timer=setInterval(()=>{left--;timeEl.textContent=String(Math.max(0,left));if(left<=0)finishGame()},1000)}
 function topIndex(a){const m=Math.max(...a);return m>0?a.indexOf(m):Math.floor(Math.random()*a.length)}function pinArt(){cells.forEach((c,i)=>{const img=c.querySelector('img');if(!img||!files[i])return;if(img.getAttribute('src')!==files[i])img.setAttribute('src',files[i])})}
 function leadingIndex(list){let best=0;for(let i=1;i<list.length;i++) if(list[i]>list[best]) best=i;return best}
 function revealResult(){gameShell.style.display='none';result.classList.add('show');const card=document.getElementById('aeCard');if(card)card.scrollIntoView({block:'center',behavior:'auto'})}
-function finishGame(){if(ended)return;ended=true;running=false;clearInterval(timer);clearTimeout(spawnTimer);gameShell.classList.remove('is-running');clearPending();pinArt();if(typeof closeSunOverlay==='function')closeSunOverlay();try{labelArt();current.art=leadingIndex(counts);current.symbol=leadingIndex(symbolCounts);const p=palettes[current.art]||palettes[0];aeCard.style.background=`linear-gradient(155deg,${p[1]},${p[0]} 54%,${p[2]})`;let artImg=document.getElementById('cardArt');if(!artImg){artImg=document.createElement('img');artImg.id='cardArt';artImg.className='card-art';aeCard.insertBefore(artImg,aeCard.firstChild)}const n=String(current.art+1).padStart(2,'0');artImg.src=files[current.art]||'';artImg.alt=aeT(`AE Touch Moment Artwork ${n}`,`AE 觸動指尖作品 ${n}`);saveMsg='idle';if(typeof registerVisit==='function')registerVisit(current.art,symbols[current.symbol]||'');renderResultCopy();setPlayNote(score>0?`You tapped ${score} time${score===1?'':'s'}.`:'No taps this time, and that is okay. The light will wait for you. Press Play Again whenever you like.',score>0?`你點了 ${score} 次。`:'這次還沒點到也沒關係，光會等你。想再試，就按「再玩一次」。');trace('completed',{score,added:score,artwork:current.art+1})}finally{revealResult()}}
-function renderResultCopy(){const note=document.getElementById('playNote');if(note&&(note.dataset.en||note.dataset.zh))note.textContent=aeT(note.dataset.en||'',note.dataset.zh||'');const n=String(current.art+1).padStart(2,'0');const c=counts[current.art];document.getElementById('cardCount').textContent=aeT(score===1?'1 tap':`${score} taps`,`${score} 次點擊`);cardSymbol.textContent='';cardName.textContent='讓光，從你這裡開始。';cardLine.textContent='Let the light begin with you.';resultCopy.textContent=aeT(score>0?`You tapped ${score} time${score===1?'':'s'}.`:'No taps this time, and that is okay. The light will wait for you. Press Play Again whenever you like.',score>0?`你點了 ${score} 次。`:'這次還沒點到也沒關係，光會等你。想再試，就按「再玩一次」。');renderVisitProgress(Number(sessionStorage.getItem(SESSION_VISIT_KEY)||progress.visitCount||1));setSave(saveMsg)} const sunOverlay=document.getElementById('sunOverlay');function showSunOverlay(){sunOverlay.classList.add('show');trace('golden_sun_found')}function closeSunOverlay(){sunOverlay.classList.remove('show')}document.getElementById('sunClose').addEventListener('click',closeSunOverlay);sunOverlay.addEventListener('click',e=>{if(e.target===sunOverlay)closeSunOverlay()});cells.forEach(c=>c.addEventListener('click',()=>{if(!running||!c.classList.contains('active'))return;stickSymbol(c,c.dataset.symbol||'✦');score++;scoreEl.textContent=String(score);counts[Number(c.dataset.i)]++;symbolCounts[Number(c.dataset.s)||0]++;spawn()}));window.__AE_GAME__={undoHit(c,stuck){if(!running||!c)return false;const i=Number(c.dataset.i);score=Math.max(0,score-1);scoreEl.textContent=String(score);if(counts[i]>0)counts[i]--;const s=Number(c.dataset.s)||0;if(symbolCounts[s]>0)symbolCounts[s]--;if(spawnCount>0)spawnCount--;if(stuck&&stuck.parentNode)stuck.remove();clearPending();active=i;c.classList.add('active');labelArt();clearTimeout(spawnTimer);spawnTimer=setTimeout(()=>{if(running)spawn()},1500);return true}};document.getElementById('startBtn').addEventListener('click',startGame);document.querySelector('#gameShell .timerbar i')?.addEventListener('animationend',()=>{if(running)finishGame()});document.getElementById('replayBtn').addEventListener('click',startGame);
+function finishGame(){if(ended)return;ended=true;running=false;clearInterval(timer);clearTimeout(spawnTimer);gameShell.classList.remove('is-running');clearPending();aeTargetEvent({end:true});pinArt();if(typeof closeSunOverlay==='function')closeSunOverlay();try{labelArt();current.art=leadingIndex(counts);current.symbol=leadingIndex(symbolCounts);const p=palettes[current.art]||palettes[0];aeCard.style.background=`linear-gradient(155deg,${p[1]},${p[0]} 54%,${p[2]})`;let artImg=document.getElementById('cardArt');if(!artImg){artImg=document.createElement('img');artImg.id='cardArt';artImg.className='card-art';aeCard.insertBefore(artImg,aeCard.firstChild)}const n=String(current.art+1).padStart(2,'0');artImg.src=files[current.art]||'';artImg.alt=aeT(`AE Touch Moment Artwork ${n}`,`AE 觸動指尖作品 ${n}`);saveMsg='idle';if(typeof registerVisit==='function')registerVisit(current.art,symbols[current.symbol]||'');renderResultCopy();setPlayNote(score>0?`You tapped ${score} time${score===1?'':'s'}.`:'No taps this time, and that is okay. The light will wait for you. Press Play Again whenever you like.',score>0?`你點了 ${score} 次。`:'這次還沒點到也沒關係，光會等你。想再試，就按「再玩一次」。');trace('completed',{score,added:score,artwork:current.art+1})}finally{revealResult()}}
+function renderResultCopy(){const note=document.getElementById('playNote');if(note&&(note.dataset.en||note.dataset.zh))note.textContent=aeT(note.dataset.en||'',note.dataset.zh||'');const n=String(current.art+1).padStart(2,'0');const c=counts[current.art];document.getElementById('cardCount').textContent=aeT(score===1?'1 tap':`${score} taps`,`${score} 次點擊`);cardSymbol.textContent='';cardName.textContent='讓光，從你這裡開始。';cardLine.textContent='Let the light begin with you.';resultCopy.textContent=aeT(score>0?`You tapped ${score} time${score===1?'':'s'}.`:'No taps this time, and that is okay. The light will wait for you. Press Play Again whenever you like.',score>0?`你點了 ${score} 次。`:'這次還沒點到也沒關係，光會等你。想再試，就按「再玩一次」。');renderVisitProgress(Number(sessionStorage.getItem(SESSION_VISIT_KEY)||progress.visitCount||1));setSave(saveMsg)} const sunOverlay=document.getElementById('sunOverlay');function showSunOverlay(){sunOverlay.classList.add('show');trace('golden_sun_found')}function closeSunOverlay(){sunOverlay.classList.remove('show')}document.getElementById('sunClose').addEventListener('click',closeSunOverlay);sunOverlay.addEventListener('click',e=>{if(e.target===sunOverlay)closeSunOverlay()});cells.forEach(c=>c.addEventListener('click',()=>{if(!running||!c.classList.contains('active'))return;if((Number(c.dataset.target)||0)!==targetId||hitTarget===targetId)return;hitTarget=targetId;stickSymbol(c,c.dataset.symbol||'✦');score++;scoreEl.textContent=String(score);counts[Number(c.dataset.i)]++;symbolCounts[Number(c.dataset.s)||0]++;spawn()}));window.__AE_GAME__={undoHit(c,stuck){if(!running||!c)return false;const i=Number(c.dataset.i);score=Math.max(0,score-1);scoreEl.textContent=String(score);if(counts[i]>0)counts[i]--;const s=Number(c.dataset.s)||0;if(symbolCounts[s]>0)symbolCounts[s]--;if(spawnCount>0)spawnCount--;if(stuck&&stuck.parentNode)stuck.remove();clearPending();active=i;c.classList.add('active');targetId++;c.dataset.target=String(targetId);aeTargetEvent({id:targetId,cell:i,prevCell:-1,prevHit:false,same:false,restore:true});labelArt();clearTimeout(spawnTimer);spawnTimer=setTimeout(()=>{if(running)spawn()},1500);return true}};document.getElementById('startBtn').addEventListener('click',startGame);document.querySelector('#gameShell .timerbar i')?.addEventListener('animationend',()=>{if(running)finishGame()});document.getElementById('replayBtn').addEventListener('click',startGame);
 function waitForArt(img,ms=8000){return new Promise(res=>{if(!img||!img.getAttribute('src'))return res(false);if(img.complete&&img.naturalWidth)return res(true);const done=ok=>{clearTimeout(t);img.removeEventListener('load',on);img.removeEventListener('error',off);res(ok)},on=()=>done(true),off=()=>done(false),t=setTimeout(()=>done(!!img.naturalWidth),ms);img.addEventListener('load',on);img.addEventListener('error',off);if(img.decode)img.decode().then(()=>done(true)).catch(()=>{})})}
 function cardCanvas(){const artImg=document.getElementById('cardArt');const artOk=!!(artImg&&artImg.complete&&artImg.naturalWidth);const w=1200,artH=960,h=1400,R=48,p=palettes[current.art],cv=document.createElement('canvas');cv.width=w;cv.height=h;const x=cv.getContext('2d');
 /* Clean card: rounded rect only (transparent outside), artwork fills its slot (object-fit: cover), tight bounds. */
@@ -196,7 +196,7 @@ const b=document.getElementById('aeEventStart');if(b)b.addEventListener('click',
 document.getElementById('ae-card-preview-close').addEventListener('click',()=>cardPreview.close());
 cardPreview.addEventListener('close',()=>{previewSave.hidden=false;const hh=document.getElementById('ae-card-preview-hint');if(hh)hh.hidden=true;previewImage.removeAttribute('src');if(preparedCard)URL.revokeObjectURL(preparedCard.url);preparedCard=null;document.body.style.overflow=previewOverflow;});
 document.getElementById('saveCardBtn').addEventListener('click',saveCard);document.getElementById('companionCueBtn').addEventListener('click',nextCompanionCue);
-new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});labelArt();window.__AE_TEST__={startGame,finishGame,showSunOverlay,closeSunOverlay,getState:()=>({running,left,score,current,goldenReady,goldenShown,events:AE_EVENTS.slice(),progress:JSON.parse(JSON.stringify(progress))}),resetProgress:()=>{localStorage.removeItem(PROGRESS_KEY);sessionStorage.removeItem(SESSION_VISIT_KEY);progress=readProgress();return progress}};
+new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});labelArt();window.__AE_TEST__={startGame,finishGame,showSunOverlay,closeSunOverlay,getState:()=>({running,left,score,targetId,hitTarget,active,current,goldenReady,goldenShown,events:AE_EVENTS.slice(),progress:JSON.parse(JSON.stringify(progress))}),resetProgress:()=>{localStorage.removeItem(PROGRESS_KEY);sessionStorage.removeItem(SESSION_VISIT_KEY);progress=readProgress();return progress}};
 </script><script>document.documentElement.dataset.aeReady=String(!!window.__AE_TEST__);document.documentElement.dataset.aeFiles=String((window.AE_EXPERIENCE_FILES||[]).length);</script>
 <!-- AE v2456 interactive existing-page light fix, Preview only. -->
 <script>/* AE Touch Moment — active button light / click bloom
@@ -435,6 +435,114 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
   queue();
 })();
 
+</script>
+<script id="ae-relight-hint-script">
+/* AE Touch Moment — v2476.51: "light gathers, then lights up" on every new target, and a short
+ * cute hint when the new target lands on the SAME cell as the previous one:
+ *   previous target was hit   -> 「再點我一下 ✨」 / "Tap me again ✨"
+ *   previous target was missed -> 「點這裡 ✨」 / "Tap here ✨"
+ * Visual only: driven by the game's own 'ae:target' event (one event per target id).
+ * pointer-events:none, sits outside the target cell, no sound, no full-screen flash,
+ * cleared on every target switch, game end and replay. Rules and scoring unchanged.
+ */
+(() => {
+  'use strict';
+  const board = document.getElementById('board');
+  const shell = document.getElementById('gameShell');
+  if (!board || !shell || document.getElementById('ae-relight-hint-style')) return;
+  const style = document.createElement('style');
+  style.id = 'ae-relight-hint-style';
+  style.textContent = `
+    #board .cell .ae-gather{position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:inherit}
+    #board .cell .ae-gather::before,#board .cell .ae-gather::after{content:'';position:absolute;left:50%;top:54%;width:54%;aspect-ratio:1;border-radius:50%;opacity:0;pointer-events:none}
+    #board .cell .ae-gather::before{border:2px solid rgba(255,246,206,.95);box-shadow:0 0 16px 4px rgba(255,226,150,.55),inset 0 0 14px rgba(255,240,190,.5);animation:aeGatherIn 380ms cubic-bezier(.3,.7,.2,1) both}
+    #board .cell .ae-gather::after{background:radial-gradient(circle,rgba(255,255,240,.95),rgba(255,226,150,.45) 45%,transparent 70%);animation:aeRelightOut 460ms ease-out 280ms both}
+    @keyframes aeGatherIn{0%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}35%{opacity:.95}100%{opacity:0;transform:translate(-50%,-50%) scale(.5)}}
+    @keyframes aeRelightOut{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}35%{opacity:.9;transform:translate(-50%,-50%) scale(1.05)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.4)}}
+    #board .cell.active.ae-relit-a::after{animation:aeOrbInA 460ms ease both}
+    #board .cell.active.ae-relit-b::after{animation:aeOrbInB 460ms ease both}
+    @keyframes aeOrbInA{0%,40%{transform:translate(-50%,-50%) scale(.35);opacity:.4}75%{transform:translate(-50%,-50%) scale(1.08);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+    @keyframes aeOrbInB{0%,40%{transform:translate(-50%,-50%) scale(.35);opacity:.4}75%{transform:translate(-50%,-50%) scale(1.08);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+    #ae-relight-hint{position:absolute;z-index:40;left:0;top:0;pointer-events:none;user-select:none;-webkit-user-select:none;
+      padding:5px 11px;border-radius:999px;white-space:nowrap;opacity:0;visibility:hidden;
+      background:linear-gradient(180deg,#fffaf0,#ffe8b4);color:#3a2a12;
+      font:600 13px/1.25 system-ui,-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;letter-spacing:.02em;
+      box-shadow:0 4px 14px rgba(0,0,0,.35),0 0 14px rgba(255,226,150,.55);transform:translate(-50%,-100%)}
+    #ae-relight-hint::after{content:'';position:absolute;left:var(--ae-tail-x,50%);top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#ffe8b4}
+    #ae-relight-hint.below{transform:translate(-50%,0)}
+    #ae-relight-hint.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#fffaf0}
+    #ae-relight-hint.show{visibility:visible;animation:aeHintBob 1300ms ease both}
+    @keyframes aeHintBob{0%{opacity:0;margin-top:7px}14%{opacity:1;margin-top:-3px}24%{margin-top:0}82%{opacity:1}100%{opacity:0}}
+    @media(max-width:700px){#ae-relight-hint{font-size:12px;padding:4px 9px}}
+    @media(prefers-reduced-motion:reduce){
+      #board .cell .ae-gather{display:none}
+      #board .cell.active.ae-relit-a::after,#board .cell.active.ae-relit-b::after{animation:none}
+      #ae-relight-hint.show{animation:none;opacity:1}
+      #board .cell.ae-hint-static{outline:3px solid #fff1bf;outline-offset:-3px}
+    }`;
+  document.head.appendChild(style);
+  const hint = document.createElement('span');
+  hint.id = 'ae-relight-hint';
+  hint.setAttribute('aria-hidden', 'true');
+  hint.setAttribute('translate', 'no');
+  board.appendChild(hint);
+  const zh = () => (document.documentElement.lang || '').toLowerCase().startsWith('zh');
+  let hideTimer = 0, raf = 0, flip = false, shownFor = 0;
+  function clear() {
+    clearTimeout(hideTimer); cancelAnimationFrame(raf); raf = 0; shownFor = 0;
+    hint.classList.remove('show', 'below'); hint.textContent = ''; delete hint.dataset.kind; delete hint.dataset.target;
+    board.querySelectorAll('.ae-hint-static').forEach(c => c.classList.remove('ae-hint-static'));
+  }
+  function clearAll() {
+    clear();
+    board.querySelectorAll('.ae-gather').forEach(n => n.remove());
+    board.querySelectorAll('.ae-relit-a,.ae-relit-b').forEach(c => c.classList.remove('ae-relit-a', 'ae-relit-b'));
+  }
+  function relight(cell) {
+    cell.querySelectorAll('.ae-gather').forEach(n => n.remove());
+    const g = document.createElement('span'); g.className = 'ae-gather'; g.setAttribute('aria-hidden', 'true');
+    cell.appendChild(g); setTimeout(() => g.remove(), 800);
+    flip = !flip;
+    board.querySelectorAll('.ae-relit-a,.ae-relit-b').forEach(c => c.classList.remove('ae-relit-a', 'ae-relit-b'));
+    cell.classList.add(flip ? 'ae-relit-a' : 'ae-relit-b');
+  }
+  function show(cell, id, again) {
+    const en = again ? 'Tap me again ✨' : 'Tap here ✨', z = again ? '再點我一下 ✨' : '點這裡 ✨';
+    hint.textContent = zh() ? z : en;
+    hint.dataset.kind = again ? 'again' : 'here'; hint.dataset.target = String(id); shownFor = id;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      if (shownFor !== id || !cell.classList.contains('active')) return;
+      const bw = board.clientWidth, row = Math.floor((Number(cell.dataset.i) || 0) / 3);
+      const cx = cell.offsetLeft + cell.offsetWidth / 2;
+      const below = row === 0;
+      hint.classList.toggle('below', below);
+      hint.style.top = (below ? cell.offsetTop + cell.offsetHeight + 7 : cell.offsetTop - 7) + 'px';
+      const w = hint.offsetWidth || 90;
+      const x = Math.max(w / 2 + 2, Math.min(bw - w / 2 - 2, cx));
+      hint.style.left = x + 'px';
+      hint.style.setProperty('--ae-tail-x', `calc(50% + ${Math.round(cx - x)}px)`);
+      cell.classList.add('ae-hint-static');
+      hint.classList.remove('show'); void hint.offsetWidth; hint.classList.add('show');
+      hideTimer = setTimeout(() => { if (shownFor === id) clear(); }, 1300);
+    });
+  }
+  board.addEventListener('ae:target', e => {
+    const d = e.detail || {};
+    clear();
+    if (d.end) { clearAll(); return; }
+    const cell = board.querySelector(`.cell[data-i="${d.cell}"]`);
+    if (!cell) return;
+    if (d.restore) return;
+    relight(cell);
+    if (d.same) show(cell, d.id, !!d.prevHit);
+  });
+  new MutationObserver(() => { if (!shell.classList.contains('is-running')) clearAll(); })
+    .observe(shell, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('click', e => {
+    if (e.target.closest && e.target.closest('#startBtn,#replayBtn,#aeEventStart')) clearAll();
+  }, true);
+})();
 </script>
 <style id="ae-board-fit">@media(min-width:821px){.game-shell .board{width:min(100%,calc((100dvh - var(--ae-hdr-h,86px) - 48px) * 9 / 16));justify-self:center}}</style>
 <style id="ae-tap-sound-style">
