@@ -30,7 +30,8 @@ button{font:inherit;color:inherit}
 .g-note{min-height:1.4em;margin:8px 0 0;text-align:center;font-size:14px;color:var(--teal)}
 .g-result{margin:26px auto 0;max-width:1000px}
 .g-result[hidden]{display:none}
-.g-result-grid{display:grid;gap:22px;align-items:start}
+.g-result-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;align-items:start}
+.g-result-grid>*{min-width:0}
 @media(min-width:860px){.g-card-img{position:sticky;top:16px}}
 @media(min-width:860px){.g-result-grid{grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:40px}}
 .g-card-img{display:block;width:min(100%,420px);height:auto;margin:0 auto;aspect-ratio:9/16;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 0 1px rgba(231,189,103,.25);background:#120f0c}
@@ -41,9 +42,9 @@ button{font:inherit;color:inherit}
 .g-reward b{color:var(--gold);font-weight:600}
 .g-actions{display:grid;gap:10px}
 .g-actions .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.g-names{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.g-names{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0 0 14px}
 .g-names label,.g-field{display:grid;gap:6px;font-size:13px;color:var(--soft)}
-.g-names input,.g-field input{min-height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#120f0c;color:var(--warm);padding:0 12px;font:inherit;font-size:16px}
+.g-names input,.g-field input{min-height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#120f0c;color:var(--warm);padding:0 12px;width:100%;min-width:0;box-sizing:border-box;font:inherit;font-size:16px}
 .g-next{margin:30px 0 0}
 .g-next h3{margin:0 0 10px;font-weight:600;font-size:18px;letter-spacing:.08em}
 .g-next h3 .en{display:inline;margin-left:8px;font-size:15px}
