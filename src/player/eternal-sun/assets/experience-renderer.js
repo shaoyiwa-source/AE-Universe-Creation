@@ -1,4 +1,4 @@
-/* AE Eternal shared renderer 0.4.0 (adds full-stage overlay show via AEExperienceStageFx; lite hysteresis).
+/* AE Eternal shared renderer 0.4.1 (homepage visual language restored: beams, beat bolts, music spots, tap spot + gold burst; lite hysteresis with back-off).
  * Adapted from official homepage ae-home-light.js (2026-10-30 sha256 a1b58497…26c).
  * One renderer for the standalone wrapper and future homepage mounting. Artwork is never drawn/transformed here.
  */
@@ -17,7 +17,7 @@ function createDisplayClock(){
  }};
 }
 function geometry(width,height){return{width,height,artX0:0,artW:width,artBottom:height,sunX:width*.52,sunY:height*.522};}
-function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime=null,lighting=null,homeVisual=null,stageFx=null,stageCanvas=null,motion:reduced,environment={}}){
+function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime=null,lighting=null,homeVisual=null,burstHost=null,motion:reduced,environment={}}){
  const ctx=canvas.getContext('2d');
  if(!ctx)throw Error('Canvas unavailable');
  const env={now:()=>globalThis.performance.now(),raf:f=>requestAnimationFrame(f),cancelRaf:i=>cancelAnimationFrame(i),later:(f,t)=>globalThis.setTimeout(f,t),cancelLater:i=>clearTimeout(i),dpr:globalThis.devicePixelRatio||1,...environment};
@@ -25,7 +25,7 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
  const timers=new Set();let dead=false;
  function later(fn,ms){if(dead)return;const id=env.later(()=>{timers.delete(id);if(!dead)fn();},ms);timers.add(id);return id;}
  const rhythm=audioEnergy.createRhythm(timeline?.events,timeline?.accents,timeline?.sections);
- let lite=false,liteLatch=false,slowSince=0,fastSince=0,stageCleared=true,frameEma=16.7,presentMs=12,lights=true,playing=false,wasPlaying=false,frame=0,lastPaint=0,energy=0,viewable=true,forceLite=false;
+ let lite=false,liteLatch=false,slowSince=0,fastSince=0,recoverMs=3000,lastTrail=0,frameEma=16.7,presentMs=12,lights=true,playing=false,wasPlaying=false,frame=0,lastPaint=0,energy=0,viewable=true,forceLite=false;
  let width=0,height=0,artBottom=0,artX0=0,artW=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
  let musicFrame={stage:'groove',dropPulse:0,buildProgress:0},specks=[],musicTime=0;const displayClock=createDisplayClock();
  let glows=[],coins=[],sweeps=[],lastFxFrame=0,pendingRelease=null;
@@ -35,8 +35,7 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
  const homeMode=()=>!lighting||lighting.current()?.mode==='home';
  const displayTime=()=>displayClock.read(readPlayback(),performance.now(),presentMs);
  function resize(){if(dead)return;const r=canvas.getBoundingClientRect();({width,height,artBottom,artX0,artW,sunX,sunY}=geometry(Math.max(1,r.width),Math.max(1,r.height)));const ratio=Math.min(env.dpr,2);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);hero.dataset.artBox=JSON.stringify([0,0,width,height]);needsStatic=true;schedule();}
- const stageOn=()=>!!stageFx&&hasLight()&&homeMode();
- function schedule(){if(!dead&&!frame&&lights&&viewable&&(stageOn()||readPlayback().playing||spots.length||musicSpots.length||bolts.length||glows.length||coins.length||sweeps.length||needsStatic||lighting?.needsAnimation()||(focus&&focus.until>performance.now())))frame=env.raf(draw);}
+ function schedule(){if(!dead&&!frame&&lights&&viewable&&(readPlayback().playing||spots.length||musicSpots.length||bolts.length||glows.length||coins.length||sweeps.length||needsStatic||lighting?.needsAnimation()||(focus&&focus.until>performance.now())))frame=env.raf(draw);}
  function clear(){ctx.clearRect(0,0,width,height);hero.dataset.audioEnergy='0';}
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
@@ -49,9 +48,9 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
     const impact=playing?Math.min(1,(musicFrame.dropPulse||0)*1.8):0;
     return{x:target.x*(1-impact)+sunX*impact,y:target.y*(1-impact)+Math.max(30,sunY)*impact};
   }
-  function launchDepth(x,y,now,seed){
+  function launchDepth(x,y,now,seed,n){
     if(reduced.matches)return;
-    const number=playing?(musicFrame.stage==='drop'?6:2):6;
+    const number=n||(playing?(musicFrame.stage==='drop'?6:2):6);
     for(let i=0;i<number;i++){
       const edge=i%3,ox=edge===0?artX0-artW*.12:edge===1?artX0+artW*1.12:artX0+artW*(.1+((i+seed)%5)*.2),oy=edge===2?-30:artBottom*(.1+((i+seed)%5)*.16);
       const target=x===null?destination(i,seed,now):{x,y};
@@ -71,7 +70,7 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
     const fd=now-lastPaint;lastPaint=now;
     if(previousPlaying&&fd>0){frameEma=frameEma*.8+Math.min(fd,250)*.2;presentMs=presentMs*.5+Math.min(fd,80)*.5;}
     // v0.4.0 P0-1: one hitch never latches lite. Degrade after 2 s of slow frames, recover after 3 s of smooth ones.
-    if(playing&&previousPlaying){if(frameEma>22){fastSince=0;slowSince=slowSince||now;if(now-slowSince>2000)liteLatch=true;}else if(frameEma<18){slowSince=0;fastSince=fastSince||now;if(now-fastSince>3000)liteLatch=false;}else{slowSince=fastSince=0;}}
+    if(playing&&previousPlaying){if(frameEma>22){fastSince=0;slowSince=slowSince||now;if(now-slowSince>2000)liteLatch=true;}else if(frameEma<18){slowSince=0;fastSince=fastSince||now;if(now-fastSince>recoverMs){liteLatch=false;recoverMs=Math.min(48000,recoverMs*2);}}else{slowSince=fastSince=0;}}
     if(!playing&&!forceLite){liteLatch=false;slowSince=fastSince=0;}
     lite=forceLite||liteLatch;
     const bare=lite&&frameEma>45;
@@ -86,6 +85,11 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
       hero.dataset.musicTime=musicTime.toFixed(3);hero.dataset.musicStage=beat.stage;hero.dataset.accentCount=String(beat.accentCount);hero.dataset.dropPulse=beat.dropPulse.toFixed(3);
       // Exactly one primary music pass: the actual homepage opening choreography,
       // retained throughout audible playback. No stacked continuous-beam show or15s cutoff.
+      if(!bare&&homeMode()&&hasLight()&&((beat.beat&&beat.stage!=='build')||(beat.accentBeat&&beat.stage==='build'))){
+        if(beat.stage!=='build')launchDepth(null,null,now,beat.count);
+        for(let i=0;i<3;i++){const hit=destination(i*2,beat.sweep,now);musicSpots.push({...hit,born:now});}
+        if(musicSpots.length>9)musicSpots.splice(0,musicSpots.length-9);
+      }
       if(pendingRelease&&musicTime>=pendingRelease.time){const hit=pendingRelease;pendingRelease=null;if(musicTime-hit.time<.18)bloom(hit.x,hit.y);}
 
     }
@@ -93,27 +97,31 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
     const home=!illumination||illumination.mode==='home';
     hero.dataset.activeVisual=illumination?.enabled===false?'original':illumination?.mode||'legacy';
     hero.dataset.homeBeams='0';hero.dataset.homePools='0';
-    if(stageFx&&(illumination?.enabled===false||!home)&&!stageCleared){stageFx.clear();stageCleared=true;}
     if(illumination?.enabled===false||!home){
       spots=[];musicSpots=[];specks=[];bolts=[];glows=illumination?.enabled?glows.filter(g=>now-g.born<g.life):[];coins=[];sweeps=[];
       hero.dataset.musicPasses='0';hero.dataset.musicBeams='0';hero.dataset.idleBeams='0';ctx.restore();schedule();return;
     }
-    if(stageFx){
-      stageCleared=false;const a=canvas.getBoundingClientRect(),s=stageCanvas.getBoundingClientRect();
-      const st=stageFx.draw({now,art:{x:a.left-s.left,y:a.top-s.top,w:a.width,h:a.height},playing:playing&&!reduced.matches,beat:musicFrame,reduced:reduced.matches});
-      hero.dataset.stageBeams=String(st.beams||0);hero.dataset.stageParticles=String(st.particles||0);hero.dataset.stageLite=st.lite?'1':'0';hero.dataset.musicPasses=playing?'1':'0';
-      spots=[];musicSpots=[];bolts=[];
-    }else if(homeVisual){
+    if(homeVisual){
       const remaining=focus?focus.until-now:0;
       const result=homeVisual.draw(ctx,{width,height,artX0,artW,artBottom,sunX,sunY,nowMs:now,musicTime:musicTime||state.time,playing,beat:musicFrame,energy,focus:remaining>0?{x:focus.x,y:focus.y,held:!!focus.held,weight:Math.min(1,remaining/600)}:null,reduced:reduced.matches,lite,bare});
       hero.dataset.homeBeams=String(result?.beams||0);hero.dataset.homePools=String(result?.pools||0);hero.dataset.laserTargets=JSON.stringify(result?.targets||[]);hero.dataset.musicPasses=playing?'1':'0';
+      if(focus?.held&&!reduced.matches){
+        // Hold: a quiet gold gathering under the finger while the beams lean in (homepage gold, no flood).
+        const grow=Math.min(1,(now-(focus.born||now))/1200),r=26+grow*38,a=.16+.14*grow;
+        ctx.globalCompositeOperation='screen';const hg=ctx.createRadialGradient(focus.x,focus.y,0,focus.x,focus.y,r);
+        hg.addColorStop(0,`rgba(255,249,218,${a})`);hg.addColorStop(.3,`rgba(255,217,108,${a*.6})`);hg.addColorStop(1,'rgba(245,180,45,0)');
+        ctx.fillStyle=hg;ctx.fillRect(focus.x-r,focus.y-r,r*2,r*2);
+        ctx.strokeStyle=`rgba(255,222,127,${.10+.22*grow})`;ctx.lineWidth=1;ctx.beginPath();ctx.arc(focus.x,focus.y,Math.max(0,10+grow*16),0,Math.PI*2);ctx.stroke();
+        ctx.globalCompositeOperation='source-over';
+      }
     }else{
       if(playing&&!reduced.matches)drawOpening(now,bare);
       if(!playing||reduced.matches)drawIdle(now);
     }
     bolts=bolts.filter(b=>now-b.born<b.life);
     if(!reduced.matches){
-      ctx.globalCompositeOperation='screen';
+      // Homepage bolts, laid source-over so they read on the undimmed painting (see home-visual note).
+      ctx.globalCompositeOperation='source-over';
       for(const b of bolts){
         const p=Math.max(0,(now-b.born)/b.life),tail=Math.max(0,p-.32),near=(1-p)**2,back=(1-tail)**2;
         const opacity=b.musical?audioEnergy.flightPower((now-b.born)/1000):Math.sin(Math.PI*p);
@@ -130,10 +138,10 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
     const touchLife=reduced.matches?240:1100; // Owner: the tap ring looks the same with sound & light on or off
     spots=spots.filter(s=>now-s.born<touchLife);
     for(const s of spots){
-      const life=(now-s.born)/touchLife,opacity=1-life,radius=reduced.matches?30:35+life*90;
+      const life=(now-s.born)/touchLife,opacity=(1-life)*(s.small?.5:1),radius=reduced.matches?30:s.small?14+life*34:35+life*90;
       const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,radius);g.addColorStop(0,`rgba(255,249,210,${opacity})`);g.addColorStop(.22,`rgba(255,217,108,${opacity*.8})`);g.addColorStop(1,'rgba(245,180,45,0)');
       ctx.fillStyle=g;ctx.fillRect(s.x-radius,s.y-radius,radius*2,radius*2);
-      if(!reduced.matches){ctx.strokeStyle=`rgba(255,222,127,${opacity})`;ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(s.x,s.y,Math.max(0,8+life*55),0,Math.PI*2);ctx.stroke();}
+      if(!reduced.matches){ctx.strokeStyle=`rgba(255,222,127,${opacity})`;ctx.lineWidth=s.small?1.2:2.4;ctx.beginPath();ctx.arc(s.x,s.y,Math.max(0,(s.small?5+life*22:8+life*55)),0,Math.PI*2);ctx.stroke();}
     }
     // Musical accents are painted above the small touch response and own their own buffer.
     const musicLife=musicFrame.stage==='build'?90:150;
@@ -212,7 +220,7 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
   function artPoint(seed){const v=variation(seed+performance.now()%997);return{x:artX0+artW*(.14+.72*v),y:Math.max(28,artBottom*(.14+.62*variation(seed*3.1+v)))};}
   function fxGlow(o){
     o=o||{};const now=performance.now(),x=o.x??(sunX||artX0+artW/2),y=o.y??Math.max(30,sunY||artBottom/2);
-    glows.push({x,y,color:homeMode()?[255,220,120]:(lighting?.current()?.colors||[255,220,120]),born:now,life:reduced.matches?900:o.soft?2400:1700,soft:!!o.soft});if(glows.length>3)glows.shift();
+    glows.push({x,y,color:homeMode()?[255,220,120]:(lighting?.current()?.colors||[255,220,120]),born:now,life:reduced.matches?900:o.soft?2400:1700,soft:!!o.soft});if(glows.length>3)glows.shift();if(homeMode()&&!o.soft)burst(x,y);
     // The original glow/ray/ring canvas effect is sufficient; no uncropped DOM burst.
     if(homeMode()&&!reduced.matches)for(let i=0;i<(o.soft?3:5);i++)later(()=>{spots.push({...artPoint(i+7),born:performance.now()});if(spots.length>8)spots.shift();schedule();},160+i*110);
     if(chime&&!o.quiet)chime.glow();
@@ -271,22 +279,23 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
   if(!lighting&&!reduced.matches)for(let i=0;i<6;i++){ctx.strokeStyle=laserColors[i];ctx.globalAlpha=strength;ctx.lineWidth=focus?.held?1.5:.7;ctx.beginPath();ctx.moveTo(i%2?width:0,height*(.12+i*.10));ctx.lineTo(target.x,target.y);ctx.stroke();}
   ctx.restore();hero.dataset.idleBeams=reduced.matches?'0':'6';
  }
- function toStage(x,y){const a=canvas.getBoundingClientRect(),s=stageCanvas.getBoundingClientRect();return[a.left-s.left+x,a.top-s.top+y];}
- function beatInfo(){const st=readPlayback();return{playing:!!st.playing,interval:musicFrame.interval||.405,phase:musicFrame.phase||0};}
- function beginFocus(x,y){if(dead||!viewable||!hasLight())return false;pendingRelease=null;focus={x:Math.max(0,Math.min(width,x)),y:Math.max(0,Math.min(height,y)),until:Infinity,held:true};if(stageOn())stageFx.hold(...toStage(focus.x,focus.y),performance.now());needsStatic=true;schedule();return true;}
- function moveFocus(x,y){if(!focus?.held)return false;return beginFocus(x,y);}
+ // Homepage .ae-gold-burst: the DOM bloom ring (3px #ffe79a, glow) inside a clipped layer over the painting.
+ function burst(x,y){if(!burstHost||reduced.matches||dead)return;const el=burstHost.ownerDocument.createElement('span');el.className='ae-gold-burst';el.setAttribute('aria-hidden','true');el.style.left=x+'px';el.style.top=y+'px';burstHost.appendChild(el);while(burstHost.children.length>4)burstHost.firstChild.remove();later(()=>el.remove(),1650);}
+ function clearBursts(){if(burstHost)burstHost.textContent='';}
+ function beginFocus(x,y){if(dead||!viewable||!hasLight())return false;pendingRelease=null;const born=focus?.held?focus.born:performance.now();focus={x:Math.max(0,Math.min(width,x)),y:Math.max(0,Math.min(height,y)),until:Infinity,held:true,born};needsStatic=true;schedule();return true;}
+ function moveFocus(x,y){if(!focus?.held)return false;const now=performance.now();if(homeMode()&&!reduced.matches&&now-lastTrail>90&&Math.hypot(x-focus.x,y-focus.y)>3){lastTrail=now;spots.push({x,y,born:now,small:true});if(spots.length>8)spots.shift();}return beginFocus(x,y);}
  function bloom(x,y){fxGlow({x,y,quiet:!readPlayback().sound});hero.dataset.gestureBlooms=String((Number(hero.dataset.gestureBlooms)||0)+1);}
- function releaseFocus(){if(!focus?.held)return false;const now=performance.now(),p={x:focus.x,y:focus.y},state=readPlayback();focus={...p,until:now+600,held:false};if(stageOn()){stageFx.release(now,beatInfo());if(state.sound&&chime)chime.glow();hero.dataset.gestureBlooms=String((Number(hero.dataset.gestureBlooms)||0)+1);needsStatic=true;schedule();return true;}if(state.playing&&!reduced.matches){const next=timeline.events?.find(t=>t>state.time+.02);if(next!==undefined&&next-state.time<1.0)pendingRelease={...p,time:next};else bloom(p.x,p.y);}else bloom(p.x,p.y);needsStatic=true;schedule();return true;}
- function cancelFocus(){focus=null;pendingRelease=null;stageFx?.cancel();needsStatic=true;}
+ function releaseFocus(){if(!focus?.held)return false;const now=performance.now(),p={x:focus.x,y:focus.y},state=readPlayback();focus={...p,until:now+600,held:false};if(state.playing&&!reduced.matches){const next=timeline.events?.find(t=>t>state.time+.02);if(next!==undefined&&next-state.time<1.0)pendingRelease={...p,time:next};else bloom(p.x,p.y);}else bloom(p.x,p.y);needsStatic=true;schedule();return true;}
+ function cancelFocus(){focus=null;pendingRelease=null;needsStatic=true;}
 
- function tap(x,y){if(dead||!viewable||!hasLight()||x<0||x>width||y<0||y>height)return false;const now=performance.now();if(!homeMode()){fxGlow({x,y,quiet:true});if(readPlayback().sound&&chime)chime.tap(x/width);return true;}if(stageOn()){stageFx.tap(...toStage(x,y),now,beatInfo());hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);if(readPlayback().sound&&chime)chime.tap(x/width);schedule();return true;}spots.push({x,y,born:now});if(spots.length>6)spots.shift();hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);if(!readPlayback().playing){focus={x,y,until:now+2400};launchDepth(x,y,now,Number(hero.dataset.touchCount));}if(readPlayback().sound&&chime)chime.tap(x/width);schedule();return true;}
+ function tap(x,y){if(dead||!viewable||!hasLight()||x<0||x>width||y<0||y>height)return false;const now=performance.now();if(!homeMode()){fxGlow({x,y,quiet:true});if(readPlayback().sound&&chime)chime.tap(x/width);return true;}spots.push({x,y,born:now});if(spots.length>6)spots.shift();burst(x,y);hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);if(!readPlayback().playing){focus={x,y,until:now+2400};launchDepth(x,y,now,Number(hero.dataset.touchCount));}else if(!reduced.matches){launchDepth(x,y,now,Number(hero.dataset.touchCount),musicFrame.stage==='drop'?3:2);}if(readPlayback().sound&&chime)chime.tap(x/width);schedule();return true;}
  function effect(id){if(dead||!viewable||!hasLight()||!FX[id]||(!homeMode()&&id!=='glow'))return false;FX[id]({quiet:!readPlayback().sound});hero.dataset.fxLastTap=id;hero.dataset.fxTaps=String((Number(hero.dataset.fxTaps)||0)+1);return true;}
- function ambient(){if(dead)return;if(!lighting&&viewable&&!reduced.matches&&!readPlayback().playing&&width>0)fxGlow({quiet:true,soft:true});later(ambient,3400);}
- function setVisible(value){viewable=!!value;if(!viewable){stageFx?.clear();if(frame)env.cancelRaf(frame);frame=0;spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];focus=null;pendingRelease=null;clear();}else{needsStatic=true;schedule();}}
- function refresh(preferenceChanged=false){if(dead)return;if(preferenceChanged){spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}needsStatic=true;schedule();}
- function destroy(){if(dead)return;dead=true;homeVisual?.destroy();stageFx?.destroy();cancelFocus();if(frame)env.cancelRaf(frame);frame=0;for(const id of timers)env.cancelLater(id);timers.clear();spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}
+ function ambient(){if(dead)return;if(homeMode()&&hasLight()&&!focus?.held&&viewable&&!reduced.matches&&!readPlayback().playing&&width>0)fxGlow({quiet:true,soft:true});later(ambient,3400);}
+ function setVisible(value){viewable=!!value;if(!viewable){clearBursts();if(frame)env.cancelRaf(frame);frame=0;spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];focus=null;pendingRelease=null;clear();}else{needsStatic=true;schedule();}}
+ function refresh(preferenceChanged=false){if(dead)return;if(preferenceChanged){clearBursts();spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}needsStatic=true;schedule();}
+ function destroy(){if(dead)return;dead=true;homeVisual?.destroy();clearBursts();cancelFocus();if(frame)env.cancelRaf(frame);frame=0;for(const id of timers)env.cancelLater(id);timers.clear();spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}
  resize();later(ambient,700);
- return{resize,tap,beginFocus,moveFocus,releaseFocus,cancelFocus,effect,setVisible,refresh,resetTiming,destroy,snapshot:()=>({destroyed:dead,timers:timers.size,raf:!!frame,width,height,playing:!!readPlayback().playing,lite,stage:stageFx?stageFx.snapshot():null})};
+ return{resize,tap,beginFocus,moveFocus,releaseFocus,cancelFocus,effect,setVisible,refresh,resetTiming,destroy,snapshot:()=>({destroyed:dead,timers:timers.size,raf:!!frame,width,height,playing:!!readPlayback().playing,lite,recoverMs})};
 }
 return{create,geometry,createDisplayClock};
 });

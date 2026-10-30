@@ -14,7 +14,6 @@
 /* Three exclusive presentations; Original remains a separate light-off control. */
 .ae-eternal .ae-modes{max-width:100%;gap:5px}.ae-eternal .ae-modes button{padding:8px 11px}@media(max-width:480px){.ae-eternal .ae-modes button{font-size:11px;padding:8px 10px}}
 /* ===== v0.4.0 — full-stage show, larger painting (painting pixels untouched: no filter/opacity/transform) ===== */
-.ae-eternal .ae-stage-fx{position:fixed;inset:0;width:100vw;height:100vh;height:100lvh;pointer-events:none;z-index:2;display:block}
 .ae-eternal .ae-stage .ae-art{width:min(92vw,calc((100svh - 200px)*1110/1536),620px);overflow:visible}
 .ae-eternal .ae-stage .ae-art .ae-painting{filter:none!important;opacity:1!important;transform:none!important;mix-blend-mode:normal!important;animation:none!important}
 @media(max-width:480px){.ae-eternal .ae-stage .ae-art{width:calc(100vw - 28px);max-width:500px;min-width:0}}
@@ -27,8 +26,21 @@
  .ae-eternal .ae-caption{grid-area:caption;justify-self:start;text-align:left;max-width:300px;padding-top:0}
  .ae-eternal .ae-progress{max-width:280px}
 }
-.ae-eternal .ae-hint{position:absolute;left:50%;bottom:3.5%;transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;border-radius:999px;background:#0b100dcc;border:1px solid #f0d69c80;color:#fbefd0;font:12px/1.2 system-ui,sans-serif;letter-spacing:.08em;pointer-events:none;animation:ae-breathe 2.4s ease-in-out infinite;white-space:nowrap}
+.ae-eternal .ae-hint{position:relative;display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;padding:5px 12px 5px 9px;border-radius:999px;background:#0b100d99;border:1px solid #f0d69c55;color:#f6ead0;font:12px/1.2 system-ui,sans-serif;letter-spacing:.08em;pointer-events:none;animation:ae-breathe 2.8s ease-in-out infinite;white-space:nowrap}
 .ae-eternal .ae-hint i{width:12px;height:12px;border-radius:50%;background:radial-gradient(circle,#fff6d2 0,#f3c45a 55%,#f3c45a00 75%);box-shadow:0 0 12px #ffd77a}
-.ae-eternal[data-touched="1"] .ae-hint,.ae-eternal[data-presentation="rgb"] .ae-hint,.ae-eternal[data-presentation="backlight"] .ae-hint,.ae-eternal[data-illumination="off"] .ae-hint{display:none}
+.ae-eternal[data-touched="1"] .ae-hint,.ae-eternal[data-presentation="rgb"] .ae-hint,.ae-eternal[data-presentation="backlight"] .ae-hint,.ae-eternal[data-illumination="off"] .ae-hint{visibility:hidden;animation:none}
 @keyframes ae-breathe{0%,100%{opacity:.55;box-shadow:0 0 0 #ffd77a00}50%{opacity:1;box-shadow:0 0 22px #ffd77a88}}
 @media(prefers-reduced-motion:reduce){.ae-eternal .ae-hint{animation:none}}
+
+/* v0.4.1 — homepage visual language. Light lives on the painting only; text and controls never sit under it. */
+.ae-eternal .ae-art canvas[data-ae="canvas"]{z-index:1}
+.ae-eternal .ae-bursts{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;border-radius:inherit}
+.ae-eternal .ae-bursts .ae-gold-burst{position:absolute;width:100px;height:100px;margin:-50px 0 0 -50px;border:3px solid #ffe79a;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff5cdb3 0%,#ffd65d55 28%,#efae2b00 65%);box-shadow:0 0 16px #ffefc0,inset 0 0 20px #ffd255,0 0 42px #f8b42bb3;animation:ae-gold-bloom 1.6s ease-out forwards}
+@keyframes ae-gold-bloom{0%{opacity:1;transform:scale(.4)}25%{opacity:1;transform:scale(.9)}100%{opacity:0;transform:scale(1.6)}}
+.ae-eternal .ae-caption,.ae-eternal .ae-modes,.ae-eternal .ae-lamps{position:relative;z-index:4}.ae-eternal .ae-dock,.ae-eternal .ae-tray{z-index:4}
+/* QA (b): magic backlight — no rectangular box edge. Wider field, faded softly on all four sides. */
+.ae-eternal .ae-ambience{left:calc(-1 * min(240px, (100vw - 100%) / 2));right:calc(-1 * min(240px, (100vw - 100%) / 2));top:-180px;bottom:-360px;width:auto;overflow:hidden;
+ -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 24%,#000 76%,transparent 100%),linear-gradient(180deg,transparent 0,#000 18%,#000 78%,transparent 100%);-webkit-mask-composite:source-in;
+ mask-image:linear-gradient(90deg,transparent 0,#000 24%,#000 76%,transparent 100%),linear-gradient(180deg,transparent 0,#000 18%,#000 78%,transparent 100%);mask-composite:intersect}
+@media(min-width:900px) and (min-aspect-ratio:1/1){.ae-eternal .ae-hint{margin-bottom:14px}}
+@media(prefers-reduced-motion:reduce){.ae-eternal .ae-bursts .ae-gold-burst{animation:none;transform:scale(.55);background:#ffd65d33;box-shadow:0 0 10px #ffd255}}
