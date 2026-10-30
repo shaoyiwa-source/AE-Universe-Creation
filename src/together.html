@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Twin flame, one lightprint · AE Universe Creation</title>
+<title>雙生共創 Twin Flame · AE Universe Creation</title>
 <meta name="ae-preview-version" content="together-v19"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -113,7 +113,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
 .fig.paint .fig-title,.fig.paint .fig-read,.fig.paint .fig-ritual,.ticket-fig.paint .fig-title,.ticket-fig.paint .fig-read,.ticket-fig.paint .fig-ritual{color:#f7f1e8;text-shadow:0 1px 8px rgba(0,0,0,.35)}
 .fig.paint .fig-eye,.fig.paint .fig-en,.fig.paint .fig-src,.fig.paint .fig-lp,.ticket-fig.paint .fig-eye,.ticket-fig.paint .fig-en,.ticket-fig.paint .fig-src,.ticket-fig.paint .fig-lp{color:#f3e6c8}
 </style>
-<link rel="stylesheet" href="/ae-surface-polish.css"></head>
+<link rel="stylesheet" href="/ae-surface-polish.css"><style id="ae-name-pattern">h1 .ae-name-en{display:block;margin-top:.28em;font-size:max(15px,.36em);font-weight:400;letter-spacing:.08em;line-height:1.2;opacity:.72}</style></head>
 <body class="ae-polish">
 <main class="wrap">
   <div class="top">
@@ -125,7 +125,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clam
       <button class="lang" type="button" data-language>中文</button>
     </nav>
   </div>
-  <h1 data-en="Twin flame, one lightprint" data-zh="雙生火焰，光紋共創">Twin flame, one lightprint</h1>
+  <h1>雙生共創<small class="ae-name-en">Twin Flame</small></h1>
   <p class="how" data-en="Tap a numbered door to leave a light. Then make the Lightprint. Where two lights overlap, a third shape appears." data-zh="點有號碼的門，留下一道光。然後再生成光紋。兩道光重疊的地方，會出現第三個形狀。">Tap a numbered door to leave a light. Then make the Lightprint. Where two lights overlap, a third shape appears.</p>
   <p class="code" id="codeLine">AE · ……</p>
   <img class="pass-qr" id="passQr" alt="" width="148" height="148" hidden>
@@ -934,7 +934,7 @@ function boot() {
 }
 document.addEventListener('DOMContentLoaded', boot);
 function applyLangChrome() {
-  document.title = lang() === 'zh' ? '雙生火焰，光紋共創 · AE Universe Creation' : 'Twin flame, one lightprint · AE Universe Creation';
+  document.title = '雙生共創 Twin Flame · AE Universe Creation';
   renderMarks();
 }
 new MutationObserver(() => applyLangChrome()).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
