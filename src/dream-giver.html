@@ -1,161 +1,301 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>夢想給予 Dream Giver · AE Universe Creation</title>
+<meta name="description" content="從 12 張希望卡抽一張，送給自己，或送給一個人。每張卡都是一幅 AE 原作，加上一件今天做得到的小事。Draw a hope card for yourself or someone."/>
+<meta name="ae-preview-version" content="dream-giver-v2"/>
+<meta name="theme-color" content="#0d0b09"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="icon" type="image/png" href="/favicon.png"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/ae-games.css?v=1"/>
 <style>
-  :root{
-    --bg:#0b0d12;
-    --panel:#141821;
-    --line:#2a3140;
-    --gold:#e8d5a3;
-    --gold2:#c9a86a;
-    --text:#f3efe6;
-    --muted:#9aa3b2;
-    --accent:#7fd1c4;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif;
-    background:radial-gradient(1200px 800px at 50% 0%, #1a1f2b 0%, var(--bg) 60%);
-    color:var(--text);
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-  }
-  .wrap{width:min(560px,100%);text-align:center}
-  .brand{letter-spacing:.35em;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
-  h1{font-size:30px;margin:0 0 6px;font-weight:500;letter-spacing:.08em}
-  .sub{color:var(--muted);font-size:15px;margin:0 0 26px;line-height:1.7}
-  .stage{position:relative;min-height:430px;display:flex;align-items:center;justify-content:center}
-  .deck{position:relative;width:220px;height:330px}
-  .card{
-    position:absolute;inset:0;
-    border-radius:18px;
-    background:linear-gradient(160deg,#1c2230,#0f131b);
-    border:1px solid var(--line);
-    box-shadow:0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.03);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:26px 20px;
-    transition:transform .5s ease, opacity .5s ease, filter .5s ease;
-    cursor:pointer;
-    user-select:none;
-  }
-  .card .ring{width:54px;height:54px;border-radius:50%;border:1px solid var(--gold2);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:20px;margin-bottom:16px}
-  .card .name{font-size:26px;letter-spacing:.12em;color:var(--gold)}
-  .card .line{margin-top:12px;color:var(--text);font-size:15px;line-height:1.7;opacity:.92}
-  .card .hint{margin-top:18px;font-size:12px;color:var(--muted);letter-spacing:.2em}
-  .card.back .name,.card.back .line,.card.back .hint{display:none}
-  .card.back .ring{border-color:var(--line);color:var(--line)}
-  .card.drawn{transform:translateY(-18px) scale(1.02);border-color:var(--gold2);box-shadow:0 26px 70px rgba(201,168,106,.25)}
-  .btn{
-    margin-top:24px;
-    background:transparent;
-    color:var(--gold);
-    border:1px solid var(--gold2);
-    padding:12px 22px;
-    border-radius:40px;
-    font-family:inherit;
-    font-size:15px;
-    letter-spacing:.18em;
-    cursor:pointer;
-    transition:.2s;
-  }
-  .btn:hover{background:rgba(201,168,106,.12)}
-  .btn:disabled{opacity:.4;cursor:not-allowed}
-  .result{display:none;margin-top:8px}
-  .result .tag{color:var(--accent);letter-spacing:.2em;font-size:12px;margin-bottom:8px}
-  .result .action{font-size:18px;line-height:1.8;color:var(--text)}
-  .result .note{margin-top:14px;color:var(--muted);font-size:13px;line-height:1.7}
-  .foot{margin-top:28px;color:var(--muted);font-size:12px;letter-spacing:.15em}
-  @media (max-width:480px){.card{width:200px;height:300px}.card .name{font-size:23px}}
+.who{display:flex;justify-content:center;gap:0;margin:14px auto 0;width:max-content;border:1px solid var(--line);border-radius:999px;padding:4px}
+.who button{min-height:42px;padding:0 18px;border:0;border-radius:999px;background:none;cursor:pointer;font-size:15px;color:var(--soft)}
+.who button small{font:italic 500 13px "Cormorant Garamond",Georgia,serif;opacity:.8;margin-left:4px}
+.who button[aria-pressed="true"]{background:var(--gold);color:#1a140c;font-weight:600}
+.to{max-width:300px;margin:10px auto 0}
+.to[hidden]{display:none}
+.table{--cw:clamp(74px,20vw,116px);position:relative;height:calc(var(--cw) * 2.25);max-width:820px;margin:22px auto 0}
+.deck{position:absolute;inset:0}
+.cb{position:absolute;left:50%;bottom:calc(var(--cw) * .5);width:var(--cw);aspect-ratio:2/3;margin-left:calc(var(--cw) / -2);border:0;padding:0;background:none;cursor:pointer;transform-origin:50% 120%;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .35s ease;perspective:900px}
+.cb .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.3,.7,.2,1)}
+.cb .face{position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.cb .back{background:radial-gradient(circle at 50% 38%,#3a2c18 0%,#1a140e 55%,#0f0c09 100%);border:1px solid rgba(231,189,103,.6);box-shadow:0 10px 26px rgba(0,0,0,.55),inset 0 0 0 5px rgba(13,11,9,.9),inset 0 0 0 6px rgba(231,189,103,.35);display:grid;place-items:center}
+.cb .back img{width:62%;height:auto;opacity:.95}
+.cb .back i{position:absolute;bottom:9%;left:0;right:0;text-align:center;font:normal 500 clamp(9px,2.2vw,12px)/1 system-ui,sans-serif;letter-spacing:.2em;color:rgba(231,189,103,.7)}
+.cb .front{transform:rotateY(180deg);background:radial-gradient(circle at 50% 45%,#fffaf0 0%,#ffe2a0 30%,#e7bd67 60%,#7a5420 100%);box-shadow:0 0 60px 20px rgba(255,214,130,.45);display:grid;place-items:center;color:#3a2a10;font-size:clamp(28px,8vw,46px);font-weight:600}
+.cb:hover:not(:disabled){transform:var(--t) translateY(-14px)}
+.cb:focus-visible{outline:none}.cb:focus-visible .back{box-shadow:0 0 0 3px var(--teal)}
+.cb.gone{opacity:0;pointer-events:none}
+.cb.pick{z-index:5;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.cb.pick .in{transform:rotateY(180deg)}
+.pickhint{text-align:center;margin:8px 0 0;font-size:15px;color:var(--soft)}
+.pickhint .en{display:inline;margin-left:6px}
+.gift{max-width:520px;margin:10px auto 0;text-align:center;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:rgba(231,189,103,.06);font-size:17px;line-height:1.6}
+.gift[hidden]{display:none}
+.done-line{margin:10px 0 0;font-size:14px;color:var(--teal);text-align:center}
 </style>
-<style id="ae-name-pattern">h1 .ae-name-en{display:block;margin-top:.28em;font-size:max(15px,.36em);font-weight:400;letter-spacing:.08em;line-height:1.2;opacity:.72}</style></head>
+</head>
 <body>
-  <div class="wrap">
-    <div class="brand">AE Universe Creation</div>
-    <h1>夢想給予<small class="ae-name-en">Dream Giver</small></h1>
-    <p class="sub">抽不是中獎，也不是算命。<br>抽到的是「這一層」的希望。</p>
-
-    <div class="stage">
-      <div class="deck" id="deck">
-        <div class="card back" id="card">
-          <div class="ring">∞</div>
-          <div class="name" id="name"></div>
-          <div class="line" id="line"></div>
-          <div class="hint">點擊抽一張</div>
-        </div>
+<header class="g-top">
+  <a href="/" aria-label="AE Universe Creation 首頁 Home"><img src="/assets/ae-three-rings-transparent.webp" alt="" width="74" height="45"></a>
+  <a class="g-back" href="/experience">← 全部體驗 <small>All experiences</small></a>
+</header>
+<main class="g-wrap">
+  <div class="g-head">
+    <p class="g-eyebrow">AE Universe Creation · 互動體驗</p>
+    <h1>夢想給予<small>Dream Giver</small></h1>
+    <p class="g-lead" id="lead">抽一張<b style="color:var(--gold)">希望卡</b>，送給自己，或送給一個人。<br>每張卡：一幅 AE 原作＋一件今天做得到的小事。
+      <span class="en">Draw a hope card for yourself or someone you love — an original AE painting and one small thing to do today.</span></p>
+    <div class="gift" id="gift" hidden></div>
+    <div id="chooser">
+      <div class="who" role="group" aria-label="這張卡給誰 Who is it for">
+        <button type="button" id="forMe" aria-pressed="true">給自己<small>For me</small></button>
+        <button type="button" id="forThem" aria-pressed="false">送給一個人<small>For someone</small></button>
+      </div>
+      <div class="to" id="toBox" hidden>
+        <label class="g-field">對方的名字（選填）· Their name<input id="toName" maxlength="12" autocomplete="off" placeholder="例：媽媽、小安"></label>
       </div>
     </div>
-
-    <button class="btn" id="drawBtn">抽一張</button>
-    <button class="btn" id="againBtn" style="display:none">再抽一次</button>
-
-    <div class="result" id="result">
-      <div class="tag">今天的小事</div>
-      <div class="action" id="action"></div>
-      <div class="note" id="note"></div>
-    </div>
-
-    <div class="foot">Action Creates Infinity · 一個人就能走完整一輪</div>
   </div>
 
+  <section class="table" id="table" aria-label="12 張希望卡 Twelve hope cards">
+    <div class="deck" id="deck"></div>
+  </section>
+  <p class="pickhint" id="pickhint">憑感覺，點一張。<span class="en">Trust your feeling — tap one card.</span></p>
+  <p class="g-note" id="note" aria-live="polite"></p>
+
+  <section class="g-result" id="result" hidden aria-labelledby="rTitle">
+    <div class="g-result-grid">
+      <img class="g-card-img" id="cardImg" alt="你的希望卡 Your hope card" width="1080" height="1920">
+      <div>
+        <p class="g-got" id="rGot">你得到了 · YOU RECEIVED</p>
+        <h2 id="rTitle"></h2>
+        <div class="g-reward" id="reward"></div>
+        <div class="g-actions">
+          <button class="g-btn" id="primary" type="button"></button>
+          <div class="row">
+            <button class="g-btn ghost" id="secondary" type="button"></button>
+            <button class="g-btn quiet" id="did" type="button">我今天做到了 ✓ <small>I did it</small></button>
+          </div>
+          <button class="g-btn quiet" id="again" type="button">再抽一張 <small>Draw again</small></button>
+        </div>
+        <p class="g-note" id="rNote" aria-live="polite"></p>
+        <nav class="g-next" aria-label="接下來 What's next">
+          <h3>接下來<span class="en">What's next</span></h3>
+          <div class="g-links">
+            <a class="g-link" id="artLink" href="/works"><img id="artThumb" alt="" loading="lazy"><span><b id="artName">看這張卡的原作</b><span>AE 手繪原作 · See the original painting</span></span></a>
+            <a class="g-link" href="https://ko-fi.com/s/9b9703d58b" target="_blank" rel="noopener"><img src="/assets/selected-works-v2/flower-heart-bloom.webp" alt="" loading="lazy"><span><b>AE Heart Universe 桌布</b><span>九款花與心的手機桌布 · Nine wallpapers on Ko-fi</span></span></a>
+            <a class="g-link" href="/together"><img src="/assets/selected-works-v2/love-embrace.webp" alt="" loading="lazy"><span><b>下一個：雙生共創</b><span>兩個人各點一道光，生成雙生光紋卡 · Twin Flame</span></span></a>
+          </div>
+          <p class="g-foot" style="text-align:left;margin-top:10px"><a href="/color-moment">光紋心卡 Lightprint Card</a> · <a href="/touch-moment">觸動指尖 Touch Moment</a> · <a href="/experience">全部體驗 All experiences</a></p>
+        </nav>
+      </div>
+    </div>
+  </section>
+
+  <footer class="g-foot">
+    <p>抽卡不是算命，是一個小小的開始 · Not fortune-telling — a small beginning.</p>
+    <p>不需登入 · 不收集資料 · 畫作為 AE 原作，光效只在畫面上方</p>
+    <p>© AE Universe Creation · Aurelia &amp; Elion</p>
+  </footer>
+</main>
+<canvas id="cardCanvas" width="1080" height="1920" hidden></canvas>
+<script src="/ae-chime.js" defer></script>
+<script src="/ae-games-kit.js?v=1"></script>
 <script>
-const cards = [
-  {name:"靠近", line:"先停一下，讓光進來。", action:"今天停一次，看一眼窗外或天空。", note:"靠近不需要大動作，先让自己在。"},
-  {name:"一小步", line:"夢不用一次走完。", action:"選一件今天做得到的小事，做完。", note:"小到能做，才算真的走出。"},
-  {name:"留白", line:"空著的地方，才容得下新的。", action:"今天留十分鐘什麼都不做。", note:"留白也是一种完成。"},
-  {name:"光", line:"陰暗角落也有光。", action:"今天對一個人說一句溫暖的話。", note:"光有時候是輕的。"},
-  {name:"手", line:"由心而生，由手而行。", action:"今天用手做一件小東西。", note:"手做到的，心才真的在。"},
-  {name:"聽", line:"先聽，再回答。", action:"今天安靜聽三分鐘。", note:"聽到的，可能就是答案。"},
-  {name:"種", line:"種下的，會自己長。", action:"今天種一題種子或一點善意。", note:"不要看到結果，才種。"},
-  {name:"回望", line:"回頭，是為了再走。", action:"今天寫下一句你還記得的話。", note:"回望不是停留，是充電。"},
-  {name:"縫", line:"裡開的地方，可以縫。", action:"今天修一件小東西或關係。", note:"縫不完全，也算走過。"},
-  {name:"燃", line:"小火也能照亮。", action:"今天點一支燃燧或一燈燈。", note:"燃的不一定大，但要真。"},
-  {name:"渡", line:"過河的人，也是橋。", action:"今天幫一個人一點忙。", note:"渡過之後，自己也成為橋。"},
-  {name:"再", line:"下一層，還在等你。", action:"今天再靠近一次。", note:"無限來自下一次行動，不是收集全套。"}
+(() => {
+'use strict';
+const G = window.aeGames;
+const W2 = '/assets/selected-works-v2/';
+const CARDS = [
+  { zh: '靠近', en: 'Come closer', line: ['先停一下，讓光進來。', 'Pause, and let the light in.'], act: ['今天停下來一次，抬頭看看天空。', 'Stop once today and look up at the sky.'], art: W2 + 'love-embrace.webp', title: 'Love Embrace' },
+  { zh: '一小步', en: 'One small step', line: ['夢，不用一次走完。', 'A dream needn’t be walked all at once.'], act: ['選一件今天做得到的小事，把它做完。', 'Pick one small thing you can do today — and finish it.'], art: W2 + 'expansion.webp', title: 'Expansion' },
+  { zh: '留白', en: 'Leave space', line: ['空著的地方，才容得下新的。', 'Empty space makes room for the new.'], act: ['今天留十分鐘，什麼都不做。', 'Keep ten minutes today for doing nothing.'], art: W2 + 'heart-recovery.webp', title: 'Heart Recovery' },
+  { zh: '光', en: 'Light', line: ['再暗的角落，也有光。', 'Even the darkest corner holds light.'], act: ['今天對一個人說一句溫暖的話。', 'Say one warm sentence to someone today.'], art: W2 + 'heart-fly.webp', title: 'Heart Fly' },
+  { zh: '手', en: 'Hands', line: ['由心而生，由手而行。', 'Born of the heart, carried by the hands.'], act: ['今天親手做一件小東西。', 'Make one small thing by hand today.'], art: W2 + 'colorful-flow.webp', title: 'Colorful Flow' },
+  { zh: '聽', en: 'Listen', line: ['先聽，再回答。', 'Listen first, then answer.'], act: ['今天安靜聽一個人說話三分鐘。', 'Listen quietly to someone for three minutes today.'], art: W2 + 'love-energy-field.webp', title: 'Love Energy Field' },
+  { zh: '種', en: 'Plant', line: ['種下的，會自己長大。', 'What you plant will grow on its own.'], act: ['今天種下一顆種子，或一點善意。', 'Plant a seed — or a little kindness — today.'], art: W2 + 'flower-heart-bloom.webp', title: 'Flower Heart Bloom' },
+  { zh: '回望', en: 'Look back', line: ['回頭，是為了再出發。', 'We look back to set out again.'], act: ['今天寫下一句你一直記得的話。', 'Write down one sentence you have always remembered.'], art: W2 + 'heart-rebuild.webp', title: 'Heart Rebuild' },
+  { zh: '縫', en: 'Mend', line: ['裂開的地方，可以慢慢縫。', 'What has torn can be mended, slowly.'], act: ['今天修好一件小東西，或一段關係。', 'Mend one small thing — or a relationship — today.'], art: '/assets/6c165bd1deb30988.webp', title: 'Life Bloom' },
+  { zh: '燃', en: 'Kindle', line: ['小小的火，也能照亮。', 'A small flame can still light the way.'], act: ['今天點一盞燈，為自己留一點光。', 'Light a lamp today and keep a little light for yourself.'], art: '/assets/bb5c9cf38f67af5b.webp', title: 'Universe Heart Bloom' },
+  { zh: '渡', en: 'Carry across', line: ['渡人的人，也成了橋。', 'Whoever helps others across becomes a bridge.'], act: ['今天幫一個人一個小忙。', 'Do someone a small favour today.'], art: '/assets/85b757c169e7afd6.webp', title: 'Joyful World' },
+  { zh: '再', en: 'Again', line: ['下一步，還在等你。', 'The next step is still waiting for you.'], act: ['今天再靠近你的夢一次。', 'Move one step closer to your dream today.'], art: '/assets/2ee9aa3b017652d9.webp', title: 'Infinite Love' }
 ];
+const $ = (id) => document.getElementById(id);
+const S = { forThem: false, to: '', idx: -1, gift: false, done: false, busy: false };
+const DONE_KEY = 'ae_dream_giver_done';
 
-const cardEl=document.getElementById('card');
-const nameEl=document.getElementById('name');
-const lineEl=document.getElementById('line');
-const drawBtn=document.getElementById('drawBtn');
-const againBtn=document.getElementById('againBtn');
-const result=document.getElementById('result');
-const actionEl=document.getElementById('action');
-const noteEl=document.getElementById('note');
+/* ---------- URL in: a gift link ---------- */
+const q = new URLSearchParams(location.search);
+const c = Number(q.get('c'));
+if (Number.isInteger(c) && c >= 1 && c <= 12) { S.gift = true; S.idx = c - 1; S.to = G.cleanName(q.get('to')); S.forThem = !!S.to; }
+if (q.get('mode') === 'gift') S.forThem = true;
 
-function draw(){
-  const c=cards[Math.floor(Math.random()*cards.length)];
-  cardEl.classList.remove('back');
-  cardEl.classList.add('drawn');
-  nameEl.textContent=c.name;
-  lineEl.textContent=c.line;
-  actionEl.textContent=c.action;
-  noteEl.textContent=c.note;
-  result.style.display='block';
-  drawBtn.style.display='none';
-  againBtn.style.display='inline-block';
-  try{
-    const log=JSON.parse(localStorage.getItem('ae_dream_giver_log')||'[]');
-    log.push({t:Date.now(),card:c.name,action:c.action});
-    localStorage.setItem('ae_dream_giver_log',JSON.stringify(log));
-  }catch(e){}
+/* ---------- deck ---------- */
+const deck = $('deck');
+function layout() {
+  const cards = [...deck.children];
+  const n = cards.length, wide = innerWidth >= 700;
+  const spread = wide ? 64 : 58, lift = wide ? 1 : .8;
+  cards.forEach((el, i) => {
+    if (el.classList.contains('pick')) return;
+    const t = n === 1 ? 0 : i / (n - 1) - .5;
+    const ang = t * spread;
+    const cw = deck.firstElementChild ? deck.firstElementChild.offsetWidth : 80;
+    const tx = n === 1 ? 0 : t * (wide ? 560 : Math.max(120, Math.min(deck.offsetWidth, innerWidth * .92) - cw * 2.3));
+    const ty = t * t * 4 * 26 * lift;
+    el.style.setProperty('--t', `translate(${tx}px, ${ty}px) rotate(${ang}deg)`);
+    el.style.transform = `translate(${tx}px, ${ty}px) rotate(${ang}deg)`;
+    el.style.zIndex = String(i + 1);
+  });
+}
+function buildDeck(count) {
+  deck.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'cb';
+    b.setAttribute('aria-label', count === 1 ? '打開這張希望卡 Open your card' : '第 ' + (i + 1) + ' 張希望卡 Hope card ' + (i + 1));
+    b.innerHTML = '<span class="in"><span class="face back"><img src="/assets/ae-three-rings-transparent.webp" alt=""><i>HOPE</i></span><span class="face front">✦</span></span>';
+    b.addEventListener('click', () => pick(b));
+    deck.appendChild(b);
+  }
+  layout();
+}
+addEventListener('resize', layout);
+
+/* ---------- who ---------- */
+function setWho(them) {
+  S.forThem = them;
+  $('forMe').setAttribute('aria-pressed', String(!them));
+  $('forThem').setAttribute('aria-pressed', String(them));
+  $('toBox').hidden = !them;
+  G.chime('tap', them ? .7 : .3);
+}
+$('forMe').addEventListener('click', () => setWho(false));
+$('forThem').addEventListener('click', () => { setWho(true); setTimeout(() => $('toName').focus(), 50); });
+
+/* ---------- pick + reveal ---------- */
+const wait = (ms) => new Promise((r) => setTimeout(r, G.reduce ? 0 : ms));
+async function pick(el) {
+  if (S.busy) return; S.busy = true;
+  if (!S.gift) { S.idx = Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * CARDS.length); S.to = S.forThem ? G.cleanName($('toName').value) : ''; }
+  const card = CARDS[S.idx];
+  const preload = G.loadImg(card.art).catch(() => null);
+  G.chime('tap', .5); G.buzz(12);
+  [...deck.children].forEach((o) => { if (o !== el) o.classList.add('gone'); o.disabled = true; });
+  el.classList.add('pick');
+  const tr = $('table').getBoundingClientRect();
+  el.style.transform = `translate(0px, ${-(tr.height * .18)}px) rotate(0deg) scale(${innerWidth >= 700 ? 1.35 : 1.25})`;
+  el.querySelector('.front').textContent = card.zh;
+  await wait(420);
+  G.burstAt(el, { n: 70, colors: ['gold', 'white', 'rose'], speed: 4.4, size: 2.8, decay: .011 });
+  G.chime('glow'); G.buzz([16, 40, 24]);
+  await wait(900);
+  await preload;
+  await reveal(true);
+  S.busy = false;
 }
 
-drawBtn.addEventListener('click',draw);
-againBtn.addEventListener('click',()=>{
-  cardEl.classList.add('back');
-  cardEl.classList.remove('drawn');
-  result.style.display='none';
-  drawBtn.style.display='inline-block';
-  againBtn.style.display='none';
-  setTimeout(draw,350);
+/* ---------- the hope card (1080×1920 phone wallpaper) ---------- */
+const imgCache = {};
+async function drawCard() {
+  const card = CARDS[S.idx], cv = $('cardCanvas'), ctx = cv.getContext('2d'), W = 1080, H = 1920;
+  await G.fontsReady();
+  const im = imgCache[card.art] || (imgCache[card.art] = await G.loadImg(card.art));
+  const ZH = G.FONT_ZH, EN = G.FONT_EN;
+  G.cardBackground(ctx, W, H);
+  G.text(ctx, 'AE UNIVERSE CREATION  ·  夢想給予 DREAM GIVER', W / 2, 108, { font: '500 24px ' + EN, color: '#e7bd67', spacing: 5 });
+  G.text(ctx, S.to ? '給 ' + S.to + ' 的希望卡' : '給自己的希望卡', W / 2, 182, { font: '600 46px ' + ZH, spacing: 4 });
+  G.text(ctx, S.to ? 'A hope card for ' + S.to : 'A hope card for myself', W / 2, 232, { font: 'italic 500 32px ' + EN, color: '#d9cfc0' });
+  G.paintingInBox(ctx, im, 110, 290, 860, 640);
+  G.text(ctx, 'No. ' + String(S.idx + 1).padStart(2, '0') + ' / 12', W / 2, 1010, { font: '500 28px ' + EN, color: '#9a8f80', spacing: 6 });
+  G.text(ctx, card.zh, W / 2, 1136, { font: '600 112px ' + ZH, color: '#e7bd67', spacing: 12 });
+  G.text(ctx, card.en, W / 2, 1194, { font: 'italic 500 44px ' + EN, color: '#d9cfc0' });
+  let y = G.text(ctx, card.line[0], W / 2, 1282, { font: '600 46px ' + ZH, maxW: 880, lh: 62 });
+  y = G.text(ctx, card.line[1], W / 2, y + 50, { font: 'italic 500 32px ' + EN, color: '#d9cfc0', maxW: 880, lh: 40 });
+  ctx.save(); ctx.strokeStyle = 'rgba(231,189,103,.45)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(W / 2 - 120, y + 46); ctx.lineTo(W / 2 + 120, y + 46); ctx.stroke(); ctx.restore();
+  y = G.text(ctx, '今天的小事  ·  ONE SMALL THING TODAY', W / 2, y + 104, { font: '600 26px ' + ZH, color: '#e7bd67', spacing: 4 });
+  y = G.text(ctx, card.act[0], W / 2, y + 70, { font: '600 46px ' + ZH, maxW: 860, lh: 62 });
+  y = G.text(ctx, card.act[1], W / 2, y + 52, { font: 'italic 500 32px ' + EN, color: '#d9cfc0', maxW: 860, lh: 40 });
+  if (S.done) {
+    const sy = Math.min(1770, y + 100);
+    ctx.save(); ctx.strokeStyle = '#8dffe4'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(W / 2 - 230, sy - 46, 460, 70, 35); ctx.stroke(); ctx.restore();
+    G.text(ctx, '✓ 做到了 Done  ·  ' + G.today(), W / 2, sy, { font: '600 30px ' + ZH, color: '#8dffe4' });
+  } else G.text(ctx, 'Action Creates Infinity', W / 2, Math.min(1780, y + 74), { font: 'italic 500 30px ' + EN, color: '#9a8f80' });
+  G.text(ctx, '原作《' + card.title + '》  ·  AE Universe Creation', W / 2, 1846, { font: '500 24px ' + ZH, color: '#9a8f80' });
+  return cv;
+}
+async function refreshCard() { const cv = await drawCard(); $('cardImg').src = cv.toDataURL('image/png'); }
+function giftUrl() {
+  const p = new URLSearchParams({ c: String(S.idx + 1) });
+  if (S.to) p.set('to', S.to);
+  return location.origin + '/dream-giver?' + p.toString();
+}
+async function reveal(scroll) {
+  const card = CARDS[S.idx];
+  $('table').hidden = true; $('pickhint').hidden = true; $('chooser').hidden = true;
+  $('rTitle').innerHTML = (S.gift ? '這張卡送給你：' : '你抽到了：') + '「' + card.zh + '」<span class="en">' + card.en + '</span>';
+  const giving = S.forThem && !S.gift;
+  $('reward').innerHTML = giving
+    ? '<b>得到：</b>一張寫著「給 ' + (S.to || '他') + '」的希望卡 —— 原作《' + card.title + '》、一句話、一件今天做得到的小事。<br>按<b>「送出這張卡」</b>，對方點開連結就會收到同一張。<span class="en">A hope card addressed to them. Send the link — they open the very same card.</span>'
+    : '<b>得到：</b>一張希望卡（No.' + String(S.idx + 1).padStart(2, '0') + '/12）—— 原作《' + card.title + '》、一句話、一件今天做得到的小事。<br>存成<b>手機桌布</b>，今天做完那件小事，回來按<b>「我做到了」</b>，卡上會蓋上完成印記。<span class="en">Save it as your wallpaper. Do the small thing today, then tap “I did it” to stamp your card.</span>';
+  $('primary').innerHTML = giving ? '送出這張卡 <small>Send this card</small>' : '儲存成手機桌布 <small>Save wallpaper</small>';
+  $('secondary').innerHTML = giving ? '儲存圖片 <small>Save</small>' : (S.gift ? '也送一張 <small>Give one</small>' : '送給別人 <small>Give it</small>');
+  $('artThumb').src = card.art; $('artName').textContent = '看原作《' + card.title + '》';
+  $('result').hidden = false;
+  try { await refreshCard(); } catch (e) { $('rNote').textContent = '卡片圖片沒有生成，請重新整理。Card image failed — please reload.'; }
+  if (!S.gift) history.replaceState(null, '', '/dream-giver?' + new URLSearchParams(Object.assign({ c: String(S.idx + 1) }, S.to ? { to: S.to } : {})).toString());
+  if (scroll) setTimeout(() => $('result').scrollIntoView({ behavior: G.reduce ? 'auto' : 'smooth', block: 'start' }), 120);
+}
+async function save(btn) {
+  G.burstAt(btn, { n: 18 }); G.chime('tap', .8);
+  const cv = await drawCard();
+  const ok = await G.saveCanvas(cv, 'AE-DreamGiver-' + String(S.idx + 1).padStart(2, '0') + '.png');
+  $('rNote').textContent = ok ? '已儲存。設成手機桌布，讓這句話陪你一天。Saved — set it as your wallpaper.' : '';
+}
+async function send() {
+  const card = CARDS[S.idx];
+  const r = await G.shareLink(giftUrl(), '夢想給予 Dream Giver', (S.to ? '給 ' + S.to + '：' : '') + '我抽了一張希望卡「' + card.zh + '」送給你 · A hope card for you');
+  $('rNote').textContent = r === 'copied' ? '連結已複製，貼給對方吧。Link copied — paste it to them.' : (r === 'manual' ? giftUrl() : (r === 'shared' ? '已送出。Sent.' : ''));
+}
+$('primary').addEventListener('click', (e) => { (S.forThem && !S.gift) ? send() : save(e.currentTarget); });
+$('secondary').addEventListener('click', (e) => {
+  if (S.forThem && !S.gift) return save(e.currentTarget);
+  location.href = '/dream-giver?mode=gift';
 });
+$('did').addEventListener('click', async (e) => {
+  if (S.done) return;
+  S.done = true;
+  let n = 1;
+  try { n = (Number(localStorage.getItem(DONE_KEY)) || 0) + 1; localStorage.setItem(DONE_KEY, String(n)); } catch (err) {}
+  G.burstAt(e.currentTarget, { n: 50, colors: ['teal', 'gold', 'white'], speed: 4, lift: 1.5 }); G.chime('glow'); G.buzz([14, 30, 14]);
+  e.currentTarget.innerHTML = '已完成 ✓ <small>Done</small>';
+  $('rNote').textContent = '這是你完成的第 ' + n + ' 件小事。無限，來自下一次行動。This is small thing #' + n + '. Action creates infinity.';
+  await refreshCard();
+});
+$('again').addEventListener('click', () => { location.href = '/dream-giver' + (S.forThem && !S.gift ? '?mode=gift' : ''); });
+
+/* ---------- boot ---------- */
+if (S.gift) {
+  $('chooser').hidden = true;
+  $('lead').hidden = true;
+  $('gift').hidden = false;
+  $('gift').innerHTML = (S.to ? '<b style="color:var(--gold)">' + S.to + '</b>，' : '') + '有人抽了一張希望卡送給你。<br>點開它。<span class="en">Someone drew a hope card for you. Tap to open it.</span>';
+  $('pickhint').innerHTML = '點一下，打開你的卡。<span class="en">Tap to open.</span>';
+  buildDeck(1);
+} else {
+  setWho(S.forThem);
+  buildDeck(12);
+}
+})();
 </script>
+<script src="/ae-version.js" defer></script>
 </body>
 </html>
