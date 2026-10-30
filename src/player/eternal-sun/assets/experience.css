@@ -10,3 +10,6 @@
 .ae-eternal h1 small{display:inline-block;font:11px/1.4 system-ui,sans-serif;letter-spacing:.10em;margin-left:9px;color:#d7cfb7}.ae-eternal .ae-art-name{font:12px/1.5 Georgia,serif;letter-spacing:.04em;margin:-2px 0 7px;color:#d8d0bb}
 
 .ae-eternal[lang^="en"] h1 small{display:none}
+
+/* Three exclusive presentations; Original remains a separate light-off control. */
+.ae-eternal .ae-modes{max-width:100%;gap:5px}.ae-eternal .ae-modes button{padding:8px 11px}@media(max-width:480px){.ae-eternal .ae-modes button{font-size:11px;padding:8px 10px}}

@@ -1,4 +1,4 @@
-/* AE Eternal shared renderer 0.1.0.
+/* AE Eternal shared renderer 0.3.0.
  * Adapted from official homepage ae-home-light.js (2026-10-30 sha256 a1b58497…26c).
  * One renderer for the standalone wrapper and future homepage mounting. Artwork is never drawn/transformed here.
  */
@@ -17,7 +17,7 @@ function createDisplayClock(){
  }};
 }
 function geometry(width,height){return{width,height,artX0:0,artW:width,artBottom:height,sunX:width*.52,sunY:height*.522};}
-function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime=null,lighting=null,motion:reduced,environment={}}){
+function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime=null,lighting=null,homeVisual=null,motion:reduced,environment={}}){
  const ctx=canvas.getContext('2d');
  if(!ctx)throw Error('Canvas unavailable');
  const env={now:()=>globalThis.performance.now(),raf:f=>requestAnimationFrame(f),cancelRaf:i=>cancelAnimationFrame(i),later:(f,t)=>globalThis.setTimeout(f,t),cancelLater:i=>clearTimeout(i),dpr:globalThis.devicePixelRatio||1,...environment};
@@ -31,6 +31,8 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
  let glows=[],coins=[],sweeps=[],lastFxFrame=0,pendingRelease=null;
  const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
  const variation=seed=>{const n=Math.sin(seed*12.9898+78.233)*43758.5453;return n-Math.floor(n);};
+ const hasLight=()=>lighting?.current()?.enabled!==false;
+ const homeMode=()=>!lighting||lighting.current()?.mode==='home';
  const displayTime=()=>displayClock.read(readPlayback(),performance.now(),presentMs);
  function resize(){if(dead)return;const r=canvas.getBoundingClientRect();({width,height,artBottom,artX0,artW,sunX,sunY}=geometry(Math.max(1,r.width),Math.max(1,r.height)));const ratio=Math.min(env.dpr,2);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);hero.dataset.artBox=JSON.stringify([0,0,width,height]);needsStatic=true;schedule();}
  function schedule(){if(!dead&&!frame&&lights&&viewable&&(readPlayback().playing||spots.length||musicSpots.length||bolts.length||glows.length||coins.length||sweeps.length||needsStatic||lighting?.needsAnimation()||(focus&&focus.until>performance.now())))frame=env.raf(draw);}
@@ -85,11 +87,22 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
       if(pendingRelease&&musicTime>=pendingRelease.time){const hit=pendingRelease;pendingRelease=null;if(musicTime-hit.time<.18)bloom(hit.x,hit.y);}
 
     }
-    const illumination=lighting?.draw(ctx,{width,height,now,playback:{...state,time:musicTime||state.time},beat:musicFrame,boost:glows.reduce((m,g)=>Math.max(m,Math.max(0,1-(now-g.born)/g.life)),0),target:focus&&focus.until>now?focus:null});
-    const front=!illumination||(illumination.enabled&&illumination.mode==='rgb');
-    if(!front){spots=[];musicSpots=[];bolts=[];glows=illumination?.enabled?glows.filter(g=>now-g.born<g.life):[];coins=[];sweeps=[];ctx.restore();schedule();return;}
-    if(playing&&!reduced.matches)drawOpening(now,bare);
-    if(!playing||reduced.matches)drawIdle(now);
+    const illumination=lighting?.draw(ctx,{width,height,now,playback:{...state,time:musicTime||state.time},beat:musicFrame,boost:glows.reduce((m,g)=>Math.max(m,Math.max(0,1-(now-g.born)/g.life)),focus?.held?.65:0),target:focus&&focus.until>now?focus:null});
+    const home=!illumination||illumination.mode==='home';
+    hero.dataset.activeVisual=illumination?.enabled===false?'original':illumination?.mode||'legacy';
+    hero.dataset.homeBeams='0';hero.dataset.homePools='0';
+    if(illumination?.enabled===false||!home){
+      spots=[];musicSpots=[];specks=[];bolts=[];glows=illumination?.enabled?glows.filter(g=>now-g.born<g.life):[];coins=[];sweeps=[];
+      hero.dataset.musicPasses='0';hero.dataset.musicBeams='0';hero.dataset.idleBeams='0';ctx.restore();schedule();return;
+    }
+    if(homeVisual){
+      const remaining=focus?focus.until-now:0;
+      const result=homeVisual.draw(ctx,{width,height,artX0,artW,artBottom,sunX,sunY,nowMs:now,musicTime:musicTime||state.time,playing,beat:musicFrame,energy,focus:remaining>0?{x:focus.x,y:focus.y,held:!!focus.held,weight:Math.min(1,remaining/600)}:null,reduced:reduced.matches,lite,bare});
+      hero.dataset.homeBeams=String(result?.beams||0);hero.dataset.homePools=String(result?.pools||0);hero.dataset.laserTargets=JSON.stringify(result?.targets||[]);hero.dataset.musicPasses=playing?'1':'0';
+    }else{
+      if(playing&&!reduced.matches)drawOpening(now,bare);
+      if(!playing||reduced.matches)drawIdle(now);
+    }
     bolts=bolts.filter(b=>now-b.born<b.life);
     if(!reduced.matches){
       ctx.globalCompositeOperation='screen';
@@ -191,9 +204,9 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
   function artPoint(seed){const v=variation(seed+performance.now()%997);return{x:artX0+artW*(.14+.72*v),y:Math.max(28,artBottom*(.14+.62*variation(seed*3.1+v)))};}
   function fxGlow(o){
     o=o||{};const now=performance.now(),x=o.x??(sunX||artX0+artW/2),y=o.y??Math.max(30,sunY||artBottom/2);
-    glows.push({x,y,color:lighting?.current()?.colors||[255,220,120],born:now,life:reduced.matches?900:o.soft?2400:1700,soft:!!o.soft});if(glows.length>3)glows.shift();
+    glows.push({x,y,color:homeMode()?[255,220,120]:(lighting?.current()?.colors||[255,220,120]),born:now,life:reduced.matches?900:o.soft?2400:1700,soft:!!o.soft});if(glows.length>3)glows.shift();
     // The original glow/ray/ring canvas effect is sufficient; no uncropped DOM burst.
-    if(!reduced.matches)for(let i=0;i<(o.soft?3:5);i++)later(()=>{spots.push({...artPoint(i+7),born:performance.now()});if(spots.length>8)spots.shift();schedule();},160+i*110);
+    if(homeMode()&&!reduced.matches)for(let i=0;i<(o.soft?3:5);i++)later(()=>{spots.push({...artPoint(i+7),born:performance.now()});if(spots.length>8)spots.shift();schedule();},160+i*110);
     if(chime&&!o.quiet)chime.glow();
     hero.dataset.fxGlowCount=String((Number(hero.dataset.fxGlowCount)||0)+1);schedule();
   }
@@ -240,7 +253,7 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
   for(const p of specks){const age=t-p.born,a=Math.max(0,1-age/p.life);ctx.fillStyle='hsla('+p.color+',90%,78%,'+a*.73*env+')';ctx.beginPath();ctx.arc(p.x+p.vx*age,p.y+p.vy*age,Math.max(0,a*2+.25),0,Math.PI*2);ctx.fill();}
   ctx.restore();hero.dataset.openingState='running';hero.dataset.openingTrack=t.toFixed(3);hero.dataset.openingStage=b.stage;hero.dataset.openingSpecks=String(specks.length);hero.dataset.oldestSpeckAge=specks.length?Math.max(...specks.map(p=>t-p.born)).toFixed(3):'0';hero.dataset.musicPasses='1';
  }
- function resetTiming(){lighting?.resetTiming();cancelFocus();glows=[];coins=[];sweeps=[];for(const id of timers)env.cancelLater(id);timers.clear();if(!dead)later(ambient,700);rhythm.reset();displayClock.reset();musicSpots=[];specks=[];bolts=bolts.filter(b=>!b.musical);energy=0;musicFrame={stage:'groove',dropPulse:0,buildProgress:0};hero.dataset.audioEnergy='0';hero.dataset.openingSpecks='0';needsStatic=true;}
+ function resetTiming(){lighting?.resetTiming();homeVisual?.reset();cancelFocus();glows=[];coins=[];sweeps=[];for(const id of timers)env.cancelLater(id);timers.clear();if(!dead)later(ambient,700);rhythm.reset();displayClock.reset();musicSpots=[];specks=[];bolts=bolts.filter(b=>!b.musical);energy=0;musicFrame={stage:'groove',dropPulse:0,buildProgress:0};hero.dataset.audioEnergy='0';hero.dataset.openingSpecks='0';needsStatic=true;}
 
  function drawIdle(now){
   const target=focus&&focus.until>now?focus:{x:sunX,y:sunY};
@@ -250,18 +263,18 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
   if(!lighting&&!reduced.matches)for(let i=0;i<6;i++){ctx.strokeStyle=laserColors[i];ctx.globalAlpha=strength;ctx.lineWidth=focus?.held?1.5:.7;ctx.beginPath();ctx.moveTo(i%2?width:0,height*(.12+i*.10));ctx.lineTo(target.x,target.y);ctx.stroke();}
   ctx.restore();hero.dataset.idleBeams=reduced.matches?'0':'6';
  }
- function beginFocus(x,y){if(dead||!viewable)return false;pendingRelease=null;focus={x:Math.max(0,Math.min(width,x)),y:Math.max(0,Math.min(height,y)),until:Infinity,held:true};needsStatic=true;schedule();return true;}
+ function beginFocus(x,y){if(dead||!viewable||!hasLight())return false;pendingRelease=null;focus={x:Math.max(0,Math.min(width,x)),y:Math.max(0,Math.min(height,y)),until:Infinity,held:true};needsStatic=true;schedule();return true;}
  function moveFocus(x,y){if(!focus?.held)return false;return beginFocus(x,y);}
  function bloom(x,y){fxGlow({x,y,quiet:!readPlayback().sound});hero.dataset.gestureBlooms=String((Number(hero.dataset.gestureBlooms)||0)+1);}
  function releaseFocus(){if(!focus?.held)return false;const now=performance.now(),p={x:focus.x,y:focus.y},state=readPlayback();focus={...p,until:now+600,held:false};if(state.playing&&!reduced.matches){const next=timeline.events?.find(t=>t>state.time+.02);if(next!==undefined&&next-state.time<1.0)pendingRelease={...p,time:next};else bloom(p.x,p.y);}else bloom(p.x,p.y);needsStatic=true;schedule();return true;}
  function cancelFocus(){focus=null;pendingRelease=null;needsStatic=true;}
 
- function tap(x,y){if(dead||!viewable||x<0||x>width||y<0||y>height)return false;const now=performance.now();spots.push({x,y,born:now});if(spots.length>6)spots.shift();hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);if(!readPlayback().playing){focus={x,y,until:now+2400};launchDepth(x,y,now,Number(hero.dataset.touchCount));}if(readPlayback().sound&&chime)chime.tap(x/width);schedule();return true;}
- function effect(id){if(dead||!viewable||!FX[id])return false;FX[id]({quiet:!readPlayback().sound});hero.dataset.fxLastTap=id;hero.dataset.fxTaps=String((Number(hero.dataset.fxTaps)||0)+1);return true;}
+ function tap(x,y){if(dead||!viewable||!hasLight()||x<0||x>width||y<0||y>height)return false;const now=performance.now();if(!homeMode()){fxGlow({x,y,quiet:true});if(readPlayback().sound&&chime)chime.tap(x/width);return true;}spots.push({x,y,born:now});if(spots.length>6)spots.shift();hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);if(!readPlayback().playing){focus={x,y,until:now+2400};launchDepth(x,y,now,Number(hero.dataset.touchCount));}if(readPlayback().sound&&chime)chime.tap(x/width);schedule();return true;}
+ function effect(id){if(dead||!viewable||!hasLight()||!FX[id]||(!homeMode()&&id!=='glow'))return false;FX[id]({quiet:!readPlayback().sound});hero.dataset.fxLastTap=id;hero.dataset.fxTaps=String((Number(hero.dataset.fxTaps)||0)+1);return true;}
  function ambient(){if(dead)return;if(!lighting&&viewable&&!reduced.matches&&!readPlayback().playing&&width>0)fxGlow({quiet:true,soft:true});later(ambient,3400);}
  function setVisible(value){viewable=!!value;if(!viewable){if(frame)env.cancelRaf(frame);frame=0;spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];focus=null;pendingRelease=null;clear();}else{needsStatic=true;schedule();}}
  function refresh(preferenceChanged=false){if(dead)return;if(preferenceChanged){spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}needsStatic=true;schedule();}
- function destroy(){if(dead)return;dead=true;cancelFocus();if(frame)env.cancelRaf(frame);frame=0;for(const id of timers)env.cancelLater(id);timers.clear();spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}
+ function destroy(){if(dead)return;dead=true;homeVisual?.destroy();cancelFocus();if(frame)env.cancelRaf(frame);frame=0;for(const id of timers)env.cancelLater(id);timers.clear();spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}
  resize();later(ambient,700);
  return{resize,tap,beginFocus,moveFocus,releaseFocus,cancelFocus,effect,setVisible,refresh,resetTiming,destroy,snapshot:()=>({destroyed:dead,timers:timers.size,raf:!!frame,width,height,playing:!!readPlayback().playing})};
 }
