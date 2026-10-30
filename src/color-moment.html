@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="ae-version" content="v2454">
-<title>光紋心卡 Lightprint Card · AE Universe Creation</title>
+<title>光紋心卡 Lightprint Card · AE Universe Creation</title><meta property="og:title" content="光紋心卡 Lightprint Card · AE Universe Creation">
 <meta name="description" content="光紋心卡 — soft feeling questions, then a colour bloom made for this moment. AE Universe Creation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -684,9 +684,9 @@
   <section class="cm-stage">
     <div class="wrap">
       <div class="cm-intro" id="cmIntro">
-        <p  class="cm-opening-kicker" id="cmOpeningKicker" data-en="CREATE A SOUL CARD" data-zh="製作一張心靈卡">CREATE A SOUL CARD</p>
+        <p  class="cm-opening-kicker" id="cmOpeningKicker" data-en="CREATE A LIGHTPRINT CARD" data-zh="製作一張光紋心卡">CREATE A LIGHTPRINT CARD</p>
         <p  class="cm-opening-lead" id="cmOpeningLead" data-en="An artwork and a message for your moment." data-zh="讓作品與一句話，留住這一刻。">An artwork and a message for your moment.</p>
-        <p  class="cm-intro-soft" id="cmIntroSoft" data-en="Choose a few feelings, draw with light, then hold to seal. Your Soul Card combines an AE artwork, your colours and a short message." data-zh="選幾個感受、用手畫下光，再按住「收光」。完成後，你會得到一張結合 AE 作品、色彩與心靈小語的卡片。">Choose a few feelings, draw with light, then hold to seal. Your Soul Card combines an AE artwork, your colours and a short message.</p>
+        <p  class="cm-intro-soft" id="cmIntroSoft" data-en="Choose a few feelings, draw with light, then hold to seal. Your Lightprint Card combines an AE artwork, your colours and a short message." data-zh="選幾個感受、用手畫下光，再按住「收光」。完成後，你會得到一張結合 AE 作品、色彩與心靈小語的卡片。">Choose a few feelings, draw with light, then hold to seal. Your Lightprint Card combines an AE artwork, your colours and a short message.</p>
         <p class="cm-coach" id="cmCoach" data-en="Pick one that fits" data-zh="輕輕選一個">Pick one that fits</p>
       </div>
 
@@ -757,8 +757,8 @@
             <p class="cm-mini-tip" id="cmMiniTip" hidden></p>
             <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
             <div class="cm-card-actions" aria-label="Moment actions">
-              <button  type="button" class="cm-shutter" id="cmSnap" data-en="Save Soul Card" data-zh="儲存心靈卡">Save Soul Card</button>
-              <button  type="button" class="cm-card-action" id="cmShare" data-en="Share Soul Card" data-zh="分享心靈卡">Share Soul Card</button>
+              <button  type="button" class="cm-shutter" id="cmSnap" data-en="Save Lightprint Card" data-zh="儲存光紋心卡">Save Lightprint Card</button>
+              <button  type="button" class="cm-card-action" id="cmShare" data-en="Share Lightprint Card" data-zh="分享光紋心卡">Share Lightprint Card</button>
               <button type="button" class="cm-card-action" id="cmPathReplay" data-en="Watch the light again" data-zh="看光再走一次">Watch the light again</button>
               <button type="button" class="cm-card-action" id="cmReplay" data-en="Feel again" data-zh="再感覺一次">Feel again</button>
             </div>
@@ -2980,8 +2980,8 @@
     renderCard();
     const L = lang();
     showToast(L === 'zh'
-      ? ('心靈卡已生成，可以儲存或分享。')
-      : ('Your Soul Card is ready to save or share.'));
+      ? ('光紋心卡已生成，可以儲存或分享。')
+      : ('Your Lightprint Card is ready to save or share.'));
   }
 
 
@@ -3032,7 +3032,7 @@
     if (!artwork) {
       artwork = document.createElement('img');
       artwork.className = 'cm-card-artwork';
-      artwork.alt = L === 'zh' ? '這張心靈卡的 AE 原創畫作' : 'The original AE artwork for this Soul Card';
+      artwork.alt = L === 'zh' ? '這張光紋心卡的 AE 原創畫作' : 'The original AE artwork for this Lightprint Card';
       cardEl.insertBefore(artwork, cardEl.querySelector('.cm-card-body'));
     }
     artwork.hidden = !activeArt;
@@ -3047,7 +3047,7 @@
       }
     };
     if (activeArt) { delete artwork.dataset.fallbackTried; artwork.src = activeArt; }
-    cardEyebrow.textContent = L === 'zh' ? 'AE 心靈卡' : 'AE SOUL CARD';
+    cardEyebrow.textContent = L === 'zh' ? 'AE 光紋心卡' : 'AE LIGHTPRINT CARD';
     cardTitle.textContent = L === 'zh' ? activeMood.zh : activeMood.en;
     cardEn.textContent = L === 'zh' ? activeMood.en : activeMood.zh;
     if (cardSrc) {
@@ -3589,7 +3589,7 @@
     const ritualBody = soulCopyParts(activeReading,activeRitual,L).invitation;
     const moodMain = isZh ? activeMood.zh : activeMood.en;
     const moodSub = isZh ? activeMood.en : activeMood.zh;
-    const eyebrow = isZh ? 'AE 心靈卡' : 'AE SOUL CARD';
+    const eyebrow = isZh ? 'AE 光紋心卡' : 'AE LIGHTPRINT CARD';
     const srcLine = isZh ? '摘自《盛明》筆記' : 'From the Sheng Ming notes';
     const ritualLabelText = ritualBody ? (isZh ? '一個小邀請' : 'A small invitation') : '';
     const lpLabel = lightprintLabel();

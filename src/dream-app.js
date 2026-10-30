@@ -276,7 +276,7 @@ function actions() {
       + '<span class="en">Yours to give: their dream, the painting, your blessing, a first step — sealed. Send the link; they open it, accept the dream, take the step and send a light back to you.</span>';
     a.appendChild(btn('送出這份夢想 <small>Send the dream</small>', '', async () => {
       const url = linkFor();
-      const r = await G.shareLink(url, '夢想給予 Dream Giver', (S.from ? S.from + ' ' : '') + '送你一封夢想信，點開拆封 · A sealed dream for you');
+      const r = await G.shareLink(url, '夢想給予 Dream Giver', (S.from ? S.from + ' ' : '') + '送你一份夢想給予，點開拆封 · A sealed dream for you');
       rNote(r === 'copied' ? '連結已複製，傳給' + (S.to || '他') + '吧。他拆封、收下後，可以傳一道光回給你。Link copied.' : (r === 'manual' ? url : (r === 'cancel' ? '' : '已送出。Sent.')));
       if (r !== 'cancel') { $('prog').lastChild.className = 'ok'; $('prog').lastChild.textContent = '✓ 送出'; }
     }));
