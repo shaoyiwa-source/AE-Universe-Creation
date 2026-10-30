@@ -1,74 +1,158 @@
-/* 藝術電視牆 Art TV Wall (site v2476.45). The 27 original Selected Works are static and locked;
-   Owner-added works come from /api/artwall (server-side Blob storage). Visitors are read-only. */
+/* 藝術電視牆 Art TV Wall — paged (site v2476.47). Serves /works (and /art-wall).
+   Selected Works come from a static, locked list in the CURRENT Production order (same names/credits as Production /works).
+   Owner-added works come from /api/artwall (server-side Blob). Visitors are read-only.
+   Each wall (page) holds at most cols×rows works; walls are paged. Nothing on this page writes anything except the Owner editor. */
 (()=>{'use strict';
-const ORIGINALS_URL='/assets/artwall/originals-v2476.45.json';
+// ---- Wall size config (edit here). Desktop picks the first rule whose min width fits; phones use a fixed page size.
+const WALL={
+  desktop:[{min:1600,cols:10,rows:10},{min:1200,cols:9,rows:9},{min:900,cols:8,rows:8}],
+  phone:{dense:3,large:2,perPage:30},          // phone: 3 cols (or 2 large), 30 works per wall in both modes so the page stays the same when toggling
+  demoMax:1000
+};
+const WORKS_URL='/assets/artwall/works-v2476.47.json';             // Production order — do not reorder here
+const PROPOSED_URL='/assets/artwall/order-proposed-v2476.45.json';  // GPT's proposed order, NOT applied; preview-only ?order=proposed
 const API='/api/artwall';
 const KEY='ae-artwall-owner-key';
 const $=id=>document.getElementById(id);
-const wall=$('awWall'),lb=$('awLb'),keyDlg=$('awKey');
+const wall=$('awWall'),lb=$('awLb'),keyDlg=$('awKey'),pager=$('awPager');
+const qs=new URLSearchParams(location.search);
+// Dev-only switches work on localhost and per-deployment preview URLs only, never on the Production domain.
+const devHost=/^(localhost|127\.0\.0\.1)$/.test(location.hostname)||/^ae-universe-creation-[a-z0-9]+-ae-universe-creation\.vercel\.app$/.test(location.hostname)||/-git-[a-z0-9-]+\.vercel\.app$/.test(location.hostname);
+const demoN=devHost?Math.max(0,Math.min(WALL.demoMax,parseInt(qs.get('demo')||'0',10)||0)):0;
+const proposed=devHost&&qs.get('order')==='proposed';
+let wallOverride=null;{const m=/^(\d{1,2})x(\d{1,2})$/.exec(qs.get('wall')||'');if(m){const c=+m[1],r=+m[2];if(c>=3&&c<=12&&r>=1&&r<=12)wallOverride={cols:c,rows:r}}}
 let originals=[],added=[],all=[],cur=-1,owner=false,apiState={storage:'unknown',writable:false};
+let page=Math.max(0,(parseInt(qs.get('page')||'1',10)||1)-1),layoutKey='';
 const zh=()=>document.documentElement.lang==='zh-Hant';
 const t=(en,zhs)=>zh()?zhs:en;
 const getKey=()=>{try{return sessionStorage.getItem(KEY)||''}catch(e){return ''}};
 const setKey=v=>{try{v?sessionStorage.setItem(KEY,v):sessionStorage.removeItem(KEY)}catch(e){}};
-function titleOf(w){if(w.kind==='o')return w.en?(zh()?(w.zh||w.en):w.en):'';return (zh()?(w.title_zh||w.title_en):(w.title_en||w.title_zh))||''}
-function creditOf(w){if(w.kind==='o')return (zh()?w.creditZh:w.creditEn)||'AE Universe Creation';return t('New work · AE Universe Creation','新上架作品・AE Universe Creation')}
-function introOf(w){if(w.kind==='o')return '';return (zh()?(w.intro_zh||w.intro_en):(w.intro_en||w.intro_zh))||''}
-function render(){
+function titleOf(w){if(w.kind==='o'||w.kind==='d')return w.en?(zh()?(w.zh||w.en):w.en):'';return (zh()?(w.title_zh||w.title_en):(w.title_en||w.title_zh))||''}
+function creditOf(w){if(w.kind==='o'||w.kind==='d')return (zh()?w.creditZh:w.creditEn)||'AE Universe Creation';return t('New work · AE Universe Creation','新上架作品・AE Universe Creation')}
+function introOf(w){if(w.kind==='o'||w.kind==='d')return (zh()?(w.storyZh||w.storyEn):(w.storyEn||w.storyZh))||'';return (zh()?(w.intro_zh||w.intro_en):(w.intro_en||w.intro_zh))||''}
+function isPhone(){return window.innerWidth<900}
+function layout(){
+  if(isPhone()){const cols=wall.dataset.mode==='large'?WALL.phone.large:WALL.phone.dense;return {cols,per:WALL.phone.perPage,key:'p'}}
+  if(wallOverride)return {cols:wallOverride.cols,per:wallOverride.cols*wallOverride.rows,key:'o'};
+  const w=window.innerWidth;const r=WALL.desktop.find(x=>w>=x.min)||WALL.desktop[WALL.desktop.length-1];
+  return {cols:r.cols,per:r.cols*r.rows,key:'d'+r.cols};
+}
+const pages=()=>Math.max(1,Math.ceil(all.length/layout().per));
+function build(){
   all=[...originals.map(o=>({...o,kind:'o'})),...added.map(a=>({...a,kind:'a',thumb:a.img,src:a.img}))];
+  if(demoN){const base=all.length?all:[];all=[];for(let i=0;i<demoN&&base.length;i++){const b=base[i%base.length];all.push({...b,kind:b.kind==='a'?'a':'d',demo:i+1,id:'demo'+(i+1)})}}
+}
+function render(anim){
+  const L=layout();layoutKey=L.key+':'+L.per;
+  const P=pages();page=Math.min(Math.max(0,page),P-1);
+  wall.style.setProperty('--cols',L.cols);
   wall.textContent='';
-  all.forEach((w,i)=>{
-    const b=document.createElement('button');b.type='button';b.className='aw-tile';b.dataset.i=i;b.dataset.kind=w.kind;b.dataset.id=w.id;
-    const name=titleOf(w);b.setAttribute('aria-label',(name||t('AE Universe Creation selected artwork','AE Universe Creation 精選作品'))+' — '+t('enlarge','放大'));
-    const img=new Image();img.src=w.thumb;img.alt='';img.loading=i<30?'eager':'lazy';img.decoding='async';img.draggable=false;b.append(img);
-    if(w.kind==='a'){const s=document.createElement('span');s.className='aw-new';s.textContent='NEW';b.append(s)}
+  const start=page*L.per,end=Math.min(all.length,start+L.per);
+  for(let i=start;i<end;i++){
+    const w=all[i];
+    const b=document.createElement('button');b.type='button';b.className='aw-tile';b.dataset.i=i;b.dataset.kind=w.kind;
+    const name=titleOf(w);b.setAttribute('aria-label',(name||t('AE Universe Creation selected artwork','AE Universe Creation 精選作品'))+(w.demo?' (demo #'+w.demo+')':'')+' — '+t('enlarge','放大'));
+    const img=new Image();img.alt='';img.loading=(i-start)<L.cols*3?'eager':'lazy';img.decoding='async';img.draggable=false;
+    img.onload=()=>img.classList.add('ok');img.onerror=()=>img.classList.add('ok');img.src=w.thumb;b.append(img);
+    if(w.kind==='a'&&!w.demo){const s=document.createElement('span');s.className='aw-new';s.textContent='NEW';b.append(s)}
+    if(w.demo){const s=document.createElement('span');s.className='aw-dn';s.textContent='#'+w.demo;b.append(s)}
     b.addEventListener('click',()=>open(i));wall.append(b);
-  });
+  }
+  if(anim){wall.classList.remove('aw-turn');void wall.offsetWidth;wall.classList.add('aw-turn')}
   $('awCount').textContent=String(all.length);
   $('awCount').setAttribute('aria-label',all.length+t(' works',' 件作品'));
+  renderPager(P,start,end);
+  syncUrl();
 }
+function renderPager(P,start,end){
+  pager.hidden=P<=1;if(P<=1)return;
+  const nums=$('awPgNums');nums.textContent='';
+  const max=isPhone()?7:11;let list=[];
+  if(P<=max){for(let i=0;i<P;i++)list.push(i)}
+  else{const s=new Set([0,P-1,page,page-1,page+1]);if(page<=2){s.add(1);s.add(2);s.add(3)}if(page>=P-3){s.add(P-2);s.add(P-3);s.add(P-4)}list=[...s].filter(i=>i>=0&&i<P).sort((a,b)=>a-b)}
+  let prev=-1;
+  list.forEach(i=>{
+    if(prev>=0&&i-prev>1){const g=document.createElement('span');g.className='aw-gap';g.textContent='…';nums.append(g)}
+    const b=document.createElement('button');b.type='button';b.className='aw-num';b.textContent=String(i+1);
+    b.setAttribute('aria-label',t('Wall ','第 ')+(i+1)+t('',' 面牆'));if(i===page)b.setAttribute('aria-current','page');
+    b.addEventListener('click',()=>go(i,true));nums.append(b);prev=i;
+  });
+  $('awPgPrev').disabled=page<=0;$('awPgNext').disabled=page>=P-1;
+  $('awPgPrev').setAttribute('aria-label',t('Previous wall','上一面牆'));$('awPgNext').setAttribute('aria-label',t('Next wall','下一面牆'));
+  $('awPgInfo').textContent=t('Wall ','第 ')+(page+1)+' / '+P+t('',' 面牆')+'  ·  '+(start+1)+'–'+end+' / '+all.length;
+}
+function syncUrl(){
+  try{const u=new URL(location.href);if(page>0)u.searchParams.set('page',String(page+1));else u.searchParams.delete('page');
+    if(u.href!==location.href)history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}
+}
+function go(p,scroll){
+  const P=pages();p=Math.min(Math.max(0,p),P-1);if(p===page)return;page=p;render(true);
+  if(scroll){const top=wall.getBoundingClientRect().top;if(top<0||top>window.innerHeight*.6)window.scrollTo({top:window.scrollY+top-90,behavior:'smooth'})}
+}
+$('awPgPrev').onclick=()=>go(page-1,true);
+$('awPgNext').onclick=()=>go(page+1,true);
 function fill(){
   const w=all[cur];if(!w)return;
-  const img=$('awLbImg');img.src=w.src;img.alt=titleOf(w)||t('AE Universe Creation selected artwork','AE Universe Creation 精選作品');
-  const name=titleOf(w);$('awLbTitle').textContent=name||'AE Universe Creation';
+  const img=$('awLbImg');img.src=w.src;img.alt=w.alt||titleOf(w)||t('AE Universe Creation selected artwork','AE Universe Creation 精選作品');
+  const name=titleOf(w);$('awLbTitle').textContent=(name||'AE Universe Creation')+(w.demo?'  ['+t('demo copy #','示範複本 #')+w.demo+']':'');
   $('awLbCredit').textContent=(name?'':t('Selected Work · ','精選作品・'))+creditOf(w)+'  ·  '+(cur+1)+' / '+all.length;
   const intro=introOf(w);$('awLbIntro').textContent=intro;$('awLbIntro').hidden=!intro;
-  $('awLbActions').hidden=!(owner&&w.kind==='a');
+  const ln=$('awLbLink');if(w.linkHref){ln.href=w.linkHref;ln.textContent=zh()?w.linkZh:w.linkEn;ln.hidden=false}else{ln.hidden=true;ln.removeAttribute('href')}
+  $('awLbActions').hidden=!(owner&&w.kind==='a'&&!w.demo);
 }
 function open(i){cur=i;fill();if(!lb.open){lb.showModal?lb.showModal():lb.setAttribute('open','')};document.documentElement.style.overflow='hidden'}
 function close(){if(lb.open)lb.close();document.documentElement.style.overflow=''}
-lb.addEventListener('close',()=>{document.documentElement.style.overflow=''});
+lb.addEventListener('close',()=>{document.documentElement.style.overflow='';if(cur>=0){const p=Math.floor(cur/layout().per);if(p!==page){page=p;render(true)}const el=wall.querySelector('[data-i="'+cur+'"]');if(el)el.focus({preventScroll:true})}});
 $('awLbX').onclick=close;
 $('awPrev').onclick=()=>{cur=(cur-1+all.length)%all.length;fill()};
 $('awNext').onclick=()=>{cur=(cur+1)%all.length;fill()};
 lb.addEventListener('click',e=>{if(e.target===lb)close()});
-document.addEventListener('keydown',e=>{if(!lb.open)return;if(e.key==='ArrowLeft')$('awPrev').click();if(e.key==='ArrowRight')$('awNext').click()});
-let sx=null;lb.addEventListener('touchstart',e=>{sx=e.touches.length===1?e.touches[0].clientX:null},{passive:true});
+document.addEventListener('keydown',e=>{
+  if(lb.open){if(e.key==='ArrowLeft')$('awPrev').click();if(e.key==='ArrowRight')$('awNext').click();return}
+  if(keyDlg.open||e.altKey||e.ctrlKey||e.metaKey)return;
+  const tg=e.target;if(tg&&(tg.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName)))return;
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){if(page>0){e.preventDefault();go(page-1,false)}}
+  else if(e.key==='ArrowRight'||e.key==='PageDown'){if(page<pages()-1){e.preventDefault();go(page+1,false)}}
+});
+let sx=null,sy=0;lb.addEventListener('touchstart',e=>{sx=e.touches.length===1?e.touches[0].clientX:null},{passive:true});
 lb.addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>60)(dx<0?$('awNext'):$('awPrev')).click()},{passive:true});
-// layout switch (phones/tablets): dense 3 columns ⇄ large 2 columns
+// swipe the wall left/right on phones to change walls
+let wx=null,wy=0;wall.addEventListener('touchstart',e=>{if(e.touches.length===1){wx=e.touches[0].clientX;wy=e.touches[0].clientY}else wx=null},{passive:true});
+wall.addEventListener('touchend',e=>{if(wx==null)return;const dx=e.changedTouches[0].clientX-wx,dy=e.changedTouches[0].clientY-wy;wx=null;if(Math.abs(dx)>60&&Math.abs(dx)>1.5*Math.abs(dy))go(page+(dx<0?1:-1),false)},{passive:true});
+// layout switch (phones/tablets): dense 3 columns ⇄ large 2 columns; same works per wall, so the wall you are on stays the same
 document.querySelectorAll('.aw-mode button').forEach(b=>b.addEventListener('click',()=>{
   wall.dataset.mode=b.dataset.mode;document.querySelectorAll('.aw-mode button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
   try{localStorage.setItem('ae-artwall-mode',b.dataset.mode)}catch(e){}
+  render(false);
 }));
-try{const m=localStorage.getItem('ae-artwall-mode');if(m==='large')document.querySelector('.aw-mode [data-mode=large]').click()}catch(e){}
+try{const m=localStorage.getItem('ae-artwall-mode');if(m==='large'){wall.dataset.mode='large';document.querySelectorAll('.aw-mode button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.mode==='large')))}}catch(e){}
+let rz=0;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{const L=layout();const k=L.key+':'+L.per;if(k===layoutKey){wall.style.setProperty('--cols',L.cols);return}
+  const first=wall.firstElementChild?+wall.firstElementChild.dataset.i:0;page=Math.floor(first/L.per);render(false)},120)});
 async function loadAdded(){
+  if(demoN){apiState={storage:'demo (not loaded)',writable:false};added=[];return}
   try{const r=await fetch(API,{cache:'no-store'});const j=await r.json();apiState={storage:j.storage,writable:!!j.writable};added=Array.isArray(j.items)?j.items:[]}
   catch(e){apiState={storage:'unreachable',writable:false};added=[]}
 }
-// ---- Owner editor
+// ---- Owner editor (unchanged behaviour; disabled while a ?demo dataset is shown)
 const status=(m,el='awStatus')=>{$(el).textContent=m};
 async function whoami(k){try{const r=await fetch(API+'?whoami=1',{headers:{'x-ae-owner-key':k},cache:'no-store'});const j=await r.json();return j}catch(e){return {ok:false}}}
 function ownerUI(){
-  $('awOwner').hidden=!owner;$('awLoginBtn').hidden=owner;
+  $('awOwner').hidden=!owner||!!demoN;$('awLoginBtn').hidden=owner||!!demoN;
   $('awOwnerNote').textContent=owner?t('Logged in as Owner. Storage: ','已以 Owner 登入。儲存：')+apiState.storage+(apiState.writable?'':t(' (not writable)','（目前不可寫入）')):'';
   fill();
+}
+function demoUI(){
+  const d=$('awDemo');const bits=[];
+  if(demoN)bits.push(t('DEV DEMO · '+demoN+' in-memory copies of the Selected Works to preview paging — nothing is saved','開發示範・以 '+demoN+' 件精選作品的記憶體複本預覽分頁，不會儲存任何資料'));
+  if(proposed)bits.push(t('PROPOSED ORDER (v2476.45) — preview only, not decided','提案排序（v2476.45）— 僅預覽，尚未決定'));
+  d.hidden=!bits.length;d.textContent=bits.join('  ·  ');
 }
 $('awLoginBtn').onclick=()=>{status('', 'awKeyStatus');$('awKeyInput').value='';keyDlg.showModal()};
 $('awKeyForm').addEventListener('submit',async e=>{
   if(e.submitter&&e.submitter.value==='cancel')return;
   e.preventDefault();const k=$('awKeyInput').value.trim();status(t('Checking…','確認中…'),'awKeyStatus');
   const j=await whoami(k);
-  if(j&&j.owner){setKey(k);owner=true;keyDlg.close();await loadAdded();render();ownerUI()}
+  if(j&&j.owner){setKey(k);owner=true;keyDlg.close();await loadAdded();build();render(false);ownerUI()}
   else status(j&&j.keyConfigured===false?t('Owner key is not configured on this deployment.','此部署尚未設定 Owner 金鑰。'):t('Key not accepted.','金鑰不正確。'),'awKeyStatus');
 });
 $('awLogout').onclick=()=>{setKey('');owner=false;resetForm();ownerUI()};
@@ -81,27 +165,28 @@ function fileToDataUrl(file){return new Promise((res,rej)=>{
     let q=.92,d=c.toDataURL('image/jpeg',q);while(d.length>4.1e6&&q>.6){q-=.08;d=c.toDataURL('image/jpeg',q)}res({data:d,w,h})};
   im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('bad image'))};im.src=url})}
 $('awForm').addEventListener('submit',async e=>{
-  e.preventDefault();const f=e.target;const id=f.id.value;const file=f.file.files[0];
+  e.preventDefault();if(demoN)return;const f=e.target;const id=f.id.value;const file=f.file.files[0];
   if(!id&&!file){status(t('Choose an image first.','請先選擇圖片。'));return}
   const body={title_en:f.title_en.value,title_zh:f.title_zh.value,intro_en:f.intro_en.value,intro_zh:f.intro_zh.value};
   try{status(t('Saving…','儲存中…'));if(file){const d=await fileToDataUrl(file);body.image=d.data;body.w=d.w;body.h=d.h}
     const r=await fetch(API+(id?'?id='+encodeURIComponent(id):''),{method:id?'PUT':'POST',headers:{'content-type':'application/json','x-ae-owner-key':getKey()},body:JSON.stringify(body)});
     const j=await r.json().catch(()=>({}));
     if(!r.ok||!j.ok){status(t('Save failed: ','儲存失敗：')+(j.error||r.status));return}
-    await loadAdded();render();resetForm();status(t('Saved to server. It will read back on any device.','已存到伺服器，任何裝置重新整理都讀得到。'));
+    await loadAdded();build();render(false);resetForm();status(t('Saved to server. It will read back on any device.','已存到伺服器，任何裝置重新整理都讀得到。'));
   }catch(err){status(t('Save failed: ','儲存失敗：')+err.message)}
 });
-$('awEdit').onclick=()=>{const w=all[cur];if(!w||w.kind!=='a')return;const f=$('awForm');f.id.value=w.id;f.title_en.value=w.title_en||'';f.title_zh.value=w.title_zh||'';f.intro_en.value=w.intro_en||'';f.intro_zh.value=w.intro_zh||'';
+$('awEdit').onclick=()=>{const w=all[cur];if(!w||w.kind!=='a'||w.demo)return;const f=$('awForm');f.id.value=w.id;f.title_en.value=w.title_en||'';f.title_zh.value=w.title_zh||'';f.intro_en.value=w.intro_en||'';f.intro_zh.value=w.intro_zh||'';
   $('awSave').textContent=t('Save changes','儲存修改');$('awCancel').hidden=false;close();$('awOwner').scrollIntoView({behavior:'smooth'});status(t('Editing: leave the image empty to keep the current one.','修改中：圖片留空即保留原圖。'))};
-$('awDel').onclick=async()=>{const w=all[cur];if(!w||w.kind!=='a')return;if(!confirm(t('Delete this added work?','確定刪除這件新增作品？')))return;
+$('awDel').onclick=async()=>{const w=all[cur];if(!w||w.kind!=='a'||w.demo)return;if(!confirm(t('Delete this added work?','確定刪除這件新增作品？')))return;
   const r=await fetch(API+'?id='+encodeURIComponent(w.id),{method:'DELETE',headers:{'x-ae-owner-key':getKey()}});const j=await r.json().catch(()=>({}));
-  if(!r.ok||!j.ok){alert(t('Delete failed: ','刪除失敗：')+(j.error||r.status));return}close();await loadAdded();render();status(t('Deleted.','已刪除。'))};
-new MutationObserver(()=>{render();if(lb.open)fill();ownerUI()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+  if(!r.ok||!j.ok){alert(t('Delete failed: ','刪除失敗：')+(j.error||r.status));return}close();await loadAdded();build();render(false);status(t('Deleted.','已刪除。'))};
+new MutationObserver(()=>{render(false);if(lb.open)fill();ownerUI();demoUI()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 (async()=>{
-  try{originals=await (await fetch(ORIGINALS_URL)).json()}catch(e){originals=[]}
-  render();await loadAdded();render();
-  const k=getKey();if(k){const j=await whoami(k);owner=!!(j&&j.owner);if(!owner)setKey('')}
-  if(/[?&]owner\b/.test(location.search)&&!owner)$('awLoginBtn').click();
+  try{originals=await (await fetch(WORKS_URL)).json()}catch(e){originals=[]}
+  if(proposed){try{const p=await (await fetch(PROPOSED_URL)).json();const by=new Map(originals.map(o=>[o.id,o]));const re=p.ids.map(id=>by.get(id)).filter(Boolean);if(re.length===originals.length)originals=re}catch(e){}}
+  demoUI();build();render(false);await loadAdded();build();render(false);
+  if(!demoN){const k=getKey();if(k){const j=await whoami(k);owner=!!(j&&j.owner);if(!owner)setKey('')}
+    if(/[?&]owner\b/.test(location.search)&&!owner)$('awLoginBtn').click();}
   ownerUI();
 })();
 })();

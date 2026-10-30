@@ -8,7 +8,7 @@
 const crypto = require('node:crypto');
 
 const INDEX = 'artwall/index.json';
-const MAX_ITEMS = 300, MAX_IMG_BYTES = 3.2 * 1024 * 1024;
+const MAX_ITEMS = 1000, MAX_IMG_BYTES = 3.2 * 1024 * 1024;
 const LIM = { title: 80, intro: 600 };
 const dev = { items: [], imgs: new Map() }; // local dev only (AE_ARTWALL_DEV_MEMORY=1), never used on Vercel
 

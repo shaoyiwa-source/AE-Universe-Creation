@@ -74,12 +74,23 @@
       "destination": "/dream-giver.html"
     },
     {
-      "source": "/art-wall",
-      "destination": "/art-wall.html"
-    },
-    {
       "source": "/free-heart-layers",
       "destination": "/free-heart-layers.html"
+    },
+    {
+      "source": "/art-wall",
+      "destination": "/works.html"
+    },
+    {
+      "source": "/works-classic",
+      "destination": "/works-classic.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/art-wall.html",
+      "destination": "/art-wall",
+      "permanent": false
     }
   ]
 }
