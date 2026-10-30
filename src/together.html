@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>雙生共創 Twin Flame · AE Universe Creation</title>
 <meta name="description" content="兩個人在同一幅 AE 原作上輪流畫光、各帶一個字、一起按住，把兩道光融成一張雙生光紋卡。Two people draw light in turns, each bring a word, and hold together to fuse one Twin Flame card."/>
-<meta name="ae-preview-version" content="together-v21-cocreate"/>
+<meta name="ae-preview-version" content="v2476.40-games-r3"/>
 <meta name="theme-color" content="#0d0b09"/>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="icon" type="image/png" href="/favicon.png"/>
@@ -58,6 +58,13 @@
 .pad.b.on{box-shadow:0 0 0 6px rgba(122,168,255,.25),0 0 40px rgba(122,168,255,.5)}
 .pad.both.on{box-shadow:0 0 0 6px rgba(141,255,228,.25),0 0 40px rgba(141,255,228,.5)}
 .pad[hidden]{display:none}
+.pad small.key{font-size:11px;opacity:.7;letter-spacing:.04em}.pad small.key[hidden]{display:none}
+.how{max-width:560px;margin:4px auto 0;padding:10px 14px;border:1px dashed var(--line);border-radius:14px;font-size:14px;line-height:1.7;color:var(--soft)}
+.how:empty{display:none}
+.how kbd{display:inline-block;min-width:1.6em;padding:0 6px;border:1px solid var(--line);border-radius:6px;font:600 12px/1.6 system-ui,sans-serif;color:var(--warm);background:#120f0c}
+.hstate{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 14px;margin:10px 0 0;font:500 13px/1.4 system-ui,sans-serif;color:var(--muted)}
+.hstate:empty{display:none}
+.hstate .ok{color:var(--teal)}.hstate .en{flex-basis:100%;text-align:center}
 .meter{width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--teal) calc(var(--p,0)*360deg),rgba(255,255,255,.1) 0);display:grid;place-items:center;flex:none}
 .meter span{width:52px;height:52px;border-radius:50%;background:var(--night);display:grid;place-items:center;font:600 13px system-ui,sans-serif;color:var(--teal)}
 .support{margin:18px 0 0;padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:13px;line-height:1.7;color:var(--muted)}
@@ -117,12 +124,14 @@
 
   <section class="hold" id="hold" hidden aria-labelledby="hTitle">
     <p class="prompt" id="hTitle" style="min-height:0"></p>
+    <p class="how" id="hHow"></p>
     <div class="pads">
-      <button class="pad g" id="padA" type="button">金<small>按住 HOLD</small></button>
+      <button class="pad g" id="padA" type="button" aria-label="金色按住 Gold hold (mouse or F key)">金<small>按住 HOLD</small><small class="key" id="padAkey">滑鼠 / F</small></button>
       <div class="meter" id="meter"><span id="meterTxt">0%</span></div>
-      <button class="pad b" id="padB" type="button">藍<small>按住 HOLD</small></button>
+      <button class="pad b" id="padB" type="button" aria-label="藍色按住 Blue hold (Space or J key)">藍<small>按住 HOLD</small><small class="key" id="padBkey">空白鍵 / J</small></button>
       <button class="pad both" id="padBoth" type="button" hidden>✦<small id="padBothTxt">一起按住 HOLD</small></button>
     </div>
+    <p class="hstate" id="holdState" aria-live="polite"></p>
   </section>
 
   <section class="g-result" id="result" hidden aria-labelledby="rTitle">
@@ -158,12 +167,13 @@
     <p>不需登入 · 不收集資料 · 畫作為 AE 原作，光效只在畫面上方</p>
     <p>No login · nothing collected · original paintings, light is an overlay only</p>
     <p>© AE Universe Creation · Aurelia &amp; Elion</p>
+    <p class="g-build" translate="no">Preview build v2476.40-games-r3</p>
   </footer>
 </main>
 <canvas id="cardCanvas" width="1080" height="1920" hidden></canvas>
 <script src="/ae-chime.js" defer></script>
 <script src="/ae-games-kit.js?v=2"></script>
-<script src="/together-app.js?v=2"></script>
+<script src="/together-app.js?v=3"></script>
 <script src="/ae-version.js" defer></script>
 </body>
 </html>

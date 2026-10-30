@@ -173,15 +173,7 @@ function frame(now) {
   const r = art.getBoundingClientRect(), W = r.width, H = r.height;
   octx.clearRect(0, 0, W, H);
   const pulse = G.reduce ? 1 : 1 + Math.sin((now - S.t0) / 380) * .08;
-  // the hold: fill or drain
-  if (S.phase === 'hold') {
-    const need = holdNeed(), dt = Math.min(64, now - (S.lastT || now));
-    if (need) { S.fuse = Math.min(1, S.fuse + dt / HOLD_MS); if (now - S.lastBuzz > 380) { G.buzz(8); S.lastBuzz = now; } }
-    else S.fuse = Math.max(0, S.fuse - dt / 900);
-    $('meter').style.setProperty('--p', S.fuse.toFixed(3));
-    $('meterTxt').textContent = Math.round(S.fuse * 100) + '%';
-    if (S.fuse >= 1) fused();
-  }
+  if (S.phase === 'hold') holdTick(now);
   S.lastT = now;
   drawPrint(octx, 0, 0, W, H, { w: Math.max(3, W * .009), pulse, live: S.live });
   requestAnimationFrame(frame);
@@ -304,34 +296,96 @@ $('sendLink').addEventListener('click', async () => {
 });
 
 /* ---------- ③ hold together ---------- */
+// Local mode always shows two pads (gold + blue); both must be held at the same time.
+// Phone/touch: two fingers (one per person). Computer (single mouse): one person holds a pad with the mouse,
+// the other holds the Space key (= the other colour); or both on one keyboard: hold F (gold) + J (blue).
+// Progress is driven by real elapsed time (not frame count), so throttled/slow frames can't stall it.
 const coarse = matchMedia('(pointer: coarse)').matches;
-const twoPads = () => S.mode === 'local' && coarse;
+const twoPads = () => S.mode === 'local';
+const keyHeld = new Set();      // 'a' | 'b' held from the keyboard
+const ptrHeld = new Map();      // pointerId -> 'a' | 'b' | 'both'
+function syncHeld() {
+  S.held = new Set([...keyHeld, ...ptrHeld.values()]);
+  ['a', 'b', 'both'].forEach((k) => { const el = $(k === 'a' ? 'padA' : k === 'b' ? 'padB' : 'padBoth'); el.classList.toggle('on', S.held.has(k)); });
+  const st = $('holdState'); if (!st) return;
+  if (twoPads()) {
+    const a = S.held.has('a'), b = S.held.has('b');
+    st.innerHTML = '<span class="' + (a ? 'ok' : '') + '">金 ' + (a ? '✓ 按住中' : '… 等待') + '</span><span class="' + (b ? 'ok' : '') + '">藍 ' + (b ? '✓ 按住中' : '… 等待') + '</span>'
+      + '<span class="en">' + (a && b ? 'Both holding — keep going' : 'Gold ' + (a ? 'holding' : 'waiting') + ' · Blue ' + (b ? 'holding' : 'waiting')) + '</span>';
+  } else st.innerHTML = '';
+}
 function holdNeed() { return twoPads() ? (S.held.has('a') && S.held.has('b')) : S.held.has('both'); }
+function holdTick(now) {
+  if (S.phase !== 'hold') return;
+  const last = S.holdT || now, dt = Math.max(0, Math.min(1000, now - last)); S.holdT = now;
+  if (holdNeed()) { S.fuse = Math.min(1, S.fuse + dt / HOLD_MS); if (now - S.lastBuzz > 380) { G.buzz(8); S.lastBuzz = now; } }
+  else S.fuse = Math.max(0, S.fuse - dt / 1400);
+  $('meter').style.setProperty('--p', S.fuse.toFixed(3));
+  $('meterTxt').textContent = Math.round(S.fuse * 100) + '%';
+  if (S.fuse >= 1) fused();
+}
+let holdTimer = 0;
 function goHold() {
   S.n1 = G.cleanName($('n1').value); S.n2 = G.cleanName($('n2').value);
-  $('words').hidden = true; S.phase = 'hold'; S.fuse = 0; render();
+  $('words').hidden = true; S.phase = 'hold'; S.fuse = 0; S.holdT = 0; render();
   $('hold').hidden = false;
   $('padA').hidden = $('padB').hidden = !twoPads(); $('padBoth').hidden = twoPads();
-  if (twoPads()) $('hTitle').innerHTML = '③ <b>兩個人同時</b>，各用一根手指按住自己的顏色，直到光融合。<span class="en">Both at once: each hold your colour until the lights fuse.</span>';
-  else if (S.mode === 'remote') { $('padBothTxt').textContent = '按住融合 HOLD'; $('hTitle').innerHTML = '③ 按住，把你的光和他的光融在一起。<span class="en">Hold to fuse your light with theirs.</span>'; }
-  else $('hTitle').innerHTML = '③ 兩個人<b>一起把手放上去</b>，按住不放，直到光融合。<span class="en">Put your hands on it together and hold until the lights fuse.</span>';
-  note('');
+  $('padAkey').hidden = $('padBkey').hidden = coarse;
+  if (twoPads()) {
+    $('hTitle').innerHTML = '③ <b>兩個人同時</b>按住自己的顏色約 2.5 秒，直到光融合；放開會慢慢退回。<span class="en">Both at once: each hold your own colour for about 2.5 s until the lights fuse. Letting go drains it.</span>';
+    $('hHow').innerHTML = coarse
+      ? '📱 <b>手機：</b>金色的人一根手指按住「金」，藍色的人一根手指按住「藍」，兩根手指同時按著。<span class="en">Phone: one finger each — gold on 金, blue on 藍, both at the same time.</span>'
+      : '💻 <b>電腦：</b>一個人用<b>滑鼠按住「金」</b>，另一個人同時<b>按住鍵盤空白鍵</b>（＝藍）。<br>或兩人共用鍵盤：一人按住 <kbd>F</kbd>（金）、一人按住 <kbd>J</kbd>（藍）。觸控螢幕可直接兩指各按一顆。'
+        + '<span class="en">Computer: one person holds 金 with the mouse while the other holds the Space bar (= blue). Or share the keyboard: hold F (gold) + J (blue). On a touchscreen, use two fingers.</span>';
+  } else if (S.mode === 'remote') { $('padBothTxt').textContent = '按住融合 HOLD'; $('hTitle').innerHTML = '③ 按住約 2.5 秒，把你的光和他的光融在一起。<span class="en">Hold for about 2.5 s to fuse your light with theirs.</span>'; $('hHow').innerHTML = '滑鼠按住、手指按住，或按住空白鍵都可以。<span class="en">Hold with the mouse, a finger, or the Space bar.</span>'; }
+  note(''); syncHeld();
+  clearInterval(holdTimer); holdTimer = setInterval(() => holdTick(performance.now()), 50);
   setTimeout(() => $('hold').scrollIntoView({ behavior: G.reduce ? 'auto' : 'smooth', block: 'end' }), 120);
 }
 $('toHold').addEventListener('click', goHold);
 function bindPad(el, key) {
-  const on = (e) => { if (S.phase !== 'hold') return; e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (x) {} S.held.add(key); el.classList.add('on'); G.chime('tap', key === 'a' ? .2 : key === 'b' ? .8 : .5); };
-  const off = () => { S.held.delete(key); el.classList.remove('on'); };
-  el.addEventListener('pointerdown', on);
-  el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
+  el.addEventListener('pointerdown', (e) => {
+    if (S.phase !== 'hold') return; if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (x) {}
+    ptrHeld.set(e.pointerId, key); syncHeld(); G.chime('tap', key === 'a' ? .2 : key === 'b' ? .8 : .5);
+  });
+  const off = (e) => { if (ptrHeld.get(e.pointerId) === key) { ptrHeld.delete(e.pointerId); syncHeld(); } };
+  el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off);
+  el.addEventListener('lostpointercapture', (e) => { if (e.pointerType !== 'mouse') off(e); });
   el.addEventListener('contextmenu', (e) => e.preventDefault());
-  el.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && S.phase === 'hold') { e.preventDefault(); if (twoPads()) { S.held.add('a'); S.held.add('b'); } else S.held.add(key); el.classList.add('on'); } });
-  el.addEventListener('keyup', () => { if (twoPads()) { S.held.delete('a'); S.held.delete('b'); } else S.held.delete(key); el.classList.remove('on'); });
 }
 bindPad($('padA'), 'a'); bindPad($('padB'), 'b'); bindPad($('padBoth'), 'both');
+// a mouse release anywhere ends that mouse hold (even if capture was lost)
+window.addEventListener('pointerup', (e) => { if (ptrHeld.has(e.pointerId)) { ptrHeld.delete(e.pointerId); syncHeld(); } });
+// keyboard: Space = the colour the mouse isn't holding (blue by default); F = gold, J = blue
+function keyFor(e) {
+  if (e.code === 'KeyF') return twoPads() ? 'a' : 'both';
+  if (e.code === 'KeyJ') return twoPads() ? 'b' : 'both';
+  if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') {
+    if (!twoPads()) return 'both';
+    const m = [...ptrHeld.values()];
+    return m.includes('b') && !m.includes('a') ? 'a' : 'b';
+  }
+  return '';
+}
+document.addEventListener('keydown', (e) => {
+  if (S.phase !== 'hold' || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  const k = keyFor(e); if (!k) return;
+  e.preventDefault(); if (e.repeat) return;
+  S._keyMap = S._keyMap || {}; S._keyMap[e.code || e.key] = k;
+  if (!keyHeld.has(k)) G.chime('tap', k === 'a' ? .2 : k === 'b' ? .8 : .5);
+  keyHeld.add(k); syncHeld();
+});
+document.addEventListener('keyup', (e) => {
+  const m = S._keyMap || {}, k = m[e.code || e.key]; if (!k) return;
+  e.preventDefault(); delete m[e.code || e.key];
+  if (!Object.values(m).includes(k)) keyHeld.delete(k); syncHeld();
+});
+window.addEventListener('blur', () => { keyHeld.clear(); ptrHeld.clear(); S._keyMap = {}; syncHeld(); });
 async function fused() {
   if (S.phase !== 'hold') return;
-  S.phase = 'done'; S.fuse = 1; S.held.clear();
+  S.phase = 'done'; S.fuse = 1; clearInterval(holdTimer); keyHeld.clear(); ptrHeld.clear(); S.held.clear();
   document.querySelectorAll('.pad').forEach((p) => p.classList.remove('on'));
   const r = art.getBoundingClientRect(), H = heart();
   G.burst(r.left + H.x * r.width, r.top + H.y * r.height, { n: 80, colors: ['teal', 'gold', 'blue', 'white'], speed: 5, size: 3, decay: .011 });

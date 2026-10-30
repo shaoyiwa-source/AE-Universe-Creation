@@ -80,7 +80,7 @@ function show(n) {
   ['w0', 'w1', 'w2', 'w3', 'w4', 'w5'].forEach((id, i) => { $(id).hidden = i !== n; });
   $('steps').hidden = n === 0;
   document.querySelectorAll('#steps li').forEach((li) => { const s = Number(li.dataset.s); li.className = s < n ? 'done' : (s === n ? 'on' : ''); });
-  if (n > 0) setTimeout(() => $('steps').scrollIntoView({ behavior: G.reduce ? 'auto' : 'smooth', block: 'start' }), 60);
+  if (n > 0) setTimeout(() => $(n === 5 ? 'w5' : 'steps').scrollIntoView({ behavior: G.reduce ? 'auto' : 'smooth', block: 'start' }), 60);
   if (n === 5) prepSeal();
 }
 document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', () => show(Number(b.dataset.back))));
@@ -158,6 +158,7 @@ async function prepSeal() {
   S.d = nowD(); S.role = 'make';
   try { const c = await drawCard(); $('preview').src = c.toDataURL('image/png'); } catch (e) {}
 }
+$('pvBtn').addEventListener('click', () => { const w = $('sealWrap'), big = w.classList.toggle('big'); $('pvTxt').textContent = big ? '點一下縮小 · Tap to shrink' : '點一下放大 · Tap to enlarge'; if (!big) $('seal').scrollIntoView({ block: 'nearest' }); });
 $('fromName').addEventListener('input', () => { clearTimeout(prepSeal.t); prepSeal.t = setTimeout(() => { S.from = G.cleanName($('fromName').value); prepSeal(); }, 300); });
 function holdButton(el, ms, done) {
   let t0 = 0, raf = 0, holding = false;

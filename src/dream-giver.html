@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>夢想給予 Dream Giver · AE Universe Creation</title>
 <meta name="description" content="寫下一個人的夢，配一幅 AE 原作、一句祝福和第一小步，封成夢想卡送給他；他打開、接受、走出第一步，再傳一道光回來。Give someone a dream card — or commit to your own."/>
-<meta name="ae-preview-version" content="dream-giver-v3"/>
+<meta name="ae-preview-version" content="v2476.40-games-r3"/>
 <meta name="theme-color" content="#0d0b09"/>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="icon" type="image/png" href="/favicon.png"/>
@@ -40,8 +40,15 @@
 .sugs{display:grid;gap:8px;margin:8px 0 10px}
 .sug{min-height:44px;padding:8px 14px;border-radius:12px;border:1px dashed rgba(231,189,103,.4);background:transparent;color:var(--soft);text-align:left;cursor:pointer;font-size:15px;line-height:1.5}
 .sug:hover{border-style:solid;color:var(--warm)}
-.sealwrap{display:grid;justify-items:center;gap:12px;margin:14px 0 0}
-.preview{width:min(70vw,260px);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.6),0 0 0 1px rgba(231,189,103,.25)}
+.sealwrap{display:grid;grid-template-columns:auto minmax(0,auto);align-items:center;justify-content:center;gap:12px 18px;margin:14px 0 0}
+.pv{display:grid;justify-items:center;gap:4px;margin:0;padding:0;border:0;background:none;cursor:zoom-in}
+.preview{display:block;width:clamp(128px,38vw,200px);height:auto;aspect-ratio:9/16;object-fit:contain;background:#120f0c;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.6),0 0 0 1px rgba(231,189,103,.25)}
+.pv small{font:500 11px/1.3 system-ui,sans-serif;color:var(--muted);letter-spacing:.06em}
+.sealwrap.big{grid-template-columns:minmax(0,1fr)}
+.sealwrap.big .pv{cursor:zoom-out}
+.sealwrap.big .preview{width:min(100%,360px)}
+.seal-side{display:grid;justify-items:center;gap:10px;max-width:200px;text-align:center}
+.seal-side .g-note{font-size:13px;line-height:1.5}
 .seal{position:relative;width:132px;height:132px;border-radius:50%;border:0;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;background:radial-gradient(circle at 35% 30%,#d9534f 0%,#a5262b 45%,#6e1418 100%);box-shadow:0 10px 26px rgba(0,0,0,.55),inset 0 0 0 6px rgba(0,0,0,.12),inset 0 0 0 9px rgba(255,210,160,.18);color:#ffe9c9;display:grid;place-items:center;align-content:center;gap:2px;font-size:34px;font-weight:600;transition:transform .15s}
 .seal small{font:600 11px/1.2 system-ui,sans-serif;letter-spacing:.12em;opacity:.9}
 .seal.on{transform:scale(.94)}
@@ -140,10 +147,12 @@
   <section class="g-panel wiz" id="w5" hidden aria-labelledby="t5">
     <h3 id="t5"></h3>
     <div id="fromWrap"><label class="g-field" style="max-width:300px;margin:12px auto 0">你的名字（選填）· From<input id="fromName" maxlength="12" autocomplete="off" placeholder="例：小安"></label></div>
-    <div class="sealwrap">
-      <img class="preview" id="preview" alt="夢想卡預覽 Card preview" width="1080" height="1920">
-      <button class="seal" id="seal" type="button"><span id="sealCh">封</span><small id="sealTxt">按住封緘 HOLD</small></button>
-      <p class="g-note" id="sealNote" style="margin:0"></p>
+    <div class="sealwrap" id="sealWrap">
+      <button class="pv" id="pvBtn" type="button" aria-label="放大／縮小預覽 Enlarge or shrink preview"><img class="preview" id="preview" alt="夢想卡預覽 Card preview" width="1080" height="1920"><small id="pvTxt">點一下放大 · Tap to enlarge</small></button>
+      <div class="seal-side">
+        <button class="seal" id="seal" type="button"><span id="sealCh">封</span><small id="sealTxt">按住封緘 HOLD</small></button>
+        <p class="g-note" id="sealNote" style="margin:0"></p>
+      </div>
     </div>
     <div class="g-nav"><button class="g-btn quiet" type="button" data-back="4">← 返回修改</button></div>
   </section>
@@ -190,12 +199,13 @@
     <p>不是算命，是一個被寫下、被祝福、被走出第一步的夢 · Not fortune-telling — a dream written, blessed and begun.</p>
     <p>不需登入 · 不收集資料 · 內容只存在連結與你的裝置裡 · 畫作為 AE 原作，保持原樣</p>
     <p>© AE Universe Creation · Aurelia &amp; Elion</p>
+    <p class="g-build" translate="no">Preview build v2476.40-games-r3</p>
   </footer>
 </main>
 <canvas id="cardCanvas" width="1080" height="1920" hidden></canvas>
 <script src="/ae-chime.js" defer></script>
 <script src="/ae-games-kit.js?v=2"></script>
-<script src="/dream-app.js?v=1"></script>
+<script src="/dream-app.js?v=2"></script>
 <script src="/ae-version.js" defer></script>
 </body>
 </html>
