@@ -56,11 +56,12 @@ function create(){let dead=false;return{reset(){},destroy(){dead=true;},destinat
     ctx.strokeStyle=trail;ctx.globalAlpha=power*.72;ctx.lineWidth=.8+pulse;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,ey);ctx.stroke();
    }
   }
-  ctx.globalAlpha=1;ctx.shadowBlur=0;ctx.globalCompositeOperation='screen';
+  ctx.globalAlpha=1;ctx.shadowBlur=0;
+  // Pools too: on the undimmed painting a 'screen' pool is invisible; the homepage's lit dot reads as a soft overlay.
   if(!bare){const pool=ctx.createRadialGradient(x,y,1,x,y,38+pulse*48);
    pool.addColorStop(0,`rgba(255,249,218,${power*.60})`);pool.addColorStop(.18,COLORS[i]+hex(power*75));pool.addColorStop(1,COLORS[i]+'00');
    ctx.fillStyle=pool;ctx.fillRect(x-90,y-90,180,180);}
-  if(pulse>.01){ctx.globalCompositeOperation='source-over';ctx.strokeStyle=COLORS[i];ctx.lineWidth=.7;ctx.globalAlpha=pulse*.6;ctx.beginPath();ctx.arc(x,y,Math.max(0,8+phase*28),0,Math.PI*2);ctx.stroke();ctx.globalCompositeOperation='screen';}
+  if(pulse>.01){ctx.strokeStyle=COLORS[i];ctx.lineWidth=.7;ctx.globalAlpha=pulse*.6;ctx.beginPath();ctx.arc(x,y,Math.max(0,8+phase*28),0,Math.PI*2);ctx.stroke();}
  }
  ctx.restore();return{beams:reduced?0:count,pools:bare?0:count,targets};
 }};}
