@@ -11,6 +11,10 @@
     },
     {
       "source": "/experience",
+      "destination": "/experience-portal.html"
+    },
+    {
+      "source": "/touch-moment",
       "destination": "/experience.html"
     },
     {
@@ -64,6 +68,10 @@
     {
       "source": "/feel-admin",
       "destination": "/feel-admin.html"
+    },
+    {
+      "source": "/dream-giver",
+      "destination": "/dream-giver.html"
     }
   ]
 }
