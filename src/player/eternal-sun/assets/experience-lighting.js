@@ -14,7 +14,7 @@ function createState({reduced=false}={}){
   clock=playback.playing?Number(playback.time)||0:wall;raw=playback.playing?(beat.count||0)/4:(now-silentOrigin)/3000;
   if(rebase||(lastPlaying!==null&&lastPlaying!==!!playback.playing)){selected=true;if(!manualPending)manual=NAMES.indexOf(current);anchorRaw=raw;changed=clock-lastMix*.6;paletteChange=clock-lastPaletteMix*.6;paletteOffset=palette-Math.floor(raw);rebase=false;}
   lastPlaying=!!playback.playing;manualPending=false;
-  const group=Math.floor(selected?Math.max(0,raw-anchorRaw):raw),index=reduced?manual:(group+(selected?manual:0))%3,color=NAMES[index],key=mode+':'+color;
+  const held=selected?Math.max(0,raw-anchorRaw):0,group=selected?(held<2.25?0:Math.floor(held-1.25)):Math.floor(raw)/* v0.4.0: a chosen lamp holds >=8 beats (2 groups of 4) */,index=reduced?manual:(group+(selected?manual:0))%3,color=NAMES[index],key=mode+':'+color;
   if(key!==lastKey){from=lastKey?current:color;current=color;changed=clock;lastKey=key;}
   const mix=reduced||from===current?1:clamp((clock-changed)/.6),pulse=clamp(beat.pulse||0),nextPalette=reduced?manual%4:((Math.floor(raw)+paletteOffset)%4+4)%4;
   if(!paletteReady){oldPalette=palette=nextPalette;paletteReady=true;paletteChange=clock;}

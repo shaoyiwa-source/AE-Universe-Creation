@@ -1,4 +1,4 @@
-/* AE Eternal shared renderer 0.3.0.
+/* AE Eternal shared renderer 0.4.0 (adds full-stage overlay show via AEExperienceStageFx; lite hysteresis).
  * Adapted from official homepage ae-home-light.js (2026-10-30 sha256 a1b58497…26c).
  * One renderer for the standalone wrapper and future homepage mounting. Artwork is never drawn/transformed here.
  */
@@ -17,7 +17,7 @@ function createDisplayClock(){
  }};
 }
 function geometry(width,height){return{width,height,artX0:0,artW:width,artBottom:height,sunX:width*.52,sunY:height*.522};}
-function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime=null,lighting=null,homeVisual=null,motion:reduced,environment={}}){
+function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime=null,lighting=null,homeVisual=null,stageFx=null,stageCanvas=null,motion:reduced,environment={}}){
  const ctx=canvas.getContext('2d');
  if(!ctx)throw Error('Canvas unavailable');
  const env={now:()=>globalThis.performance.now(),raf:f=>requestAnimationFrame(f),cancelRaf:i=>cancelAnimationFrame(i),later:(f,t)=>globalThis.setTimeout(f,t),cancelLater:i=>clearTimeout(i),dpr:globalThis.devicePixelRatio||1,...environment};
@@ -25,7 +25,7 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
  const timers=new Set();let dead=false;
  function later(fn,ms){if(dead)return;const id=env.later(()=>{timers.delete(id);if(!dead)fn();},ms);timers.add(id);return id;}
  const rhythm=audioEnergy.createRhythm(timeline?.events,timeline?.accents,timeline?.sections);
- let lite=false,liteLatch=false,frameEma=16.7,presentMs=12,lights=true,playing=false,wasPlaying=false,frame=0,lastPaint=0,energy=0,viewable=true,forceLite=false;
+ let lite=false,liteLatch=false,slowSince=0,fastSince=0,stageCleared=true,frameEma=16.7,presentMs=12,lights=true,playing=false,wasPlaying=false,frame=0,lastPaint=0,energy=0,viewable=true,forceLite=false;
  let width=0,height=0,artBottom=0,artX0=0,artW=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
  let musicFrame={stage:'groove',dropPulse:0,buildProgress:0},specks=[],musicTime=0;const displayClock=createDisplayClock();
  let glows=[],coins=[],sweeps=[],lastFxFrame=0,pendingRelease=null;
@@ -35,7 +35,8 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
  const homeMode=()=>!lighting||lighting.current()?.mode==='home';
  const displayTime=()=>displayClock.read(readPlayback(),performance.now(),presentMs);
  function resize(){if(dead)return;const r=canvas.getBoundingClientRect();({width,height,artBottom,artX0,artW,sunX,sunY}=geometry(Math.max(1,r.width),Math.max(1,r.height)));const ratio=Math.min(env.dpr,2);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);hero.dataset.artBox=JSON.stringify([0,0,width,height]);needsStatic=true;schedule();}
- function schedule(){if(!dead&&!frame&&lights&&viewable&&(readPlayback().playing||spots.length||musicSpots.length||bolts.length||glows.length||coins.length||sweeps.length||needsStatic||lighting?.needsAnimation()||(focus&&focus.until>performance.now())))frame=env.raf(draw);}
+ const stageOn=()=>!!stageFx&&hasLight()&&homeMode();
+ function schedule(){if(!dead&&!frame&&lights&&viewable&&(stageOn()||readPlayback().playing||spots.length||musicSpots.length||bolts.length||glows.length||coins.length||sweeps.length||needsStatic||lighting?.needsAnimation()||(focus&&focus.until>performance.now())))frame=env.raf(draw);}
  function clear(){ctx.clearRect(0,0,width,height);hero.dataset.audioEnergy='0';}
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
@@ -69,8 +70,9 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
     // far ahead so a slow frame still lands on the kick that is playing when it appears.
     const fd=now-lastPaint;lastPaint=now;
     if(previousPlaying&&fd>0){frameEma=frameEma*.8+Math.min(fd,250)*.2;presentMs=presentMs*.5+Math.min(fd,80)*.5;}
-    if(playing&&previousPlaying&&(fd>28||frameEma>22))liteLatch=true;
-    if(!playing&&!forceLite)liteLatch=false;
+    // v0.4.0 P0-1: one hitch never latches lite. Degrade after 2 s of slow frames, recover after 3 s of smooth ones.
+    if(playing&&previousPlaying){if(frameEma>22){fastSince=0;slowSince=slowSince||now;if(now-slowSince>2000)liteLatch=true;}else if(frameEma<18){slowSince=0;fastSince=fastSince||now;if(now-fastSince>3000)liteLatch=false;}else{slowSince=fastSince=0;}}
+    if(!playing&&!forceLite){liteLatch=false;slowSince=fastSince=0;}
     lite=forceLite||liteLatch;
     const bare=lite&&frameEma>45;
     hero.dataset.lightLite=lite?'1':'0';hero.dataset.lightBare=bare?'1':'0';
@@ -91,11 +93,17 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
     const home=!illumination||illumination.mode==='home';
     hero.dataset.activeVisual=illumination?.enabled===false?'original':illumination?.mode||'legacy';
     hero.dataset.homeBeams='0';hero.dataset.homePools='0';
+    if(stageFx&&(illumination?.enabled===false||!home)&&!stageCleared){stageFx.clear();stageCleared=true;}
     if(illumination?.enabled===false||!home){
       spots=[];musicSpots=[];specks=[];bolts=[];glows=illumination?.enabled?glows.filter(g=>now-g.born<g.life):[];coins=[];sweeps=[];
       hero.dataset.musicPasses='0';hero.dataset.musicBeams='0';hero.dataset.idleBeams='0';ctx.restore();schedule();return;
     }
-    if(homeVisual){
+    if(stageFx){
+      stageCleared=false;const a=canvas.getBoundingClientRect(),s=stageCanvas.getBoundingClientRect();
+      const st=stageFx.draw({now,art:{x:a.left-s.left,y:a.top-s.top,w:a.width,h:a.height},playing:playing&&!reduced.matches,beat:musicFrame,reduced:reduced.matches});
+      hero.dataset.stageBeams=String(st.beams||0);hero.dataset.stageParticles=String(st.particles||0);hero.dataset.stageLite=st.lite?'1':'0';hero.dataset.musicPasses=playing?'1':'0';
+      spots=[];musicSpots=[];bolts=[];
+    }else if(homeVisual){
       const remaining=focus?focus.until-now:0;
       const result=homeVisual.draw(ctx,{width,height,artX0,artW,artBottom,sunX,sunY,nowMs:now,musicTime:musicTime||state.time,playing,beat:musicFrame,energy,focus:remaining>0?{x:focus.x,y:focus.y,held:!!focus.held,weight:Math.min(1,remaining/600)}:null,reduced:reduced.matches,lite,bare});
       hero.dataset.homeBeams=String(result?.beams||0);hero.dataset.homePools=String(result?.pools||0);hero.dataset.laserTargets=JSON.stringify(result?.targets||[]);hero.dataset.musicPasses=playing?'1':'0';
@@ -263,20 +271,22 @@ function create({canvas,host:hero,timeline,energy:audioEnergy,readPlayback,chime
   if(!lighting&&!reduced.matches)for(let i=0;i<6;i++){ctx.strokeStyle=laserColors[i];ctx.globalAlpha=strength;ctx.lineWidth=focus?.held?1.5:.7;ctx.beginPath();ctx.moveTo(i%2?width:0,height*(.12+i*.10));ctx.lineTo(target.x,target.y);ctx.stroke();}
   ctx.restore();hero.dataset.idleBeams=reduced.matches?'0':'6';
  }
- function beginFocus(x,y){if(dead||!viewable||!hasLight())return false;pendingRelease=null;focus={x:Math.max(0,Math.min(width,x)),y:Math.max(0,Math.min(height,y)),until:Infinity,held:true};needsStatic=true;schedule();return true;}
+ function toStage(x,y){const a=canvas.getBoundingClientRect(),s=stageCanvas.getBoundingClientRect();return[a.left-s.left+x,a.top-s.top+y];}
+ function beatInfo(){const st=readPlayback();return{playing:!!st.playing,interval:musicFrame.interval||.405,phase:musicFrame.phase||0};}
+ function beginFocus(x,y){if(dead||!viewable||!hasLight())return false;pendingRelease=null;focus={x:Math.max(0,Math.min(width,x)),y:Math.max(0,Math.min(height,y)),until:Infinity,held:true};if(stageOn())stageFx.hold(...toStage(focus.x,focus.y),performance.now());needsStatic=true;schedule();return true;}
  function moveFocus(x,y){if(!focus?.held)return false;return beginFocus(x,y);}
  function bloom(x,y){fxGlow({x,y,quiet:!readPlayback().sound});hero.dataset.gestureBlooms=String((Number(hero.dataset.gestureBlooms)||0)+1);}
- function releaseFocus(){if(!focus?.held)return false;const now=performance.now(),p={x:focus.x,y:focus.y},state=readPlayback();focus={...p,until:now+600,held:false};if(state.playing&&!reduced.matches){const next=timeline.events?.find(t=>t>state.time+.02);if(next!==undefined&&next-state.time<1.0)pendingRelease={...p,time:next};else bloom(p.x,p.y);}else bloom(p.x,p.y);needsStatic=true;schedule();return true;}
- function cancelFocus(){focus=null;pendingRelease=null;needsStatic=true;}
+ function releaseFocus(){if(!focus?.held)return false;const now=performance.now(),p={x:focus.x,y:focus.y},state=readPlayback();focus={...p,until:now+600,held:false};if(stageOn()){stageFx.release(now,beatInfo());if(state.sound&&chime)chime.glow();hero.dataset.gestureBlooms=String((Number(hero.dataset.gestureBlooms)||0)+1);needsStatic=true;schedule();return true;}if(state.playing&&!reduced.matches){const next=timeline.events?.find(t=>t>state.time+.02);if(next!==undefined&&next-state.time<1.0)pendingRelease={...p,time:next};else bloom(p.x,p.y);}else bloom(p.x,p.y);needsStatic=true;schedule();return true;}
+ function cancelFocus(){focus=null;pendingRelease=null;stageFx?.cancel();needsStatic=true;}
 
- function tap(x,y){if(dead||!viewable||!hasLight()||x<0||x>width||y<0||y>height)return false;const now=performance.now();if(!homeMode()){fxGlow({x,y,quiet:true});if(readPlayback().sound&&chime)chime.tap(x/width);return true;}spots.push({x,y,born:now});if(spots.length>6)spots.shift();hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);if(!readPlayback().playing){focus={x,y,until:now+2400};launchDepth(x,y,now,Number(hero.dataset.touchCount));}if(readPlayback().sound&&chime)chime.tap(x/width);schedule();return true;}
+ function tap(x,y){if(dead||!viewable||!hasLight()||x<0||x>width||y<0||y>height)return false;const now=performance.now();if(!homeMode()){fxGlow({x,y,quiet:true});if(readPlayback().sound&&chime)chime.tap(x/width);return true;}if(stageOn()){stageFx.tap(...toStage(x,y),now,beatInfo());hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);if(readPlayback().sound&&chime)chime.tap(x/width);schedule();return true;}spots.push({x,y,born:now});if(spots.length>6)spots.shift();hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);if(!readPlayback().playing){focus={x,y,until:now+2400};launchDepth(x,y,now,Number(hero.dataset.touchCount));}if(readPlayback().sound&&chime)chime.tap(x/width);schedule();return true;}
  function effect(id){if(dead||!viewable||!hasLight()||!FX[id]||(!homeMode()&&id!=='glow'))return false;FX[id]({quiet:!readPlayback().sound});hero.dataset.fxLastTap=id;hero.dataset.fxTaps=String((Number(hero.dataset.fxTaps)||0)+1);return true;}
  function ambient(){if(dead)return;if(!lighting&&viewable&&!reduced.matches&&!readPlayback().playing&&width>0)fxGlow({quiet:true,soft:true});later(ambient,3400);}
- function setVisible(value){viewable=!!value;if(!viewable){if(frame)env.cancelRaf(frame);frame=0;spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];focus=null;pendingRelease=null;clear();}else{needsStatic=true;schedule();}}
+ function setVisible(value){viewable=!!value;if(!viewable){stageFx?.clear();if(frame)env.cancelRaf(frame);frame=0;spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];focus=null;pendingRelease=null;clear();}else{needsStatic=true;schedule();}}
  function refresh(preferenceChanged=false){if(dead)return;if(preferenceChanged){spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}needsStatic=true;schedule();}
- function destroy(){if(dead)return;dead=true;homeVisual?.destroy();cancelFocus();if(frame)env.cancelRaf(frame);frame=0;for(const id of timers)env.cancelLater(id);timers.clear();spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}
+ function destroy(){if(dead)return;dead=true;homeVisual?.destroy();stageFx?.destroy();cancelFocus();if(frame)env.cancelRaf(frame);frame=0;for(const id of timers)env.cancelLater(id);timers.clear();spots=[];musicSpots=[];specks=[];bolts=[];glows=[];coins=[];sweeps=[];clear();}
  resize();later(ambient,700);
- return{resize,tap,beginFocus,moveFocus,releaseFocus,cancelFocus,effect,setVisible,refresh,resetTiming,destroy,snapshot:()=>({destroyed:dead,timers:timers.size,raf:!!frame,width,height,playing:!!readPlayback().playing})};
+ return{resize,tap,beginFocus,moveFocus,releaseFocus,cancelFocus,effect,setVisible,refresh,resetTiming,destroy,snapshot:()=>({destroyed:dead,timers:timers.size,raf:!!frame,width,height,playing:!!readPlayback().playing,lite,stage:stageFx?stageFx.snapshot():null})};
 }
 return{create,geometry,createDisplayClock};
 });
