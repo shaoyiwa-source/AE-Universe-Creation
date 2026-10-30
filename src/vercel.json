@@ -63,6 +63,14 @@
     {
       "source": "/feel-admin",
       "destination": "/feel-admin.html"
+    },
+    {
+      "source": "/art-wall",
+      "destination": "/art-wall.html"
+    },
+    {
+      "source": "/free-heart-layers",
+      "destination": "/free-heart-layers.html"
     }
   ]
 }
