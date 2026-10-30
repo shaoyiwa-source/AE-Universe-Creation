@@ -1,161 +1,211 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>夢想給予 Dream Giver · AE Universe Creation</title>
+<meta name="description" content="寫下一個人的夢，配一幅 AE 原作、一句祝福和第一小步，封成夢想卡送給他；他打開、接受、走出第一步，再傳一道光回來。Give someone a dream card — or commit to your own."/>
+<meta name="ae-preview-version" content="v2476.40-games-r3"/>
+<meta name="theme-color" content="#0d0b09"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="icon" type="image/png" href="/favicon.png"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/ae-games.css?v=3"/>
 <style>
-  :root{
-    --bg:#0b0d12;
-    --panel:#141821;
-    --line:#2a3140;
-    --gold:#e8d5a3;
-    --gold2:#c9a86a;
-    --text:#f3efe6;
-    --muted:#9aa3b2;
-    --accent:#7fd1c4;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif;
-    background:radial-gradient(1200px 800px at 50% 0%, #1a1f2b 0%, var(--bg) 60%);
-    color:var(--text);
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-  }
-  .wrap{width:min(560px,100%);text-align:center}
-  .brand{letter-spacing:.35em;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
-  h1{font-size:30px;margin:0 0 6px;font-weight:500;letter-spacing:.08em}
-  .sub{color:var(--muted);font-size:15px;margin:0 0 26px;line-height:1.7}
-  .stage{position:relative;min-height:430px;display:flex;align-items:center;justify-content:center}
-  .deck{position:relative;width:220px;height:330px}
-  .card{
-    position:absolute;inset:0;
-    border-radius:18px;
-    background:linear-gradient(160deg,#1c2230,#0f131b);
-    border:1px solid var(--line);
-    box-shadow:0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.03);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:26px 20px;
-    transition:transform .5s ease, opacity .5s ease, filter .5s ease;
-    cursor:pointer;
-    user-select:none;
-  }
-  .card .ring{width:54px;height:54px;border-radius:50%;border:1px solid var(--gold2);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:20px;margin-bottom:16px}
-  .card .name{font-size:26px;letter-spacing:.12em;color:var(--gold)}
-  .card .line{margin-top:12px;color:var(--text);font-size:15px;line-height:1.7;opacity:.92}
-  .card .hint{margin-top:18px;font-size:12px;color:var(--muted);letter-spacing:.2em}
-  .card.back .name,.card.back .line,.card.back .hint{display:none}
-  .card.back .ring{border-color:var(--line);color:var(--line)}
-  .card.drawn{transform:translateY(-18px) scale(1.02);border-color:var(--gold2);box-shadow:0 26px 70px rgba(201,168,106,.25)}
-  .btn{
-    margin-top:24px;
-    background:transparent;
-    color:var(--gold);
-    border:1px solid var(--gold2);
-    padding:12px 22px;
-    border-radius:40px;
-    font-family:inherit;
-    font-size:15px;
-    letter-spacing:.18em;
-    cursor:pointer;
-    transition:.2s;
-  }
-  .btn:hover{background:rgba(201,168,106,.12)}
-  .btn:disabled{opacity:.4;cursor:not-allowed}
-  .result{display:none;margin-top:8px}
-  .result .tag{color:var(--accent);letter-spacing:.2em;font-size:12px;margin-bottom:8px}
-  .result .action{font-size:18px;line-height:1.8;color:var(--text)}
-  .result .note{margin-top:14px;color:var(--muted);font-size:13px;line-height:1.7}
-  .foot{margin-top:28px;color:var(--muted);font-size:12px;letter-spacing:.15em}
-  @media (max-width:480px){.card{width:200px;height:300px}.card .name{font-size:23px}}
+.modes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;max-width:640px;margin:18px auto 0}
+.mode{display:grid;gap:8px;justify-items:center;text-align:center;padding:16px 12px;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.02);cursor:pointer;transition:border-color .2s,background .2s}
+.mode img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#0a0908;border-radius:10px}
+.mode b{font-size:17px}.mode .en{font-size:14px}
+.mode span.d{font-size:13px;line-height:1.55;color:var(--muted)}
+.mode:hover{border-color:var(--gold)}
+.mode[aria-pressed="true"]{border-color:var(--gold);background:rgba(231,189,103,.08);box-shadow:0 0 0 3px rgba(231,189,103,.15)}
+.wiz[hidden],.g-steps[hidden]{display:none}
+.paints{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:12px 0 0}
+@media(min-width:620px){.paints{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.paint{display:grid;gap:6px;padding:8px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:#0d0b09;cursor:pointer;text-align:left}
+.paint img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#080706;border-radius:8px;display:block}
+.paint b{font-size:16px;color:var(--gold)}.paint b small{font:italic 500 14px "Cormorant Garamond",Georgia,serif;color:var(--soft);margin-left:6px}
+.paint span{font-size:12px;color:var(--muted)}
+.paint[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 3px rgba(231,189,103,.25)}
+.more{display:block;margin:10px auto 0}
+.allp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}
+@media(min-width:620px){.allp{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.allp[hidden]{display:none}
+.allp button{padding:4px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0d0b09;cursor:pointer}
+.allp button img{width:100%;aspect-ratio:1;object-fit:contain;display:block}
+.allp button[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 2px rgba(231,189,103,.4)}
+.sugs{display:grid;gap:8px;margin:8px 0 10px}
+.sug{min-height:44px;padding:8px 14px;border-radius:12px;border:1px dashed rgba(231,189,103,.4);background:transparent;color:var(--soft);text-align:left;cursor:pointer;font-size:15px;line-height:1.5}
+.sug:hover{border-style:solid;color:var(--warm)}
+.sealwrap{display:grid;grid-template-columns:auto minmax(0,auto);align-items:center;justify-content:center;gap:12px 18px;margin:14px 0 0}
+.pv{display:grid;justify-items:center;gap:4px;margin:0;padding:0;border:0;background:none;cursor:zoom-in}
+.preview{display:block;width:clamp(128px,38vw,200px);height:auto;aspect-ratio:9/16;object-fit:contain;background:#120f0c;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.6),0 0 0 1px rgba(231,189,103,.25)}
+.pv small{font:500 11px/1.3 system-ui,sans-serif;color:var(--muted);letter-spacing:.06em}
+.sealwrap.big{grid-template-columns:minmax(0,1fr)}
+.sealwrap.big .pv{cursor:zoom-out}
+.sealwrap.big .preview{width:min(100%,360px)}
+.seal-side{display:grid;justify-items:center;gap:10px;max-width:200px;text-align:center}
+.seal-side .g-note{font-size:13px;line-height:1.5}
+.seal{position:relative;width:132px;height:132px;border-radius:50%;border:0;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;background:radial-gradient(circle at 35% 30%,#d9534f 0%,#a5262b 45%,#6e1418 100%);box-shadow:0 10px 26px rgba(0,0,0,.55),inset 0 0 0 6px rgba(0,0,0,.12),inset 0 0 0 9px rgba(255,210,160,.18);color:#ffe9c9;display:grid;place-items:center;align-content:center;gap:2px;font-size:34px;font-weight:600;transition:transform .15s}
+.seal small{font:600 11px/1.2 system-ui,sans-serif;letter-spacing:.12em;opacity:.9}
+.seal.on{transform:scale(.94)}
+.seal::after{content:"";position:absolute;inset:-8px;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--p,0)*360deg),transparent 0);-webkit-mask:radial-gradient(circle,transparent 69px,#000 70px);mask:radial-gradient(circle,transparent 69px,#000 70px)}
+.envelope{position:relative;max-width:420px;margin:18px auto 0;aspect-ratio:3/2;perspective:1200px}
+.envelope[hidden]{display:none}
+.env-body{position:absolute;inset:0;border-radius:12px;background:linear-gradient(160deg,#2a2016,#16120e);border:1px solid rgba(231,189,103,.5);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.env-flap{position:absolute;left:0;right:0;top:0;height:58%;transform-origin:50% 0;background:linear-gradient(180deg,#3a2c1c,#221a12);clip-path:polygon(0 0,100% 0,50% 100%);border-top-left-radius:12px;border-top-right-radius:12px;transition:transform .9s cubic-bezier(.3,.7,.2,1);z-index:2}
+.envelope.open .env-flap{transform:rotateX(180deg)}
+.env-to{position:absolute;left:0;right:0;bottom:7%;text-align:center;font-size:18px;color:var(--warm);z-index:1}
+.env-to .en{display:block;font-size:14px}
+.envelope .seal{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:96px;height:96px;font-size:26px;z-index:3}
+.envelope .seal.on{transform:translate(-50%,-50%) scale(.94)}
+.envelope .seal::after{-webkit-mask:radial-gradient(circle,transparent 51px,#000 52px);mask:radial-gradient(circle,transparent 51px,#000 52px)}
+.envelope.open .seal{opacity:0;transform:translate(-50%,-50%) scale(1.4);transition:opacity .5s,transform .5s;pointer-events:none}
+.g-card-img.rise{animation:rise 1.1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(60px) scale(.94)}to{opacity:1;transform:none}}
+.banner{max-width:640px;margin:14px auto 0;padding:14px 16px;border:1px solid rgba(141,255,228,.35);border-radius:16px;background:rgba(141,255,228,.06);text-align:center;font-size:16px;line-height:1.6}
+.banner[hidden]{display:none}
+.banner .en{font-size:14px}
+.prog{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:6px 0 0}
+.prog i{font-style:normal;font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:var(--muted)}
+.prog i.ok{border-color:var(--teal);color:var(--teal)}
+.newstep[hidden]{display:none}
 </style>
-<style id="ae-name-pattern">h1 .ae-name-en{display:block;margin-top:.28em;font-size:max(15px,.36em);font-weight:400;letter-spacing:.08em;line-height:1.2;opacity:.72}</style></head>
+</head>
 <body>
-  <div class="wrap">
-    <div class="brand">AE Universe Creation</div>
-    <h1>夢想給予<small class="ae-name-en">Dream Giver</small></h1>
-    <p class="sub">抽不是中獎，也不是算命。<br>抽到的是「這一層」的希望。</p>
-
-    <div class="stage">
-      <div class="deck" id="deck">
-        <div class="card back" id="card">
-          <div class="ring">∞</div>
-          <div class="name" id="name"></div>
-          <div class="line" id="line"></div>
-          <div class="hint">點擊抽一張</div>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn" id="drawBtn">抽一張</button>
-    <button class="btn" id="againBtn" style="display:none">再抽一次</button>
-
-    <div class="result" id="result">
-      <div class="tag">今天的小事</div>
-      <div class="action" id="action"></div>
-      <div class="note" id="note"></div>
-    </div>
-
-    <div class="foot">Action Creates Infinity · 一個人就能走完整一輪</div>
+<header class="g-top">
+  <a href="/" aria-label="AE Universe Creation 首頁 Home"><img src="/assets/ae-three-rings-transparent.webp" alt="" width="74" height="45"></a>
+  <a class="g-back" href="/experience">← 全部體驗 <small>All experiences</small></a>
+</header>
+<main class="g-wrap">
+  <div class="g-head">
+    <p class="g-eyebrow">AE Universe Creation · 互動體驗</p>
+    <h1>夢想給予<small>Dream Giver</small></h1>
+    <p class="g-lead" id="lead">寫下一個人的夢，為它配一幅 AE 原作、一句祝福、一個第一小步，<br><b style="color:var(--gold)">封成一張夢想卡</b>送給他。他打開、收下、走出第一步，再傳一道光回來。
+      <span class="en">Write down someone’s dream, match it with an original AE painting, a blessing and a first small step — seal it into a dream card and send it. They open it, accept it, take the first step, and send a light back.</span></p>
+    <ol class="g-steps" id="steps" aria-label="步驟 Steps" hidden>
+      <li data-s="1">① 夢想</li><li data-s="2">② 畫</li><li data-s="3">③ 祝福</li><li data-s="4">④ 第一步</li><li data-s="5">⑤ 封緘</li>
+    </ol>
   </div>
 
-<script>
-const cards = [
-  {name:"靠近", line:"先停一下，讓光進來。", action:"今天停一次，看一眼窗外或天空。", note:"靠近不需要大動作，先让自己在。"},
-  {name:"一小步", line:"夢不用一次走完。", action:"選一件今天做得到的小事，做完。", note:"小到能做，才算真的走出。"},
-  {name:"留白", line:"空著的地方，才容得下新的。", action:"今天留十分鐘什麼都不做。", note:"留白也是一种完成。"},
-  {name:"光", line:"陰暗角落也有光。", action:"今天對一個人說一句溫暖的話。", note:"光有時候是輕的。"},
-  {name:"手", line:"由心而生，由手而行。", action:"今天用手做一件小東西。", note:"手做到的，心才真的在。"},
-  {name:"聽", line:"先聽，再回答。", action:"今天安靜聽三分鐘。", note:"聽到的，可能就是答案。"},
-  {name:"種", line:"種下的，會自己長。", action:"今天種一題種子或一點善意。", note:"不要看到結果，才種。"},
-  {name:"回望", line:"回頭，是為了再走。", action:"今天寫下一句你還記得的話。", note:"回望不是停留，是充電。"},
-  {name:"縫", line:"裡開的地方，可以縫。", action:"今天修一件小東西或關係。", note:"縫不完全，也算走過。"},
-  {name:"燃", line:"小火也能照亮。", action:"今天點一支燃燧或一燈燈。", note:"燃的不一定大，但要真。"},
-  {name:"渡", line:"過河的人，也是橋。", action:"今天幫一個人一點忙。", note:"渡過之後，自己也成為橋。"},
-  {name:"再", line:"下一層，還在等你。", action:"今天再靠近一次。", note:"無限來自下一次行動，不是收集全套。"}
-];
+  <div class="banner" id="banner" hidden></div>
 
-const cardEl=document.getElementById('card');
-const nameEl=document.getElementById('name');
-const lineEl=document.getElementById('line');
-const drawBtn=document.getElementById('drawBtn');
-const againBtn=document.getElementById('againBtn');
-const result=document.getElementById('result');
-const actionEl=document.getElementById('action');
-const noteEl=document.getElementById('note');
+  <!-- 0. choose -->
+  <section class="wiz" id="w0" aria-label="選擇 Choose">
+    <div class="modes">
+      <button class="mode" type="button" id="mGive" aria-pressed="false"><img src="/assets/selected-works-v2/heart-fly.webp" alt="" loading="lazy"><b>送一個夢給某人</b><span class="en">Give someone a dream</span><span class="d">寫下他的夢，封成一張卡送給他</span></button>
+      <button class="mode" type="button" id="mSelf" aria-pressed="false"><img src="/assets/selected-works-v2/expansion.webp" alt="" loading="lazy"><b>許下我自己的夢</b><span class="en">Commit to my own dream</span><span class="d">寫下你的夢，承諾第一步，一步步蓋章</span></button>
+    </div>
+    <div class="banner" id="resume" hidden></div>
+  </section>
 
-function draw(){
-  const c=cards[Math.floor(Math.random()*cards.length)];
-  cardEl.classList.remove('back');
-  cardEl.classList.add('drawn');
-  nameEl.textContent=c.name;
-  lineEl.textContent=c.line;
-  actionEl.textContent=c.action;
-  noteEl.textContent=c.note;
-  result.style.display='block';
-  drawBtn.style.display='none';
-  againBtn.style.display='inline-block';
-  try{
-    const log=JSON.parse(localStorage.getItem('ae_dream_giver_log')||'[]');
-    log.push({t:Date.now(),card:c.name,action:c.action});
-    localStorage.setItem('ae_dream_giver_log',JSON.stringify(log));
-  }catch(e){}
-}
+  <!-- 1. dream -->
+  <section class="g-panel wiz" id="w1" hidden aria-labelledby="t1">
+    <h3 id="t1"></h3>
+    <div id="toWrap"><label class="g-field" style="margin-top:12px">他的名字 · Their name<input id="toName" maxlength="12" autocomplete="off" placeholder="例：媽媽、小安"></label></div>
+    <p class="sub">這個夢是關於什麼？<span class="en">What is the dream about?</span></p>
+    <div class="g-chips" id="cats" role="group" aria-label="夢想類別"></div>
+    <label class="g-field" style="margin-top:14px"><span id="drLabel">用一句話寫下這個夢（選填）· The dream in one line</span><textarea id="dream" maxlength="40" rows="2"></textarea></label>
+    <p class="g-count" id="drCount">0/40</p>
+    <div class="g-nav"><button class="g-btn quiet" type="button" data-back="0">← 返回</button><button class="g-btn" id="n1" type="button" disabled>下一步：選一幅畫 <small>Next</small></button></div>
+  </section>
 
-drawBtn.addEventListener('click',draw);
-againBtn.addEventListener('click',()=>{
-  cardEl.classList.add('back');
-  cardEl.classList.remove('drawn');
-  result.style.display='none';
-  drawBtn.style.display='inline-block';
-  againBtn.style.display='none';
-  setTimeout(draw,350);
-});
-</script>
+  <!-- 2. painting -->
+  <section class="g-panel wiz" id="w2" hidden aria-labelledby="t2">
+    <h3 id="t2">② 為這個夢選一幅畫<span class="en">Choose a painting for this dream</span></h3>
+    <p class="sub">依這個夢挑了三幅 AE 原作，選最像它的那一幅。<span class="en">Three originals matched to the dream.</span></p>
+    <div class="paints" id="paints"></div>
+    <button class="more g-btn quiet" id="moreP" type="button">看全部畫作 · See all paintings</button>
+    <div class="allp" id="allP" hidden></div>
+    <div class="g-nav"><button class="g-btn quiet" type="button" data-back="1">← 返回</button><button class="g-btn" id="n2" type="button" disabled>下一步：寫祝福 <small>Next</small></button></div>
+  </section>
+
+  <!-- 3. blessing -->
+  <section class="g-panel wiz" id="w3" hidden aria-labelledby="t3">
+    <h3 id="t3"></h3>
+    <p class="sub">點一句放進來，或自己寫。<span class="en">Tap one to start, or write your own.</span></p>
+    <div class="sugs" id="blSug"></div>
+    <label class="g-field"><span class="sr">祝福 Blessing</span><textarea id="bless" maxlength="40" rows="2"></textarea></label>
+    <p class="g-count" id="blCount">0/40</p>
+    <div class="g-nav"><button class="g-btn quiet" type="button" data-back="2">← 返回</button><button class="g-btn" id="n3" type="button" disabled>下一步：第一小步 <small>Next</small></button></div>
+  </section>
+
+  <!-- 4. first step -->
+  <section class="g-panel wiz" id="w4" hidden aria-labelledby="t4">
+    <h3 id="t4"></h3>
+    <p class="sub">夢很大，第一步要小到今天就做得到。<span class="en">Dreams are big; the first step should be doable today.</span></p>
+    <div class="sugs" id="stSug"></div>
+    <label class="g-field"><span class="sr">第一小步 First step</span><textarea id="step" maxlength="32" rows="2"></textarea></label>
+    <p class="g-count" id="stCount">0/32</p>
+    <div class="g-nav"><button class="g-btn quiet" type="button" data-back="3">← 返回</button><button class="g-btn" id="n4" type="button" disabled>下一步：封緘 <small>Next</small></button></div>
+  </section>
+
+  <!-- 5. seal -->
+  <section class="g-panel wiz" id="w5" hidden aria-labelledby="t5">
+    <h3 id="t5"></h3>
+    <div id="fromWrap"><label class="g-field" style="max-width:300px;margin:12px auto 0">你的名字（選填）· From<input id="fromName" maxlength="12" autocomplete="off" placeholder="例：小安"></label></div>
+    <div class="sealwrap" id="sealWrap">
+      <button class="pv" id="pvBtn" type="button" aria-label="放大／縮小預覽 Enlarge or shrink preview"><img class="preview" id="preview" alt="夢想卡預覽 Card preview" width="1080" height="1920"><small id="pvTxt">點一下放大 · Tap to enlarge</small></button>
+      <div class="seal-side">
+        <button class="seal" id="seal" type="button"><span id="sealCh">封</span><small id="sealTxt">按住封緘 HOLD</small></button>
+        <p class="g-note" id="sealNote" style="margin:0"></p>
+      </div>
+    </div>
+    <div class="g-nav"><button class="g-btn quiet" type="button" data-back="4">← 返回修改</button></div>
+  </section>
+
+  <!-- recipient: envelope -->
+  <section class="envelope" id="env" hidden aria-label="一封夢想信 A dream letter">
+    <div class="env-body"></div>
+    <div class="env-flap"></div>
+    <p class="env-to" id="envTo"></p>
+    <button class="seal" id="envSeal" type="button"><span>啟</span><small>按住拆封</small></button>
+  </section>
+
+  <section class="g-result" id="result" hidden aria-labelledby="rTitle">
+    <div class="g-result-grid">
+      <img class="g-card-img" id="cardImg" alt="夢想卡 Dream card" width="1080" height="1920">
+      <div>
+        <p class="g-got" id="rGot">你得到了 · YOU RECEIVED</p>
+        <h2 id="rTitle"></h2>
+        <div class="prog" id="prog"></div>
+        <div class="g-reward" id="reward" style="margin-top:12px"></div>
+        <div class="g-actions" id="acts"></div>
+        <div class="newstep g-panel" id="newStep" hidden style="margin:12px 0 0">
+          <p class="sub" style="margin-top:0">下一步是什麼？<span class="en">What is the next step?</span></p>
+          <div class="sugs" id="nsSug"></div>
+          <label class="g-field"><span class="sr">下一步 Next step</span><textarea id="nsText" maxlength="32" rows="2"></textarea></label>
+          <div class="g-nav"><button class="g-btn" id="nsOk" type="button">定下這一步 <small>Set it</small></button></div>
+        </div>
+        <p class="g-note" id="rNote" aria-live="polite"></p>
+        <nav class="g-next" aria-label="接下來 What's next">
+          <h3>接下來<span class="en">What's next</span></h3>
+          <div class="g-links">
+            <a class="g-link" id="artLink" href="/works"><img id="artThumb" alt="" loading="lazy"><span><b id="artName">看這張卡的原作</b><span>AE 手繪原作 · See the original painting</span></span></a>
+            <a class="g-link" href="https://ko-fi.com/s/9b9703d58b" target="_blank" rel="noopener"><img src="/assets/selected-works-v2/flower-heart-bloom.webp" alt="" loading="lazy"><span><b>AE Heart Universe 桌布</b><span>九款花與心的手機桌布 · Nine wallpapers on Ko-fi</span></span></a>
+            <a class="g-link" href="/together"><img src="/assets/selected-works-v2/love-embrace.webp" alt="" loading="lazy"><span><b>下一個：雙生共創</b><span>兩個人輪流畫光，一起融成光紋卡 · Twin Flame</span></span></a>
+          </div>
+          <p class="g-foot" style="text-align:left;margin-top:10px"><a href="/color-moment">光紋心卡 Lightprint Card</a> · <a href="/touch-moment">觸動指尖 Touch Moment</a> · <a href="/experience">全部體驗 All experiences</a></p>
+        </nav>
+      </div>
+    </div>
+  </section>
+  <p class="g-note" id="note" aria-live="polite"></p>
+
+  <footer class="g-foot">
+    <p>不是算命，是一個被寫下、被祝福、被走出第一步的夢 · Not fortune-telling — a dream written, blessed and begun.</p>
+    <p>不需登入 · 不收集資料 · 內容只存在連結與你的裝置裡 · 畫作為 AE 原作，保持原樣</p>
+    <p>© AE Universe Creation · Aurelia &amp; Elion</p>
+    <p class="g-build" translate="no">Preview build v2476.40-games-r3</p>
+  </footer>
+</main>
+<canvas id="cardCanvas" width="1080" height="1920" hidden></canvas>
+<script src="/ae-chime.js" defer></script>
+<script src="/ae-games-kit.js?v=2"></script>
+<script src="/dream-app.js?v=2"></script>
+<script src="/ae-version.js" defer></script>
 </body>
 </html>
