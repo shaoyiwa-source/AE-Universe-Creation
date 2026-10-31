@@ -44,3 +44,18 @@
  mask-image:linear-gradient(90deg,transparent 0,#000 24%,#000 76%,transparent 100%),linear-gradient(180deg,transparent 0,#000 18%,#000 78%,transparent 100%);mask-composite:intersect}
 @media(min-width:900px) and (min-aspect-ratio:1/1){.ae-eternal .ae-hint{margin-bottom:14px}}
 @media(prefers-reduced-motion:reduce){.ae-eternal .ae-bursts .ae-gold-burst{animation:none;transform:scale(.55);background:#ffd65d33;box-shadow:0 0 10px #ffd255}}
+/* v0.4.2 — play cue + single light-mode menu (owner feedback 2026-10-31). */
+.ae-eternal .ae-modes{flex-direction:column;align-items:center;gap:3px;margin:0 0 6px}
+.ae-eternal .ae-mode-pick{display:inline-flex;align-items:center;gap:9px;font:12px/1.2 system-ui,sans-serif;letter-spacing:.06em;color:#e9d099}
+.ae-eternal .ae-mode-pick select{appearance:none;-webkit-appearance:none;min-height:44px;min-width:150px;padding:8px 34px 8px 14px;border-radius:22px;border:1px solid #efdfb78c;color:var(--ae-ink);font:13px/1.2 system-ui,sans-serif;cursor:pointer;touch-action:manipulation;background:#10170de0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23e9d099' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 13px center}
+.ae-eternal .ae-mode-pick select:hover{border-color:#fff0c3}.ae-eternal .ae-mode-pick select:focus-visible{outline:3px solid white;outline-offset:3px}
+.ae-eternal .ae-mode-pick option{background:#10170d;color:#fbf3db}
+.ae-eternal .ae-mode-tip{font:10px/1.4 system-ui,sans-serif;color:#a6ad9d;letter-spacing:.04em}
+.ae-eternal .ae-play-hint{position:relative;align-self:center;min-height:36px;padding:7px 13px;border-radius:999px;font:13px/1.2 system-ui,sans-serif;letter-spacing:.04em;white-space:nowrap;color:#1a1608;background:#f0d69cf2;border-color:#fff0c3;margin-right:4px;animation:ae-cue 2s ease-in-out infinite}
+.ae-eternal .ae-play-hint:hover{background:#ffe4a8;color:#1a1608}
+.ae-eternal .ae-play-hint:after{content:'';position:absolute;right:-7px;top:50%;margin-top:-6px;border:6px solid transparent;border-right:0;border-left:7px solid #f0d69cf2}
+.ae-eternal[data-cue="1"] [data-ae="sound"]{animation:ae-cue-ring 2s ease-in-out infinite}
+@keyframes ae-cue{0%,100%{box-shadow:0 0 0 0 #ffd77a00;background-color:#f0d69cf2}50%{box-shadow:0 0 0 4px #ffd77a55,0 0 20px #ffd77acc;background-color:#ffe6ad}}
+@keyframes ae-cue-ring{0%,100%{box-shadow:0 0 0 0 #ffd77a99}50%{box-shadow:0 0 0 7px #ffd77a00,0 0 16px #ffd77a}}
+@media(max-width:480px){.ae-eternal .ae-play-hint{font-size:12px;padding:6px 11px}}
+@media(prefers-reduced-motion:reduce){.ae-eternal .ae-play-hint,.ae-eternal[data-cue="1"] [data-ae="sound"]{animation:none}}
