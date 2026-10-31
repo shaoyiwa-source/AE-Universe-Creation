@@ -63,6 +63,10 @@
     {
       "source": "/feel-admin",
       "destination": "/feel-admin.html"
+    },
+    {
+      "source": "/free-heart-layers",
+      "destination": "/free-heart-layers.html"
     }
   ]
 }
