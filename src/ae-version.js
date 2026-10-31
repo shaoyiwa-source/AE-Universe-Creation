@@ -2,7 +2,7 @@
    Each build changes AE_SITE_VERSION here and nothing else.
    Only a clean "v<major>.<minor>" label is ever shown; anything else (build/preview/date/test words) is refused. */
 (function () {
-  var AE_SITE_VERSION = 'v2476.53-jam';
+  var AE_SITE_VERSION = 'v2476.54-jam';
   if (!/^v\d+\.\d+(-jam)?$/.test(AE_SITE_VERSION)) return; /* '-jam' = isolated 音樂共創 preview branch label */
   function put() {
     var fs = document.querySelectorAll('footer');
