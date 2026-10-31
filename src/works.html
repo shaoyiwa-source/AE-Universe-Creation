@@ -10,14 +10,16 @@
 .aw-classic{margin-left:auto;opacity:.75;font-size:12px}
 .aw-demo{font:600 11px/1.3 Inter,system-ui,sans-serif;letter-spacing:.08em;background:#ffe28a;color:#2a1d00;border-radius:8px;padding:8px 12px}
 .aw-wall-wrap{padding:0 clamp(6px,1.2vw,18px) 18px}
-.aw-wall{--cols:10;display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:6px;background:#050605;padding:6px;border-radius:10px;box-shadow:0 0 0 1px rgba(237,205,117,.22),0 30px 60px -30px rgba(0,0,0,.8);max-width:1880px;margin:0 auto;touch-action:pan-y pinch-zoom}
+.aw-wall{--cols:9;--ratio:1 / 1;display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:2px;background:#050605;padding:2px;border-radius:0;box-shadow:0 0 0 1px rgba(237,205,117,.22),0 30px 60px -30px rgba(0,0,0,.8);max-width:1880px;margin:0 auto;touch-action:pan-y pinch-zoom}
 .aw-wall.aw-turn{animation:awTurn .28s ease}
 @keyframes awTurn{from{opacity:.35}to{opacity:1}}
-.aw-tile{position:relative;display:block;width:100%;aspect-ratio:1/1;padding:0;border:0;border-radius:3px;overflow:hidden;background:radial-gradient(circle at 50% 45%,#1a1d1b,#0b0c0b 70%);cursor:zoom-in;-webkit-tap-highlight-color:transparent}
-.aw-tile img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .35s ease;opacity:0}
-.aw-tile img.ok{opacity:1;transition:opacity .3s ease,transform .35s ease}
-.aw-tile:hover img,.aw-tile:focus-visible img{transform:scale(1.04)}
-.aw-tile:focus-visible{outline:2px solid #edcd75;outline-offset:2px}
+.aw-tile{position:relative;display:block;width:100%;aspect-ratio:var(--ratio);padding:0;border:0;border-radius:0;overflow:hidden;background:#0b0c0b;cursor:zoom-in;-webkit-tap-highlight-color:transparent}
+.aw-tile img{width:100%;height:100%;object-fit:contain;display:block;opacity:0}
+.aw-tile img.ok{opacity:1;transition:opacity .3s ease,filter .2s ease}
+.aw-tile:hover img,.aw-tile:focus-visible img{filter:brightness(1.12)}
+.aw-tile:focus-visible{outline:2px solid #edcd75;outline-offset:-2px;z-index:1}
+.aw-group{display:block;max-width:1880px;margin:0 auto 6px;font:500 12px/1.4 Inter,system-ui,sans-serif;letter-spacing:.12em;color:var(--muted)}
+.aw-group[hidden]{display:none}
 .aw-tile .aw-new,.aw-tile .aw-dn{position:absolute;left:5px;top:5px;font:600 9px/1 Inter,sans-serif;letter-spacing:.06em;background:#edcd75;color:#111;border-radius:99px;padding:4px 6px}
 .aw-tile .aw-dn{background:rgba(255,226,138,.85)}
 .aw-pg{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:10px 8px calc(10px + env(safe-area-inset-bottom));margin:0 auto;max-width:1880px;background:linear-gradient(to top,var(--bg) 70%,transparent)}
@@ -27,7 +29,7 @@
 .aw-pg button:disabled{opacity:.3;cursor:default}
 .aw-pg .aw-gap{color:var(--muted);padding:0 4px}
 .aw-pg .aw-pinfo{font-size:12px;color:var(--muted);letter-spacing:.06em;margin:0 6px;white-space:nowrap}
-@media(max-width:899px){.aw-mode{display:inline-flex}.aw-classic{margin-left:0}.aw-wall{gap:4px;padding:4px}.aw-wall[data-mode="large"]{gap:8px;padding:8px}.aw-wall[data-mode="large"] .aw-tile{aspect-ratio:4/5}.aw-pg{gap:4px}.aw-pg button{min-width:40px;padding:0 8px}.aw-pg .aw-pinfo{flex-basis:100%;text-align:center;order:-1;margin:0 0 2px}}
+@media(max-width:899px){.aw-mode{display:inline-flex}.aw-classic{margin-left:0}.aw-wall{gap:1px;padding:1px}.aw-wall[data-mode="large"]{gap:2px;padding:2px}.aw-pg{gap:4px}.aw-pg button{min-width:40px;padding:0 8px}.aw-pg .aw-pinfo{flex-basis:100%;text-align:center;order:-1;margin:0 0 2px}}
 .aw-login-row{display:flex;justify-content:flex-end;padding-bottom:26px}
 .aw-login{opacity:.45;font-size:11px;min-height:36px}
 .aw-owner{padding-bottom:30px}
@@ -61,16 +63,16 @@
   <h1 data-en="The artworks" data-zh="作品畫廊">The artworks</h1>
   <p data-en="Selected Works on an art TV wall. Tap any painting to see it large, with its name and story." data-zh="精選作品，排成一面藝術電視牆。點任一幅，放大欣賞作品名稱與故事。">Selected Works on an art TV wall. Tap any painting to see it large, with its name and story.</p>
   <div class="aw-bar">
-    <span class="aw-count" id="awCount">27</span>
+    <span class="aw-count" id="awCount">197</span>
     <div class="aw-mode" role="group" aria-label="Layout">
-      <button type="button" data-mode="dense" aria-pressed="true" data-en="Dense · 3" data-zh="密集・三欄">Dense · 3</button>
-      <button type="button" data-mode="large" aria-pressed="false" data-en="Large · 2" data-zh="大圖・兩欄">Large · 2</button>
+      <button type="button" data-mode="dense" aria-pressed="true" data-en="Dense · 4" data-zh="密集・四欄">Dense · 4</button>
+      <button type="button" data-mode="large" aria-pressed="false" data-en="Large · 3" data-zh="大圖・三欄">Large · 3</button>
     </div>
     <span class="aw-demo" id="awDemo" hidden></span>
     <a class="aw-classic" href="/works-classic" data-en="Classic view" data-zh="經典排版">Classic view</a>
   </div>
 </section>
-<section class="aw-wall-wrap" id="works"><div class="aw-wall" id="awWall" data-mode="dense" aria-label="Art TV Wall" aria-live="polite"></div>
+<section class="aw-wall-wrap" id="works"><span class="aw-group" id="awGroup" hidden></span><div class="aw-wall" id="awWall" data-mode="dense" aria-label="Art TV Wall" aria-live="polite"></div>
 <nav class="aw-pg" id="awPager" aria-label="Wall pages" hidden><button type="button" class="aw-prev" id="awPgPrev" aria-label="Previous wall">‹</button><span id="awPgNums" class="aw-pgnums" style="display:contents"></span><button type="button" class="aw-next" id="awPgNext" aria-label="Next wall">›</button><span class="aw-pinfo" id="awPgInfo"></span></nav></section>
 
 <section class="aw-owner wrap" id="awOwner" hidden>
@@ -97,5 +99,5 @@
   <button type="button" class="aw-lb-nav next" id="awNext" aria-label="Next">›</button>
 </dialog>
 <dialog class="aw-key" id="awKey"><form method="dialog" id="awKeyForm"><h3 data-en="Owner login" data-zh="Owner 登入">Owner login</h3><p data-en="Enter the AE admin key (the same key used for /feel-admin)." data-zh="輸入 AE 管理金鑰（與 /feel-admin 相同的金鑰）。">Enter the AE admin key (the same key used for /feel-admin).</p><input type="password" id="awKeyInput" autocomplete="current-password" required><div><button value="ok" data-en="Log in" data-zh="登入">Log in</button> <button value="cancel" formnovalidate class="alt" data-en="Cancel" data-zh="取消">Cancel</button></div><p class="aw-status" id="awKeyStatus"></p></form></dialog>
-</main><footer class="site-footer"><div class="footer-top"><div class="footer-brand"><img src="assets/ae-three-rings-transparent.webp" alt="AE Universe Creation 金色三環標誌" width="110" height="67">AE Universe Creation</div><nav class="footer-links" aria-label="Footer"><a data-en="Artworks" data-zh="作品" href="works.html" class="">Artworks</a><a data-en="Collections" data-zh="收藏系列" href="collections.html" class="">Collections</a><a data-en="Experience" data-zh="互動體驗" href="/experience" class="">Experience</a><a data-en="Our story" data-zh="我們的故事" href="about.html" class="">Our story</a><a data-en="Shop" data-zh="選購" href="shop.html">Shop</a><a data-en="Ko-fi shop" data-zh="Ko-fi 商店" href="https://ko-fi.com/aeuniverse1314/shop" class="" target="_blank" rel="noopener">Ko-fi shop</a><a class="ae-line-link" href="https://line.me/R/ti/p/@804pbgev" target="_blank" rel="noopener" aria-label="LINE @804pbgev"><span class="ae-line-dot" aria-hidden="true"></span><span data-en="Add us on LINE" data-zh="加入 LINE 好友">Add us on LINE</span><span class="ae-line-id" aria-hidden="true">@804pbgev</span></a></nav></div><p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p><p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p><p class="ae-version-mark" aria-hidden="true">AE · WEB 2.4.54</p></footer><script src="/ae-artwall.js?v=2476.48" defer></script><script src="/ae-version.js" defer></script>
+</main><footer class="site-footer"><div class="footer-top"><div class="footer-brand"><img src="assets/ae-three-rings-transparent.webp" alt="AE Universe Creation 金色三環標誌" width="110" height="67">AE Universe Creation</div><nav class="footer-links" aria-label="Footer"><a data-en="Artworks" data-zh="作品" href="works.html" class="">Artworks</a><a data-en="Collections" data-zh="收藏系列" href="collections.html" class="">Collections</a><a data-en="Experience" data-zh="互動體驗" href="/experience" class="">Experience</a><a data-en="Our story" data-zh="我們的故事" href="about.html" class="">Our story</a><a data-en="Shop" data-zh="選購" href="shop.html">Shop</a><a data-en="Ko-fi shop" data-zh="Ko-fi 商店" href="https://ko-fi.com/aeuniverse1314/shop" class="" target="_blank" rel="noopener">Ko-fi shop</a><a class="ae-line-link" href="https://line.me/R/ti/p/@804pbgev" target="_blank" rel="noopener" aria-label="LINE @804pbgev"><span class="ae-line-dot" aria-hidden="true"></span><span data-en="Add us on LINE" data-zh="加入 LINE 好友">Add us on LINE</span><span class="ae-line-id" aria-hidden="true">@804pbgev</span></a></nav></div><p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p><p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p><p class="ae-version-mark" aria-hidden="true">AE · WEB 2.4.54</p></footer><script src="/ae-artwall.js?v=2476.55" defer></script><script src="/ae-version.js" defer></script>
 </body></html>
