@@ -560,7 +560,7 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
 }
 </style>
 <script id="ae-tap-sound-script">
-/* AE Touch Moment — tap sound (v2476.19 preview; v2476.22 flourish; v2476.23 latency fix).
+/* AE Touch Moment — tap sound (v2476.19 preview; v2476.22 flourish; v2476.23 latency fix; v2476.52 no cut-off on quick re-taps).
  * Lit cell: grace note into a quick ascending 3-note celesta arpeggio (C pentatonic, ~0.3 s),
  * starting note walks per tap, +-8 cents. Empty cell: short tick. Self-synthesised, no files.
  * v2476.23:
@@ -591,7 +591,7 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
   let soundGid = 0;
   const voices = [];
   const stats = { hit: 0, tick: 0, buffered: 0, live: 0, deferred: 0 };
-  const MAX_VOICES = 4, VOLUME = 0.28;
+  const MAX_VOICES = 6, VOLUME = 0.28; // v2476.52: 4 -> 6 so even very fast re-taps are not stolen
   const PENTA = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
   const C6 = 1046.5;
   const ROOTS = [1, 2, 3, 2, 4, 1, 3, 0]; // walk of starting degrees
@@ -686,10 +686,17 @@ new MutationObserver(()=>{labelArt();showCue();renderResultCopy()}).observe(docu
     try { v.g.gain.cancelScheduledValues(when); v.g.gain.setValueAtTime(v.g.gain.value, when); v.g.gain.setTargetAtTime(0, when, k); } catch (e) {}
     v.src.forEach(o => { try { o.stop(when + k * 6); } catch (e) {} });
   }
+  const DUCK = 0.6;
+  function duck(v, when) {
+    try { v.g.gain.cancelScheduledValues(when); v.g.gain.setValueAtTime(v.g.gain.value, when); v.g.gain.setTargetAtTime(DUCK, when, 0.03); } catch (e) {}
+  }
   function start(hit) {
     const t = ctx.currentTime;
-    while (voices.length >= MAX_VOICES) retire(voices.shift(), t); // steal oldest, never drop
-    if (hit) voices.forEach(v => { if (v.hit && !v.fading) { v.fading = true; retire(v, t, 0.03); } });
+    while (voices.length >= MAX_VOICES) retire(voices.shift(), t, 0.02); // steal oldest, never drop
+    // v2476.52: a new hit no longer fades the previous flourish to silence (that cut its last notes
+    // on quick re-taps, most noticeably on same-cell re-lights). The previous hit keeps ringing to
+    // its natural end, only ducked a little so the new one stays on top.
+    if (hit) voices.forEach(v => { if (v.hit && !v.fading && !v.ducked) { v.ducked = true; duck(v, t); } });
     const g = ctx.createGain();
     g.connect(master);
     const v = { g, src: [], hit, gid: soundGid };
