@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>盛明 Eternal Sun · 精裝版 Premium Edition · AE Universe Creation</title>
+<link rel="stylesheet" href="./assets/premium.css">
+</head>
+<body>
+<div id="stage" aria-label="盛明 Eternal Sun 精裝版動態桌布">
+  <canvas id="back" aria-hidden="true"></canvas>
+  <div id="art">
+    <img id="painting" src="/assets/eternal-sun-canonical-1110x1536.jpg" alt="盛明 Eternal Sun — original painting" draggable="false">
+    <div id="uv" aria-hidden="true"><div id="uvDark"></div><canvas id="uvGlow"></canvas></div>
+  </div>
+  <canvas id="front" aria-hidden="true"></canvas>
+</div>
+<div id="hint" data-zh="輕觸 · 顯示控制" data-en="Tap · show controls"></div>
+<header id="brand"><a href="/" data-zh="AE UNIVERSE CREATION" data-en="AE UNIVERSE CREATION"></a><span id="title" data-zh="盛明 · 精裝版" data-en="Eternal Sun · Premium"></span></header>
+<nav id="panel" aria-label="controls" hidden>
+  <div class="row">
+    <button id="play" data-zh="▶ 播放音樂" data-en="▶ Play music"></button>
+    <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mUv" data-zh="螢光" data-en="Fluorescent"></button></div>
+    <button id="lang">EN</button>
+  </div>
+  <div class="row">
+    <label><span data-zh="強度" data-en="Intensity"></span><input id="int" type="range" min="0" max="1" step="0.01" value="0.7"></label>
+    <label><span data-zh="速度" data-en="Speed"></span><input id="spd" type="range" min="0.3" max="2" step="0.01" value="1"></label>
+  </div>
+  <div class="row toggles">
+    <button class="tg on" data-k="frame" data-zh="畫框" data-en="Frame"></button>
+    <button class="tg on" data-k="led" data-zh="燈帶" data-en="LED"></button>
+    <button class="tg on" data-k="aura" data-zh="光環" data-en="Aura"></button>
+    <button class="tg on" data-k="glint" data-zh="閃光" data-en="Glints"></button>
+    <button class="tg" data-k="torch" data-zh="手電筒" data-en="Flashlight"></button>
+    <button id="orig" data-zh="原作" data-en="Original"></button>
+  </div>
+  <p class="note" id="engine"></p>
+</nav>
+<audio id="music" src="/player/eternal-sun/assets/ae-eternal-stream.m4a" preload="none" loop crossorigin="anonymous"></audio>
+<script type="module" src="./assets/premium.js"></script>
+</body>
+</html>
