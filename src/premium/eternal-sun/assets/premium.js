@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.64, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.65, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -51,6 +51,9 @@ function layout() {
 const CK = { base: 0, at: 0, last: -1, ok: 0, err: 0 };
 // Output latency (v2476.64): read from an AudioContext created on the play gesture (not routed; reading only).
 // Media elements and Web Audio share the same output device, so baseLatency + outputLatency is the delay from decoder to speaker.
+const OM = (() => { const o = window.aePremiumOnsets; return o ? { sub: o.sub, st: o.subS, i: 0, n: 0, since: 9, hits: 0, last: -1 } : { sub: null }; })();
+const SYNC = { off: (() => { try { const v = +localStorage.getItem('ae-premium-sync-ms'); return Number.isFinite(v) ? Math.max(-200, Math.min(200, v)) : 0; } catch (e) { return 0; } })() };
+document.addEventListener('visibilitychange', () => { CK.ok = 0; });
 const LAT = { ctx: null, v: 0, frame: 0.012, read: 0, src: 'none', override: null };
 function measureLatency() {
   try { if (!LAT.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { LAT.ctx = new AC({ latencyHint: 'playback' }); LAT.ctx.resume && LAT.ctx.resume(); } } } catch (e) {}
@@ -61,6 +64,9 @@ function latency() { if (LAT.override != null) return LAT.override; if (performa
 const QL = new URLSearchParams(location.search).get('lat'); if (QL != null && QL !== '' && !isNaN(+QL)) LAT.override = +QL / 1000;
 const A = { count: 0, t: 0, phase: 0, ctx: null, an: null, buf: null, bass: 0, avg: 0, level: 0, lastKick: 0, kick: 0 };
 const audio = $('#music');
+for (const ev of ['waiting', 'stalled', 'seeking']) audio.addEventListener(ev, () => { CK.stall = 1; CK.ok = 0; });
+for (const ev of ['playing', 'seeked', 'canplay']) audio.addEventListener(ev, () => { CK.stall = 0; CK.ok = 0; });
+
 async function togglePlay() {
   measureLatency();
   if (!A.ctx && !RH) {
@@ -102,13 +108,22 @@ function analyse(now) {
     // then shifted back by the measured output latency so lights land on what is HEARD, not what the decoder has reached.
     if (ct !== CK.last || !CK.ok) { const pred = CK.base + (now - CK.at) / 1000 * rate, d = ct - pred; if (!CK.ok || Math.abs(d) > 0.12 || ct < CK.last) { CK.base = ct; CK.at = now; } else { CK.base = pred + d * 0.2; CK.at = now; } CK.err = d; CK.last = ct; CK.ok = 1; }
     let tt = CK.base + (now - CK.at) / 1000 * rate; if (Math.abs(tt - ct) > 0.25) { CK.base = tt = ct; CK.at = now; }
-    tt = Math.max(0, tt - latency());
+    // v2476.65 robustness: never extrapolate while the element is seeking / buffering (the CUE seek on first play and
+    // mobile stalls kept the old clock running ahead of the frozen audio), and never more than 0.35 s past the last real update.
+    if (audio.seeking || audio.readyState < 3 || CK.stall) { CK.base = tt = ct; CK.at = now; }
+    else if (tt - ct > 0.35) { CK.base = tt = ct; CK.at = now; }
+    tt = Math.max(0, tt - latency() - SYNC.off / 1000); // + offset = lights later
+    CK.tt = tt;
     A.t = tt; bass = Math.min(1, EN.energyAt(TL, tt));
     const b = RH.update(bass, tt);
     if (b.count < A.count) A.count = b.count; // loop / seek back
     if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); if (isHeavy(b, tt, bass)) { IMP.t = now; IMP.at = TL.events[b.count - 1]; IMP.n++; } if (b.stage !== 'build') launchDepth(null, null, now, b.count); for (let i = 0; i < 3; i++) { musicSpots.push({ ...hpDest(i * 2, b.sweep, now), born: now }); } if (musicSpots.length > 9) musicSpots.splice(0, musicSpots.length - 9); }
     A.b = b; A.since = b.count ? Math.max(0, tt - TL.events[b.count - 1]) : 9; // seconds since the last grid kick (audio time)
-    A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = b.stage === 'build' ? b.pulse : Math.exp(-A.since / 0.095); A.drop = b.dropPulse || 0; A.phase = b.phase; return;
+    A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = A.kickQ = Math.exp(-A.since / 0.095); // quarter-note kick (grid)
+    // v2476.65 onset map: the builds accelerate to 8th/16th snare rolls and the bass goes double-time after each drop.
+    // A quarter-only grid felt like the lights "could not keep up" as the music sped up, so every measured onset now punches too.
+    if (OM.sub) { const ss = OM.sub; let k = OM.i; if (k > 0 && ss[k - 1] > tt) k = 0; while (k < ss.length && ss[k] <= tt) k++; OM.i = k;
+      if (k) { const ds = tt - ss[k - 1]; OM.since = ds; OM.n = k; const sub = Math.exp(-ds / 0.075) * (0.35 + 0.4 * OM.st[k - 1]); if (ds < 0.012 && OM.last !== k) { OM.last = k; OM.hits++; } A.kick = Math.max(A.kick, sub); } } A.drop = b.dropPulse || 0; A.phase = b.phase; return;
   }
   CK.ok = 0;
   if (A.an && S.playing) {
@@ -150,7 +165,7 @@ function drawImpact(c, now) { // v2476.62: refined — soft light swell from the
     c.strokeStyle = lg; c.lineWidth = 1; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(an) * len, cy + Math.sin(an) * len); c.stroke(); } // fine fading rays
   c.restore();
 }
-function onKick(now, k) { A.lastKick = now; if (!S.playing) A.kick = 1; RG.beats++; const n = S.playing ? A.count : RG.beats; LZ.hit = now; if (S.laser && n % 8 === 0) LZ.pat = (LZ.pat + 1) % 3; if (S.glint) sparkle(now, S.playing ? 3 : 2); if (S.bloom && n % 4 === 0) autoBloom(now); }
+function onKick(now, k) { A.lastKick = now; if (!S.playing) A.kick = 1; RG.beats++; const n = S.playing ? A.count : RG.beats; LZ.hit = now; if (S.laser && n % 8 === 0) LZ.pat = (LZ.pat + 1) % 3; if (S.glint) { sparkle(now, S.playing ? 1 : 1); if (S.playing && n % 16 === 0) sheen(now); } if (S.bloom && n % 4 === 0) autoBloom(now); }
 
 /* ---------- pointer / tilt ---------- */
 const T = { tx: 0, ty: 0, x: 0, y: 0, px: -1, py: -1 };
@@ -247,7 +262,7 @@ function drawLasers(ctx, now) {
   ctx.save(); ctx.beginPath(); ctx.rect(G.X0, G.T, G.W, G.H); ctx.clip();
   if (S.laser) {
     const b = S.playing && A.b ? A.b : { count: RG.beats, pulse: A.kick, phase: 0, stage: 'groove', dropPulse: 0, buildProgress: 0, sweep: now / 405 };
-    const pulse = S.playing ? A.kick : A.kick, colors = LASER, sweep = b.sweep || 0;
+    const pulse = S.playing ? A.kickQ : A.kick, colors = LASER, sweep = b.sweep || 0;
     ctx.globalCompositeOperation = 'screen';
     const group = Math.floor(b.count / 4), pattern = Math.floor(variation(group + 3) * 3), beamCount = b.stage === 'build' ? (b.buildProgress > .7 ? 5 : 3) : 6;
     LZ.pat = pattern; const energy = A.level;
@@ -311,19 +326,52 @@ function drawTaps(ctx, now) {
   tapStars = tapStars.filter(q => now - q.t < q.life);
   for (const q of tapStars) {
     const u = (now - q.t) / q.life, e = 1 - (1 - u) ** 3, x = q.x + q.vx * e, y = q.y + q.vy * e + 12 * u * u, a = (1 - u) ** 1.5, r = q.s * (1 - .5 * u);
-    ctx.globalAlpha = a; ctx.fillStyle = '#fff8e6'; ctx.beginPath();
-    ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
-    ctx.globalAlpha = a * .5; ctx.fillStyle = 'rgba(255,214,140,1)'; ctx.beginPath(); ctx.arc(x, y, r * .45, 0, 6.2832); ctx.fill();
+    const mg = ctx.createRadialGradient(x, y, 0, x, y, r); mg.addColorStop(0, `rgba(255,250,236,${a * .85})`); mg.addColorStop(.4, `rgba(255,222,160,${a * .35})`); mg.addColorStop(1, 'rgba(255,210,140,0)');
+    ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
   }
   ctx.restore(); ctx.globalAlpha = 1;
 }
 function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
+  if (!A.started && !S.playing) { togglePlay(); const now0 = performance.now(); spots.push({ x, y, born: now0 }); return; } // v2476.65: first tap on the painting starts the music
+  if (S.playing) beatTap(x, y);
   const now = performance.now(); spots.push({ x, y, born: now }); if (spots.length > 6) spots.shift(); RG.taps = (RG.taps || 0) + 1;
   const b = document.createElement('span'); b.className = 'ae-gold-burst'; b.style.left = x + 'px'; b.style.top = y + 'px'; $('#stage').appendChild(b); setTimeout(() => b.remove(), 1650);
-  if (S.glint || S.preset === 'gallery') for (let i = 0; i < 14; i++) { const an = Math.random() * 6.2832, d = 30 + Math.random() * 90; tapStars.push({ t: now, x, y, vx: Math.cos(an) * d, vy: Math.sin(an) * d, s: 4 + Math.random() * 6, life: 700 + Math.random() * 600 }); }
+  if (S.glint || S.preset === 'gallery') for (let i = 0; i < 10; i++) { const an = Math.random() * 6.2832, d = 30 + Math.random() * 90; tapStars.push({ t: now, x, y, vx: Math.cos(an) * d, vy: Math.sin(an) * d, s: 3 + Math.random() * 5, life: 700 + Math.random() * 600 }); }
   if (S.laser && !S.playing) launchDepth(x, y, now, RG.taps);
   if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {}
 }
+/* v2476.65 beat taps: while playing, a tap is judged against the audio beat grid (same clock as the lights).
+   on-beat (<=70 ms, perfect <=35 ms): warm halo + a soft bell note from C# minor pentatonic (the song's key), climbing with the combo;
+   off-beat: just the normal ring. Consecutive on-beat taps build a combo (shown as a small fading ×N), dragging leaves a light trail. */
+const GAME = { combo: 0, best: 0, last: 0, hits: 0, perfect: 0, taps: 0, marks: [], trail: [], ac: null };
+const PENTA = [554.37, 659.25, 739.99, 830.61, 987.77, 1108.73, 1318.51, 1479.98];
+function beatErr() { const ev = TL && TL.events; if (!ev || !ev.length) return 9; const t = CK.tt != null ? CK.tt : A.t; let lo = 0, hi = ev.length; while (lo < hi) { const m = (lo + hi) >> 1; if (ev[m] <= t) lo = m + 1; else hi = m; } const a = lo ? t - ev[lo - 1] : 9, b = lo < ev.length ? ev[lo] - t : 9; return a < b ? a : -b; }
+function bell(f, gain) {
+  try { const c = GAME.ac || (GAME.ac = LAT.ctx || new (window.AudioContext || window.webkitAudioContext)()); if (c.state === 'suspended') c.resume(); const t = c.currentTime;
+    for (const [m, g, d] of [[1, gain, 1.4], [2.01, gain * .22, .6], [3.0, gain * .08, .35]]) { const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.value = f * m; v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(g, t + .008); v.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(v); v.connect(c.destination); o.start(t); o.stop(t + d + .05); }
+  } catch (e) {}
+}
+function beatTap(x, y) {
+  const now = performance.now(), e = beatErr(), ae = Math.abs(e); GAME.taps++; GAME.lastErr = Math.round(e * 1000);
+  if (ae <= 0.07) { GAME.combo = now - GAME.last < 2600 ? GAME.combo + 1 : 1; GAME.last = now; GAME.hits++; const perfect = ae <= 0.035; if (perfect) GAME.perfect++;
+    GAME.best = Math.max(GAME.best, GAME.combo); bloom(now, x, y);
+    bell(PENTA[(GAME.combo - 1) % PENTA.length], perfect ? 0.07 : 0.045);
+    GAME.marks.push({ t: now, x, y, n: GAME.combo, perfect }); if (GAME.marks.length > 4) GAME.marks.shift();
+  } else { GAME.combo = 0; }
+}
+function drawGame(c, now) {
+  GAME.marks = GAME.marks.filter(m => now - m.t < 1300); GAME.trail = GAME.trail.filter(q => now - q.t < 650);
+  c.save(); c.globalCompositeOperation = 'screen';
+  for (let i = 1; i < GAME.trail.length; i++) { const a = GAME.trail[i - 1], b = GAME.trail[i]; if (b.t - a.t > 80) continue; const k = 1 - (now - b.t) / 650;
+    c.strokeStyle = `rgba(255,226,160,${k * .5})`; c.lineWidth = 1 + 5 * k; c.lineCap = 'round'; c.shadowColor = 'rgba(255,200,120,.9)'; c.shadowBlur = 10 * k; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
+  c.shadowBlur = 0;
+  for (const m of GAME.marks) { const u = (now - m.t) / 1300, a = (1 - u) ** 1.6;
+    c.strokeStyle = `rgba(255,236,190,${a * (m.perfect ? .75 : .5)})`; c.lineWidth = m.perfect ? 1.6 : 1; c.beginPath(); c.arc(m.x, m.y, 14 + 70 * Math.sqrt(u), 0, 6.2832); c.stroke();
+    if (m.n >= 2) { c.globalCompositeOperation = 'source-over'; c.globalAlpha = a; c.fillStyle = '#f3e2b6'; c.font = `300 ${13 + Math.min(6, m.n)}px "Cormorant Garamond", Georgia, serif`; c.textAlign = 'center'; c.fillText('×' + m.n, m.x, m.y - 24 - 18 * u); c.globalAlpha = 1; c.globalCompositeOperation = 'screen'; }
+  }
+  c.restore();
+}
+function gameTrail(e) { if (!S.playing || Z.pts.size !== 1) return; const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x < p.x || x > p.x + p.w || y < p.y || y > p.y + p.h) return; GAME.trail.push({ x, y, t: performance.now() }); if (GAME.trail.length > 40) GAME.trail.shift(); }
 /* sun bloom (restored from Light Player 'glow' / homepage tap bloom): tap the painting or press ✦ */
 let blooms = [];
 function bloom(now, x, y) { blooms.push({ t: now, x, y }); if (blooms.length > 4) blooms.shift(); if (S.laser) fireBolts(now, { x, y }, 6); }
@@ -400,27 +448,40 @@ function drawFixture(c, now) {
   c.restore();
 }
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
-/* glints (v2476.60): clearly visible 4-point star sparkles on beats, on the frame and the sun's highlights */
+/* glints (v2476.65): soft specular highlights + varnish sheen (replaces the 4-point star sparkles) */
 let sparks = [];
 function sparkle(now, n) {
   for (let i = 0; i < n; i++) sparks.push({ t: now + i * 60, u: Math.random(), onSun: Math.random() < .45, a: Math.random() * 6.28, d: .05 + Math.random() * .2, s: .7 + Math.random() * .6 });
   if (sparks.length > 24) sparks.splice(0, sparks.length - 24);
 }
 function drawSparks(c, now, ox, oy) {
-  const p = L.p, I = S.intensity, g = S.frame ? L.F * 0.5 : 2, r = { x: p.x - g + ox, y: p.y - g + oy, w: p.w + 2 * g, h: p.h + 2 * g }, life = 1100;
+  // v2476.65 閃光 = specular light, not star symbols: a soft anisotropic highlight (like light catching wet varnish /
+  // a lens glint seen out of focus) that swells and fades, plus an occasional slow sheen sweeping across the varnish.
+  const p = L.p, I = S.intensity, g = S.frame ? L.F * 0.5 : 2, r = { x: p.x - g + ox, y: p.y - g + oy, w: p.w + 2 * g, h: p.h + 2 * g }, life = 1500;
   sparks = sparks.filter(q => now - q.t < life);
+  c.save(); c.beginPath(); c.rect(r.x - 30, r.y - 30, r.w + 60, r.h + 60); c.clip();
   for (const q of sparks) {
     if (now < q.t) continue;
-    const f = (now - q.t) / life, a = Math.sin(Math.PI * Math.min(1, f * 1.3)) * (0.7 + .5 * I);
+    const f = (now - q.t) / life, env = Math.sin(Math.PI * Math.min(1, f)) ** 2, a = env * (0.22 + .18 * I);
     const [x, y] = q.onSun ? [p.x + p.w * SUN.x + Math.cos(q.a) * p.w * q.d * 1.6, p.y + p.h * SUN.y + Math.sin(q.a) * p.w * q.d * 1.6] : perimeterPoint(q.u, r);
-    const s = Math.max(14, p.w * .045) * q.s * (0.6 + .6 * Math.sin(Math.PI * f));
-    const gr = c.createRadialGradient(x, y, 0, x, y, s * .7); gr.addColorStop(0, `rgba(255,255,250,${a})`); gr.addColorStop(1, 'rgba(255,230,170,0)');
-    c.fillStyle = gr; c.beginPath(); c.arc(x, y, s * .7, 0, 6.2832); c.fill();
-    c.save(); c.translate(x, y); c.rotate(f * .6); c.fillStyle = `rgba(255,252,236,${a})`;
-    for (const [L1, w1] of [[s * 1.6, s * .09], [s * .9, s * .06]]) { c.beginPath(); c.moveTo(0, -L1); c.lineTo(w1, 0); c.lineTo(0, L1); c.lineTo(-w1, 0); c.closePath(); c.fill(); c.beginPath(); c.moveTo(-L1, 0); c.lineTo(0, w1); c.lineTo(L1, 0); c.lineTo(0, -w1); c.closePath(); c.fill(); c.rotate(.785); }
-    c.restore();
+    const s = Math.max(10, p.w * .03) * q.s;
+    c.save(); c.translate(x, y); c.rotate(-0.62 + q.a * 0.08); c.scale(2.6, 0.55); // elongated along a fixed "light direction"
+    const gr = c.createRadialGradient(0, 0, 0, 0, 0, s); gr.addColorStop(0, `rgba(255,252,242,${a})`); gr.addColorStop(.35, `rgba(255,236,200,${a * .45})`); gr.addColorStop(1, 'rgba(255,220,170,0)');
+    c.fillStyle = gr; c.beginPath(); c.arc(0, 0, s, 0, 6.2832); c.fill(); c.restore();
+    const core = c.createRadialGradient(x, y, 0, x, y, s * .28); core.addColorStop(0, `rgba(255,255,252,${a * 1.2})`); core.addColorStop(1, 'rgba(255,248,230,0)');
+    c.fillStyle = core; c.beginPath(); c.arc(x, y, s * .28, 0, 6.2832); c.fill();
+  }
+  c.restore();
+  if (SH.t && now - SH.t < SH.dur) { // varnish sheen: a wide, very faint diagonal band crossing the canvas
+    const u = (now - SH.t) / SH.dur, e = u * u * (3 - 2 * u), a = Math.sin(Math.PI * u) * (0.07 + 0.05 * I), w = p.w * 0.22;
+    const cx = p.x + ox - w * 2 + (p.w + w * 4) * e;
+    c.save(); c.beginPath(); c.rect(p.x + ox, p.y + oy, p.w, p.h); c.clip(); c.translate(cx, p.y + oy + p.h / 2); c.rotate(0.38);
+    const lg = c.createLinearGradient(-w, 0, w, 0); lg.addColorStop(0, 'rgba(255,240,210,0)'); lg.addColorStop(.5, `rgba(255,248,232,${a})`); lg.addColorStop(1, 'rgba(255,240,210,0)');
+    c.fillStyle = lg; c.fillRect(-w, -p.h, w * 2, p.h * 2); c.restore();
   }
 }
+const SH = { t: 0, dur: 2600 };
+function sheen(now) { if (!SH.t || now - SH.t > SH.dur + 3000) SH.t = now; }
 
 /* ---------- colours ---------- */
 const GOLD = [[255, 196, 92], [255, 150, 70], [255, 222, 150], [214, 120, 255], [120, 230, 170]];
@@ -472,7 +533,7 @@ function drawFront(now) {
     c.beginPath(); c.arc(cx, cy, rad, 0, 6.2832); c.stroke(); c.shadowBlur = 0;
   }
   if (S.glint) {
-    if (Math.random() < 0.004 * S.speed * (0.5 + I)) sparkle(now, 1); if (false) glints.push({ t: now, u: Math.random(), s: 0.6 + Math.random() * 0.6 });
+    if (Math.random() < 0.0025 * S.speed * (0.5 + I)) sparkle(now, 1); if (!S.playing && Math.random() < 0.0007) sheen(now); if (false) glints.push({ t: now, u: Math.random(), s: 0.6 + Math.random() * 0.6 });
     const g = S.frame ? L.F * 0.5 : 2, r = { x: p.x - g + ox, y: p.y - g + oy, w: p.w + 2 * g, h: p.h + 2 * g };
     glints = glints.filter(q => now - q.t < 900);
     for (const q of glints) {
@@ -485,7 +546,7 @@ function drawFront(now) {
     }
     drawSparks(c, now, ox, oy);
   } else { glints.length = 0; sparks.length = 0; }
-  drawCones(c, now); drawLasers(c, now); drawTaps(c, now);
+  drawCones(c, now); drawLasers(c, now); drawTaps(c, now); drawGame(c, now);
   c.save(); c.globalCompositeOperation = 'source-over'; drawFixture(c, now); c.restore();
   drawBlooms(c, now);
   c.globalAlpha = 1; c.shadowBlur = 0;
@@ -616,7 +677,7 @@ function drawLook(now, dt) {
   if (window.AELooks.draw(c, w, h, { x: 0, y: 0, w, h }, LK.ph, LK.idx[S.look], 1, false, 1, vals)) LK.draws++;
 }
 function frontVis() { // nothing to draw above the painting -> remove the overlay layer entirely, so the <img> is composited exactly as on its own
-  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
+  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || GAME.marks.length > 0 || GAME.trail.length > 0 || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
   const d = any ? '' : 'none'; if ($('#front').style.display !== d) $('#front').style.display = d;
 }
 function syncButtons() {
@@ -670,7 +731,7 @@ function bindUI() {
   // v2476.63: the painting is for art interaction only. Panel opens from ⚙ or a tap on the empty area beside the painting;
   // while it is open a tap anywhere outside it (backdrop) closes it.
   st.addEventListener('pointerdown', e => { onPointer(e); if (document.body.classList.contains('ui') && Z.pts.size <= 1) { hideUI(); Z.consumed = true; } else if (Z.pts.size <= 1) Z.consumed = false; });
-  st.addEventListener('pointermove', onPointer);
+  st.addEventListener('pointermove', e => { onPointer(e); gameTrail(e); });
   $('#open').onclick = e => { e.stopPropagation(); showUI(); };
   $('#panel').addEventListener('pointerdown', e => { e.stopPropagation(); showUI(); });
   $('#play').onclick = togglePlay;
@@ -736,9 +797,15 @@ for (const ev of ['selectstart', 'dragstart', 'contextmenu']) document.addEventL
 document.querySelectorAll('#stage img, #art img').forEach(im => { im.draggable = false; im.setAttribute('draggable', 'false'); });
 $('#stage').addEventListener('touchstart', e => { if (e.touches.length > 1 || e.cancelable) e.preventDefault(); }, { passive: false });
 document.addEventListener('dblclick', e => e.preventDefault());
+// v2476.65: 對拍微調 slider (advanced panel), saved to localStorage
+(() => { const r = $('#syncoff'), o = $('#syncval'); if (!r) return; const show = () => { o.textContent = (SYNC.off > 0 ? '+' : '') + SYNC.off + ' ms'; }; r.value = SYNC.off; show();
+  r.addEventListener('input', () => { SYNC.off = Math.round(+r.value); show(); try { localStorage.setItem('ae-premium-sync-ms', String(SYNC.off)); } catch (e) {} }); })();
+// v2476.65: elegant play glyph over the painting until the first playback starts
+function syncGlyph() { const g = $('#artplay'); if (!g) return; const p = L.p; g.style.left = (p.x + p.w / 2) + 'px'; g.style.top = (p.y + p.h / 2) + 'px'; g.classList.toggle('gone', !!(A.started || S.playing)); }
+audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setTimeout(syncGlyph, 50)); setTimeout(syncGlyph, 0); setInterval(syncGlyph, 1000);
 // v2476.64: main panel = presets + 只留燈光; 進階 reveals the full fine-control set (advanced panel).
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
-window.__premium = { LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }

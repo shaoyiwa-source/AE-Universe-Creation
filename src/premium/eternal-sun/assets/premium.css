@@ -62,3 +62,15 @@ html,body,#stage,#stage *,#art,#art *{-webkit-user-select:none;user-select:none;
 #stage,#art{touch-action:none}
 #stage img,#art img{-webkit-user-drag:none;pointer-events:auto}
 #panel input{-webkit-user-select:auto;user-select:auto}
+
+/* v2476.65: play glyph over the painting (before first playback) */
+#artplay{position:fixed;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;z-index:5;pointer-events:none;opacity:.88;transition:opacity .7s ease,transform .7s ease;filter:drop-shadow(0 2px 14px rgba(0,0,0,.45))}
+#artplay svg{width:100%;height:100%}
+#artplay circle{fill:rgba(12,9,6,.28);stroke:rgba(243,226,182,.85);stroke-width:1.4;-webkit-backdrop-filter:blur(2px)}
+#artplay path{fill:rgba(248,236,206,.92)}
+#artplay{animation:ae-play-breathe 3.2s ease-in-out infinite}
+#artplay.gone{opacity:0;transform:scale(1.25);animation:none}
+@keyframes ae-play-breathe{0%,100%{opacity:.72}50%{opacity:.95}}
+#panel .row.sync label{display:flex;align-items:center;gap:.6em;width:100%}
+#panel .row.sync input{flex:1}
+#panel .row.sync output{min-width:4.5em;text-align:right;font-variant-numeric:tabular-nums;opacity:.85}
