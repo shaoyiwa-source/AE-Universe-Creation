@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.66, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.67, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -117,7 +117,7 @@ function analyse(now) {
     A.t = tt; bass = Math.min(1, EN.energyAt(TL, tt));
     const b = RH.update(bass, tt);
     if (b.count < A.count) A.count = b.count; // loop / seek back
-    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); if (isHeavy(b, tt, bass)) { IMP.t = now; IMP.at = TL.events[b.count - 1]; IMP.n++; } if (b.stage !== 'build') launchDepth(null, null, now, b.count); for (let i = 0; i < 3; i++) { musicSpots.push({ ...hpDest(i * 2, b.sweep, now), born: now }); } if (musicSpots.length > 9) musicSpots.splice(0, musicSpots.length - 9); }
+    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); if (isHeavy(b, tt, bass)) { IMP.t = now; IMP.at = TL.events[b.count - 1]; IMP.n++; if (S.laser && (b.stage === 'drop' || (IMP.n % 2 === 0))) laserShow(now); partyHeavy(now); } if (b.stage !== 'build' || b.accentBeat) { if (b.stage !== 'build') launchDepth(null, null, now, b.count); for (let i = 0; i < 3; i++) { musicSpots.push({ ...hpDest(i * 2, b.sweep, now), born: now }); } if (musicSpots.length > 9) musicSpots.splice(0, musicSpots.length - 9); } partyBeat(b, now); }
     A.b = b; A.since = b.count ? Math.max(0, tt - TL.events[b.count - 1]) : 9; // seconds since the last grid kick (audio time)
     A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = A.kickQ = Math.exp(-A.since / 0.095); // quarter-note kick (grid)
     // v2476.65 onset map: the builds accelerate to 8th/16th snare rolls and the bass goes double-time after each drop.
@@ -257,12 +257,39 @@ function launchDepth(x, y, now, seed) {
   }
   if (bolts.length > 36) bolts.splice(0, bolts.length - 36);
 }
+/* v2476.67: lite v0.1.0 "laser show" sweep — six beams from off-frame emitters sweep across the art for 1.65 s, flaring on each
+   beat of the audio grid (lite used a 0.405 s wall clock; here the flare is A.since from the real beat grid). Fired on heavy beats. */
+const LSW = []; function laserShow(now) { LSW.push({ born: now, life: 1650, seed: variation(now % 1000) * 6 }); if (LSW.length > 2) LSW.shift(); }
+function drawLaserShow(ctx, now, G, lite) {
+  for (let n = LSW.length - 1; n >= 0; n--) if (now - LSW[n].born > LSW[n].life) LSW.splice(n, 1);
+  for (const w of LSW) {
+    const t = (now - w.born) / 1000, life = (now - w.born) / w.life, env = Math.sin(Math.PI * Math.min(1, life)) ** .5, pulse = S.playing ? Math.exp(-(A.since || 0) / 0.11) : (1 - ((t / .405) % 1)) ** 3;
+    ctx.globalCompositeOperation = 'screen'; ctx.lineCap = 'round';
+    for (let i = 0; i < 6; i++) {
+      const ox = i % 3 === 0 ? G.X0 - G.W * .06 : i % 3 === 1 ? G.X0 + G.W * 1.06 : G.X0 + G.W * (.2 + i * .11), oy = i % 3 === 2 ? G.T - 16 : G.T + G.H * (.12 + (i % 4) * .2);
+      const ph = t * (1.1 + i * .13) + i * 1.7 + w.seed, tx = G.X0 + G.W * (.5 + .4 * Math.sin(ph)), ty = G.T + Math.max(24, G.H * (.3 + .42 * (.5 + .5 * Math.cos(ph * 1.3))));
+      const col = LASER[i], power = Math.min(1, env * (.35 + .65 * pulse));
+      ctx.shadowColor = col; ctx.shadowBlur = lite ? 0 : 16 + pulse * 18; ctx.strokeStyle = col; ctx.globalAlpha = power; ctx.lineWidth = 1.2 + pulse * 2.4;
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.shadowBlur = lite ? 0 : 4; ctx.strokeStyle = '#fff9df'; ctx.lineWidth = .7; ctx.globalAlpha = power * .8; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+      const pool = ctx.createRadialGradient(tx, ty, 1, tx, ty, 30 + pulse * 34); pool.addColorStop(0, `rgba(255,249,218,${power * .7})`); pool.addColorStop(.2, col + Math.round(power * 90).toString(16).padStart(2, '0')); pool.addColorStop(1, col + '00');
+      ctx.fillStyle = pool; ctx.fillRect(tx - 70, ty - 70, 140, 140);
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0; ctx.globalCompositeOperation = 'source-over';
+  }
+}
 function drawLasers(ctx, now) {
   const G = hpGeom(), lite = S.engine === 'lite';
   ctx.save(); ctx.beginPath(); ctx.rect(G.X0, G.T, G.W, G.H); ctx.clip();
   if (S.laser) {
     const b = S.playing && A.b ? A.b : { count: RG.beats, pulse: A.kick, phase: 0, stage: 'groove', dropPulse: 0, buildProgress: 0, sweep: now / 405 };
     const pulse = S.playing ? A.kickQ : A.kick, colors = LASER, sweep = b.sweep || 0;
+    // v2476.67 (AE Player lite v0.1.0, ecbfd41): warm sun glow breathing under the beams, and a beat-locked laser show sweep on heavy beats.
+    if (S.playing) { const en = Math.max(A.level, (LZ.en || 0) * .84); LZ.en = en; const R0 = Math.min(G.W * .42, 190) * Math.max(1, G.W / 460);
+      const sg = ctx.createRadialGradient(G.sx, G.sy, 3, G.sx, G.sy, R0); sg.addColorStop(0, `rgba(255,223,115,${en * .16 + pulse * .35})`); sg.addColorStop(.45, `rgba(243,178,48,${en * .08 + pulse * .18})`); sg.addColorStop(1, 'rgba(240,170,45,0)');
+      ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = sg; ctx.fillRect(G.X0, G.T, G.W, G.H); }
+    drawLaserShow(ctx, now, G, lite);
     ctx.globalCompositeOperation = 'screen';
     const group = Math.floor(b.count / 4), pattern = Math.floor(variation(group + 3) * 3), beamCount = b.stage === 'build' ? (b.buildProgress > .7 ? 5 : 3) : 6;
     LZ.pat = pattern; const energy = A.level;
@@ -374,36 +401,98 @@ function drawGame(c, now) {
     c.strokeStyle = `rgba(255,226,160,${k * .5})`; c.lineWidth = 1 + 5 * k; c.lineCap = 'round'; c.shadowColor = 'rgba(255,200,120,.9)'; c.shadowBlur = 10 * k; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
   c.shadowBlur = 0;
   cxC.setTransform(1, 0, 0, 1, 0, 0); cxC.clearRect(0, 0, cxC.canvas.width, cxC.canvas.height); cxC.setTransform(L.dpr, 0, 0, L.dpr, 0, 0);
+  drawConfetti(cxC, now);
   for (const m of GAME.marks) drawCoin(cxC, now, m);
   c.restore();
 }
 /* v2476.66 reward coin: a small rendered gold coin (rim, embossed sun, specular sweep) that pops, rises a little and shimmers.
    perfect = larger, brighter, soft halo + 'Perfect'; good = smaller, dimmer + 'Nice'. Labels are thin, small, semi-transparent. */
 function drawCoin(c, now, m) {
+  // v2476.67: a flat struck coin — circular face, visible milled edge (thickness) as it tilts, reeded rim, engraved sun,
+  // dark hairline outline + contact shadow so it reads on the brightest parts of the painting.
   const u = (now - m.t) / 1300; if (u < 0 || u > 1) return;
-  const pop = u < .18 ? 1 - (1 - u / .18) ** 3 * 1 : 1 + .08 * Math.sin(Math.min(1, (u - .18) / .2) * Math.PI) * (1 - u);
+  const pop = u < .16 ? 1 - (1 - u / .16) ** 3 : 1 + .06 * Math.sin(Math.min(1, (u - .16) / .22) * Math.PI) * (1 - u);
   const R0 = (m.perfect ? 17 : 12) * Math.max(.85, Math.min(1.3, L.p.w / 520)), r = R0 * Math.max(.01, pop), a = u < .7 ? 1 : 1 - (u - .7) / .3;
-  const x = m.x, y = m.y - 26 - 22 * Math.sqrt(u), turn = 0.86 + 0.14 * Math.cos(u * Math.PI * 3); // a gentle spin = horizontal squash
-  c.save(); c.globalCompositeOperation = 'source-over'; c.globalAlpha = a;
-  if (m.perfect) { const h = c.createRadialGradient(x, y, r * .4, x, y, r * 3.2); h.addColorStop(0, 'rgba(255,220,140,.32)'); h.addColorStop(1, 'rgba(255,200,110,0)'); c.globalCompositeOperation = 'screen'; c.fillStyle = h; c.beginPath(); c.arc(x, y, r * 3.2, 0, 6.2832); c.fill(); c.globalCompositeOperation = 'source-over'; }
-  c.translate(x, y); c.scale(Math.max(.18, Math.abs(turn)), 1);
-  c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 6; c.shadowOffsetY = 2;
-  const edge = c.createLinearGradient(-r, -r, r, r); edge.addColorStop(0, '#fff2c4'); edge.addColorStop(.35, '#e0b257'); edge.addColorStop(.7, '#9b6a22'); edge.addColorStop(1, '#f1cf7d');
-  c.fillStyle = edge; c.beginPath(); c.arc(0, 0, r, 0, 6.2832); c.fill(); c.shadowColor = 'transparent';
-  const face = c.createRadialGradient(-r * .35, -r * .4, r * .1, 0, 0, r * .86); face.addColorStop(0, '#ffeeb8'); face.addColorStop(.55, '#e7b85c'); face.addColorStop(1, '#b07c2c');
-  c.fillStyle = face; c.beginPath(); c.arc(0, 0, r * .82, 0, 6.2832); c.fill();
-  c.strokeStyle = 'rgba(120,78,22,.55)'; c.lineWidth = Math.max(.6, r * .05); c.beginPath(); c.arc(0, 0, r * .66, 0, 6.2832); c.stroke();
-  c.strokeStyle = 'rgba(255,246,214,.75)'; c.lineWidth = Math.max(.5, r * .04); c.beginPath(); c.arc(0, 0, r * .24, 0, 6.2832); c.stroke(); // embossed sun
-  for (let i = 0; i < 12; i++) { const an = i * .5236; c.beginPath(); c.moveTo(Math.cos(an) * r * .32, Math.sin(an) * r * .32); c.lineTo(Math.cos(an) * r * (i % 2 ? .44 : .52), Math.sin(an) * r * (i % 2 ? .44 : .52)); c.stroke(); }
-  // specular sweep (shimmer)
+  const x = m.x, y = m.y - 26 - 22 * Math.sqrt(u);
+  const ue = Math.min(1, u / .42), th = 1.05 * (1 - ue) ** 2 + .12 * Math.sin(u * 9) * (1 - u), cs = Math.cos(th), T = r * .24 * Math.sin(Math.abs(th)), rx = r * cs; // tilt about the vertical axis
+  c.save(); c.globalAlpha = a;
+  if (m.perfect) { const h = c.createRadialGradient(x, y, r * .4, x, y, r * 3.2); h.addColorStop(0, 'rgba(255,220,140,.30)'); h.addColorStop(1, 'rgba(255,200,110,0)'); c.globalCompositeOperation = 'screen'; c.fillStyle = h; c.beginPath(); c.arc(x, y, r * 3.2, 0, 6.2832); c.fill(); c.globalCompositeOperation = 'source-over'; }
+  // soft contact shadow (helps on bright paint)
+  c.fillStyle = 'rgba(20,10,0,.28)'; c.beginPath(); c.ellipse(x + T * .5 + 1.5, y + r * .12 + 2.5, rx + T + 1.5, r + 1.5, 0, 0, 6.2832); c.fill();
+  // edge / thickness: back face + band, reeded
+  const eg = c.createLinearGradient(x - rx, 0, x + rx + T, 0); eg.addColorStop(0, '#6b4512'); eg.addColorStop(.5, '#b9852f'); eg.addColorStop(1, '#5a3a0f');
+  c.fillStyle = eg; c.beginPath(); c.ellipse(x + T, y, rx, r, 0, -Math.PI / 2, Math.PI / 2); c.lineTo(x, y + r); c.ellipse(x, y, rx, r, 0, Math.PI / 2, -Math.PI / 2, true); c.closePath(); c.fill();
+  if (T > .8) { c.strokeStyle = 'rgba(60,36,6,.55)'; c.lineWidth = .6; for (let k = -8; k <= 8; k++) { const yy = y + (k / 9) * r, w = Math.sqrt(Math.max(0, 1 - (k / 9) ** 2)); c.beginPath(); c.moveTo(x + rx * w, yy); c.lineTo(x + rx * w + T, yy); c.stroke(); } }
+  // face
+  c.save(); c.translate(x, y); c.scale(Math.max(.05, cs), 1);
+  const rim = c.createLinearGradient(-r, -r, r, r); rim.addColorStop(0, '#fff1c0'); rim.addColorStop(.4, '#e2b45a'); rim.addColorStop(.75, '#9c6b22'); rim.addColorStop(1, '#efcb78');
+  c.fillStyle = rim; c.beginPath(); c.arc(0, 0, r, 0, 6.2832); c.fill();
+  c.strokeStyle = 'rgba(110,70,16,.6)'; c.lineWidth = Math.max(.5, r * .035); for (let k = 0; k < 48; k++) { const an = k / 48 * 6.2832; c.beginPath(); c.moveTo(Math.cos(an) * r * .86, Math.sin(an) * r * .86); c.lineTo(Math.cos(an) * r * .97, Math.sin(an) * r * .97); c.stroke(); } // reeded rim
+  const face = c.createRadialGradient(-r * .3, -r * .35, r * .08, 0, 0, r * .82); face.addColorStop(0, '#ffefbd'); face.addColorStop(.55, '#e6b85d'); face.addColorStop(1, '#b17d2d');
+  c.fillStyle = face; c.beginPath(); c.arc(0, 0, r * .8, 0, 6.2832); c.fill();
+  c.strokeStyle = 'rgba(255,244,210,.7)'; c.lineWidth = Math.max(.5, r * .03); c.beginPath(); c.arc(0, 0, r * .8, -2.4, -0.6); c.stroke(); // bevel light
+  c.strokeStyle = 'rgba(110,70,16,.7)'; c.lineWidth = Math.max(.6, r * .045); c.beginPath(); c.arc(0, 0, r * .22, 0, 6.2832); c.stroke(); // engraved sun
+  for (let k = 0; k < 12; k++) { const an = k * .5236; c.beginPath(); c.moveTo(Math.cos(an) * r * .3, Math.sin(an) * r * .3); c.lineTo(Math.cos(an) * r * (k % 2 ? .45 : .56), Math.sin(an) * r * (k % 2 ? .45 : .56)); c.stroke(); }
+  c.strokeStyle = 'rgba(255,246,214,.55)'; c.lineWidth = Math.max(.4, r * .02); c.beginPath(); c.arc(-r * .01, -r * .015, r * .22, 3.4, 5.2); c.stroke();
   c.save(); c.beginPath(); c.arc(0, 0, r, 0, 6.2832); c.clip(); const sx = -r * 1.6 + r * 3.2 * ((u * 1.6) % 1);
-  const sg = c.createLinearGradient(sx - r * .35, -r, sx + r * .35, r); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, `rgba(255,255,250,${m.perfect ? .75 : .5})`); sg.addColorStop(1, 'rgba(255,255,255,0)');
+  const sg = c.createLinearGradient(sx - r * .3, -r, sx + r * .3, r); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, `rgba(255,255,250,${m.perfect ? .6 : .4})`); sg.addColorStop(1, 'rgba(255,255,255,0)');
   c.globalCompositeOperation = 'screen'; c.fillStyle = sg; c.fillRect(-r, -r, r * 2, r * 2); c.restore();
+  c.strokeStyle = 'rgba(40,22,4,.75)'; c.lineWidth = 1 / Math.max(.3, cs); c.beginPath(); c.arc(0, 0, r, 0, 6.2832); c.stroke(); // dark hairline outline
+  c.restore(); c.restore();
+  const la = Math.max(0, 1 - u / .8) * (m.perfect ? .95 : .78);
+  if (la > 0) { c.save(); c.globalAlpha = la; c.font = `italic 500 ${m.perfect ? 13 : 12}px "Cormorant Garamond", Georgia, serif`; c.textAlign = 'center'; if (c.letterSpacing !== undefined) c.letterSpacing = '1.5px';
+    const txt = (m.perfect ? 'Perfect' : 'Nice') + (m.n >= 2 ? '  ×' + m.n : ''), ty = y - R0 - 10 - 6 * u;
+    c.lineJoin = 'round'; c.strokeStyle = 'rgba(30,16,2,.45)'; c.lineWidth = 2.2; c.strokeText(txt, x, ty); c.fillStyle = '#fff4d6'; c.fillText(txt, x, ty); c.restore(); }
+}
+/* v2476.67 派對 party layer (overlay only, all timing from the audio beat grid + onset map):
+   drops/climax -> coloured light motes + gold confetti burst from the frame edges; heavy beats -> soft coloured sweep;
+   bar downbeats -> faint multicolour bloom from the sun. Confetti is drawn on the normal-blend coin layer so gold reads as foil. */
+const PT = { motes: [], conf: [], sweeps: [], blooms: [], bursts: 0, lastDrop: -1, lastOn: -1 };
+const PCOL = ['#ff5c8a', '#5effb0', '#ffe08a', '#6fd8ff', '#c98bff', '#ffb070'];
+function partyBurst(now, big) {
+  const p = L.p, n = big ? 46 : 18, m = big ? 30 : 10; PT.bursts++;
+  for (let i = 0; i < n; i++) { const side = i % 4, u = Math.random(); const [x, y, an] = side === 0 ? [p.x + p.w * u, p.y, Math.PI / 2] : side === 1 ? [p.x + p.w, p.y + p.h * u, Math.PI] : side === 2 ? [p.x + p.w * u, p.y + p.h, -Math.PI / 2] : [p.x, p.y + p.h * u, 0];
+    const a2 = an + (Math.random() - .5) * 1.3, v = (160 + Math.random() * 300) * Math.max(.7, p.w / 520);
+    PT.motes.push({ t: now, x, y, vx: Math.cos(a2) * v, vy: Math.sin(a2) * v, col: PCOL[i % PCOL.length], r: 3 + Math.random() * 4, life: 1100 + Math.random() * 900 }); }
+  for (let i = 0; i < m; i++) { const side = i % 2, u = Math.random(), x = side ? p.x + p.w - 4 : p.x + 4, y = p.y + p.h * (.05 + .35 * u);
+    const v = (220 + Math.random() * 300) * Math.max(.7, p.w / 520), a2 = (side ? Math.PI - .35 : .35) + (Math.random() - .5) * .9;
+    PT.conf.push({ t: now, x, y, vx: Math.cos(a2) * v, vy: Math.sin(a2) * v - 80, w: 8 + Math.random() * 6, h: 4 + Math.random() * 3, rot: Math.random() * 6, vr: (Math.random() - .5) * 14, flip: Math.random() * 6, vf: 6 + Math.random() * 8, tone: i % 3, life: 2200 + Math.random() * 900 }); }
+  if (PT.motes.length > 160) PT.motes.splice(0, PT.motes.length - 160); if (PT.conf.length > 90) PT.conf.splice(0, PT.conf.length - 90);
+}
+function partyHeavy(now) { if (!S.party || !S.playing) return; PT.sweeps.push({ t: now, dir: (IMP.n % 2) ? 1 : -1, col: PCOL[IMP.n % PCOL.length] }); if (PT.sweeps.length > 3) PT.sweeps.shift(); }
+function partyBeat(b, now) {
+  if (!S.party || !S.playing) return;
+  if (b.count % 4 === 1 && b.stage !== 'build') { PT.blooms.push({ t: now, c1: PCOL[(b.count >> 2) % 6], c2: PCOL[((b.count >> 2) + 3) % 6] }); if (PT.blooms.length > 2) PT.blooms.shift(); }
+  const secs = (TL && TL.sections) || []; for (let k = 0; k < secs.length; k++) { const d = secs[k].drop; if (PT.lastDrop === k && A.t < d - 1) PT.lastDrop = -1; if (PT.lastDrop !== k && A.t >= d - 0.02 && A.t < d + 0.6) { PT.lastDrop = k; partyBurst(now, true); laserShow(now); } }
+  const gr = GROOVE.find(r => A.t >= r[0] && A.t < r[1]); if ((b.stage === 'drop' || gr) && b.count % 16 === 0) partyBurst(now, false); // drop + climax grooves: smaller edge bursts every 4 bars
+}
+function drawParty(c, now) { // screen layer: motes, sweeps, blooms
+  if (!S.party) { PT.motes.length = PT.sweeps.length = PT.blooms.length = 0; return; }
+  const p = L.p, dt = Math.min(.05, (now - (PT.lt || now)) / 1000); PT.lt = now;
+  // onset-map sparkle: small motes from the edges on fast onsets during drops
+  if (S.playing && OM.n !== PT.lastOn && A.b && (A.b.stage === 'drop' || GROOVE.some(r => A.t >= r[0] && A.t < r[1]))) { PT.lastOn = OM.n; if (Math.random() < .5) { const u = Math.random(), top = Math.random() < .5; PT.motes.push({ t: now, x: p.x + p.w * u, y: top ? p.y : p.y + p.h, vx: (Math.random() - .5) * 60, vy: (top ? 1 : -1) * (60 + Math.random() * 80), col: PCOL[OM.n % 6], r: 1.6 + Math.random() * 2, life: 700 }); } }
+  c.save(); c.beginPath(); c.rect(p.x - 40, p.y - 40, p.w + 80, p.h + 80); c.clip(); c.globalCompositeOperation = 'screen';
+  PT.blooms = PT.blooms.filter(q => now - q.t < 900);
+  for (const q of PT.blooms) { const u = (now - q.t) / 900, a = Math.sin(Math.PI * Math.min(1, u * 2.2)) * (1 - u) * .32, R = p.w * (.18 + .5 * u), X = p.x + p.w * SUN.x, Y = p.y + p.h * SUN.y;
+    const g = c.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, `rgba(255,250,235,${a})`); g.addColorStop(.35, q.c1 + Math.round(a * 200).toString(16).padStart(2, '0')); g.addColorStop(.7, q.c2 + Math.round(a * 120).toString(16).padStart(2, '0')); g.addColorStop(1, q.c2 + '00'); c.fillStyle = g; c.beginPath(); c.arc(X, Y, R, 0, 6.2832); c.fill(); }
+  PT.sweeps = PT.sweeps.filter(q => now - q.t < 700);
+  for (const q of PT.sweeps) { const u = (now - q.t) / 700, e = u * u * (3 - 2 * u), a = Math.sin(Math.PI * u) * .16, w = p.w * .18, cx = q.dir > 0 ? p.x - w + (p.w + 2 * w) * e : p.x + p.w + w - (p.w + 2 * w) * e;
+    c.save(); c.beginPath(); c.rect(p.x, p.y, p.w, p.h); c.clip(); c.translate(cx, p.y + p.h / 2); c.rotate(q.dir * .32); const lg = c.createLinearGradient(-w, 0, w, 0); lg.addColorStop(0, q.col + '00'); lg.addColorStop(.5, q.col + Math.round(a * 255).toString(16).padStart(2, '0')); lg.addColorStop(1, q.col + '00'); c.fillStyle = lg; c.fillRect(-w, -p.h, 2 * w, 2 * p.h); c.restore(); }
   c.restore();
-  // label: tiny, thin, semi-transparent, quick fade
-  const la = Math.max(0, 1 - u / .8) * (m.perfect ? .92 : .72);
-  if (la > 0) { c.save(); c.globalAlpha = la; c.fillStyle = '#fff4d6'; c.font = `italic 400 ${m.perfect ? 13 : 12}px "Cormorant Garamond", Georgia, serif`; c.textAlign = 'center'; c.shadowColor = 'rgba(40,22,4,.85)'; c.shadowBlur = 4;
-    const txt = (m.perfect ? 'Perfect' : 'Nice') + (m.n >= 2 ? '  ×' + m.n : ''); if (c.letterSpacing !== undefined) c.letterSpacing = '1.5px'; c.fillText(txt, x, y - R0 - 9 - 6 * u); c.restore(); }
+}
+function drawConfetti(c, now) { // normal blend: light motes + gold foil confetti with a two-tone flip
+  if (!S.party) { PT.conf.length = 0; return; } const dt = Math.min(.05, (now - (PT.ct || now)) / 1000); PT.ct = now;
+  PT.motes = PT.motes.filter(q => now - q.t < q.life);
+  for (const q of PT.motes) { q.vx *= (1 - 1.3 * dt); q.vy *= (1 - 1.3 * dt); q.x += q.vx * dt; q.y += q.vy * dt; const u = (now - q.t) / q.life, a = (1 - u) ** 1.2 * (.75 + .25 * Math.sin(now / 60 + q.r * 9)), R = q.r * 2.4;
+    c.globalAlpha = a; const g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, R); g.addColorStop(0, '#ffffff'); g.addColorStop(.28, q.col); g.addColorStop(.62, q.col + '88'); g.addColorStop(1, q.col + '00'); c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, R, 0, 6.2832); c.fill(); }
+  c.globalAlpha = 1;
+
+  PT.conf = PT.conf.filter(q => now - q.t < q.life);
+  for (const q of PT.conf) { q.vy += 260 * dt; q.vx *= (1 - 1.2 * dt); q.vy *= (1 - 1.0 * dt); q.x += q.vx * dt + Math.sin(now / 300 + q.rot) * 14 * dt; q.y += q.vy * dt; q.rot += q.vr * dt; q.flip += q.vf * dt;
+    const u = (now - q.t) / q.life, a = Math.min(1, (1 - u) * 2.5), f = Math.cos(q.flip), lit = f > 0;
+    c.save(); c.globalAlpha = a; c.translate(q.x, q.y); c.rotate(q.rot); c.scale(1, Math.max(.12, Math.abs(f)));
+    c.fillStyle = q.tone === 2 ? (lit ? '#f6f1e6' : '#b9b2a2') : (lit ? (q.tone ? '#ffe3a0' : '#f2c75f') : (q.tone ? '#b98a35' : '#9a6c22'));
+    c.fillRect(-q.w / 2, -q.h / 2, q.w, q.h); if (f > .9) { c.fillStyle = `rgba(255,255,245,${(f - .9) * 9})`; c.fillRect(-q.w / 2, -q.h / 2, q.w, q.h); } c.strokeStyle = 'rgba(50,30,6,.55)'; c.lineWidth = .5; c.strokeRect(-q.w / 2, -q.h / 2, q.w, q.h); c.restore(); }
 }
 /* v2476.66 光紋 (light pattern): optional mode — finger strokes on the painting persist, breathe with the beat, and can be
    saved as a personal card (painting crop + the drawn light, composited in a new image; the page's artwork is never touched). */
@@ -431,13 +520,21 @@ function saveGlowCard() {
   c.drawImage(img, cx, cy, cw, ch, M, M, OW, OH); // painting crop, untouched
   c.save(); c.beginPath(); c.rect(M, M, OW, OH); c.clip(); strokeGlow(c, { w: NW * sc, h: NH * sc }, M - cx * sc, M - cy * sc, sc * NW / Math.max(1, L.p.w), performance.now(), 1); c.restore();
   c.strokeStyle = 'rgba(214,178,106,.65)'; c.lineWidth = 2; c.strokeRect(M - 10, M - 10, OW + 20, OH + 20);
-  c.fillStyle = '#e9d7a6'; c.textAlign = 'center'; c.font = '300 34px "Cormorant Garamond", Georgia, serif'; c.fillText('光紋  ·  盛明 Eternal Sun', cv.width / 2, OH + 2 * M + 40);
+  c.fillStyle = '#e9d7a6'; c.textAlign = 'center'; c.font = '300 34px "Cormorant Garamond", Georgia, serif'; c.fillText('光繪  ·  盛明 Eternal Sun', cv.width / 2, OH + 2 * M + 40);
   c.globalAlpha = .6; c.font = '300 20px "Cormorant Garamond", Georgia, serif'; const d = new Date(); c.fillText('AE UNIVERSE CREATION  ·  ' + d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0'), cv.width / 2, OH + 2 * M + 78);
   GLOW.saved++; GLOW.last = { w: cv.width, h: cv.height };
-  cv.toBlob(b => { if (!b) return; const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'AE-光紋-EternalSun.png'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }, 'image/png');
+  // v2476.67: iOS Safari ignores <a download> -> build the file synchronously (keeps the tap's user activation) and use the
+  // share sheet (保存影像); if sharing is unavailable/declined, show the card full-screen with a long-press-to-save hint.
+  const url = cv.toDataURL('image/png'); GLOW.url = url; let file = null;
+  try { const bin = atob(url.split(',')[1]), arr = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k); file = new File([arr], 'AE-光繪卡-EternalSun.png', { type: 'image/png' }); } catch (e) {}
+  const show = () => { GLOW.method = GLOW.method || 'view'; $('#cardimg').src = url; document.body.classList.add('card-open'); };
+  const touch = matchMedia('(pointer: coarse)').matches;
+  if (file && navigator.canShare && navigator.canShare({ files: [file] }) && touch) { GLOW.method = 'share'; navigator.share({ files: [file], title: '光繪卡 · 盛明 Eternal Sun' }).catch(err => { if (!err || err.name !== 'AbortError') { GLOW.method = 'view'; show(); } }); }
+  else if (touch) { GLOW.method = 'view'; show(); }
+  else { GLOW.method = 'download'; const a = document.createElement('a'); a.href = url; a.download = 'AE-光繪卡-EternalSun.png'; document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 1000); show(); }
   return cv;
 }
-function setGlow(on) { GLOW.on = on; document.body.classList.toggle('glow-on', on); $('#glowbtn') && $('#glowbtn').classList.toggle('on', on); frontVis(); }
+function setGlow(on) { GLOW.on = on; if (!on) { GLOW.strokes.length = 0; GLOW.cur = null; } document.body.classList.toggle('glow-on', on); $('#glowbtn') && $('#glowbtn').classList.toggle('on', on); frontVis(); }
 function gameTrail(e) { if (!S.playing || Z.pts.size !== 1) return; const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x < p.x || x > p.x + p.w || y < p.y || y > p.y + p.h) return; GAME.trail.push({ x, y, t: performance.now() }); if (GAME.trail.length > 40) GAME.trail.shift(); }
 /* sun bloom (restored from Light Player 'glow' / homepage tap bloom): tap the painting or press ✦ */
 let blooms = [];
@@ -490,7 +587,7 @@ function drawCones(c, now) {
 /* the fixture itself, drawn normally (not screen) so it reads as a physical brass bar that glows */
 function drawFixture(c, now) {
   if (S.mode !== 'rgb') return;
-  if (S.rgbStyle === 'wash') { if (S.preset !== 'breath') drawBarOnly(c, now); return; }
+  if (S.rgbStyle === 'wash') { drawBarOnly(c, now); return; } // v2476.67: 柔光呼吸 too — coloured light always comes from a visible fixture
   const p = L.p, F = fixture(p), col = lampColor(now), cs = col.join(','), k = A.kick, I = 0.5 + S.intensity;
   c.save();
   // wall arm
@@ -629,7 +726,7 @@ function drawFront(now) {
     }
     drawSparks(c, now, ox, oy);
   } else { glints.length = 0; sparks.length = 0; }
-  drawCones(c, now); drawLasers(c, now); drawTaps(c, now); drawGlow(c, now); drawGame(c, now);
+  drawCones(c, now); drawLasers(c, now); drawTaps(c, now); drawParty(c, now); drawGlow(c, now); drawGame(c, now);
   c.save(); c.globalCompositeOperation = 'source-over'; drawFixture(c, now); c.restore();
   drawBlooms(c, now);
   c.globalAlpha = 1; c.shadowBlur = 0;
@@ -760,10 +857,11 @@ function drawLook(now, dt) {
   if (window.AELooks.draw(c, w, h, { x: 0, y: 0, w, h }, LK.ph, LK.idx[S.look], 1, false, 1, vals)) LK.draws++;
 }
 function frontVis() { // nothing to draw above the painting -> remove the overlay layer entirely, so the <img> is composited exactly as on its own
-  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || GAME.marks.length > 0 || GAME.trail.length > 0 || GLOW.strokes.length > 0 || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
+  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || GAME.marks.length > 0 || GAME.trail.length > 0 || GLOW.strokes.length > 0 || S.party || PT.conf.length > 0 || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
   const d = any ? '' : 'none'; if ($('#front').style.display !== d) $('#front').style.display = d;
 }
 function syncButtons() {
+  if ($('#partybtn')) { $('#partybtn').classList.toggle('on', !!S.party); $('#partybtn').setAttribute('aria-pressed', String(!!S.party)); }
   document.querySelectorAll('.tg').forEach(b => { b.classList.toggle('on', !!S[b.dataset.k]); b.setAttribute('aria-pressed', String(!!S[b.dataset.k])); });
   for (const [id, m] of [['#mNat', 'natural'], ['#mRgb', 'rgb']]) { $(id).classList.toggle('on', S.mode === m); $(id).setAttribute('aria-pressed', String(S.mode === m)); }
   $('#lamps').hidden = S.mode !== 'rgb'; $('#styles').hidden = S.mode !== 'rgb';
@@ -821,6 +919,8 @@ function bindUI() {
   $('#glowclear').onclick = e => { e.stopPropagation(); GLOW.strokes.length = 0; frontVis(); };
   $('#glowsave').onclick = e => { e.stopPropagation(); saveGlowCard(); };
   $('#glowdone').onclick = e => { e.stopPropagation(); setGlow(false); };
+  $('#cardclose').onclick = e => { e.stopPropagation(); document.body.classList.remove('card-open'); };
+  $('#partybtn').onclick = e => { e.stopPropagation(); S.party = !S.party; syncButtons(); };
   $('#open').onclick = e => { e.stopPropagation(); showUI(); };
   $('#panel').addEventListener('pointerdown', e => { e.stopPropagation(); showUI(); });
   $('#play').onclick = togglePlay;
@@ -846,13 +946,13 @@ function bindUI() {
 }
 
 /* ---------- 7 curated presets (模式), each with its own tuned motion speed (no speed slider) ---------- */
-const BASE = { frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
+const BASE = { party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
 const PRESETS = {
   golden:  { ...BASE, mode: 'natural', led: true, aura: true, glint: true, bloom: true, impact: true, intensity: 0.75, speed: 1 },        // 金色綻放: gold LED + aura + sun blooms + heavy-beat impact
   gallery: { ...BASE, mode: 'rgb', rgbStyle: 'bar', glint: true, intensity: 0.75, speed: 1 },                                               // 畫廊燈: fixed picture-light bar
   breath:  { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', aura: true, intensity: 0.55, speed: 0.45 },                                // 柔光呼吸: slow cool blue-violet wash + breathing ring, no LED/sparks
-  stage:   { ...BASE, mode: 'rgb', rgbStyle: 'spot', led: true, glint: true, bloom: true, impact: true, intensity: 0.85, speed: 1.2 },       // RGB 舞台: 3 spots + impact
-  club:    { ...BASE, mode: 'rgb', rgbStyle: 'wash', frame: true, led: true, laser: true, impact: true, intensity: 0.85, speed: 1.1 },       // 夜店雷射: lasers projected on the painting
+  stage:   { ...BASE, mode: 'rgb', rgbStyle: 'spot', led: true, glint: true, bloom: true, impact: true, party: true, intensity: 0.85, speed: 1.2 },       // RGB 舞台: 3 spots + impact
+  club:    { ...BASE, mode: 'natural', frame: true, led: true, laser: true, impact: false, party: true, intensity: 0.85, speed: 1.1 },     // v2476.67: lite v0.1.0 laser look (no colour wash; additive beams on the unchanged painting)       // 夜店雷射: lasers projected on the painting
   //amber removed v2476.63: { ...BASE, mode: 'natural', look: 'amber', led: true, impact: true, intensity: 0.5, speed: 1 },                                  // 琥珀 Amber (琉璃 glass): golden light flowing along curved veins
   lights:  { ...BASE, mode: 'natural', intensity: 0.7, speed: 1 },                                                                          // 只留燈光 (v2476.64): every effect off, base picture lighting only
   gem:     { ...BASE, mode: 'natural', look: 'gem', glint: true, impact: true, intensity: 0.75, speed: 1 }                                   // 寶石 Gem: faceted, white streaks along facet edges flash on beats
@@ -894,7 +994,7 @@ function syncGlyph() { const g = $('#artplay'); if (!g) return; const p = L.p; g
 audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setTimeout(syncGlyph, 50)); setTimeout(syncGlyph, 0); setInterval(syncGlyph, 1000);
 // v2476.64: main panel = presets + 只留燈光; 進階 reveals the full fine-control set (advanced panel).
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
-window.__premium = { FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }

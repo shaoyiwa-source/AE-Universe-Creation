@@ -86,3 +86,11 @@ body.glow-on #hint{opacity:0}
 #panel .glowbtn.on{border-color:currentColor}
 #coin{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 body[data-original="1"] #coin{display:none}
+
+/* v2476.67 光繪卡 viewer (long-press to save on iOS) */
+#cardview{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(6,5,4,.92);padding:24px}
+body.card-open #cardview{display:flex}
+#cardview img{max-width:92vw;max-height:76vh;box-shadow:0 10px 40px rgba(0,0,0,.6);-webkit-touch-callout:default!important;-webkit-user-select:auto!important;user-select:auto!important;pointer-events:auto}
+#cardview p{margin:0;color:#eadbb2;font-size:13px;letter-spacing:.08em;opacity:.85}
+#cardview button{font:inherit;color:#eadbb2;background:transparent;border:1px solid rgba(214,178,106,.55);border-radius:999px;padding:7px 18px}
+#panel .partybtn.on{border-color:currentColor;background:linear-gradient(90deg,rgba(255,92,138,.18),rgba(94,255,176,.14),rgba(111,216,255,.18))}

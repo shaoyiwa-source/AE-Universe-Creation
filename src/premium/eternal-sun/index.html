@@ -21,7 +21,8 @@
 <div id="hint" data-zh="點畫作播放 · 跟著節拍點擊 · 雙指縮放" data-en="Tap the art to play · tap on the beat · pinch to zoom"></div>
 <button id="open" aria-label="settings" title="設定 / Settings">⚙</button>
 <div id="artplay" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/><path d="M41 33 L69 50 L41 67 Z"/></svg></div>
-<div id="glowbar" aria-label="光紋"><span data-zh="光紋 · 用手指在畫上作畫" data-en="Light trace · draw on the art"></span><button id="glowclear" data-zh="清除" data-en="Clear"></button><button id="glowsave" data-zh="存成光紋卡" data-en="Save card"></button><button id="glowdone" data-zh="完成" data-en="Done"></button></div>
+<div id="glowbar" aria-label="光繪"><span data-zh="光繪 · 用手指在畫上作畫" data-en="Light painting · draw on the art"></span><button id="glowclear" data-zh="清除" data-en="Clear"></button><button id="glowsave" data-zh="存成光繪卡" data-en="Save card"></button><button id="glowdone" data-zh="完成" data-en="Done"></button></div>
+<div id="cardview" role="dialog" aria-label="光繪卡"><img id="cardimg" alt="光繪卡"><p data-zh="長按圖片即可儲存到相簿" data-en="Long-press the image to save it"></p><button id="cardclose" data-zh="關閉" data-en="Close"></button></div>
 <button id="zreset" hidden aria-label="reset zoom" data-zh="⟲ 還原大小" data-en="⟲ Reset zoom"></button>
 <header id="brand"><a href="/" data-zh="AE UNIVERSE CREATION" data-en="AE UNIVERSE CREATION"></a><span id="title" data-zh="盛明 · 精裝版" data-en="Eternal Sun · Premium"></span></header>
 <nav id="panel" aria-label="controls" hidden>
@@ -35,7 +36,8 @@
     <button class="pr" data-p="club" data-zh="夜店雷射" data-en="Club lasers"></button>
     <button class="pr" data-p="gem" data-zh="寶石 Gem" data-en="Gem"></button>
     <button class="pr reset" data-p="lights" data-zh="只留燈光" data-en="Lighting only"></button>
-    <button id="glowbtn" class="pr glowbtn" data-zh="光紋" data-en="Light trace"></button>
+    <button id="partybtn" class="pr partybtn" aria-pressed="false" data-zh="派對" data-en="Party"></button>
+    <button id="glowbtn" class="pr glowbtn" data-zh="光繪" data-en="Light painting"></button>
     <button id="adv" class="advbtn" aria-expanded="false" data-zh="進階 ›" data-en="Advanced ›"></button>
   </div>
   <div class="row prog"><span id="tcur">0:00</span><input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="song position"><span id="tdur">0:00</span></div>
