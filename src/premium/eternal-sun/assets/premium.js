@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.67, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.68, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -117,7 +117,7 @@ function analyse(now) {
     A.t = tt; bass = Math.min(1, EN.energyAt(TL, tt));
     const b = RH.update(bass, tt);
     if (b.count < A.count) A.count = b.count; // loop / seek back
-    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); if (isHeavy(b, tt, bass)) { IMP.t = now; IMP.at = TL.events[b.count - 1]; IMP.n++; if (S.laser && (b.stage === 'drop' || (IMP.n % 2 === 0))) laserShow(now); partyHeavy(now); } if (b.stage !== 'build' || b.accentBeat) { if (b.stage !== 'build') launchDepth(null, null, now, b.count); for (let i = 0; i < 3; i++) { musicSpots.push({ ...hpDest(i * 2, b.sweep, now), born: now }); } if (musicSpots.length > 9) musicSpots.splice(0, musicSpots.length - 9); } partyBeat(b, now); }
+    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); if (isHeavy(b, tt, bass)) { IMP.t = now; IMP.at = TL.events[b.count - 1]; IMP.n++; partyHeavy(now); } if (b.stage !== 'build' || b.accentBeat) { if (b.stage !== 'build') launchDepth(null, null, now, b.count); for (let i = 0; i < 3; i++) { musicSpots.push({ ...hpDest(i * 2, b.sweep, now), born: now }); } if (musicSpots.length > 9) musicSpots.splice(0, musicSpots.length - 9); } partyBeat(b, now); }
     A.b = b; A.since = b.count ? Math.max(0, tt - TL.events[b.count - 1]) : 9; // seconds since the last grid kick (audio time)
     A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = A.kickQ = Math.exp(-A.since / 0.095); // quarter-note kick (grid)
     // v2476.65 onset map: the builds accelerate to 8th/16th snare rolls and the bass goes double-time after each drop.
@@ -257,7 +257,9 @@ function launchDepth(x, y, now, seed) {
   }
   if (bolts.length > 36) bolts.splice(0, bolts.length - 36);
 }
-/* v2476.67: lite v0.1.0 "laser show" sweep — six beams from off-frame emitters sweep across the art for 1.65 s, flaring on each
+/* v2476.68: like the homepage, the sweep is NOT auto-fired during music any more (v67 stacked it on heavy beats + drops on top
+   of the six music beams = up to 18 beams + 18 pools at once -> cluttered). It stays available as a manual effect only.
+   v2476.67: lite v0.1.0 "laser show" sweep — six beams from off-frame emitters sweep across the art for 1.65 s, flaring on each
    beat of the audio grid (lite used a 0.405 s wall clock; here the flare is A.since from the real beat grid). Fired on heavy beats. */
 const LSW = []; function laserShow(now) { LSW.push({ born: now, life: 1650, seed: variation(now % 1000) * 6 }); if (LSW.length > 2) LSW.shift(); }
 function drawLaserShow(ctx, now, G, lite) {
@@ -284,11 +286,11 @@ function drawLasers(ctx, now) {
   ctx.save(); ctx.beginPath(); ctx.rect(G.X0, G.T, G.W, G.H); ctx.clip();
   if (S.laser) {
     const b = S.playing && A.b ? A.b : { count: RG.beats, pulse: A.kick, phase: 0, stage: 'groove', dropPulse: 0, buildProgress: 0, sweep: now / 405 };
-    const pulse = S.playing ? A.kickQ : A.kick, colors = LASER, sweep = b.sweep || 0;
+    const pulse = S.playing ? (A.b ? A.b.pulse : A.kickQ) : A.kick, colors = LASER, sweep = b.sweep || 0; // v2476.68: homepage beat.pulse envelope
     // v2476.67 (AE Player lite v0.1.0, ecbfd41): warm sun glow breathing under the beams, and a beat-locked laser show sweep on heavy beats.
     if (S.playing) { const en = Math.max(A.level, (LZ.en || 0) * .84); LZ.en = en; const R0 = Math.min(G.W * .42, 190) * Math.max(1, G.W / 460);
       const sg = ctx.createRadialGradient(G.sx, G.sy, 3, G.sx, G.sy, R0); sg.addColorStop(0, `rgba(255,223,115,${en * .16 + pulse * .35})`); sg.addColorStop(.45, `rgba(243,178,48,${en * .08 + pulse * .18})`); sg.addColorStop(1, 'rgba(240,170,45,0)');
-      ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = sg; ctx.fillRect(G.X0, G.T, G.W, G.H); }
+      ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = sg; ctx.fillRect(G.X0, G.T, G.W, G.H); }
     drawLaserShow(ctx, now, G, lite);
     ctx.globalCompositeOperation = 'screen';
     const group = Math.floor(b.count / 4), pattern = Math.floor(variation(group + 3) * 3), beamCount = b.stage === 'build' ? (b.buildProgress > .7 ? 5 : 3) : 6;
@@ -296,7 +298,7 @@ function drawLasers(ctx, now) {
     for (let i = 0; i < beamCount; i++) {
       const originX = i % 3 === 0 ? G.X0 - G.W * .08 : i % 3 === 1 ? G.X0 + G.W * 1.08 : G.X0 + G.W * (.15 + i * .12), originY = i % 3 === 2 ? G.T - 20 : G.T + G.H * (.15 + (i % 4) * .20);
       const tg = hpDest(i, sweep, now), targetX = tg.x, targetY = tg.y;
-      const power = Math.min(1, ((b.stage === 'build' ? .06 + b.buildProgress * .06 : .07) + energy * .035 + pulse * .85 + (b.dropPulse || 0) * .12) * (0.6 + 0.6 * S.intensity) + (S.playing ? 0 : .12));
+      const power = Math.min(1, ((b.stage === 'build' ? .06 + b.buildProgress * .06 : .07) + energy * .035 + pulse * .85 + (b.dropPulse || 0) * .12) * Math.min(1, 0.6 + 0.6 * S.intensity) + (S.playing ? 0 : .12));
       ctx.shadowColor = colors[i]; ctx.shadowBlur = lite ? 0 : 14 + pulse * 25;
       ctx.strokeStyle = colors[i]; ctx.globalAlpha = power; ctx.lineWidth = .8 + pulse * 2.2;
       ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke();
@@ -463,7 +465,7 @@ function partyHeavy(now) { if (!S.party || !S.playing) return; PT.sweeps.push({ 
 function partyBeat(b, now) {
   if (!S.party || !S.playing) return;
   if (b.count % 4 === 1 && b.stage !== 'build') { PT.blooms.push({ t: now, c1: PCOL[(b.count >> 2) % 6], c2: PCOL[((b.count >> 2) + 3) % 6] }); if (PT.blooms.length > 2) PT.blooms.shift(); }
-  const secs = (TL && TL.sections) || []; for (let k = 0; k < secs.length; k++) { const d = secs[k].drop; if (PT.lastDrop === k && A.t < d - 1) PT.lastDrop = -1; if (PT.lastDrop !== k && A.t >= d - 0.02 && A.t < d + 0.6) { PT.lastDrop = k; partyBurst(now, true); laserShow(now); } }
+  const secs = (TL && TL.sections) || []; for (let k = 0; k < secs.length; k++) { const d = secs[k].drop; if (PT.lastDrop === k && A.t < d - 1) PT.lastDrop = -1; if (PT.lastDrop !== k && A.t >= d - 0.02 && A.t < d + 0.6) { PT.lastDrop = k; partyBurst(now, true); } }
   const gr = GROOVE.find(r => A.t >= r[0] && A.t < r[1]); if ((b.stage === 'drop' || gr) && b.count % 16 === 0) partyBurst(now, false); // drop + climax grooves: smaller edge bursts every 4 bars
 }
 function drawParty(c, now) { // screen layer: motes, sweeps, blooms
