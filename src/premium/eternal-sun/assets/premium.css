@@ -74,3 +74,4 @@ html,body,#stage,#stage *,#art,#art *{-webkit-user-select:none;user-select:none;
 #panel .row.sync label{display:flex;align-items:center;gap:.6em;width:100%}
 #panel .row.sync input{flex:1}
 #panel .row.sync output{min-width:4.5em;text-align:right;font-variant-numeric:tabular-nums;opacity:.85}
+body[data-original="1"] #artplay{display:none}
