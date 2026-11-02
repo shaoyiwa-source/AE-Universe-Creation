@@ -50,3 +50,15 @@ body.ui #open{opacity:0;pointer-events:none}
 #zreset{top:auto;bottom:max(12px,env(safe-area-inset-bottom));right:64px}
 .ae-gold-burst{position:absolute;width:100px;height:100px;margin:-50px 0 0 -50px;border:3px solid #ffe79a;border-radius:50%;pointer-events:none;z-index:2;background:radial-gradient(circle,#fff5cdb3 0%,#ffd65d55 28%,#efae2b00 65%);box-shadow:0 0 16px #ffefc0,inset 0 0 20px #ffd255,0 0 42px #f8b42bb3;animation:ae-gold-bloom 1.6s ease-out forwards;mix-blend-mode:screen}
 @keyframes ae-gold-bloom{0%{opacity:1;transform:scale(.4)}25%{opacity:1;transform:scale(.9)}100%{opacity:0;transform:scale(1.6)}}
+
+/* v2476.64: simplified panel - presets + 只留燈光 + play only */
+body:not(.adv-open) #panel .row:not(.presets):not(.keeprow),body:not(.adv-open) #panel .note{display:none!important}
+body:not(.adv-open) #panel .row.keeprow > :not(#play){display:none!important}
+#panel .advbtn{opacity:.8}
+body.adv-open #panel .advbtn{opacity:1;border-color:currentColor}
+#panel .pr.reset{border-style:dashed;opacity:.92}
+/* v2476.64: never select / highlight / call out the artwork */
+html,body,#stage,#stage *,#art,#art *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+#stage,#art{touch-action:none}
+#stage img,#art img{-webkit-user-drag:none;pointer-events:auto}
+#panel input{-webkit-user-select:auto;user-select:auto}

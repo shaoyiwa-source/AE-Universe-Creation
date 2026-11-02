@@ -32,10 +32,12 @@
     <button class="pr" data-p="stage" data-zh="RGB 舞台" data-en="RGB stage"></button>
     <button class="pr" data-p="club" data-zh="夜店雷射" data-en="Club lasers"></button>
     <button class="pr" data-p="gem" data-zh="寶石 Gem" data-en="Gem"></button>
+    <button class="pr reset" data-p="lights" data-zh="只留燈光" data-en="Lighting only"></button>
+    <button id="adv" class="advbtn" aria-expanded="false" data-zh="進階 ›" data-en="Advanced ›"></button>
   </div>
   <div class="row prog"><span id="tcur">0:00</span><input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="song position"><span id="tdur">0:00</span></div>
-  <div class="row">
-    <button id="play" data-zh="▶ 播放音樂" data-en="▶ Play music"></button>
+  <div class="row keeprow">
+    <button id="play" class="keep" data-zh="▶ 播放音樂" data-en="▶ Play music"></button>
     <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mRgb" data-zh="三色照畫" data-en="RGB light"></button></div>
     <button id="lang">EN</button>
   </div>

@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.63, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.64, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -48,10 +48,21 @@ function layout() {
 }
 
 /* ---------- audio / beat ---------- */
-const CK = { base: 0, at: 0, last: -1, ok: 0 };
+const CK = { base: 0, at: 0, last: -1, ok: 0, err: 0 };
+// Output latency (v2476.64): read from an AudioContext created on the play gesture (not routed; reading only).
+// Media elements and Web Audio share the same output device, so baseLatency + outputLatency is the delay from decoder to speaker.
+const LAT = { ctx: null, v: 0, frame: 0.012, read: 0, src: 'none', override: null };
+function measureLatency() {
+  try { if (!LAT.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { LAT.ctx = new AC({ latencyHint: 'playback' }); LAT.ctx.resume && LAT.ctx.resume(); } } } catch (e) {}
+  const c = LAT.ctx; if (!c) return; const o = Number(c.outputLatency) || 0, b = Number(c.baseLatency) || 0;
+  LAT.out = o; LAT.base = b; LAT.src = o ? 'outputLatency+baseLatency' : (b ? 'baseLatency' : 'none'); LAT.v = Math.min(0.5, Math.max(0, o + b)); LAT.read = performance.now();
+}
+function latency() { if (LAT.override != null) return LAT.override; if (performance.now() - LAT.read > 2000) measureLatency(); return Math.max(0, LAT.v - LAT.frame); }
+const QL = new URLSearchParams(location.search).get('lat'); if (QL != null && QL !== '' && !isNaN(+QL)) LAT.override = +QL / 1000;
 const A = { count: 0, t: 0, phase: 0, ctx: null, an: null, buf: null, bass: 0, avg: 0, level: 0, lastKick: 0, kick: 0 };
 const audio = $('#music');
 async function togglePlay() {
+  measureLatency();
   if (!A.ctx && !RH) {
     const AC = window.AudioContext || window.webkitAudioContext;
     A.ctx = new AC();
@@ -87,8 +98,11 @@ function analyse(now) {
     // v2476.60 sync: beat time = audio.currentTime every frame (smoothed between coarse currentTime updates, re-locked if off by >40 ms).
     // Independent of the Speed slider and of frame rate, so it cannot drift over long playback or after seeking / looping.
     const ct = audio.currentTime, rate = audio.playbackRate || 1;
-    if (ct !== CK.last || !CK.ok) { const pred = CK.base + (now - CK.at) / 1000 * rate; if (!CK.ok || Math.abs(pred - ct) > 0.04 || ct < CK.last) { CK.base = ct; CK.at = now; } CK.last = ct; CK.ok = 1; }
+    // v2476.64: phase-locked clock (slews toward every fresh currentTime instead of tolerating 40 ms before re-locking),
+    // then shifted back by the measured output latency so lights land on what is HEARD, not what the decoder has reached.
+    if (ct !== CK.last || !CK.ok) { const pred = CK.base + (now - CK.at) / 1000 * rate, d = ct - pred; if (!CK.ok || Math.abs(d) > 0.12 || ct < CK.last) { CK.base = ct; CK.at = now; } else { CK.base = pred + d * 0.2; CK.at = now; } CK.err = d; CK.last = ct; CK.ok = 1; }
     let tt = CK.base + (now - CK.at) / 1000 * rate; if (Math.abs(tt - ct) > 0.25) { CK.base = tt = ct; CK.at = now; }
+    tt = Math.max(0, tt - latency());
     A.t = tt; bass = Math.min(1, EN.energyAt(TL, tt));
     const b = RH.update(bass, tt);
     if (b.count < A.count) A.count = b.count; // loop / seek back
@@ -582,7 +596,7 @@ function swapToLite() { // auto-fallback when WebGL is slow; replace the canvas 
 /* ---------- UI ---------- */
 let uiTimer = 0;
 const UI_MS = 5000;
-function hideUI() { clearTimeout(uiTimer); document.body.classList.remove('ui'); }
+function hideUI() { clearTimeout(uiTimer); document.body.classList.remove('ui', 'adv-open'); }
 function bumpUI() { if (document.body.classList.contains('ui')) { clearTimeout(uiTimer); uiTimer = setTimeout(hideUI, UI_MS); } }
 function showUI() { document.body.classList.add('ui'); $('#panel').hidden = false; clearTimeout(uiTimer); uiTimer = setTimeout(hideUI, UI_MS); } // auto-close after 5 s without interaction (no :hover check — it sticks on touch screens)
 /* 琥珀 Amber / 寶石 Gem (v2476.61): AE Living Wallpaper looks (琉璃 glass + 寶石 gem shaders, looks.js) on their own canvas
@@ -690,6 +704,7 @@ const PRESETS = {
   stage:   { ...BASE, mode: 'rgb', rgbStyle: 'spot', led: true, glint: true, bloom: true, impact: true, intensity: 0.85, speed: 1.2 },       // RGB 舞台: 3 spots + impact
   club:    { ...BASE, mode: 'rgb', rgbStyle: 'wash', frame: true, led: true, laser: true, impact: true, intensity: 0.85, speed: 1.1 },       // 夜店雷射: lasers projected on the painting
   //amber removed v2476.63: { ...BASE, mode: 'natural', look: 'amber', led: true, impact: true, intensity: 0.5, speed: 1 },                                  // 琥珀 Amber (琉璃 glass): golden light flowing along curved veins
+  lights:  { ...BASE, mode: 'natural', intensity: 0.7, speed: 1 },                                                                          // 只留燈光 (v2476.64): every effect off, base picture lighting only
   gem:     { ...BASE, mode: 'natural', look: 'gem', glint: true, impact: true, intensity: 0.75, speed: 1 }                                   // 寶石 Gem: faceted, white streaks along facet edges flash on beats
 };
 function applyPreset(k) { saved = null; Object.assign(S, PRESETS[k]); S.preset = k; $('#int').value = S.intensity; syncButtons(); }
@@ -716,7 +731,14 @@ async function start() {
   layout(); updateEngineNote();
   const img = $('#painting'); if (img.complete && img.naturalWidth) buildRGB(img); else img.addEventListener('load', () => buildRGB(img), { once: true });
   if (window.AELooks) window.AELooks.prepare(img).then(ok => { LK.ready = !!ok; });
-  window.__premium = { artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+  // v2476.64: no text/image selection, callout, drag or tap highlight on the artwork (pinch zoom is our own pointer handler).
+for (const ev of ['selectstart', 'dragstart', 'contextmenu']) document.addEventListener(ev, e => { if (!e.target.closest || !e.target.closest('#panel input')) e.preventDefault(); });
+document.querySelectorAll('#stage img, #art img').forEach(im => { im.draggable = false; im.setAttribute('draggable', 'false'); });
+$('#stage').addEventListener('touchstart', e => { if (e.touches.length > 1 || e.cancelable) e.preventDefault(); }, { passive: false });
+document.addEventListener('dblclick', e => e.preventDefault());
+// v2476.64: main panel = presets + 只留燈光; 進階 reveals the full fine-control set (advanced panel).
+$('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
+window.__premium = { LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
