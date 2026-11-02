@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.58, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.59, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -8,10 +8,10 @@ const SUN = { x: 0.515, y: 0.50 };            // sun focal point of the painting
 const AR = 1110 / 1536;
 const S = {
   lang: Q.get('lang') === 'en' ? 'en' : 'zh', mode: 'natural', intensity: 0.7, speed: 1,
-  frame: true, led: true, aura: true, glint: true, laser: true, lamp: 'auto',
+  frame: true, led: true, aura: true, glint: true, laser: true, bloom: true, rgbStyle: 'bar', lamp: 'auto',
   engine: 'webgl', playing: false
 };
-if (Q.get('fx') === '0') Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false });
+if (Q.get('fx') === '0') Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, bloom: false });
 if (['rgb', 'uv'].includes(Q.get('mode'))) S.mode = 'rgb'; 
 
 /* ---------- i18n ---------- */
@@ -65,12 +65,12 @@ async function togglePlay() {
   else audio.pause();
   syncPlay();
 }
-// v2476.58: the button always mirrors the REAL audio state (iOS pauses media when you leave Safari) -> one tap resumes
+// v2476.59: the button always mirrors the REAL audio state (iOS pauses media when you leave Safari) -> one tap resumes
 function syncPlay() { S.playing = !audio.paused && !audio.ended; updatePlayLabel(); }
 ['play', 'playing', 'pause', 'ended', 'emptied', 'stalled', 'suspend', 'waiting'].forEach(ev => audio.addEventListener(ev, syncPlay));
 document.addEventListener('visibilitychange', syncPlay); addEventListener('pageshow', syncPlay); addEventListener('focus', syncPlay);
 let rings = [];
-// v2476.58: same pre-measured kick timeline + bass energy as the homepage sound-light (ae-home-beats.js / ae-home-light-energy.js).
+// v2476.59: same pre-measured kick timeline + bass energy as the homepage sound-light (ae-home-beats.js / ae-home-light-energy.js).
 // Driven by audio.currentTime, so it works on iPhone even when the live analyser returns silence.
 const EN = window.aeHomeAudioEnergy, TL = window.aeHomeBeatTimeline;
 const RH = EN && TL && TL.events ? EN.createRhythm(TL.events, TL.accents || [], TL.sections || []) : null;
@@ -97,7 +97,7 @@ function analyse(now) {
   A.bass = bass; A.level += (bass - A.level) * 0.15;
   A.kick *= 0.9;
 }
-function onKick(now, k) { A.lastKick = now; A.kick = 1; RG.beats++; if (S.laser && S.playing) fireBolts(now, null, 3); if (S.aura) rings.push({ t: now, k }); if (rings.length > 8) rings.shift(); }
+function onKick(now, k) { A.lastKick = now; A.kick = 1; RG.beats++; if (S.laser && S.playing) fireBolts(now, null, 3); if (S.glint) sparkle(now, S.playing ? 3 : 2); if (S.bloom && RG.beats % 4 === 0) autoBloom(now); }
 
 /* ---------- pointer / tilt ---------- */
 const T = { tx: 0, ty: 0, x: 0, y: 0, px: -1, py: -1 };
@@ -152,6 +152,7 @@ function drawRGB(now) {
   // beat shimmer: lamp brightens slightly on each kick
   // night room: dim the lit painting between beats, flash back up on every kick (stronger while music plays)
   c.globalCompositeOperation = 'source-atop'; c.globalAlpha = Math.max(0, (S.playing ? 0.5 : 0.3) - (S.playing ? 0.45 : 0.2) * A.kick); c.fillStyle = '#05040a'; c.fillRect(0, 0, rc.width, rc.height);
+  if (S.rgbStyle !== 'wash') { c.globalCompositeOperation = 'source-atop'; c.globalAlpha = 1; const vg = c.createLinearGradient(0, 0, 0, rc.height); vg.addColorStop(0, 'rgba(5,4,10,0)'); vg.addColorStop(.45, 'rgba(5,4,10,0.12)'); vg.addColorStop(1, 'rgba(5,4,10,0.42)'); c.fillStyle = vg; c.fillRect(0, 0, rc.width, rc.height); }
   c.globalCompositeOperation = 'screen'; const L2 = lampColor(now);
   c.globalAlpha = 0.16 * A.kick + 0.04 * A.level; c.fillStyle = `rgb(${L2.join(',')})`; c.fillRect(0, 0, rc.width, rc.height);
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
@@ -174,7 +175,7 @@ function fireBolts(now, at, n) {
   if (bolts.length > 40) bolts.splice(0, bolts.length - 40);
 }
 function drawLasers(c, now) {
-  const p = L.p, show = S.playing; // v2476.58: one Laser toggle; music playing = full 6-beam show
+  const p = L.p, show = S.playing; // v2476.59: one Laser toggle; music playing = full 6-beam show
   if (!S.laser) { bolts.length = 0; return; }
   const t = now / 1000 * S.speed, I = S.intensity, pulse = Math.max(A.kick, S.playing ? 0 : Math.pow(1 - ((t / .81) % 1), 3) * .6);
   c.lineCap = 'round';
@@ -199,28 +200,100 @@ function beam(c, ox, oy, tx, ty, col, a, pulse) {
 }
 /* sun bloom (restored from Light Player 'glow' / homepage tap bloom): tap the painting or press ✦ */
 let blooms = [];
-function bloom(now, x, y) { blooms.push({ t: now, x, y }); if (blooms.length > 4) blooms.shift(); if (S.aura) { rings.push({ t: now, k: 1 }); } if (S.laser) fireBolts(now, { x, y }, 6); }
+function bloom(now, x, y) { blooms.push({ t: now, x, y }); if (blooms.length > 4) blooms.shift(); if (S.laser) fireBolts(now, { x, y }, 6); }
+function autoBloom(now) { const p = L.p; bloom(now, p.x + p.w * SUN.x, p.y + p.h * SUN.y); }
 function drawBlooms(c, now) {
-  blooms = blooms.filter(b => now - b.t < 1800);
+  blooms = blooms.filter(b => now - b.t < 1800); c.save(); c.beginPath(); c.rect(0, 0, L.W, L.H); c.clip();
   for (const b of blooms) {
-    const q = (now - b.t) / 1800, a = Math.sin(Math.PI * Math.min(1, q * 1.4)) * (1 - q) * (0.6 + .5 * S.intensity), r = L.p.w * (.08 + .32 * q);
+    const q = (now - b.t) / 1800, a = Math.sin(Math.PI * Math.min(1, q * 1.4)) * (1 - q) * (0.6 + .5 * S.intensity), r = L.p.w * (.12 + .3 * q);
     const col = S.mode === 'rgb' ? lampColor(now) : [255, 214, 120];
     const g = c.createRadialGradient(b.x, b.y, 0, b.x, b.y, r); g.addColorStop(0, `rgba(255,250,230,${a})`); g.addColorStop(.35, `rgba(${col.join(',')},${a * .6})`); g.addColorStop(1, `rgba(${col.join(',')},0)`);
     c.fillStyle = g; c.beginPath(); c.arc(b.x, b.y, r, 0, 6.2832); c.fill();
-    c.strokeStyle = `rgba(255,240,200,${a * .5})`; c.lineWidth = 1;
-    for (let i = 0; i < 12; i++) { const an = i * .5236 + q; c.beginPath(); c.moveTo(b.x + Math.cos(an) * r * .2, b.y + Math.sin(an) * r * .2); c.lineTo(b.x + Math.cos(an) * r * 1.1, b.y + Math.sin(an) * r * 1.1); c.stroke(); }
+    const R2 = r * 1.9, h = c.createRadialGradient(b.x, b.y, r * .3, b.x, b.y, R2); h.addColorStop(0, `rgba(${col.join(',')},${a * .35})`); h.addColorStop(1, `rgba(${col.join(',')},0)`);
+    c.fillStyle = h; c.beginPath(); c.arc(b.x, b.y, R2, 0, 6.2832); c.fill();
+    c.lineCap = 'round';
+    for (let i = 0; i < 16; i++) { const an = i * .3927 + q * .4, len = (i % 2 ? 1.25 : 1.9) * r;
+      const lg = c.createLinearGradient(b.x, b.y, b.x + Math.cos(an) * len, b.y + Math.sin(an) * len); lg.addColorStop(0, `rgba(255,252,240,${a})`); lg.addColorStop(1, 'rgba(255,240,200,0)');
+      c.strokeStyle = lg; c.lineWidth = i % 2 ? 1.5 : 3; c.beginPath(); c.moveTo(b.x + Math.cos(an) * r * .12, b.y + Math.sin(an) * r * .12); c.lineTo(b.x + Math.cos(an) * len, b.y + Math.sin(an) * len); c.stroke(); }
+    c.strokeStyle = `rgba(255,246,220,${a * .9})`; c.lineWidth = 2; c.beginPath(); c.arc(b.x, b.y, L.p.w * (.06 + .55 * q), 0, 6.2832); c.stroke();
   }
+  c.restore();
 }
-/* lamp cones in RGB mode: coloured light falling from three virtual lamps above the painting */
+/* RGB mode (v2476.59): a fixed gallery picture light. The fixture never moves; only its colour changes with the beat.
+   styles: 'bar'  = one emissive light bar above the frame washing down the painting
+           'spot' = three fixed pin spotlights on a rail, soft round pools
+           'wash' = no fixture, soft even colour wash (previous look) */
+function fixture(p) { const fw = p.w * .78, fh = Math.max(6, p.w * .022), fy = Math.max(6, p.y - (S.frame ? L.F : 0) - fh - Math.max(8, p.w * .03)); return { x: p.x + (p.w - fw) / 2, y: fy, w: fw, h: fh }; }
 function drawCones(c, now) {
-  if (S.mode !== 'rgb') return;
-  const p = L.p, col = lampColor(now), pos = { red: .18, green: .5, blue: .82 }[RG.cur], x = p.x + p.w * pos, a = (.16 + .1 * A.kick) * (0.5 + S.intensity);
-  const g = c.createLinearGradient(x, 0, p.x + p.w / 2, p.y + p.h * .6); g.addColorStop(0, `rgba(${col.join(',')},${a})`); g.addColorStop(1, `rgba(${col.join(',')},0)`);
-  c.fillStyle = g; c.beginPath(); c.moveTo(x - 6, 0); c.lineTo(x + 6, 0); c.lineTo(p.x + p.w * 1.05, p.y + p.h * .8); c.lineTo(p.x - p.w * .05, p.y + p.h * .8); c.closePath(); c.fill();
-  // coloured spill on the wall around the frame
-  const cx = p.x + p.w / 2, cy = p.y + p.h / 2, sg = c.createRadialGradient(cx, cy, p.w * .55, cx, cy, p.w * 1.2);
-  sg.addColorStop(0, `rgba(${col.join(',')},${.22 * (0.5 + S.intensity)})`); sg.addColorStop(1, `rgba(${col.join(',')},0)`);
+  if (S.mode !== 'rgb' || S.rgbStyle === 'wash') return;
+  const p = L.p, col = lampColor(now), cs = col.join(','), I = 0.5 + S.intensity, k = A.kick, F = fixture(p);
+  const glow = (.55 + .45 * k) * I;
+  if (S.rgbStyle === 'bar') {
+    // light falling down: fixed trapezoid, brightest just under the bar
+    const g = c.createLinearGradient(0, F.y + F.h, 0, p.y + p.h * .85); g.addColorStop(0, `rgba(${cs},${.30 * glow})`); g.addColorStop(.35, `rgba(${cs},${.12 * glow})`); g.addColorStop(1, `rgba(${cs},0)`);
+    c.fillStyle = g; c.beginPath(); c.moveTo(F.x, F.y + F.h); c.lineTo(F.x + F.w, F.y + F.h); c.lineTo(p.x + p.w * 1.06, p.y + p.h * .85); c.lineTo(p.x - p.w * .06, p.y + p.h * .85); c.closePath(); c.fill();
+  } else {
+    for (const u of [.2, .5, .8]) {
+      const x = p.x + p.w * u, y0 = F.y + F.h, cy = p.y + p.h * .34, rr = p.w * .26;
+      const g = c.createLinearGradient(0, y0, 0, cy + rr); g.addColorStop(0, `rgba(${cs},${.22 * glow})`); g.addColorStop(1, `rgba(${cs},0)`);
+      c.fillStyle = g; c.beginPath(); c.moveTo(x - 3, y0); c.lineTo(x + 3, y0); c.lineTo(x + rr, cy); c.lineTo(x - rr, cy); c.closePath(); c.fill();
+      const pg = c.createRadialGradient(x, cy, 0, x, cy, rr); pg.addColorStop(0, `rgba(${cs},${.20 * glow})`); pg.addColorStop(1, `rgba(${cs},0)`);
+      c.fillStyle = pg; c.beginPath(); c.ellipse(x, cy, rr, rr * .7, 0, 0, 6.2832); c.fill();
+    }
+  }
+  // coloured spill on the wall around the frame (static)
+  const cx = p.x + p.w / 2, sg = c.createRadialGradient(cx, p.y, p.w * .1, cx, p.y + p.h * .2, p.w * 1.1);
+  sg.addColorStop(0, `rgba(${cs},${.20 * I})`); sg.addColorStop(1, `rgba(${cs},0)`);
   c.save(); c.beginPath(); c.rect(0, 0, L.W, L.H); c.rect(p.x, p.y, p.w, p.h); c.clip('evenodd'); c.fillStyle = sg; c.fillRect(0, 0, L.W, L.H); c.restore();
+}
+/* the fixture itself, drawn normally (not screen) so it reads as a physical brass bar that glows */
+function drawFixture(c, now) {
+  if (S.mode !== 'rgb' || S.rgbStyle === 'wash') return;
+  const p = L.p, F = fixture(p), col = lampColor(now), cs = col.join(','), k = A.kick, I = 0.5 + S.intensity;
+  c.save();
+  // wall arm
+  c.fillStyle = '#2a2016'; c.fillRect(p.x + p.w / 2 - 2, F.y + F.h * .5, 4, Math.max(0, p.y - F.y - F.h * .5));
+  // halo
+  c.shadowColor = `rgba(${cs},${Math.min(1, (.7 + .3 * k) * I)})`; c.shadowBlur = (18 + 18 * k) * L.dpr;
+  if (S.rgbStyle === 'bar') {
+    const bg = c.createLinearGradient(0, F.y, 0, F.y + F.h); bg.addColorStop(0, '#d9b46a'); bg.addColorStop(.45, '#7a5a2a'); bg.addColorStop(1, '#3a2a14');
+    c.fillStyle = bg; rr(c, F.x, F.y, F.w, F.h, F.h / 2); c.fill(); c.shadowBlur = 0;
+    // emissive diffuser along the underside
+    const lg = c.createLinearGradient(F.x, 0, F.x + F.w, 0); lg.addColorStop(0, `rgba(${cs},0.35)`); lg.addColorStop(.5, 'rgba(255,252,244,0.95)'); lg.addColorStop(1, `rgba(${cs},0.35)`);
+    c.fillStyle = lg; c.globalAlpha = Math.min(1, (.75 + .25 * k)); rr(c, F.x + F.h * .4, F.y + F.h * .55, F.w - F.h * .8, F.h * .38, F.h * .19); c.fill();
+    c.globalAlpha = Math.min(1, (.55 + .45 * k) * I); c.fillStyle = `rgba(${cs},0.9)`; rr(c, F.x + F.h * .4, F.y + F.h * .62, F.w - F.h * .8, F.h * .26, F.h * .13); c.fill();
+  } else {
+    c.fillStyle = '#3a2a14'; rr(c, p.x + p.w * .12, F.y, p.w * .76, F.h * .45, F.h * .2); c.fill();
+    for (const u of [.2, .5, .8]) {
+      const x = p.x + p.w * u, s = F.h * 1.1;
+      c.shadowBlur = (14 + 14 * k) * L.dpr; c.fillStyle = '#6b4f26'; rr(c, x - s * .55, F.y, s * 1.1, s * 1.2, s * .3); c.fill();
+      c.shadowBlur = 0; c.globalAlpha = Math.min(1, (.6 + .4 * k) * I); const lg = c.createRadialGradient(x, F.y + s * 1.15, 0, x, F.y + s * 1.15, s * .6);
+      lg.addColorStop(0, 'rgba(255,252,244,1)'); lg.addColorStop(1, `rgba(${cs},0.8)`); c.fillStyle = lg; c.beginPath(); c.ellipse(x, F.y + s * 1.15, s * .5, s * .22, 0, 0, 6.2832); c.fill(); c.globalAlpha = 1;
+    }
+  }
+  c.restore();
+}
+function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+/* glints (v2476.59): clearly visible 4-point star sparkles on beats, on the frame and the sun's highlights */
+let sparks = [];
+function sparkle(now, n) {
+  for (let i = 0; i < n; i++) sparks.push({ t: now + i * 60, u: Math.random(), onSun: Math.random() < .45, a: Math.random() * 6.28, d: .05 + Math.random() * .2, s: .7 + Math.random() * .6 });
+  if (sparks.length > 24) sparks.splice(0, sparks.length - 24);
+}
+function drawSparks(c, now, ox, oy) {
+  const p = L.p, I = S.intensity, g = S.frame ? L.F * 0.5 : 2, r = { x: p.x - g + ox, y: p.y - g + oy, w: p.w + 2 * g, h: p.h + 2 * g }, life = 1100;
+  sparks = sparks.filter(q => now - q.t < life);
+  for (const q of sparks) {
+    if (now < q.t) continue;
+    const f = (now - q.t) / life, a = Math.sin(Math.PI * Math.min(1, f * 1.3)) * (0.7 + .5 * I);
+    const [x, y] = q.onSun ? [p.x + p.w * SUN.x + Math.cos(q.a) * p.w * q.d * 1.6, p.y + p.h * SUN.y + Math.sin(q.a) * p.w * q.d * 1.6] : perimeterPoint(q.u, r);
+    const s = Math.max(14, p.w * .045) * q.s * (0.6 + .6 * Math.sin(Math.PI * f));
+    const gr = c.createRadialGradient(x, y, 0, x, y, s * .7); gr.addColorStop(0, `rgba(255,255,250,${a})`); gr.addColorStop(1, 'rgba(255,230,170,0)');
+    c.fillStyle = gr; c.beginPath(); c.arc(x, y, s * .7, 0, 6.2832); c.fill();
+    c.save(); c.translate(x, y); c.rotate(f * .6); c.fillStyle = `rgba(255,252,236,${a})`;
+    for (const [L1, w1] of [[s * 1.6, s * .09], [s * .9, s * .06]]) { c.beginPath(); c.moveTo(0, -L1); c.lineTo(w1, 0); c.lineTo(0, L1); c.lineTo(-w1, 0); c.closePath(); c.fill(); c.beginPath(); c.moveTo(-L1, 0); c.lineTo(0, w1); c.lineTo(L1, 0); c.lineTo(0, -w1); c.closePath(); c.fill(); c.rotate(.785); }
+    c.restore();
+  }
 }
 
 /* ---------- colours ---------- */
@@ -264,20 +337,16 @@ function drawFront(now) {
     c.shadowBlur = 0;
   }
   if (S.aura) {
-    c.save(); c.beginPath(); c.rect(p.x, p.y, p.w, p.h); c.clip();
-    const cx = p.x + p.w * SUN.x, cy = p.y + p.h * SUN.y, dur = 2600 / S.speed;
-    rings = rings.filter(r => now - r.t < dur);
-    for (const r of rings) {
-      const q = (now - r.t) / dur, e = 1 - Math.pow(1 - q, 2.2);
-      const rad = p.w * (0.05 + 0.5 * e), a = Math.pow(1 - q, 1.8) * 0.5 * I * (0.6 + 0.6 * r.k);
-      const gr = c.createRadialGradient(cx, cy, rad * 0.86, cx, cy, rad * 1.04);
-      gr.addColorStop(0, 'rgba(255,214,140,0)'); gr.addColorStop(0.75, `rgba(255,214,140,${a})`); gr.addColorStop(1, 'rgba(255,200,120,0)');
-      c.fillStyle = gr; c.beginPath(); c.arc(cx, cy, rad * 1.05, 0, 6.2832); c.fill();
-    }
-    c.restore();
-  } else rings.length = 0;
+    const cx = p.x + p.w * SUN.x, cy = p.y + p.h * SUN.y, br = 0.5 + 0.5 * Math.sin(now / 1000 * 1.4 * S.speed);
+    const rad = p.w * (0.30 + 0.012 * br + 0.022 * A.kick), a = Math.min(1, (0.55 + 0.15 * br + 0.4 * A.kick) * (0.5 + I));
+    const gr = c.createRadialGradient(cx, cy, rad * 0.82, cx, cy, rad * 1.12);
+    gr.addColorStop(0, 'rgba(255,214,150,0)'); gr.addColorStop(0.5, `rgba(255,226,170,${a * 0.6})`); gr.addColorStop(1, 'rgba(255,200,120,0)');
+    c.fillStyle = gr; c.beginPath(); c.arc(cx, cy, rad * 1.12, 0, 6.2832); c.fill();
+    c.strokeStyle = `rgba(255,250,232,${a})`; c.lineWidth = Math.max(2, p.w * .006); c.shadowColor = 'rgba(255,220,150,1)'; c.shadowBlur = 14 * k;
+    c.beginPath(); c.arc(cx, cy, rad, 0, 6.2832); c.stroke(); c.shadowBlur = 0;
+  }
   if (S.glint) {
-    if (Math.random() < 0.006 * S.speed * (0.5 + I)) glints.push({ t: now, u: Math.random(), s: 0.6 + Math.random() * 0.6 });
+    if (Math.random() < 0.004 * S.speed * (0.5 + I)) sparkle(now, 1); if (false) glints.push({ t: now, u: Math.random(), s: 0.6 + Math.random() * 0.6 });
     const g = S.frame ? L.F * 0.5 : 2, r = { x: p.x - g + ox, y: p.y - g + oy, w: p.w + 2 * g, h: p.h + 2 * g };
     glints = glints.filter(q => now - q.t < 900);
     for (const q of glints) {
@@ -288,8 +357,11 @@ function drawFront(now) {
       c.strokeStyle = `rgba(255,248,225,${a * 0.8})`; c.lineWidth = 0.8;
       c.beginPath(); c.moveTo(x - s * 1.4, y); c.lineTo(x + s * 1.4, y); c.moveTo(x, y - s * 1.4); c.lineTo(x, y + s * 1.4); c.stroke();
     }
-  } else glints.length = 0;
-  drawCones(c, now); drawBlooms(c, now); drawLasers(c, now);
+    drawSparks(c, now, ox, oy);
+  } else { glints.length = 0; sparks.length = 0; }
+  drawCones(c, now); drawLasers(c, now);
+  c.save(); c.globalCompositeOperation = 'source-over'; drawFixture(c, now); c.restore();
+  drawBlooms(c, now);
   c.globalAlpha = 1; c.shadowBlur = 0;
 }
 
@@ -398,23 +470,28 @@ function swapToLite() { // auto-fallback when WebGL is slow; replace the canvas 
 /* ---------- UI ---------- */
 let uiTimer = 0;
 function showUI() { document.body.classList.add('ui'); $('#panel').hidden = false; clearTimeout(uiTimer); uiTimer = setTimeout(() => { if (!$('#panel').matches(':hover')) document.body.classList.remove('ui'); }, 4500); }
+function frontVis() { // nothing to draw above the painting -> remove the overlay layer entirely, so the <img> is composited exactly as on its own
+  const any = S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
+  const d = any ? '' : 'none'; if ($('#front').style.display !== d) $('#front').style.display = d;
+}
 function syncButtons() {
   document.querySelectorAll('.tg').forEach(b => { b.classList.toggle('on', !!S[b.dataset.k]); b.setAttribute('aria-pressed', String(!!S[b.dataset.k])); });
   for (const [id, m] of [['#mNat', 'natural'], ['#mRgb', 'rgb']]) { $(id).classList.toggle('on', S.mode === m); $(id).setAttribute('aria-pressed', String(S.mode === m)); }
-  $('#lamps').hidden = S.mode !== 'rgb';
+  $('#lamps').hidden = S.mode !== 'rgb'; $('#styles').hidden = S.mode !== 'rgb';
   document.querySelectorAll('.lp').forEach(b => b.classList.toggle('on', b.dataset.c === S.lamp));
   $('#orig').classList.toggle('on', !!saved); $('#orig').setAttribute('aria-pressed', String(!!saved));
   // nothing to draw above the painting -> remove the overlay layers entirely, so the <img> is composited exactly as on its own
-  const any = S.led || S.aura || S.glint || S.laser || S.mode !== 'natural';
-  $('#front').style.display = any ? '' : 'none';
+  frontVis();
+  $('#burst').classList.toggle('on', !!S.bloom); $('#burst').setAttribute('aria-pressed', String(!!S.bloom));
+  document.querySelectorAll('.st').forEach(b => b.classList.toggle('on', b.dataset.s === S.rgbStyle));
   if (S.mode !== 'rgb') { $('#rgb').classList.remove('on'); }
   $('#rgb').style.display = S.mode === 'rgb' ? '' : 'none';
   document.body.dataset.mode = S.mode; document.body.dataset.original = saved ? '1' : '0';
 }
-let saved = null; const KEYS = ['frame', 'led', 'aura', 'glint', 'laser', 'mode'];
+let saved = null; const KEYS = ['frame', 'led', 'aura', 'glint', 'laser', 'bloom', 'mode'];
 function setOriginal() { // toggle: 1st press = untouched original art, 2nd press = restore previous effects
   if (saved) { Object.assign(S, saved); saved = null; }
-  else { saved = Object.fromEntries(KEYS.map(k => [k, S[k]])); Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, mode: 'natural' }); T.tx = T.ty = 0; rings.length = 0; bolts.length = 0; blooms.length = 0; }
+  else { saved = Object.fromEntries(KEYS.map(k => [k, S[k]])); Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, bloom: false, mode: 'natural' }); T.tx = T.ty = 0; rings.length = 0; bolts.length = 0; blooms.length = 0; }
   syncButtons();
 }
 function leaveOriginal() { saved = null; }
@@ -422,7 +499,7 @@ function bindUI() {
   const st = $('#stage');
   st.addEventListener('pointerdown', e => {
     onPointer(e); const wasHidden = !document.body.classList.contains('ui'); showUI();
-    const p = L.p; if (!saved && !wasHidden && e.clientX >= p.x && e.clientX <= p.x + p.w && e.clientY >= p.y && e.clientY <= p.y + p.h) bloom(performance.now(), e.clientX, e.clientY);
+    const p = L.p; if (!wasHidden && e.clientX >= p.x && e.clientX <= p.x + p.w && e.clientY >= p.y && e.clientY <= p.y + p.h) bloom(performance.now(), e.clientX, e.clientY);
   });
   st.addEventListener('pointermove', e => { onPointer(e); if (e.pointerType === 'mouse') showUI(); });
   $('#panel').addEventListener('pointerdown', e => { e.stopPropagation(); showUI(); });
@@ -430,7 +507,8 @@ function bindUI() {
   $('#mNat').onclick = () => { leaveOriginal(); S.mode = 'natural'; syncButtons(); };
   $('#mRgb').onclick = () => { leaveOriginal(); S.mode = 'rgb'; syncButtons(); };
   document.querySelectorAll('.lp').forEach(b => b.onclick = () => { S.lamp = b.dataset.c; syncButtons(); });
-  $('#burst').onclick = () => { leaveOriginal(); const p = L.p; bloom(performance.now(), p.x + p.w * SUN.x, p.y + p.h * SUN.y); syncButtons(); };
+  $('#burst').onclick = () => { S.bloom = !S.bloom; if (S.bloom) autoBloom(performance.now()); syncButtons(); }; // toggle: periodic bloom every 4 beats (works over 原畫 too); tapping the painting still blooms
+  document.querySelectorAll('.st').forEach(b => b.onclick = () => { S.rgbStyle = b.dataset.s; syncButtons(); });
   $('#lang').onclick = () => { S.lang = S.lang === 'en' ? 'zh' : 'en'; applyLang(); };
   $('#int').oninput = e => { S.intensity = +e.target.value; };
   $('#spd').oninput = e => { S.speed = +e.target.value; };
@@ -450,7 +528,7 @@ function loop(now) {
   if (!Number.isFinite(T.tx)) T.tx = 0; if (!Number.isFinite(T.ty)) T.ty = 0;
   T.x += (T.tx - T.x) * 0.06; T.y += (T.ty - T.y) * 0.06;
   analyse(now);
-  gl.render(now); drawRGB(now); drawFront(now);
+  gl.render(now); drawRGB(now); frontVis(); drawFront(now);
   if (gl.kind === 'webgl' && !Q.has('nofallback') && document.visibilityState === 'visible') {
     frames++; if (dt > 45) slow++;
     if (frames === 240) { if (slow > 150) swapToLite(); frames = 0; slow = 0; }
@@ -464,7 +542,7 @@ async function start() {
   else { try { await initWebGL(); } catch (e) { console.warn('WebGL unavailable, using Canvas 2D', e && e.message); swapToLite(); } }
   layout(); updateEngineNote();
   const img = $('#painting'); if (img.complete && img.naturalWidth) buildRGB(img); else img.addEventListener('load', () => buildRGB(img), { once: true });
-  window.__premium = { A, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, stats: () => ({ bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime }) };
+  window.__premium = { A, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }

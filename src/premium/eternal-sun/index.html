@@ -32,6 +32,12 @@
     <button class="lp" data-c="green" data-zh="綠" data-en="Green"></button>
     <button class="lp" data-c="blue" data-zh="藍紫" data-en="Blue-violet"></button>
   </div>
+  <div class="row lamps" id="styles">
+    <span class="lab" data-zh="燈具" data-en="Fixture"></span>
+    <button class="st on" data-s="bar" data-zh="畫燈條" data-en="Light bar"></button>
+    <button class="st" data-s="spot" data-zh="三盞射燈" data-en="3 spots"></button>
+    <button class="st" data-s="wash" data-zh="柔光" data-en="Soft wash"></button>
+  </div>
   <div class="row">
     <label><span data-zh="強度" data-en="Intensity"></span><input id="int" type="range" min="0" max="1" step="0.01" value="0.7"></label>
     <label><span data-zh="速度" data-en="Speed"></span><input id="spd" type="range" min="0.3" max="2" step="0.01" value="1"></label>
@@ -42,7 +48,7 @@
     <button class="tg on" data-k="led" data-zh="燈帶" data-en="LED"></button>
     <button class="tg on" data-k="aura" data-zh="光環" data-en="Aura"></button>
     <button class="tg on" data-k="glint" data-zh="閃光" data-en="Glints"></button>
-    <button id="burst" data-zh="✦ 綻放" data-en="✦ Bloom"></button>
+    <button id="burst" class="tg2 on" aria-pressed="true" data-zh="✦ 綻放" data-en="✦ Bloom"></button>
     <button id="orig" aria-pressed="false" data-zh="原畫" data-en="Original art"></button>
   </div>
   <p class="note" id="engine"></p>
