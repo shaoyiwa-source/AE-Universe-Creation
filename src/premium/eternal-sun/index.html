@@ -13,7 +13,7 @@
   <canvas id="back" aria-hidden="true"></canvas>
   <div id="art">
     <img id="painting" src="/assets/eternal-sun-canonical-1110x1536.jpg" alt="盛明 Eternal Sun — original painting" draggable="false">
-    <div id="uv" aria-hidden="true"><div id="uvDark"></div><canvas id="uvGlow"></canvas></div>
+    <canvas id="rgb" aria-hidden="true"></canvas>
   </div>
   <canvas id="front" aria-hidden="true"></canvas>
 </div>
@@ -22,20 +22,29 @@
 <nav id="panel" aria-label="controls" hidden>
   <div class="row">
     <button id="play" data-zh="▶ 播放音樂" data-en="▶ Play music"></button>
-    <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mUv" data-zh="螢光" data-en="Fluorescent"></button></div>
+    <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mRgb" data-zh="三色照畫" data-en="RGB light"></button><button id="mShow" data-zh="聲光秀" data-en="Light show"></button></div>
     <button id="lang">EN</button>
+  </div>
+  <div class="row lamps" id="lamps" hidden>
+    <span class="lab" data-zh="燈色" data-en="Lamp"></span>
+    <button class="lp on" data-c="auto" data-zh="自動輪替" data-en="Auto cycle"></button>
+    <button class="lp" data-c="red" data-zh="紅" data-en="Red"></button>
+    <button class="lp" data-c="green" data-zh="綠" data-en="Green"></button>
+    <button class="lp" data-c="blue" data-zh="藍紫" data-en="Blue-violet"></button>
   </div>
   <div class="row">
     <label><span data-zh="強度" data-en="Intensity"></span><input id="int" type="range" min="0" max="1" step="0.01" value="0.7"></label>
     <label><span data-zh="速度" data-en="Speed"></span><input id="spd" type="range" min="0.3" max="2" step="0.01" value="1"></label>
   </div>
   <div class="row toggles">
+    <button class="tg on" data-k="laser" data-zh="雷射" data-en="Laser"></button>
     <button class="tg on" data-k="frame" data-zh="畫框" data-en="Frame"></button>
     <button class="tg on" data-k="led" data-zh="燈帶" data-en="LED"></button>
     <button class="tg on" data-k="aura" data-zh="光環" data-en="Aura"></button>
     <button class="tg on" data-k="glint" data-zh="閃光" data-en="Glints"></button>
-    <button class="tg" data-k="torch" data-zh="手電筒" data-en="Flashlight"></button>
-    <button id="orig" data-zh="原作" data-en="Original"></button>
+    <button class="tg on" data-k="laser" data-zh="雷射光" data-en="Laser"></button>
+    <button id="burst" data-zh="✦ 綻放" data-en="✦ Bloom"></button>
+    <button id="orig" aria-pressed="false" data-zh="原畫" data-en="Original art"></button>
   </div>
   <p class="note" id="engine"></p>
 </nav>

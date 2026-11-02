@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.56, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.57, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -8,11 +8,11 @@ const SUN = { x: 0.515, y: 0.50 };            // sun focal point of the painting
 const AR = 1110 / 1536;
 const S = {
   lang: Q.get('lang') === 'en' ? 'en' : 'zh', mode: 'natural', intensity: 0.7, speed: 1,
-  frame: true, led: true, aura: true, glint: true, torch: false,
+  frame: true, led: true, aura: true, glint: true, laser: true, lamp: 'auto',
   engine: 'webgl', playing: false
 };
-if (Q.get('fx') === '0') Object.assign(S, { frame: false, led: false, aura: false, glint: false });
-if (Q.get('mode') === 'uv') S.mode = 'uv';
+if (Q.get('fx') === '0') Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false });
+if (['rgb', 'uv'].includes(Q.get('mode'))) S.mode = 'rgb'; if (Q.get('mode') === 'show') S.mode = 'show';
 
 /* ---------- i18n ---------- */
 function applyLang() {
@@ -83,37 +83,128 @@ function analyse(now) {
   A.bass = bass; A.level += (bass - A.level) * 0.15;
   A.kick *= 0.9;
 }
-function onKick(now, k) { A.lastKick = now; A.kick = 1; if (S.aura) rings.push({ t: now, k }); if (rings.length > 8) rings.shift(); }
+function onKick(now, k) { A.lastKick = now; A.kick = 1; RG.beats++; if (S.laser && S.playing) fireBolts(now, null, S.mode === 'show' ? 4 : 2); if (S.aura) rings.push({ t: now, k }); if (rings.length > 8) rings.shift(); }
 
 /* ---------- pointer / tilt ---------- */
 const T = { tx: 0, ty: 0, x: 0, y: 0, px: -1, py: -1 };
 function onPointer(e) {
   T.tx = (e.clientX / L.W - 0.5) * 2; T.ty = (e.clientY / L.H - 0.5) * 2;
   T.px = e.clientX - L.p.x; T.py = e.clientY - L.p.y;
-  const uv = $('#uv').style; uv.setProperty('--x', T.px + 'px'); uv.setProperty('--y', T.py + 'px');
-  uv.setProperty('--r', Math.round(L.p.w * 0.32) + 'px');
 }
 addEventListener('deviceorientation', e => {
   if (!Number.isFinite(e.gamma) || !Number.isFinite(e.beta)) return;
   T.tx = Math.max(-1, Math.min(1, e.gamma / 25)); T.ty = Math.max(-1, Math.min(1, (e.beta - 45) / 25));
 });
 
-/* ---------- UV (fluorescent) glow map: built once from the image into a SEPARATE canvas ---------- */
-function buildUV(img) {
-  const c = $('#uvGlow'); const w = 555, h = 768; c.width = w; c.height = h;
-  const t = document.createElement('canvas'); t.width = w; t.height = h;
+/* ---------- RGB tri-colour light wash (restored from Light Player 三色照畫, /player/eternal-sun/ experience-lighting.js).
+   Simulates red / green / blue-violet LED lamps shining on the painting (owner ref IMG_1681.MOV).
+   The response images are built once into SEPARATE canvases and drawn on the #rgb overlay; the <img> is never touched. */
+const LAMPS = ['green', 'red', 'blue'], LAMP_RGB = { red: [255, 47, 72], green: [85, 255, 125], blue: [120, 80, 255] };
+const RG = { masks: {}, beats: 0, cur: 'green', from: 'green', changed: -1e9, lastKey: '' };
+function lampResponse(r, g, b, c) {
+  const fl = Math.max(0, g - r * .45 - b * .25), w = (r + g + b) / 3;
+  if (c === 'red') return [r * .82 + g * .18 + 40, g * .22 + r * .1, b * .30 + r * .12 + 14];
+  if (c === 'green') return [r * .30 + w * .1, g * .92 + w * .25 + fl * .25, b * .18];
+  return [r * .22 + b * .25 + 20, g * .10 + fl * 1.25, b * .80 + r * .25 + w * .25 + 40];   // blue-violet: greens fluoresce
+}
+function buildRGB(img) {
+  const w = 555, h = 768, t = document.createElement('canvas'); t.width = w; t.height = h;
   const x = t.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, w, h);
-  const d = x.getImageData(0, 0, w, h), p = d.data;
-  for (let i = 0; i < p.length; i += 4) {
-    const r = p[i] / 255, g = p[i + 1] / 255, b = p[i + 2] / 255;
-    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), s = mx ? (mx - mn) / mx : 0;
-    const f = Math.pow(Math.max(0, s - 0.28) / 0.72, 1.3) * mx * 1.6;
-    p[i] = Math.min(255, r * 255 * f); p[i + 1] = Math.min(255, g * 255 * f); p[i + 2] = Math.min(255, b * 255 * f);
+  const src = x.getImageData(0, 0, w, h).data;
+  for (const col of LAMPS) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const o = c.getContext('2d'), d = o.createImageData(w, h);
+    for (let i = 0; i < src.length; i += 4) {
+      const v = lampResponse(src[i], src[i + 1], src[i + 2], col);
+      d.data[i] = Math.min(255, v[0]); d.data[i + 1] = Math.min(255, v[1]); d.data[i + 2] = Math.min(255, v[2]); d.data[i + 3] = 255;
+    }
+    o.putImageData(d, 0, 0); RG.masks[col] = c;
   }
-  x.putImageData(d, 0, 0);
-  const o = c.getContext('2d');
-  o.filter = 'blur(7px)'; o.drawImage(t, 0, 0);
-  o.filter = 'none'; o.globalCompositeOperation = 'lighter'; o.globalAlpha = 0.85; o.drawImage(t, 0, 0);
+  const rc = $('#rgb'); rc.width = w; rc.height = h;
+}
+function lampNow(now) {
+  if (S.lamp !== 'auto') return S.lamp;
+  const step = S.playing ? Math.floor(RG.beats / 8) : Math.floor(now * S.speed / 3500);
+  return LAMPS[((step % 3) + 3) % 3];
+}
+function drawRGB(now) {
+  const rc = $('#rgb'); const on = S.mode === 'rgb' && RG.masks.red;
+  rc.classList.toggle('on', !!on); if (!on) return;
+  const col = lampNow(now);
+  if (col !== RG.cur) { RG.from = RG.cur; RG.cur = col; RG.changed = now; }
+  const mix = Math.min(1, (now - RG.changed) / 900), c = rc.getContext('2d'), op = k => (k === 'red' ? .78 : .86) * (0.55 + 0.5 * S.intensity);
+  c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, rc.width, rc.height);
+  if (mix < 1) { c.globalAlpha = op(RG.from) * (1 - mix); c.drawImage(RG.masks[RG.from], 0, 0); }
+  c.globalAlpha = op(RG.cur) * (mix < 1 ? mix : 1); c.drawImage(RG.masks[RG.cur], 0, 0);
+  // beat shimmer: lamp brightens slightly on each kick
+  c.globalCompositeOperation = 'screen'; const L2 = lampColor(now);
+  c.globalAlpha = 0.10 * A.kick + 0.06 * A.level; c.fillStyle = `rgb(${L2.join(',')})`; c.fillRect(0, 0, rc.width, rc.height);
+  c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+}
+function lampColor(now) {
+  const a = LAMP_RGB[RG.from], b = LAMP_RGB[RG.cur], m = Math.min(1, (now - RG.changed) / 900);
+  return a.map((v, i) => Math.round(v * (1 - m) + b[i] * m));
+}
+
+/* ---------- Laser beams (restored from homepage Eternal Sun sound-light / Light Player 'laser' effect, experience-renderer.js) ---------- */
+const LASER = ['#ff416d', '#57ffa0', '#ffe28d', '#65dbff', '#c987ff', '#ffac68'];
+let bolts = [];
+function fireBolts(now, at, n) {
+  const p = L.p;
+  for (let i = 0; i < n; i++) {
+    const e = (i + bolts.length) % 3, ox = e === 0 ? -10 : e === 1 ? L.W + 10 : p.x + p.w * (.1 + Math.random() * .8), oy = e === 2 ? -10 : L.H * (.1 + Math.random() * .6);
+    const tx = at ? at.x : p.x + p.w * (.15 + .7 * Math.random()), ty = at ? at.y : p.y + p.h * (.15 + .7 * Math.random());
+    bolts.push({ ox, oy, x: tx, y: ty, born: now + i * 25, life: at ? 700 : 260, col: LASER[(i + bolts.length) % 6] });
+  }
+  if (bolts.length > 40) bolts.splice(0, bolts.length - 40);
+}
+function drawLasers(c, now) {
+  const p = L.p, show = S.mode === 'show';
+  if (!S.laser) { bolts.length = 0; return; }
+  const t = now / 1000 * S.speed, I = S.intensity, pulse = Math.max(A.kick, S.playing ? 0 : Math.pow(1 - ((t / .81) % 1), 3) * .6);
+  c.lineCap = 'round';
+  // sweeping ambient beams: 6 in light-show mode, 3 otherwise
+  const n = show ? 6 : 3, base = show ? .55 : .28;
+  for (let i = 0; i < n; i++) {
+    const k = show ? i : i * 2, ox = k % 3 === 0 ? 0 : k % 3 === 1 ? L.W : p.x + p.w * (.2 + k * .11), oy = k % 3 === 2 ? 0 : L.H * (.12 + (k % 4) * .2);
+    const ph = t * (.55 + k * .07) + k * 1.7, tx = p.x + p.w * (.5 + .4 * Math.sin(ph)), ty = p.y + p.h * (.3 + .42 * (.5 + .5 * Math.cos(ph * 1.3)));
+    beam(c, ox, oy, tx, ty, LASER[k], Math.min(1, (base + .45 * pulse) * (0.4 + I)), pulse);
+  }
+  bolts = bolts.filter(b => now - b.born < b.life);
+  for (const b of bolts) { const q = Math.max(0, now - b.born) / b.life; beam(c, b.ox, b.oy, b.x, b.y, b.col, Math.sin(Math.PI * q) * (0.5 + I * .6), 1); }
+}
+function beam(c, ox, oy, tx, ty, col, a, pulse) {
+  if (!(a > 0.01)) return;
+  c.globalAlpha = a; c.strokeStyle = col; c.shadowColor = col; c.shadowBlur = (12 + pulse * 14) * L.dpr; c.lineWidth = 1.1 + pulse * 2;
+  c.beginPath(); c.moveTo(ox, oy); c.lineTo(tx, ty); c.stroke();
+  c.shadowBlur = 0; c.strokeStyle = '#fff9df'; c.lineWidth = .6; c.globalAlpha = a * .8; c.beginPath(); c.moveTo(ox, oy); c.lineTo(tx, ty); c.stroke();
+  const r = 22 + pulse * 26, g = c.createRadialGradient(tx, ty, 1, tx, ty, r);
+  g.addColorStop(0, `rgba(255,249,218,${.6 * a})`); g.addColorStop(.25, col + '88'); g.addColorStop(1, col + '00');
+  c.globalAlpha = 1; c.fillStyle = g; c.fillRect(tx - r, ty - r, 2 * r, 2 * r);
+}
+/* sun bloom (restored from Light Player 'glow' / homepage tap bloom): tap the painting or press ✦ */
+let blooms = [];
+function bloom(now, x, y) { blooms.push({ t: now, x, y }); if (blooms.length > 4) blooms.shift(); if (S.aura) { rings.push({ t: now, k: 1 }); } if (S.laser) fireBolts(now, { x, y }, 6); }
+function drawBlooms(c, now) {
+  blooms = blooms.filter(b => now - b.t < 1800);
+  for (const b of blooms) {
+    const q = (now - b.t) / 1800, a = Math.sin(Math.PI * Math.min(1, q * 1.4)) * (1 - q) * (0.6 + .5 * S.intensity), r = L.p.w * (.08 + .32 * q);
+    const col = S.mode === 'rgb' ? lampColor(now) : [255, 214, 120];
+    const g = c.createRadialGradient(b.x, b.y, 0, b.x, b.y, r); g.addColorStop(0, `rgba(255,250,230,${a})`); g.addColorStop(.35, `rgba(${col.join(',')},${a * .6})`); g.addColorStop(1, `rgba(${col.join(',')},0)`);
+    c.fillStyle = g; c.beginPath(); c.arc(b.x, b.y, r, 0, 6.2832); c.fill();
+    c.strokeStyle = `rgba(255,240,200,${a * .5})`; c.lineWidth = 1;
+    for (let i = 0; i < 12; i++) { const an = i * .5236 + q; c.beginPath(); c.moveTo(b.x + Math.cos(an) * r * .2, b.y + Math.sin(an) * r * .2); c.lineTo(b.x + Math.cos(an) * r * 1.1, b.y + Math.sin(an) * r * 1.1); c.stroke(); }
+  }
+}
+/* lamp cones in RGB mode: coloured light falling from three virtual lamps above the painting */
+function drawCones(c, now) {
+  if (S.mode !== 'rgb') return;
+  const p = L.p, col = lampColor(now), pos = { red: .18, green: .5, blue: .82 }[RG.cur], x = p.x + p.w * pos, a = (.16 + .1 * A.kick) * (0.5 + S.intensity);
+  const g = c.createLinearGradient(x, 0, p.x + p.w / 2, p.y + p.h * .6); g.addColorStop(0, `rgba(${col.join(',')},${a})`); g.addColorStop(1, `rgba(${col.join(',')},0)`);
+  c.fillStyle = g; c.beginPath(); c.moveTo(x - 6, 0); c.lineTo(x + 6, 0); c.lineTo(p.x + p.w * 1.05, p.y + p.h * .8); c.lineTo(p.x - p.w * .05, p.y + p.h * .8); c.closePath(); c.fill();
+  // coloured spill on the wall around the frame
+  const cx = p.x + p.w / 2, cy = p.y + p.h / 2, sg = c.createRadialGradient(cx, cy, p.w * .55, cx, cy, p.w * 1.2);
+  sg.addColorStop(0, `rgba(${col.join(',')},${.22 * (0.5 + S.intensity)})`); sg.addColorStop(1, `rgba(${col.join(',')},0)`);
+  c.save(); c.beginPath(); c.rect(0, 0, L.W, L.H); c.rect(p.x, p.y, p.w, p.h); c.clip('evenodd'); c.fillStyle = sg; c.fillRect(0, 0, L.W, L.H); c.restore();
 }
 
 /* ---------- colours ---------- */
@@ -169,12 +260,12 @@ function drawFront(now) {
     }
     c.restore();
   } else rings.length = 0;
-  if (S.glint && S.frame) {
+  if (S.glint) {
     if (Math.random() < 0.006 * S.speed * (0.5 + I)) glints.push({ t: now, u: Math.random(), s: 0.6 + Math.random() * 0.6 });
-    const g = L.F * 0.5, r = { x: p.x - g + ox, y: p.y - g + oy, w: p.w + 2 * g, h: p.h + 2 * g };
+    const g = S.frame ? L.F * 0.5 : 2, r = { x: p.x - g + ox, y: p.y - g + oy, w: p.w + 2 * g, h: p.h + 2 * g };
     glints = glints.filter(q => now - q.t < 900);
     for (const q of glints) {
-      const f = (now - q.t) / 900, a = Math.sin(f * Math.PI) * 0.85 * I, [x, y] = perimeterPoint(q.u, r), s = L.F * 0.55 * q.s;
+      const f = (now - q.t) / 900, a = Math.sin(f * Math.PI) * 0.85 * I, [x, y] = perimeterPoint(q.u, r), s = Math.max(8, L.F * 0.55) * q.s;
       if (!Number.isFinite(x + y + s + a)) continue;
       const gr = c.createRadialGradient(x, y, 0, x, y, s); gr.addColorStop(0, `rgba(255,250,235,${a})`); gr.addColorStop(1, 'rgba(255,230,180,0)');
       c.fillStyle = gr; c.beginPath(); c.arc(x, y, s, 0, 6.2832); c.fill();
@@ -182,6 +273,8 @@ function drawFront(now) {
       c.beginPath(); c.moveTo(x - s * 1.4, y); c.lineTo(x + s * 1.4, y); c.moveTo(x, y - s * 1.4); c.lineTo(x, y + s * 1.4); c.stroke();
     }
   } else glints.length = 0;
+  drawCones(c, now); drawBlooms(c, now); drawLasers(c, now);
+  c.globalAlpha = 1; c.shadowBlur = 0;
 }
 
 /* ---------- back layer: WebGL (Three.js) or Canvas 2D fallback ---------- */
@@ -241,7 +334,7 @@ async function initWebGL() {
     cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
     frame.visible = S.frame;
     const e = S.frame ? (0.35 + 0.6 * A.level + 0.4 * A.kick) * (0.3 + S.intensity) : 0;
-    const col = ledColor(0, now / 1000 * 0.06 * S.speed);
+    const col = S.mode === 'rgb' ? lampColor(now) : ledColor(0, now / 1000 * 0.06 * S.speed);
     glowM.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255); glowM.opacity = Math.min(1, 0.55 * e);
     glow.visible = S.frame; panel.visible = S.frame;
     r.render(scene, cam);
@@ -256,7 +349,7 @@ function initLite() {
       const k = L.dpr, p = L.p, F = L.F; c.setTransform(k, 0, 0, k, 0, 0);
       c.fillStyle = '#060505'; c.fillRect(0, 0, L.W, L.H);
       if (!S.frame) return;
-      const e = (0.35 + 0.6 * A.level + 0.4 * A.kick) * (0.3 + S.intensity), col = ledColor(0, now / 1000 * 0.06 * S.speed);
+      const e = (0.35 + 0.6 * A.level + 0.4 * A.kick) * (0.3 + S.intensity), col = S.mode === 'rgb' ? lampColor(now) : ledColor(0, now / 1000 * 0.06 * S.speed);
       const cx = p.x + p.w / 2, cy = p.y + p.h / 2;
       c.save(); c.translate(cx, cy); c.scale(1, p.h / p.w * 0.85);
       const g = c.createRadialGradient(0, 0, p.w * 0.3, 0, 0, p.w * 1.05);
@@ -290,29 +383,43 @@ function swapToLite() { // auto-fallback when WebGL is slow; replace the canvas 
 let uiTimer = 0;
 function showUI() { document.body.classList.add('ui'); $('#panel').hidden = false; clearTimeout(uiTimer); uiTimer = setTimeout(() => { if (!$('#panel').matches(':hover')) document.body.classList.remove('ui'); }, 4500); }
 function syncButtons() {
-  document.querySelectorAll('.tg').forEach(b => b.classList.toggle('on', !!S[b.dataset.k]));
-  $('#mNat').classList.toggle('on', S.mode === 'natural'); $('#mUv').classList.toggle('on', S.mode === 'uv');
-  const uv = $('#uv'); clearTimeout(uvTimer);
-  if (S.mode === 'uv') { uv.style.display = 'block'; requestAnimationFrame(() => requestAnimationFrame(() => uv.classList.add('on'))); }
-  else { uv.classList.remove('on'); uvTimer = setTimeout(() => { uv.style.display = 'none'; }, 1700); }
-  uv.classList.toggle('torch', S.mode === 'uv' && S.torch);
-  // nothing to draw above the painting -> remove the overlay layer entirely, so the <img> is composited exactly as on its own
-  $('#front').style.display = (S.led || S.aura || (S.glint && S.frame)) ? '' : 'none';
+  document.querySelectorAll('.tg').forEach(b => { b.classList.toggle('on', !!S[b.dataset.k]); b.setAttribute('aria-pressed', String(!!S[b.dataset.k])); });
+  for (const [id, m] of [['#mNat', 'natural'], ['#mRgb', 'rgb'], ['#mShow', 'show']]) { $(id).classList.toggle('on', S.mode === m); $(id).setAttribute('aria-pressed', String(S.mode === m)); }
+  $('#lamps').hidden = S.mode !== 'rgb';
+  document.querySelectorAll('.lp').forEach(b => b.classList.toggle('on', b.dataset.c === S.lamp));
+  $('#orig').classList.toggle('on', !!saved); $('#orig').setAttribute('aria-pressed', String(!!saved));
+  // nothing to draw above the painting -> remove the overlay layers entirely, so the <img> is composited exactly as on its own
+  const any = S.led || S.aura || S.glint || S.laser || S.mode !== 'natural';
+  $('#front').style.display = any ? '' : 'none';
+  if (S.mode !== 'rgb') { $('#rgb').classList.remove('on'); }
+  $('#rgb').style.display = S.mode === 'rgb' ? '' : 'none';
+  document.body.dataset.mode = S.mode; document.body.dataset.original = saved ? '1' : '0';
 }
-let uvTimer = 0;
-function setOriginal() { Object.assign(S, { frame: false, led: false, aura: false, glint: false, torch: false, mode: 'natural' }); T.tx = T.ty = 0; syncButtons(); }
+let saved = null; const KEYS = ['frame', 'led', 'aura', 'glint', 'laser', 'mode'];
+function setOriginal() { // toggle: 1st press = untouched original art, 2nd press = restore previous effects
+  if (saved) { Object.assign(S, saved); saved = null; }
+  else { saved = Object.fromEntries(KEYS.map(k => [k, S[k]])); Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, mode: 'natural' }); T.tx = T.ty = 0; rings.length = 0; bolts.length = 0; blooms.length = 0; }
+  syncButtons();
+}
+function leaveOriginal() { saved = null; }
 function bindUI() {
   const st = $('#stage');
-  st.addEventListener('pointerdown', e => { onPointer(e); showUI(); });
+  st.addEventListener('pointerdown', e => {
+    onPointer(e); const wasHidden = !document.body.classList.contains('ui'); showUI();
+    const p = L.p; if (!saved && !wasHidden && e.clientX >= p.x && e.clientX <= p.x + p.w && e.clientY >= p.y && e.clientY <= p.y + p.h) bloom(performance.now(), e.clientX, e.clientY);
+  });
   st.addEventListener('pointermove', e => { onPointer(e); if (e.pointerType === 'mouse') showUI(); });
   $('#panel').addEventListener('pointerdown', e => { e.stopPropagation(); showUI(); });
   $('#play').onclick = togglePlay;
-  $('#mNat').onclick = () => { S.mode = 'natural'; syncButtons(); };
-  $('#mUv').onclick = () => { S.mode = 'uv'; syncButtons(); };
+  $('#mNat').onclick = () => { leaveOriginal(); S.mode = 'natural'; syncButtons(); };
+  $('#mRgb').onclick = () => { leaveOriginal(); S.mode = 'rgb'; syncButtons(); };
+  $('#mShow').onclick = () => { leaveOriginal(); S.mode = 'show'; if (!S.laser) S.laser = true; syncButtons(); };
+  document.querySelectorAll('.lp').forEach(b => b.onclick = () => { S.lamp = b.dataset.c; syncButtons(); });
+  $('#burst').onclick = () => { leaveOriginal(); const p = L.p; bloom(performance.now(), p.x + p.w * SUN.x, p.y + p.h * SUN.y); syncButtons(); };
   $('#lang').onclick = () => { S.lang = S.lang === 'en' ? 'zh' : 'en'; applyLang(); };
   $('#int').oninput = e => { S.intensity = +e.target.value; };
   $('#spd').oninput = e => { S.speed = +e.target.value; };
-  document.querySelectorAll('.tg').forEach(b => b.onclick = () => { S[b.dataset.k] = !S[b.dataset.k]; syncButtons(); });
+  document.querySelectorAll('.tg').forEach(b => b.onclick = () => { leaveOriginal(); S[b.dataset.k] = !S[b.dataset.k]; syncButtons(); });
   $('#orig').onclick = setOriginal;
   addEventListener('resize', layout);
 }
@@ -324,8 +431,7 @@ function loop(now) {
   if (!Number.isFinite(T.tx)) T.tx = 0; if (!Number.isFinite(T.ty)) T.ty = 0;
   T.x += (T.tx - T.x) * 0.06; T.y += (T.ty - T.y) * 0.06;
   analyse(now);
-  const uvGlow = $('#uvGlow'); uvGlow.style.opacity = !$('#uv').classList.contains('on') ? 0 : (0.75 + 0.25 * A.level) * (0.55 + 0.6 * S.intensity);
-  gl.render(now); drawFront(now);
+  gl.render(now); drawRGB(now); drawFront(now);
   if (gl.kind === 'webgl' && !Q.has('nofallback') && document.visibilityState === 'visible') {
     frames++; if (dt > 45) slow++;
     if (frames === 240) { if (slow > 150) swapToLite(); frames = 0; slow = 0; }
@@ -338,8 +444,8 @@ async function start() {
   if (weakDevice()) { S.engine = 'lite'; initLite(); }
   else { try { await initWebGL(); } catch (e) { console.warn('WebGL unavailable, using Canvas 2D', e && e.message); swapToLite(); } }
   layout(); updateEngineNote();
-  const img = $('#painting'); if (img.complete && img.naturalWidth) buildUV(img); else img.addEventListener('load', () => buildUV(img), { once: true });
-  window.__premium = { S, setOriginal, syncButtons, engine: () => S.engine };
+  const img = $('#painting'); if (img.complete && img.naturalWidth) buildRGB(img); else img.addEventListener('load', () => buildRGB(img), { once: true });
+  window.__premium = { S, setOriginal, syncButtons, engine: () => S.engine, stats: () => ({ bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
