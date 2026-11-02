@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.62, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.63, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -92,8 +92,9 @@ function analyse(now) {
     A.t = tt; bass = Math.min(1, EN.energyAt(TL, tt));
     const b = RH.update(bass, tt);
     if (b.count < A.count) A.count = b.count; // loop / seek back
-    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); if (isHeavy(b, tt, bass)) IMP.t = now, IMP.n++; }
-    A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = b.pulse; A.phase = b.phase; return;
+    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); if (isHeavy(b, tt, bass)) { IMP.t = now; IMP.at = TL.events[b.count - 1]; IMP.n++; } if (b.stage !== 'build') launchDepth(null, null, now, b.count); for (let i = 0; i < 3; i++) { musicSpots.push({ ...hpDest(i * 2, b.sweep, now), born: now }); } if (musicSpots.length > 9) musicSpots.splice(0, musicSpots.length - 9); }
+    A.b = b; A.since = b.count ? Math.max(0, tt - TL.events[b.count - 1]) : 9; // seconds since the last grid kick (audio time)
+    A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = b.stage === 'build' ? b.pulse : Math.exp(-A.since / 0.095); A.drop = b.dropPulse || 0; A.phase = b.phase; return;
   }
   CK.ok = 0;
   if (A.an && S.playing) {
@@ -120,7 +121,8 @@ function isHeavy(b, t, bass) { // v2476.62: heavy downbeats felt through the WHO
   if (b.count % 4 === 0 && bass > 0.7) { IMP.s = 0.55; return true; }
   return false;
 }
-function impE(now) { if (!S.impact) return 0; const q = (now - IMP.t) / 650; return q < 0 || q > 1 ? 0 : (1 - q) * (1 - q) * (IMP.s || 1); }
+// impE: audio-time envelope while playing, shorter than one beat (0.405 s) so it never smears into the next kick
+function impE(now) { if (!S.impact) return 0; const q = S.playing && IMP.at != null ? (A.t - IMP.at) / 0.34 : (now - IMP.t) / 650; return q < 0 || q > 1 ? 0 : (1 - q) * (1 - q) * (IMP.s || 1); }
 function drawImpact(c, now) { // v2476.62: refined — soft light swell from the sun, gentle fading rays, slight brightness lift. No ripple rings.
   const e = impE(now); if (e <= 0.002) return;
   const p = L.p, cx = p.x + p.w * SUN.x, cy = p.y + p.h * SUN.y, I = 0.6 + 0.5 * S.intensity, R = p.w * (0.55 + 0.15 * e);
@@ -181,8 +183,8 @@ function drawRGB(now) {
   const rc = $('#rgb'); const on = S.mode === 'rgb' && RG.masks.red;
   rc.classList.toggle('on', !!on); if (!on) return;
   const col = lampNow(now);
-  if (col !== RG.cur) { RG.from = RG.cur; RG.cur = col; RG.changed = now; }
-  const mix = Math.min(1, (now - RG.changed) / (S.playing ? 260 : 900)), c = rc.getContext('2d'), op = k => (k === 'red' ? .78 : .86) * (0.55 + 0.5 * S.intensity);
+  if (col !== RG.cur) { RG.from = RG.cur; RG.cur = col; RG.changed = now; RG.changedT = A.t; }
+  const mix = Math.min(1, S.playing ? Math.max(0, A.t - (RG.changedT || 0)) / 0.26 : (now - RG.changed) / 900), c = rc.getContext('2d'), op = k => (k === 'red' ? .78 : .86) * (0.55 + 0.5 * S.intensity);
   c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, rc.width, rc.height);
   if (mix < 1) { c.globalAlpha = op(RG.from) * (1 - mix); c.drawImage(RG.masks[RG.from], 0, 0); }
   c.globalAlpha = op(RG.cur) * (mix < 1 ? mix : 1); c.drawImage(RG.masks[RG.cur], 0, 0);
@@ -195,56 +197,118 @@ function drawRGB(now) {
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
 }
 function lampColor(now) {
-  const a = LAMP_RGB[RG.from], b = LAMP_RGB[RG.cur], m = Math.min(1, (now - RG.changed) / (S.playing ? 260 : 900));
+  const a = LAMP_RGB[RG.from], b = LAMP_RGB[RG.cur], m = Math.min(1, S.playing ? Math.max(0, A.t - (RG.changedT || 0)) / 0.26 : (now - RG.changed) / 900);
   return a.map((v, i) => Math.round(v * (1 - m) + b[i] * m));
 }
 
 /* ---------- Club lasers (v2476.60): thin crisp beams from fixed emitters above the painting.
    patterns rotate every 8 kicks: fan sheet sweep / single-beam scan / crossing twin fans.
    On the beat the beams strobe hard on, then gate down; faint haze scatter along each beam; tips fade out. ---------- */
-const LASER = ['#00ff4c', '#ff1744', '#2f5bff', '#ff2bd6', '#00e5ff', '#39ff14'];
+/* Lasers (v2476.63): faithful port of the homepage sound-light lasers (ae-home-light.js, GPT handoff 8b64dbf, unchanged in
+   site v2476.26): six prismatic beams from off-frame origins onto the painting, refracted ray fans at each landing point,
+   soft light pools, beat rings; flying depth bolts on each kick; small music spots. Coordinates mapped to the painting rect. */
+const LASER = ['#ff416d', '#57ffa0', '#ffe28d', '#65dbff', '#c987ff', '#ffac68'];
 const LZ = { pat: 0, hit: -1e9 };
-let bolts = [];
+let bolts = [], musicSpots = [], spots = [];
 function fireBolts() {}
-function emitters() { // v2476.61: off-frame sources (bottom corners + above screen), beams land ON the painting
-  return [{ x: L.W * .5, y: -30 }, { x: -30, y: L.H + 30 }, { x: L.W + 30, y: L.H + 30 }];
+const variation = seed => { const n = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return n - Math.floor(n); };
+function hpGeom() { const p = L.p; return { X0: p.x, W: p.w, T: p.y, H: p.h, sx: p.x + p.w * SUN.x, sy: p.y + p.h * SUN.y }; }
+function hpDest(i, phase, now) {
+  const G = hpGeom(), group = Math.floor((A.count || RG.beats) / 4), angle = i * Math.PI / 3 + phase * .24 + variation(group + 1) * 1.7;
+  const t = { x: G.X0 + G.W * (.16 + .68 * (.5 + .5 * Math.sin(angle))), y: G.T + Math.max(30, G.H * (.20 + .60 * (.5 + .5 * Math.cos(angle * 1.3)))) };
+  const impact = S.playing ? Math.min(1, (A.drop || 0) * 1.8) : 0;
+  return { x: t.x * (1 - impact) + G.sx * impact, y: t.y * (1 - impact) + G.sy * impact };
 }
-function laserGate(now) {
-  if (!S.playing) return 0.6 + 0.25 * Math.sin(now / 700);
-  const ph = A.phase || 0; return ph < 0.22 ? 1 : 0.5;
-}
-const trail = [];
-function drawLasers(c, now) {
-  if (!S.laser) { trail.length = 0; return; }
-  const t = now / 1000 * S.speed, I = 0.45 + S.intensity * 0.75, g = laserGate(now) * I, E = emitters(), p = L.p;
-  const n8 = Math.floor((S.playing ? A.count : RG.beats) / 8), colA = LASER[n8 % 6], colB = LASER[(n8 + 3) % 6];
-  const P2 = (u, v) => ({ x: p.x + p.w * u, y: p.y + p.h * v });
-  c.save(); c.lineCap = 'round';
-  const beam = (o, h, col, a) => { /* thin */ c.globalAlpha = a * 0.12; c.strokeStyle = col; c.lineWidth = 3; c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(h.x, h.y); c.stroke(); c.globalAlpha = Math.min(1, a * .9); c.lineWidth = 1; c.stroke(); return; // faint haze beam from an off-frame source to the hit point on the canvas surface
-    c.globalAlpha = a * 0.35; c.strokeStyle = col; c.lineWidth = 7; c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(h.x, h.y); c.stroke();
-    c.globalAlpha = Math.min(1, a); c.lineWidth = 2; c.stroke(); c.globalAlpha = a * .6; c.strokeStyle = '#fff'; c.lineWidth = .8; c.stroke(); };
-  const spot = (h, col, a, r = 10) => { // bright hit spot burning on the painting
-    const gr = c.createRadialGradient(h.x, h.y, 0, h.x, h.y, r * 3); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, col); gr.addColorStop(1, col + '00');
-    c.globalAlpha = Math.min(1, a * 1.2); c.fillStyle = gr; c.beginPath(); c.arc(h.x, h.y, r * 3, 0, 6.2832); c.fill(); };
-  const P = LZ.pat;
-  const thin = (o, h, col, a) => { c.globalAlpha = a * 0.12; c.strokeStyle = col; c.lineWidth = 3; c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(h.x, h.y); c.stroke(); c.globalAlpha = Math.min(1, a * 0.9); c.lineWidth = 0.9; c.stroke(); };
-  const dot = (h, col, a) => { c.globalAlpha = Math.min(1, a); c.fillStyle = '#fff'; c.beginPath(); c.arc(h.x, h.y, 1.4, 0, 6.2832); c.fill(); c.globalAlpha = a * .5; c.fillStyle = col; c.beginPath(); c.arc(h.x, h.y, 3.5, 0, 6.2832); c.fill(); };
-  if (P === 0) { // tunnel: thin crisp beams from both lower corners converging on a slowly drifting point on the canvas, tiny hit points
-    const tgt = P2(0.5 + 0.18 * Math.sin(t * 0.35), 0.42 + 0.12 * Math.sin(t * 0.27));
-    for (const [o, col, sgn] of [[E[1], colA, 1], [E[2], colB, -1]]) for (let i = 0; i < 7; i++) { const off = (i - 3) * p.w * 0.035, h = { x: tgt.x + off, y: tgt.y + sgn * off * 0.3 }; thin(o, h, col, g * .8); dot(h, col, g); }
-  } else if (P === 1) { // rotating ring of hit points around the sun + traced circle
-    const cx = p.x + p.w * SUN.x, cy = p.y + p.h * SUN.y, R = p.w * (0.26 + 0.06 * Math.sin(t * 2));
-    c.globalAlpha = Math.min(1, g * .8); c.strokeStyle = colA; c.lineWidth = 1.2; c.beginPath(); c.arc(cx, cy, R, 0, 6.2832); c.stroke();
-    for (let i = 0; i < 8; i++) { const an = t * 1.6 + i * Math.PI / 4, h = { x: cx + Math.cos(an) * R, y: cy + Math.sin(an) * R }; beam(E[i % 3], h, i % 2 ? colB : colA, g); dot(h, i % 2 ? colB : colA, g); }
-    c.globalAlpha = Math.min(1, g * .9); c.strokeStyle = colB; c.lineWidth = 1.2; c.beginPath(); for (let i = 0; i <= 6; i++) { const an = -t * 0.8 + i * Math.PI / 3; const X = cx + Math.cos(an) * R * .55, Y = cy + Math.sin(an) * R * .55; i ? c.lineTo(X, Y) : c.moveTo(X, Y); } c.stroke(); // hexagon inside
-  } else { // slow rotating beam cone from above + a gentle liquid sheet (beams whose landing points ripple like a wave)
-    const o = E[0], n = 16, base = 0.35 * Math.sin(t * 0.25);
-    for (let i = 0; i < n; i++) { const an = base + (i / (n - 1) - 0.5) * 0.7, u = 0.5 + Math.sin(an) * 0.9, v = 0.55 + 0.08 * Math.sin(t * 1.2 + i * 0.6);
-      const h = P2(Math.max(0.03, Math.min(0.97, u)), v); thin(o, h, i % 2 ? colA : colB, g * .7); dot(h, i % 2 ? colA : colB, g * .9); }
-    c.globalAlpha = g * .5; c.strokeStyle = colA; c.lineWidth = 0.8; c.beginPath();
-    for (let i = 0; i <= 40; i++) { const u = i / 40, h = P2(u, 0.55 + 0.08 * Math.sin(t * 1.2 + u * 9.6)); i ? c.lineTo(h.x, h.y) : c.moveTo(h.x, h.y); } c.stroke();
+function launchDepth(x, y, now, seed) {
+  if (!S.laser) return; const G = hpGeom(), st = A.b ? A.b.stage : 'groove', number = S.playing ? (st === 'drop' ? 6 : 2) : 6;
+  for (let i = 0; i < number; i++) {
+    const edge = i % 3, ox = edge === 0 ? G.X0 - G.W * .12 : edge === 1 ? G.X0 + G.W * 1.12 : G.X0 + G.W * (.1 + ((i + seed) % 5) * .2), oy = edge === 2 ? G.T - 30 : G.T + G.H * (.1 + ((i + seed) % 5) * .16);
+    const tg = x === null ? hpDest(i, seed, now) : { x, y };
+    bolts.push({ ox, oy, x: tg.x, y: tg.y, born: now + (S.playing ? 0 : i * 12), life: S.playing ? 180 : 650, musical: S.playing, color: LASER[i] });
   }
-  c.restore(); c.globalAlpha = 1;
+  if (bolts.length > 36) bolts.splice(0, bolts.length - 36);
+}
+function drawLasers(ctx, now) {
+  const G = hpGeom(), lite = S.engine === 'lite';
+  ctx.save(); ctx.beginPath(); ctx.rect(G.X0, G.T, G.W, G.H); ctx.clip();
+  if (S.laser) {
+    const b = S.playing && A.b ? A.b : { count: RG.beats, pulse: A.kick, phase: 0, stage: 'groove', dropPulse: 0, buildProgress: 0, sweep: now / 405 };
+    const pulse = S.playing ? A.kick : A.kick, colors = LASER, sweep = b.sweep || 0;
+    ctx.globalCompositeOperation = 'screen';
+    const group = Math.floor(b.count / 4), pattern = Math.floor(variation(group + 3) * 3), beamCount = b.stage === 'build' ? (b.buildProgress > .7 ? 5 : 3) : 6;
+    LZ.pat = pattern; const energy = A.level;
+    for (let i = 0; i < beamCount; i++) {
+      const originX = i % 3 === 0 ? G.X0 - G.W * .08 : i % 3 === 1 ? G.X0 + G.W * 1.08 : G.X0 + G.W * (.15 + i * .12), originY = i % 3 === 2 ? G.T - 20 : G.T + G.H * (.15 + (i % 4) * .20);
+      const tg = hpDest(i, sweep, now), targetX = tg.x, targetY = tg.y;
+      const power = Math.min(1, ((b.stage === 'build' ? .06 + b.buildProgress * .06 : .07) + energy * .035 + pulse * .85 + (b.dropPulse || 0) * .12) * (0.6 + 0.6 * S.intensity) + (S.playing ? 0 : .12));
+      ctx.shadowColor = colors[i]; ctx.shadowBlur = lite ? 0 : 14 + pulse * 25;
+      ctx.strokeStyle = colors[i]; ctx.globalAlpha = power; ctx.lineWidth = .8 + pulse * 2.2;
+      ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke();
+      ctx.shadowBlur = lite ? 0 : 4; ctx.strokeStyle = '#fff9df'; ctx.lineWidth = .65; ctx.globalAlpha = power * .72;
+      ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke();
+      for (let k = -1; k <= 1; k++) {
+        const angle = Math.atan2(targetY - originY, targetX - originX) + k * (pattern === 0 ? .12 : pattern === 1 ? .34 : .52) + Math.sin(sweep) * .18;
+        const reach = Math.min(G.W * .24, 150) * (1 + pulse * .22), endX = targetX + Math.cos(angle) * reach, endY = targetY + Math.sin(angle) * reach;
+        const trail = ctx.createLinearGradient(targetX, targetY, endX, endY); trail.addColorStop(0, colors[(i + k + colors.length) % colors.length]); trail.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = trail; ctx.globalAlpha = power * .72; ctx.lineWidth = .8 + pulse; ctx.beginPath(); ctx.moveTo(targetX, targetY); ctx.lineTo(endX, endY); ctx.stroke();
+      }
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      const pool = ctx.createRadialGradient(targetX, targetY, 1, targetX, targetY, 38 + pulse * 48);
+      pool.addColorStop(0, `rgba(255,249,218,${power * .60})`); pool.addColorStop(.18, colors[i] + Math.round(power * 75).toString(16).padStart(2, '0')); pool.addColorStop(1, colors[i] + '00');
+      ctx.fillStyle = pool; ctx.fillRect(targetX - 90, targetY - 90, 180, 180);
+      ctx.strokeStyle = colors[i]; ctx.lineWidth = .7; ctx.globalAlpha = pulse * .6; ctx.beginPath(); ctx.arc(targetX, targetY, Math.max(0, 8 + Math.min(1, b.phase) * 28), 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.shadowBlur = 0;
+    bolts = bolts.filter(q => now - q.born < q.life);
+    ctx.globalCompositeOperation = 'screen';
+    for (const q of bolts) {
+      const pr = Math.max(0, (now - q.born) / q.life), tail = Math.max(0, pr - .32), near = (1 - pr) ** 2, back = (1 - tail) ** 2;
+      const opacity = q.musical ? EN.flightPower((now - q.born) / 1000) : Math.sin(Math.PI * pr);
+      const tipX = q.x + (q.ox - q.x) * near, tipY = q.y + (q.oy - q.y) * near, startX = q.x + (q.ox - q.x) * back, startY = q.y + (q.oy - q.y) * back;
+      const streak = ctx.createLinearGradient(startX, startY, tipX, tipY); streak.addColorStop(0, q.color + '00'); streak.addColorStop(1, q.color);
+      ctx.strokeStyle = streak; ctx.lineWidth = 1.4 + (1 - pr) * 7; ctx.shadowColor = q.color; ctx.shadowBlur = lite ? 0 : 20; ctx.globalAlpha = opacity * .95;
+      ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(tipX, tipY); ctx.stroke();
+      ctx.strokeStyle = '#fff9e9'; ctx.lineWidth = .7 + (1 - pr) * 1.5; ctx.globalAlpha = opacity * .85;
+      ctx.beginPath(); ctx.moveTo(startX + (tipX - startX) * .5, startY + (tipY - startY) * .5); ctx.lineTo(tipX, tipY); ctx.stroke();
+      ctx.fillStyle = '#fff6d2'; ctx.beginPath(); ctx.arc(tipX, tipY, Math.max(0, 1.5 + (1 - pr) * 2), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    const st = A.b ? A.b.stage : 'groove', musicLife = st === 'build' ? 90 : 150;
+    musicSpots = musicSpots.filter(s => now - s.born < musicLife);
+    for (const s of musicSpots) {
+      const life = (now - s.born) / musicLife, opacity = (1 - life) * (st === 'build' ? .55 + (A.b.buildProgress || 0) * .25 : .65), radius = st === 'build' ? 24 + life * 44 : 18 + life * 38;
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, radius); g.addColorStop(0, `rgba(255,247,207,${opacity})`); g.addColorStop(1, 'rgba(255,210,80,0)');
+      ctx.fillStyle = g; ctx.fillRect(s.x - radius, s.y - radius, radius * 2, radius * 2);
+    }
+  } else { bolts.length = 0; musicSpots.length = 0; }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+/* homepage tap response (ring + soft gold pool, 1.1 s) + gold burst element; in gallery/glint presets the stars also scatter from the finger */
+let tapStars = [];
+function drawTaps(ctx, now) {
+  const touchLife = 1100; spots = spots.filter(s => now - s.born < touchLife);
+  ctx.save(); ctx.globalCompositeOperation = 'screen';
+  for (const s of spots) {
+    const life = (now - s.born) / touchLife, opacity = 1 - life, radius = 35 + life * 90;
+    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, radius); g.addColorStop(0, `rgba(255,249,210,${opacity})`); g.addColorStop(.22, `rgba(255,217,108,${opacity * .8})`); g.addColorStop(1, 'rgba(245,180,45,0)');
+    ctx.fillStyle = g; ctx.fillRect(s.x - radius, s.y - radius, radius * 2, radius * 2);
+    ctx.strokeStyle = `rgba(255,222,127,${opacity})`; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(s.x, s.y, Math.max(0, 8 + life * 55), 0, Math.PI * 2); ctx.stroke();
+  }
+  tapStars = tapStars.filter(q => now - q.t < q.life);
+  for (const q of tapStars) {
+    const u = (now - q.t) / q.life, e = 1 - (1 - u) ** 3, x = q.x + q.vx * e, y = q.y + q.vy * e + 12 * u * u, a = (1 - u) ** 1.5, r = q.s * (1 - .5 * u);
+    ctx.globalAlpha = a; ctx.fillStyle = '#fff8e6'; ctx.beginPath();
+    ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+    ctx.globalAlpha = a * .5; ctx.fillStyle = 'rgba(255,214,140,1)'; ctx.beginPath(); ctx.arc(x, y, r * .45, 0, 6.2832); ctx.fill();
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
+  const now = performance.now(); spots.push({ x, y, born: now }); if (spots.length > 6) spots.shift(); RG.taps = (RG.taps || 0) + 1;
+  const b = document.createElement('span'); b.className = 'ae-gold-burst'; b.style.left = x + 'px'; b.style.top = y + 'px'; $('#stage').appendChild(b); setTimeout(() => b.remove(), 1650);
+  if (S.glint || S.preset === 'gallery') for (let i = 0; i < 14; i++) { const an = Math.random() * 6.2832, d = 30 + Math.random() * 90; tapStars.push({ t: now, x, y, vx: Math.cos(an) * d, vy: Math.sin(an) * d, s: 4 + Math.random() * 6, life: 700 + Math.random() * 600 }); }
+  if (S.laser && !S.playing) launchDepth(x, y, now, RG.taps);
+  if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {}
 }
 /* sun bloom (restored from Light Player 'glow' / homepage tap bloom): tap the painting or press ✦ */
 let blooms = [];
@@ -385,7 +449,7 @@ function drawFront(now) {
     c.shadowBlur = 0;
   }
   if (S.aura) {
-    const cx = p.x + p.w * SUN.x, cy = p.y + p.h * SUN.y, br = 0.5 + 0.5 * Math.sin(now / 1000 * 1.4 * S.speed);
+    const cx = p.x + p.w * SUN.x, cy = p.y + p.h * SUN.y, br = S.playing ? 0.5 + 0.5 * Math.cos(6.2832 * ((A.count + Math.min(1, A.phase)) / 8)) : 0.5 + 0.5 * Math.sin(now / 1000 * 1.4 * S.speed);
     const rad = p.w * (0.30 + 0.012 * br + 0.022 * A.kick), a = Math.min(1, (0.55 + 0.15 * br + 0.4 * A.kick) * (0.5 + I));
     const gr = c.createRadialGradient(cx, cy, rad * 0.82, cx, cy, rad * 1.12);
     gr.addColorStop(0, 'rgba(255,214,150,0)'); gr.addColorStop(0.5, `rgba(255,226,170,${a * 0.6})`); gr.addColorStop(1, 'rgba(255,200,120,0)');
@@ -407,7 +471,7 @@ function drawFront(now) {
     }
     drawSparks(c, now, ox, oy);
   } else { glints.length = 0; sparks.length = 0; }
-  drawCones(c, now); drawLasers(c, now);
+  drawCones(c, now); drawLasers(c, now); drawTaps(c, now);
   c.save(); c.globalCompositeOperation = 'source-over'; drawFixture(c, now); c.restore();
   drawBlooms(c, now);
   c.globalAlpha = 1; c.shadowBlur = 0;
@@ -538,7 +602,7 @@ function drawLook(now, dt) {
   if (window.AELooks.draw(c, w, h, { x: 0, y: 0, w, h }, LK.ph, LK.idx[S.look], 1, false, 1, vals)) LK.draws++;
 }
 function frontVis() { // nothing to draw above the painting -> remove the overlay layer entirely, so the <img> is composited exactly as on its own
-  const any = (S.impact && performance.now() - IMP.t < 800) || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
+  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
   const d = any ? '' : 'none'; if ($('#front').style.display !== d) $('#front').style.display = d;
 }
 function syncButtons() {
@@ -582,18 +646,18 @@ function bindZoom() {
     else if (Z.pts.size === 1 && Z.s > 1) { Z.x += e.clientX - pr.x; Z.y += e.clientY - pr.y; applyZoom(); } });
   const up = e => { Z.pts.delete(e.pointerId); Z.st = null; if (!Z.pts.size) setTimeout(() => { Z.pinching = false; }, 50); };
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => st.addEventListener(ev, up));
-  st.addEventListener('pointerup', e => { const n = Date.now(), g = Z.g; if (!g || Z.pts.size) return; Z.g = null; const tap = !g.multi && n - g.t < 280 && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 12; if (!tap) { Z.lastTap = 0; return; } if (n - Z.lastTap < 320 && Z.s > 1) { resetZoom(); Z.lastTap = 0; } else Z.lastTap = n; });
+  st.addEventListener('pointerup', e => { const n = Date.now(), g = Z.g; if (!g || Z.pts.size) return; Z.g = null; const tap = !g.multi && n - g.t < 280 && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 12; if (!tap) { Z.lastTap = 0; return; } if (!Z.consumed) { const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) artTap(x, y); else if (Z.s === 1) showUI(); } if (n - Z.lastTap < 320 && Z.s > 1) { resetZoom(); Z.lastTap = 0; } else Z.lastTap = n; });
   st.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Z.s * Math.exp(-e.deltaY * 0.002)); }, { passive: false });
   $('#zreset').onclick = e => { e.stopPropagation(); resetZoom(); };
 }
 function bindUI() {
   bindZoom();
   const st = $('#stage');
-  st.addEventListener('pointerdown', e => {
-    onPointer(e); const wasHidden = !document.body.classList.contains('ui'); showUI();
-    const p = L.p; if (!wasHidden && e.clientX >= p.x && e.clientX <= p.x + p.w && e.clientY >= p.y && e.clientY <= p.y + p.h) { if (!Z.pinching && Z.pts.size <= 1 && Z.s === 1) bloom(performance.now(), e.clientX, e.clientY); }
-  });
-  st.addEventListener('pointermove', e => { onPointer(e); if (e.pointerType === 'mouse') showUI(); });
+  // v2476.63: the painting is for art interaction only. Panel opens from ⚙ or a tap on the empty area beside the painting;
+  // while it is open a tap anywhere outside it (backdrop) closes it.
+  st.addEventListener('pointerdown', e => { onPointer(e); if (document.body.classList.contains('ui') && Z.pts.size <= 1) { hideUI(); Z.consumed = true; } else if (Z.pts.size <= 1) Z.consumed = false; });
+  st.addEventListener('pointermove', onPointer);
+  $('#open').onclick = e => { e.stopPropagation(); showUI(); };
   $('#panel').addEventListener('pointerdown', e => { e.stopPropagation(); showUI(); });
   $('#play').onclick = togglePlay;
   $('#mNat').onclick = () => { S.preset = ''; leaveOriginal(); S.mode = 'natural'; syncButtons(); };
@@ -625,7 +689,7 @@ const PRESETS = {
   breath:  { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', aura: true, intensity: 0.55, speed: 0.45 },                                // 柔光呼吸: slow cool blue-violet wash + breathing ring, no LED/sparks
   stage:   { ...BASE, mode: 'rgb', rgbStyle: 'spot', led: true, glint: true, bloom: true, impact: true, intensity: 0.85, speed: 1.2 },       // RGB 舞台: 3 spots + impact
   club:    { ...BASE, mode: 'rgb', rgbStyle: 'wash', frame: true, led: true, laser: true, impact: true, intensity: 0.85, speed: 1.1 },       // 夜店雷射: lasers projected on the painting
-  amber:   { ...BASE, mode: 'natural', look: 'amber', led: true, impact: true, intensity: 0.5, speed: 1 },                                  // 琥珀 Amber (琉璃 glass): golden light flowing along curved veins
+  //amber removed v2476.63: { ...BASE, mode: 'natural', look: 'amber', led: true, impact: true, intensity: 0.5, speed: 1 },                                  // 琥珀 Amber (琉璃 glass): golden light flowing along curved veins
   gem:     { ...BASE, mode: 'natural', look: 'gem', glint: true, impact: true, intensity: 0.75, speed: 1 }                                   // 寶石 Gem: faceted, white streaks along facet edges flash on beats
 };
 function applyPreset(k) { saved = null; Object.assign(S, PRESETS[k]); S.preset = k; $('#int').value = S.intensity; syncButtons(); }
@@ -652,7 +716,7 @@ async function start() {
   layout(); updateEngineNote();
   const img = $('#painting'); if (img.complete && img.naturalWidth) buildRGB(img); else img.addEventListener('load', () => buildRGB(img), { once: true });
   if (window.AELooks) window.AELooks.prepare(img).then(ok => { LK.ready = !!ok; });
-  window.__premium = { Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+  window.__premium = { artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }

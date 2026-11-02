@@ -18,7 +18,8 @@
   </div>
   <canvas id="front" aria-hidden="true"></canvas>
 </div>
-<div id="hint" data-zh="輕觸 · 顯示控制" data-en="Tap · show controls"></div>
+<div id="hint" data-zh="點畫作互動 · 雙指縮放 · ⚙ 設定" data-en="Tap the art · pinch to zoom · ⚙ settings"></div>
+<button id="open" aria-label="settings" title="設定 / Settings">⚙</button>
 <button id="zreset" hidden aria-label="reset zoom" data-zh="⟲ 還原大小" data-en="⟲ Reset zoom"></button>
 <header id="brand"><a href="/" data-zh="AE UNIVERSE CREATION" data-en="AE UNIVERSE CREATION"></a><span id="title" data-zh="盛明 · 精裝版" data-en="Eternal Sun · Premium"></span></header>
 <nav id="panel" aria-label="controls" hidden>
@@ -30,7 +31,6 @@
     <button class="pr" data-p="breath" data-zh="柔光呼吸" data-en="Soft breathing"></button>
     <button class="pr" data-p="stage" data-zh="RGB 舞台" data-en="RGB stage"></button>
     <button class="pr" data-p="club" data-zh="夜店雷射" data-en="Club lasers"></button>
-    <button class="pr" data-p="amber" data-zh="琥珀 Amber" data-en="Amber"></button>
     <button class="pr" data-p="gem" data-zh="寶石 Gem" data-en="Gem"></button>
   </div>
   <div class="row prog"><span id="tcur">0:00</span><input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="song position"><span id="tdur">0:00</span></div>
@@ -70,6 +70,7 @@
 <script src="/player/eternal-sun/assets/ae-home-light-energy.js"></script>
 <script src="/player/eternal-sun/assets/ae-home-beats.js"></script>
 <script src="./assets/looks.js"></script>
+<script src="/ae-chime.js"></script>
 <script type="module" src="./assets/premium.js"></script>
 </body>
 </html>
