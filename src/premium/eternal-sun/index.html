@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="robots" content="noindex">
 <title>盛明 Eternal Sun · 精裝版 Premium Edition · AE Universe Creation</title>
@@ -22,7 +22,7 @@
 <nav id="panel" aria-label="controls" hidden>
   <div class="row">
     <button id="play" data-zh="▶ 播放音樂" data-en="▶ Play music"></button>
-    <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mRgb" data-zh="三色照畫" data-en="RGB light"></button><button id="mShow" data-zh="聲光秀" data-en="Light show"></button></div>
+    <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mRgb" data-zh="三色照畫" data-en="RGB light"></button></div>
     <button id="lang">EN</button>
   </div>
   <div class="row lamps" id="lamps" hidden>
@@ -37,18 +37,19 @@
     <label><span data-zh="速度" data-en="Speed"></span><input id="spd" type="range" min="0.3" max="2" step="0.01" value="1"></label>
   </div>
   <div class="row toggles">
-    <button class="tg on" data-k="laser" data-zh="雷射" data-en="Laser"></button>
+    <button class="tg on" data-k="laser" data-zh="雷射光" data-en="Laser"></button>
     <button class="tg on" data-k="frame" data-zh="畫框" data-en="Frame"></button>
     <button class="tg on" data-k="led" data-zh="燈帶" data-en="LED"></button>
     <button class="tg on" data-k="aura" data-zh="光環" data-en="Aura"></button>
     <button class="tg on" data-k="glint" data-zh="閃光" data-en="Glints"></button>
-    <button class="tg on" data-k="laser" data-zh="雷射光" data-en="Laser"></button>
     <button id="burst" data-zh="✦ 綻放" data-en="✦ Bloom"></button>
     <button id="orig" aria-pressed="false" data-zh="原畫" data-en="Original art"></button>
   </div>
   <p class="note" id="engine"></p>
 </nav>
 <audio id="music" src="/player/eternal-sun/assets/ae-eternal-stream.m4a" preload="none" loop crossorigin="anonymous"></audio>
+<script src="/player/eternal-sun/assets/ae-home-light-energy.js"></script>
+<script src="/player/eternal-sun/assets/ae-home-beats.js"></script>
 <script type="module" src="./assets/premium.js"></script>
 </body>
 </html>
