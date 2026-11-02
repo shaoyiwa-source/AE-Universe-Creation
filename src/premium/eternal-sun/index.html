@@ -13,6 +13,7 @@
   <canvas id="back" aria-hidden="true"></canvas>
   <div id="art">
     <img id="painting" src="/assets/eternal-sun-canonical-1110x1536.jpg" alt="盛明 Eternal Sun — original painting" draggable="false">
+    <canvas id="look" aria-hidden="true"></canvas>
     <canvas id="rgb" aria-hidden="true"></canvas>
   </div>
   <canvas id="front" aria-hidden="true"></canvas>
@@ -28,7 +29,10 @@
     <button class="pr" data-p="breath" data-zh="柔光呼吸" data-en="Soft breathing"></button>
     <button class="pr" data-p="stage" data-zh="RGB 舞台" data-en="RGB stage"></button>
     <button class="pr" data-p="club" data-zh="夜店雷射" data-en="Club lasers"></button>
+    <button class="pr" data-p="amber" data-zh="琥珀 Amber" data-en="Amber"></button>
+    <button class="pr" data-p="gem" data-zh="寶石 Gem" data-en="Gem"></button>
   </div>
+  <div class="row prog"><span id="tcur">0:00</span><input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="song position"><span id="tdur">0:00</span></div>
   <div class="row">
     <button id="play" data-zh="▶ 播放音樂" data-en="▶ Play music"></button>
     <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mRgb" data-zh="三色照畫" data-en="RGB light"></button></div>
@@ -49,7 +53,6 @@
   </div>
   <div class="row">
     <label><span data-zh="強度" data-en="Intensity"></span><input id="int" type="range" min="0" max="1" step="0.01" value="0.7"></label>
-    <label><span data-zh="動態速度·非音樂" data-en="FX speed (not music)"></span><input id="spd" type="range" min="0.3" max="2" step="0.01" value="1"></label>
   </div>
   <div class="row toggles">
     <button class="tg" data-k="laser" data-zh="雷射光" data-en="Laser"></button>
@@ -62,9 +65,10 @@
   </div>
   <p class="note" id="engine"></p>
 </nav>
-<audio id="music" src="/player/eternal-sun/assets/ae-eternal-stream.m4a" preload="none" loop crossorigin="anonymous"></audio>
+<audio id="music" src="/player/eternal-sun/assets/ae-eternal-stream.m4a" preload="metadata" loop crossorigin="anonymous"></audio>
 <script src="/player/eternal-sun/assets/ae-home-light-energy.js"></script>
 <script src="/player/eternal-sun/assets/ae-home-beats.js"></script>
+<script src="./assets/looks.js"></script>
 <script type="module" src="./assets/premium.js"></script>
 </body>
 </html>
