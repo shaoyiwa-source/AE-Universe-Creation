@@ -20,6 +20,15 @@
 <div id="hint" data-zh="輕觸 · 顯示控制" data-en="Tap · show controls"></div>
 <header id="brand"><a href="/" data-zh="AE UNIVERSE CREATION" data-en="AE UNIVERSE CREATION"></a><span id="title" data-zh="盛明 · 精裝版" data-en="Eternal Sun · Premium"></span></header>
 <nav id="panel" aria-label="controls" hidden>
+  <button id="close" aria-label="close" title="關閉 / Close">✕</button>
+  <div class="row presets">
+    <span class="lab" data-zh="模式" data-en="Preset"></span>
+    <button class="pr on" data-p="golden" data-zh="金色綻放" data-en="Golden bloom"></button>
+    <button class="pr" data-p="gallery" data-zh="畫廊燈" data-en="Gallery light"></button>
+    <button class="pr" data-p="breath" data-zh="柔光呼吸" data-en="Soft breathing"></button>
+    <button class="pr" data-p="stage" data-zh="RGB 舞台" data-en="RGB stage"></button>
+    <button class="pr" data-p="club" data-zh="夜店雷射" data-en="Club lasers"></button>
+  </div>
   <div class="row">
     <button id="play" data-zh="▶ 播放音樂" data-en="▶ Play music"></button>
     <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mRgb" data-zh="三色照畫" data-en="RGB light"></button></div>
@@ -40,10 +49,10 @@
   </div>
   <div class="row">
     <label><span data-zh="強度" data-en="Intensity"></span><input id="int" type="range" min="0" max="1" step="0.01" value="0.7"></label>
-    <label><span data-zh="速度" data-en="Speed"></span><input id="spd" type="range" min="0.3" max="2" step="0.01" value="1"></label>
+    <label><span data-zh="動態速度·非音樂" data-en="FX speed (not music)"></span><input id="spd" type="range" min="0.3" max="2" step="0.01" value="1"></label>
   </div>
   <div class="row toggles">
-    <button class="tg on" data-k="laser" data-zh="雷射光" data-en="Laser"></button>
+    <button class="tg" data-k="laser" data-zh="雷射光" data-en="Laser"></button>
     <button class="tg on" data-k="frame" data-zh="畫框" data-en="Frame"></button>
     <button class="tg on" data-k="led" data-zh="燈帶" data-en="LED"></button>
     <button class="tg on" data-k="aura" data-zh="光環" data-en="Aura"></button>

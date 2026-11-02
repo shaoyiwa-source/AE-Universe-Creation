@@ -26,3 +26,8 @@ input[type=range]{flex:1;accent-color:#c9a85c;height:2px}
 #orig.on{background:#f0d69c;color:#181c15}
 [hidden]{display:none!important}
 body:not(.ui) #panel{pointer-events:none}
+
+/* v2476.60 */
+#close{position:absolute;top:6px;right:6px;width:34px;height:34px;min-height:0;padding:0;border-radius:50%;font-size:16px;line-height:1;z-index:2}
+.presets{padding-right:38px;flex-wrap:wrap}
+.pr.on{background:rgba(201,168,92,.28);border-color:#e3c27a;color:#fff3d6}

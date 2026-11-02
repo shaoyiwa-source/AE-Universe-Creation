@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.59, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.60, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -8,7 +8,7 @@ const SUN = { x: 0.515, y: 0.50 };            // sun focal point of the painting
 const AR = 1110 / 1536;
 const S = {
   lang: Q.get('lang') === 'en' ? 'en' : 'zh', mode: 'natural', intensity: 0.7, speed: 1,
-  frame: true, led: true, aura: true, glint: true, laser: true, bloom: true, rgbStyle: 'bar', lamp: 'auto',
+  frame: true, led: true, aura: true, glint: true, laser: false, bloom: true, rgbStyle: 'bar', lamp: 'auto', preset: 'golden',
   engine: 'webgl', playing: false
 };
 if (Q.get('fx') === '0') Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, bloom: false });
@@ -48,10 +48,11 @@ function layout() {
 }
 
 /* ---------- audio / beat ---------- */
-const A = { ctx: null, an: null, buf: null, bass: 0, avg: 0, level: 0, lastKick: 0, kick: 0 };
+const CK = { base: 0, at: 0, last: -1, ok: 0 };
+const A = { count: 0, t: 0, phase: 0, ctx: null, an: null, buf: null, bass: 0, avg: 0, level: 0, lastKick: 0, kick: 0 };
 const audio = $('#music');
 async function togglePlay() {
-  if (!A.ctx) {
+  if (!A.ctx && !RH) {
     const AC = window.AudioContext || window.webkitAudioContext;
     A.ctx = new AC();
     const src = A.ctx.createMediaElementSource(audio);
@@ -60,28 +61,36 @@ async function togglePlay() {
     A.buf = new Uint8Array(A.an.frequencyBinCount);
     try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); } catch (e) {}
   }
-  if (A.ctx.state === 'suspended') await A.ctx.resume();
+  try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission && !A.asked) { A.asked = 1; DeviceOrientationEvent.requestPermission().catch(() => {}); } } catch (e) {}
+  if (A.ctx && A.ctx.state === 'suspended') await A.ctx.resume();
   if (audio.paused) { try { await audio.play(); } catch (e) {} }
   else audio.pause();
   syncPlay();
 }
-// v2476.59: the button always mirrors the REAL audio state (iOS pauses media when you leave Safari) -> one tap resumes
+// v2476.60: the button always mirrors the REAL audio state (iOS pauses media when you leave Safari) -> one tap resumes
 function syncPlay() { S.playing = !audio.paused && !audio.ended; updatePlayLabel(); }
 ['play', 'playing', 'pause', 'ended', 'emptied', 'stalled', 'suspend', 'waiting'].forEach(ev => audio.addEventListener(ev, syncPlay));
 document.addEventListener('visibilitychange', syncPlay); addEventListener('pageshow', syncPlay); addEventListener('focus', syncPlay);
 let rings = [];
-// v2476.59: same pre-measured kick timeline + bass energy as the homepage sound-light (ae-home-beats.js / ae-home-light-energy.js).
+// v2476.60: same pre-measured kick timeline + bass energy as the homepage sound-light (ae-home-beats.js / ae-home-light-energy.js).
 // Driven by audio.currentTime, so it works on iPhone even when the live analyser returns silence.
 const EN = window.aeHomeAudioEnergy, TL = window.aeHomeBeatTimeline;
 const RH = EN && TL && TL.events ? EN.createRhythm(TL.events, TL.accents || [], TL.sections || []) : null;
 function analyse(now) {
   let bass = 0;
   if (RH && S.playing) {
-    const tt = audio.currentTime; bass = Math.min(1, EN.energyAt(TL, tt));
+    // v2476.60 sync: beat time = audio.currentTime every frame (smoothed between coarse currentTime updates, re-locked if off by >40 ms).
+    // Independent of the Speed slider and of frame rate, so it cannot drift over long playback or after seeking / looping.
+    const ct = audio.currentTime, rate = audio.playbackRate || 1;
+    if (ct !== CK.last || !CK.ok) { const pred = CK.base + (now - CK.at) / 1000 * rate; if (!CK.ok || Math.abs(pred - ct) > 0.04 || ct < CK.last) { CK.base = ct; CK.at = now; } CK.last = ct; CK.ok = 1; }
+    let tt = CK.base + (now - CK.at) / 1000 * rate; if (Math.abs(tt - ct) > 0.25) { CK.base = tt = ct; CK.at = now; }
+    A.t = tt; bass = Math.min(1, EN.energyAt(TL, tt));
     const b = RH.update(bass, tt);
-    if (b.beat) onKick(now, 0.6 + 0.4 * bass);
-    A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = Math.max(A.kick * 0.88, b.pulse); return;
+    if (b.count < A.count) A.count = b.count; // loop / seek back
+    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); }
+    A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = b.pulse; A.phase = b.phase; return;
   }
+  CK.ok = 0;
   if (A.an && S.playing) {
     A.an.getByteFrequencyData(A.buf);
     const hz = A.ctx.sampleRate / A.an.fftSize; const n = Math.max(2, Math.round(140 / hz));
@@ -97,7 +106,7 @@ function analyse(now) {
   A.bass = bass; A.level += (bass - A.level) * 0.15;
   A.kick *= 0.9;
 }
-function onKick(now, k) { A.lastKick = now; A.kick = 1; RG.beats++; if (S.laser && S.playing) fireBolts(now, null, 3); if (S.glint) sparkle(now, S.playing ? 3 : 2); if (S.bloom && RG.beats % 4 === 0) autoBloom(now); }
+function onKick(now, k) { A.lastKick = now; if (!S.playing) A.kick = 1; RG.beats++; const n = S.playing ? A.count : RG.beats; LZ.hit = now; if (S.laser && n % 8 === 0) LZ.pat = (LZ.pat + 1) % 3; if (S.glint) sparkle(now, S.playing ? 3 : 2); if (S.bloom && n % 4 === 0) autoBloom(now); }
 
 /* ---------- pointer / tilt ---------- */
 const T = { tx: 0, ty: 0, x: 0, y: 0, px: -1, py: -1 };
@@ -137,7 +146,7 @@ function buildRGB(img) {
 }
 function lampNow(now) {
   if (S.lamp !== 'auto') return S.lamp;
-  const step = S.playing ? Math.floor(RG.beats / 2) : Math.floor(now * S.speed / 3500);
+  const step = S.playing ? Math.floor(A.count / 2) : Math.floor(now * S.speed / 3500);
   return LAMPS[((step % 3) + 3) % 3];
 }
 function drawRGB(now) {
@@ -162,41 +171,39 @@ function lampColor(now) {
   return a.map((v, i) => Math.round(v * (1 - m) + b[i] * m));
 }
 
-/* ---------- Laser beams (restored from homepage Eternal Sun sound-light / Light Player 'laser' effect, experience-renderer.js) ---------- */
-const LASER = ['#ff416d', '#57ffa0', '#ffe28d', '#65dbff', '#c987ff', '#ffac68'];
+/* ---------- Club lasers (v2476.60): thin crisp beams from fixed emitters above the painting.
+   patterns rotate every 8 kicks: fan sheet sweep / single-beam scan / crossing twin fans.
+   On the beat the beams strobe hard on, then gate down; faint haze scatter along each beam; tips fade out. ---------- */
+const LASER = ['#00ff4c', '#ff1744', '#2f5bff', '#ff2bd6', '#00e5ff', '#39ff14'];
+const LZ = { pat: 0, hit: -1e9 };
 let bolts = [];
-function fireBolts(now, at, n) {
-  const p = L.p;
-  for (let i = 0; i < n; i++) {
-    const e = (i + bolts.length) % 3, ox = e === 0 ? -10 : e === 1 ? L.W + 10 : p.x + p.w * (.1 + Math.random() * .8), oy = e === 2 ? -10 : L.H * (.1 + Math.random() * .6);
-    const tx = at ? at.x : p.x + p.w * (.15 + .7 * Math.random()), ty = at ? at.y : p.y + p.h * (.15 + .7 * Math.random());
-    bolts.push({ ox, oy, x: tx, y: ty, born: now + i * 25, life: at ? 700 : 260, col: LASER[(i + bolts.length) % 6] });
-  }
-  if (bolts.length > 40) bolts.splice(0, bolts.length - 40);
+function fireBolts() {}
+function emitters() { const p = L.p, y = Math.max(4, p.y - (S.frame ? L.F : 0) - 6); return [{ x: p.x + p.w * .5, y }, { x: p.x + p.w * .08, y }, { x: p.x + p.w * .92, y }]; }
+function laserGate(now) {
+  if (!S.playing) return 0.55 + 0.25 * Math.sin(now / 700);                        // idle: steady, softly breathing
+  const ph = A.phase || 0; return ph < 0.22 ? 1 : 0.42; // hard strobe-on at every kick, then hold at a lower level // sharp strobe on every kick
 }
 function drawLasers(c, now) {
-  const p = L.p, show = S.playing; // v2476.59: one Laser toggle; music playing = full 6-beam show
-  if (!S.laser) { bolts.length = 0; return; }
-  const t = now / 1000 * S.speed, I = S.intensity, pulse = Math.max(A.kick, S.playing ? 0 : Math.pow(1 - ((t / .81) % 1), 3) * .6);
-  c.lineCap = 'round';
-  // sweeping ambient beams: 6 in light-show mode, 3 otherwise
-  const n = show ? 6 : 3, base = show ? .55 : .28;
-  for (let i = 0; i < n; i++) {
-    const k = show ? i : i * 2, ox = k % 3 === 0 ? 0 : k % 3 === 1 ? L.W : p.x + p.w * (.2 + k * .11), oy = k % 3 === 2 ? 0 : L.H * (.12 + (k % 4) * .2);
-    const ph = t * (.55 + k * .07) + k * 1.7, tx = p.x + p.w * (.5 + .4 * Math.sin(ph)), ty = p.y + p.h * (.3 + .42 * (.5 + .5 * Math.cos(ph * 1.3)));
-    beam(c, ox, oy, tx, ty, LASER[k], Math.min(1, (base + .45 * pulse) * (0.4 + I)), pulse);
-  }
-  bolts = bolts.filter(b => now - b.born < b.life);
-  for (const b of bolts) { const q = Math.max(0, now - b.born) / b.life; beam(c, b.ox, b.oy, b.x, b.y, b.col, Math.sin(Math.PI * q) * (0.5 + I * .6), 1); }
-}
-function beam(c, ox, oy, tx, ty, col, a, pulse) {
-  if (!(a > 0.01)) return;
-  c.globalAlpha = a; c.strokeStyle = col; c.shadowColor = col; c.shadowBlur = (12 + pulse * 14) * L.dpr; c.lineWidth = 1.1 + pulse * 2;
-  c.beginPath(); c.moveTo(ox, oy); c.lineTo(tx, ty); c.stroke();
-  c.shadowBlur = 0; c.strokeStyle = '#fff9df'; c.lineWidth = .6; c.globalAlpha = a * .8; c.beginPath(); c.moveTo(ox, oy); c.lineTo(tx, ty); c.stroke();
-  const r = 22 + pulse * 26, g = c.createRadialGradient(tx, ty, 1, tx, ty, r);
-  g.addColorStop(0, `rgba(255,249,218,${.6 * a})`); g.addColorStop(.25, col + '88'); g.addColorStop(1, col + '00');
-  c.globalAlpha = 1; c.fillStyle = g; c.fillRect(tx - r, ty - r, 2 * r, 2 * r);
+  if (!S.laser) return;
+  const t = now / 1000 * S.speed, I = 0.45 + S.intensity * 0.75, g = laserGate(now) * I, E = emitters(), reach = Math.hypot(L.W, L.H);
+  if (g < 0.02) return;
+  const colA = LASER[(Math.floor((S.playing ? A.count : RG.beats) / 8)) % 6], colB = LASER[(Math.floor((S.playing ? A.count : RG.beats) / 8) + 3) % 6];
+  c.save(); c.lineCap = 'butt';
+  const ray = (o, ang, col, a) => {
+    const ex = o.x + Math.sin(ang) * reach, ey = o.y + Math.cos(ang) * reach;
+    const gr = c.createLinearGradient(o.x, o.y, ex, ey); gr.addColorStop(0, col); gr.addColorStop(0.55, col + '66'); gr.addColorStop(1, col + '00');
+    c.globalAlpha = a * 0.16; c.strokeStyle = gr; c.lineWidth = 10; c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(ex, ey); c.stroke();   // haze scatter
+    c.globalAlpha = a; c.lineWidth = 2; c.stroke();                                                                             // crisp beam
+    const wg = c.createLinearGradient(o.x, o.y, o.x + Math.sin(ang) * reach * .6, o.y + Math.cos(ang) * reach * .6); wg.addColorStop(0, 'rgba(255,255,255,0.95)'); wg.addColorStop(1, 'rgba(255,255,255,0)'); c.globalAlpha = a * 0.85; c.strokeStyle = wg; c.lineWidth = 0.8; c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(o.x + Math.sin(ang) * reach * .6, o.y + Math.cos(ang) * reach * .6); c.stroke(); // hot core near source
+  };
+  const fan = (o, n, centre, spread, col, a) => { for (let i = 0; i < n; i++) ray(o, centre + spread * (i / (n - 1) - .5), col, a); };
+  const P = LZ.pat;
+  if (P === 0) { fan(E[0], 9, 0.55 * Math.sin(t * 0.9), 1.1 + 0.25 * Math.sin(t * 0.5), colA, g); }
+  else if (P === 1) { for (let i = 0; i < 3; i++) ray(E[0], 0.9 * Math.sin(t * 2.2 + i * 0.35), i === 1 ? colB : colA, g); }
+  else { fan(E[1], 6, -0.45 + 0.35 * Math.sin(t * 1.1), 0.7, colA, g * .9); fan(E[2], 6, 0.45 - 0.35 * Math.sin(t * 1.1), 0.7, colB, g * .9); }
+  // emitter heads
+  for (const o of (P === 2 ? [E[1], E[2]] : [E[0]])) { const r = 6 + 6 * g; const hg = c.createRadialGradient(o.x, o.y, 0, o.x, o.y, r); hg.addColorStop(0, 'rgba(255,255,255,1)'); hg.addColorStop(.4, colA); hg.addColorStop(1, colA + '00'); c.globalAlpha = Math.min(1, g * 1.2); c.fillStyle = hg; c.beginPath(); c.arc(o.x, o.y, r, 0, 6.2832); c.fill(); }
+  c.restore(); c.globalAlpha = 1;
 }
 /* sun bloom (restored from Light Player 'glow' / homepage tap bloom): tap the painting or press ✦ */
 let blooms = [];
@@ -219,7 +226,7 @@ function drawBlooms(c, now) {
   }
   c.restore();
 }
-/* RGB mode (v2476.59): a fixed gallery picture light. The fixture never moves; only its colour changes with the beat.
+/* RGB mode (v2476.60): a fixed gallery picture light. The fixture never moves; only its colour changes with the beat.
    styles: 'bar'  = one emissive light bar above the frame washing down the painting
            'spot' = three fixed pin spotlights on a rail, soft round pools
            'wash' = no fixture, soft even colour wash (previous look) */
@@ -274,7 +281,7 @@ function drawFixture(c, now) {
   c.restore();
 }
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
-/* glints (v2476.59): clearly visible 4-point star sparkles on beats, on the frame and the sun's highlights */
+/* glints (v2476.60): clearly visible 4-point star sparkles on beats, on the frame and the sun's highlights */
 let sparks = [];
 function sparkle(now, n) {
   for (let i = 0; i < n; i++) sparks.push({ t: now + i * 60, u: Math.random(), onSun: Math.random() < .45, a: Math.random() * 6.28, d: .05 + Math.random() * .2, s: .7 + Math.random() * .6 });
@@ -469,7 +476,10 @@ function swapToLite() { // auto-fallback when WebGL is slow; replace the canvas 
 
 /* ---------- UI ---------- */
 let uiTimer = 0;
-function showUI() { document.body.classList.add('ui'); $('#panel').hidden = false; clearTimeout(uiTimer); uiTimer = setTimeout(() => { if (!$('#panel').matches(':hover')) document.body.classList.remove('ui'); }, 4500); }
+const UI_MS = 5000;
+function hideUI() { clearTimeout(uiTimer); document.body.classList.remove('ui'); }
+function bumpUI() { if (document.body.classList.contains('ui')) { clearTimeout(uiTimer); uiTimer = setTimeout(hideUI, UI_MS); } }
+function showUI() { document.body.classList.add('ui'); $('#panel').hidden = false; clearTimeout(uiTimer); uiTimer = setTimeout(hideUI, UI_MS); } // auto-close after 5 s without interaction (no :hover check — it sticks on touch screens)
 function frontVis() { // nothing to draw above the painting -> remove the overlay layer entirely, so the <img> is composited exactly as on its own
   const any = S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
   const d = any ? '' : 'none'; if ($('#front').style.display !== d) $('#front').style.display = d;
@@ -484,6 +494,7 @@ function syncButtons() {
   frontVis();
   $('#burst').classList.toggle('on', !!S.bloom); $('#burst').setAttribute('aria-pressed', String(!!S.bloom));
   document.querySelectorAll('.st').forEach(b => b.classList.toggle('on', b.dataset.s === S.rgbStyle));
+  document.querySelectorAll('.pr').forEach(b => { b.classList.toggle('on', b.dataset.p === S.preset); b.setAttribute('aria-pressed', String(b.dataset.p === S.preset)); });
   if (S.mode !== 'rgb') { $('#rgb').classList.remove('on'); }
   $('#rgb').style.display = S.mode === 'rgb' ? '' : 'none';
   document.body.dataset.mode = S.mode; document.body.dataset.original = saved ? '1' : '0';
@@ -504,15 +515,18 @@ function bindUI() {
   st.addEventListener('pointermove', e => { onPointer(e); if (e.pointerType === 'mouse') showUI(); });
   $('#panel').addEventListener('pointerdown', e => { e.stopPropagation(); showUI(); });
   $('#play').onclick = togglePlay;
-  $('#mNat').onclick = () => { leaveOriginal(); S.mode = 'natural'; syncButtons(); };
-  $('#mRgb').onclick = () => { leaveOriginal(); S.mode = 'rgb'; syncButtons(); };
+  $('#mNat').onclick = () => { S.preset = ''; leaveOriginal(); S.mode = 'natural'; syncButtons(); };
+  $('#mRgb').onclick = () => { S.preset = ''; leaveOriginal(); S.mode = 'rgb'; syncButtons(); };
   document.querySelectorAll('.lp').forEach(b => b.onclick = () => { S.lamp = b.dataset.c; syncButtons(); });
   $('#burst').onclick = () => { S.bloom = !S.bloom; if (S.bloom) autoBloom(performance.now()); syncButtons(); }; // toggle: periodic bloom every 4 beats (works over 原畫 too); tapping the painting still blooms
   document.querySelectorAll('.st').forEach(b => b.onclick = () => { S.rgbStyle = b.dataset.s; syncButtons(); });
   $('#lang').onclick = () => { S.lang = S.lang === 'en' ? 'zh' : 'en'; applyLang(); };
-  $('#int').oninput = e => { S.intensity = +e.target.value; };
-  $('#spd').oninput = e => { S.speed = +e.target.value; };
-  document.querySelectorAll('.tg').forEach(b => b.onclick = () => { leaveOriginal(); S[b.dataset.k] = !S[b.dataset.k]; syncButtons(); });
+  $('#int').oninput = e => { S.intensity = +e.target.value; S.preset = ''; syncButtons(); };
+  $('#spd').oninput = e => { S.speed = +e.target.value; S.preset = ''; syncButtons(); }; // ambient motion only — beat timing never depends on it
+  document.querySelectorAll('.pr').forEach(b => b.onclick = () => applyPreset(b.dataset.p));
+  $('#close').onclick = e => { e.stopPropagation(); hideUI(); };
+  ['pointerdown', 'pointermove', 'input', 'keydown', 'wheel'].forEach(ev => $('#panel').addEventListener(ev, bumpUI, { passive: true }));
+  document.querySelectorAll('.tg').forEach(b => b.onclick = () => { S.preset = ''; leaveOriginal(); S[b.dataset.k] = !S[b.dataset.k]; syncButtons(); });
   $('#orig').onclick = setOriginal;
   addEventListener('resize', layout);
   // page zoom locked: iOS ignores user-scalable=no, so also cancel its pinch / double-tap gestures (painting always fits the screen)
@@ -520,6 +534,16 @@ function bindUI() {
   document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
   let lastTouch = 0; document.addEventListener('touchend', e => { const n = Date.now(); if (n - lastTouch < 300) e.preventDefault(); lastTouch = n; }, { passive: false });
 }
+
+/* ---------- 5 curated presets (模式) ---------- */
+const PRESETS = {
+  golden:  { mode: 'natural', frame: true, led: true,  aura: true,  glint: true,  bloom: true,  laser: false, intensity: 0.72, speed: 1 },            // 金色綻放 (default)
+  gallery: { mode: 'rgb', rgbStyle: 'bar', lamp: 'auto', frame: true, led: false, aura: false, glint: true, bloom: false, laser: false, intensity: 0.75, speed: 1 }, // 畫廊燈
+  breath:  { mode: 'natural', frame: true, led: true,  aura: true,  glint: false, bloom: false, laser: false, intensity: 0.5, speed: 0.6 },            // 柔光呼吸
+  stage:   { mode: 'rgb', rgbStyle: 'spot', lamp: 'auto', frame: true, led: true, aura: false, glint: true, bloom: true, laser: false, intensity: 0.85, speed: 1.2 }, // RGB 舞台
+  club:    { mode: 'rgb', rgbStyle: 'wash', lamp: 'auto', frame: true, led: true, aura: false, glint: false, bloom: false, laser: true, intensity: 0.85, speed: 1.1 } // 夜店雷射
+};
+function applyPreset(k) { saved = null; Object.assign(S, PRESETS[k]); S.preset = k; $('#int').value = S.intensity; $('#spd').value = S.speed; syncButtons(); }
 
 /* ---------- loop ---------- */
 let slow = 0, frames = 0, lastT = 0;
@@ -542,7 +566,7 @@ async function start() {
   else { try { await initWebGL(); } catch (e) { console.warn('WebGL unavailable, using Canvas 2D', e && e.message); swapToLite(); } }
   layout(); updateEngineNote();
   const img = $('#painting'); if (img.complete && img.naturalWidth) buildRGB(img); else img.addEventListener('load', () => buildRGB(img), { once: true });
-  window.__premium = { A, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime }) };
+  window.__premium = { A, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
