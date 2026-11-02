@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.65, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.66, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -43,7 +43,7 @@ function layout() {
   L.F = Math.max(9, Math.round(w * 0.03));
   const a = $('#art').style;
   a.left = L.p.x + 'px'; a.top = L.p.y + 'px'; a.width = w + 'px'; a.height = h + 'px';
-  for (const c of [$('#front'), $('#back')]) { c.width = L.W * L.dpr; c.height = L.H * L.dpr; }
+  for (const c of [$('#front'), $('#back'), $('#coin')]) { c.width = L.W * L.dpr; c.height = L.H * L.dpr; }
   if (gl) gl.resize(); 
 }
 
@@ -346,16 +346,24 @@ function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
 const GAME = { combo: 0, best: 0, last: 0, hits: 0, perfect: 0, taps: 0, marks: [], trail: [], ac: null };
 const PENTA = [554.37, 659.25, 739.99, 830.61, 987.77, 1108.73, 1318.51, 1479.98];
 function beatErr() { const ev = TL && TL.events; if (!ev || !ev.length) return 9; const t = CK.tt != null ? CK.tt : A.t; let lo = 0, hi = ev.length; while (lo < hi) { const m = (lo + hi) >> 1; if (ev[m] <= t) lo = m + 1; else hi = m; } const a = lo ? t - ev[lo - 1] : 9, b = lo < ev.length ? ev[lo] - t : 9; return a < b ? a : -b; }
-function bell(f, gain) {
-  try { const c = GAME.ac || (GAME.ac = LAT.ctx || new (window.AudioContext || window.webkitAudioContext)()); if (c.state === 'suspended') c.resume(); const t = c.currentTime;
-    for (const [m, g, d] of [[1, gain, 1.4], [2.01, gain * .22, .6], [3.0, gain * .08, .35]]) { const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.value = f * m; v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(g, t + .008); v.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(v); v.connect(c.destination); o.start(t); o.stop(t + d + .05); }
+// v2476.66 tap sounds: only the song's tonic C# and its fifth G#, very quiet, high-passed so they sit above the mix
+// like a glass/coin "ting"; plus a 4 ms filtered click. No scale climbing, nothing that can clash with the track.
+const TONE = { root: 1108.73, fifth: 1661.22, vol: 0.022 };
+function acx() { const c = GAME.ac || (GAME.ac = LAT.ctx || new (window.AudioContext || window.webkitAudioContext)()); if (c.state === 'suspended') c.resume(); return c; }
+function ting(perfect) {
+  try { const c = acx(), t = c.currentTime + 0.005, out = c.createGain(), hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 900; out.gain.value = TONE.vol * (perfect ? 1 : 0.6); hp.connect(out); out.connect(c.destination);
+    const notes = perfect ? [[TONE.root, 1, 0.9], [TONE.fifth, 0.45, 0.7]] : [[TONE.root, 0.8, 0.55]];
+    for (const [f, g, d] of notes) for (const [m, k] of [[1, 1], [2.756, .18]]) { const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.value = f * m; v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(g * k, t + .004); v.gain.exponentialRampToValueAtTime(0.0001, t + d * (m > 1 ? .35 : 1)); o.connect(v); v.connect(hp); o.start(t); o.stop(t + d + .05); }
+    const n = c.createBuffer(1, Math.round(c.sampleRate * 0.004), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length);
+    const ns = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; bp.type = 'bandpass'; bp.frequency.value = 5200; bp.Q.value = 1.2; ng.gain.value = perfect ? 0.5 : 0.35; ns.connect(bp); bp.connect(ng); ng.connect(hp); ns.start(t);
+    GAME.sounds = (GAME.sounds || 0) + 1;
   } catch (e) {}
 }
 function beatTap(x, y) {
   const now = performance.now(), e = beatErr(), ae = Math.abs(e); GAME.taps++; GAME.lastErr = Math.round(e * 1000);
   if (ae <= 0.07) { GAME.combo = now - GAME.last < 2600 ? GAME.combo + 1 : 1; GAME.last = now; GAME.hits++; const perfect = ae <= 0.035; if (perfect) GAME.perfect++;
-    GAME.best = Math.max(GAME.best, GAME.combo); bloom(now, x, y);
-    bell(PENTA[(GAME.combo - 1) % PENTA.length], perfect ? 0.07 : 0.045);
+    GAME.best = Math.max(GAME.best, GAME.combo); if (perfect) bloom(now, x, y);
+    ting(perfect);
     GAME.marks.push({ t: now, x, y, n: GAME.combo, perfect }); if (GAME.marks.length > 4) GAME.marks.shift();
   } else { GAME.combo = 0; }
 }
@@ -365,12 +373,71 @@ function drawGame(c, now) {
   for (let i = 1; i < GAME.trail.length; i++) { const a = GAME.trail[i - 1], b = GAME.trail[i]; if (b.t - a.t > 80) continue; const k = 1 - (now - b.t) / 650;
     c.strokeStyle = `rgba(255,226,160,${k * .5})`; c.lineWidth = 1 + 5 * k; c.lineCap = 'round'; c.shadowColor = 'rgba(255,200,120,.9)'; c.shadowBlur = 10 * k; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
   c.shadowBlur = 0;
-  for (const m of GAME.marks) { const u = (now - m.t) / 1300, a = (1 - u) ** 1.6;
-    c.strokeStyle = `rgba(255,236,190,${a * (m.perfect ? .75 : .5)})`; c.lineWidth = m.perfect ? 1.6 : 1; c.beginPath(); c.arc(m.x, m.y, 14 + 70 * Math.sqrt(u), 0, 6.2832); c.stroke();
-    if (m.n >= 2) { c.globalCompositeOperation = 'source-over'; c.globalAlpha = a; c.fillStyle = '#f3e2b6'; c.font = `300 ${13 + Math.min(6, m.n)}px "Cormorant Garamond", Georgia, serif`; c.textAlign = 'center'; c.fillText('×' + m.n, m.x, m.y - 24 - 18 * u); c.globalAlpha = 1; c.globalCompositeOperation = 'screen'; }
-  }
+  cxC.setTransform(1, 0, 0, 1, 0, 0); cxC.clearRect(0, 0, cxC.canvas.width, cxC.canvas.height); cxC.setTransform(L.dpr, 0, 0, L.dpr, 0, 0);
+  for (const m of GAME.marks) drawCoin(cxC, now, m);
   c.restore();
 }
+/* v2476.66 reward coin: a small rendered gold coin (rim, embossed sun, specular sweep) that pops, rises a little and shimmers.
+   perfect = larger, brighter, soft halo + 'Perfect'; good = smaller, dimmer + 'Nice'. Labels are thin, small, semi-transparent. */
+function drawCoin(c, now, m) {
+  const u = (now - m.t) / 1300; if (u < 0 || u > 1) return;
+  const pop = u < .18 ? 1 - (1 - u / .18) ** 3 * 1 : 1 + .08 * Math.sin(Math.min(1, (u - .18) / .2) * Math.PI) * (1 - u);
+  const R0 = (m.perfect ? 17 : 12) * Math.max(.85, Math.min(1.3, L.p.w / 520)), r = R0 * Math.max(.01, pop), a = u < .7 ? 1 : 1 - (u - .7) / .3;
+  const x = m.x, y = m.y - 26 - 22 * Math.sqrt(u), turn = 0.86 + 0.14 * Math.cos(u * Math.PI * 3); // a gentle spin = horizontal squash
+  c.save(); c.globalCompositeOperation = 'source-over'; c.globalAlpha = a;
+  if (m.perfect) { const h = c.createRadialGradient(x, y, r * .4, x, y, r * 3.2); h.addColorStop(0, 'rgba(255,220,140,.32)'); h.addColorStop(1, 'rgba(255,200,110,0)'); c.globalCompositeOperation = 'screen'; c.fillStyle = h; c.beginPath(); c.arc(x, y, r * 3.2, 0, 6.2832); c.fill(); c.globalCompositeOperation = 'source-over'; }
+  c.translate(x, y); c.scale(Math.max(.18, Math.abs(turn)), 1);
+  c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 6; c.shadowOffsetY = 2;
+  const edge = c.createLinearGradient(-r, -r, r, r); edge.addColorStop(0, '#fff2c4'); edge.addColorStop(.35, '#e0b257'); edge.addColorStop(.7, '#9b6a22'); edge.addColorStop(1, '#f1cf7d');
+  c.fillStyle = edge; c.beginPath(); c.arc(0, 0, r, 0, 6.2832); c.fill(); c.shadowColor = 'transparent';
+  const face = c.createRadialGradient(-r * .35, -r * .4, r * .1, 0, 0, r * .86); face.addColorStop(0, '#ffeeb8'); face.addColorStop(.55, '#e7b85c'); face.addColorStop(1, '#b07c2c');
+  c.fillStyle = face; c.beginPath(); c.arc(0, 0, r * .82, 0, 6.2832); c.fill();
+  c.strokeStyle = 'rgba(120,78,22,.55)'; c.lineWidth = Math.max(.6, r * .05); c.beginPath(); c.arc(0, 0, r * .66, 0, 6.2832); c.stroke();
+  c.strokeStyle = 'rgba(255,246,214,.75)'; c.lineWidth = Math.max(.5, r * .04); c.beginPath(); c.arc(0, 0, r * .24, 0, 6.2832); c.stroke(); // embossed sun
+  for (let i = 0; i < 12; i++) { const an = i * .5236; c.beginPath(); c.moveTo(Math.cos(an) * r * .32, Math.sin(an) * r * .32); c.lineTo(Math.cos(an) * r * (i % 2 ? .44 : .52), Math.sin(an) * r * (i % 2 ? .44 : .52)); c.stroke(); }
+  // specular sweep (shimmer)
+  c.save(); c.beginPath(); c.arc(0, 0, r, 0, 6.2832); c.clip(); const sx = -r * 1.6 + r * 3.2 * ((u * 1.6) % 1);
+  const sg = c.createLinearGradient(sx - r * .35, -r, sx + r * .35, r); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, `rgba(255,255,250,${m.perfect ? .75 : .5})`); sg.addColorStop(1, 'rgba(255,255,255,0)');
+  c.globalCompositeOperation = 'screen'; c.fillStyle = sg; c.fillRect(-r, -r, r * 2, r * 2); c.restore();
+  c.restore();
+  // label: tiny, thin, semi-transparent, quick fade
+  const la = Math.max(0, 1 - u / .8) * (m.perfect ? .92 : .72);
+  if (la > 0) { c.save(); c.globalAlpha = la; c.fillStyle = '#fff4d6'; c.font = `italic 400 ${m.perfect ? 13 : 12}px "Cormorant Garamond", Georgia, serif`; c.textAlign = 'center'; c.shadowColor = 'rgba(40,22,4,.85)'; c.shadowBlur = 4;
+    const txt = (m.perfect ? 'Perfect' : 'Nice') + (m.n >= 2 ? '  ×' + m.n : ''); if (c.letterSpacing !== undefined) c.letterSpacing = '1.5px'; c.fillText(txt, x, y - R0 - 9 - 6 * u); c.restore(); }
+}
+/* v2476.66 光紋 (light pattern): optional mode — finger strokes on the painting persist, breathe with the beat, and can be
+   saved as a personal card (painting crop + the drawn light, composited in a new image; the page's artwork is never touched). */
+const GLOW = { on: false, strokes: [], cur: null, saved: 0 };
+function glowDown(e) { if (!GLOW.on || Z.pts.size !== 1) return; const q = toArt(e); if (!q) return; GLOW.cur = { pts: [q], hue: GLOW.strokes.length % 3 }; GLOW.strokes.push(GLOW.cur); if (GLOW.strokes.length > 60) GLOW.strokes.shift(); }
+function glowMove(e) { if (!GLOW.on || !GLOW.cur || Z.pts.size !== 1) { GLOW.cur = null; return; } const q = toArt(e); if (!q) return; const l = GLOW.cur.pts[GLOW.cur.pts.length - 1]; if (Math.hypot(q.u - l.u, q.v - l.v) > 0.004) GLOW.cur.pts.push(q); }
+function toArt(e) { const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x < p.x || x > p.x + p.w || y < p.y || y > p.y + p.h) return null; return { u: (x - p.x) / p.w, v: (y - p.y) / p.h }; }
+const GLOW_COL = [[255, 214, 140], [255, 236, 196], [255, 190, 120]];
+function strokeGlow(c, p, ox, oy, sc, now, breath) {
+  c.save(); c.globalCompositeOperation = 'screen'; c.lineCap = 'round'; c.lineJoin = 'round';
+  for (const st of GLOW.strokes) { if (st.pts.length < 2) continue; const col = GLOW_COL[st.hue].join(',');
+    for (const [w, a, bl] of [[9, .10, 18], [3.2, .38, 8], [1.1, .85, 0]]) { c.strokeStyle = `rgba(${col},${a * breath})`; c.lineWidth = w * sc * (0.85 + 0.3 * (breath - .6)); c.shadowColor = `rgba(${col},.9)`; c.shadowBlur = bl * sc;
+      c.beginPath(); st.pts.forEach((q, i) => { const X = ox + q.u * p.w, Y = oy + q.v * p.h; i ? c.lineTo(X, Y) : c.moveTo(X, Y); }); c.stroke(); } }
+  c.restore();
+}
+function drawGlow(c, now) { if (!GLOW.strokes.length) return; const breath = S.playing ? 0.62 + 0.38 * A.kick : 0.72 + 0.12 * Math.sin(now / 900); strokeGlow(c, L.p, L.p.x, L.p.y, 1, now, breath); }
+function saveGlowCard() {
+  const img = $('#painting'); if (!img || !img.naturalWidth || !GLOW.strokes.length) return null;
+  let u0 = 1, v0 = 1, u1 = 0, v1 = 0; for (const st of GLOW.strokes) for (const q of st.pts) { u0 = Math.min(u0, q.u); v0 = Math.min(v0, q.v); u1 = Math.max(u1, q.u); v1 = Math.max(v1, q.v); }
+  const NW = img.naturalWidth, NH = img.naturalHeight, pad = .06; let cw = Math.max(.35, u1 - u0 + 2 * pad) * NW, ch = Math.max(.35, v1 - v0 + 2 * pad) * NH;
+  if (cw / ch > .8) ch = cw / .8; else cw = ch * .8; cw = Math.min(NW, cw); ch = Math.min(NH, ch);
+  let cx = ((u0 + u1) / 2) * NW - cw / 2, cy = ((v0 + v1) / 2) * NH - ch / 2; cx = Math.max(0, Math.min(NW - cw, cx)); cy = Math.max(0, Math.min(NH - ch, cy));
+  const OW = 1080, sc = OW / cw, OH = Math.round(ch * sc), M = 70, FOOT = 120, cv = document.createElement('canvas'); cv.width = OW + 2 * M; cv.height = OH + 2 * M + FOOT;
+  const c = cv.getContext('2d'); c.fillStyle = '#0b0907'; c.fillRect(0, 0, cv.width, cv.height);
+  c.drawImage(img, cx, cy, cw, ch, M, M, OW, OH); // painting crop, untouched
+  c.save(); c.beginPath(); c.rect(M, M, OW, OH); c.clip(); strokeGlow(c, { w: NW * sc, h: NH * sc }, M - cx * sc, M - cy * sc, sc * NW / Math.max(1, L.p.w), performance.now(), 1); c.restore();
+  c.strokeStyle = 'rgba(214,178,106,.65)'; c.lineWidth = 2; c.strokeRect(M - 10, M - 10, OW + 20, OH + 20);
+  c.fillStyle = '#e9d7a6'; c.textAlign = 'center'; c.font = '300 34px "Cormorant Garamond", Georgia, serif'; c.fillText('光紋  ·  盛明 Eternal Sun', cv.width / 2, OH + 2 * M + 40);
+  c.globalAlpha = .6; c.font = '300 20px "Cormorant Garamond", Georgia, serif'; const d = new Date(); c.fillText('AE UNIVERSE CREATION  ·  ' + d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0'), cv.width / 2, OH + 2 * M + 78);
+  GLOW.saved++; GLOW.last = { w: cv.width, h: cv.height };
+  cv.toBlob(b => { if (!b) return; const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'AE-光紋-EternalSun.png'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }, 'image/png');
+  return cv;
+}
+function setGlow(on) { GLOW.on = on; document.body.classList.toggle('glow-on', on); $('#glowbtn') && $('#glowbtn').classList.toggle('on', on); frontVis(); }
 function gameTrail(e) { if (!S.playing || Z.pts.size !== 1) return; const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x < p.x || x > p.x + p.w || y < p.y || y > p.y + p.h) return; GAME.trail.push({ x, y, t: performance.now() }); if (GAME.trail.length > 40) GAME.trail.shift(); }
 /* sun bloom (restored from Light Player 'glow' / homepage tap bloom): tap the painting or press ✦ */
 let blooms = [];
@@ -422,7 +489,8 @@ function drawCones(c, now) {
 }
 /* the fixture itself, drawn normally (not screen) so it reads as a physical brass bar that glows */
 function drawFixture(c, now) {
-  if (S.mode !== 'rgb' || S.rgbStyle === 'wash') return;
+  if (S.mode !== 'rgb') return;
+  if (S.rgbStyle === 'wash') { if (S.preset !== 'breath') drawBarOnly(c, now); return; }
   const p = L.p, F = fixture(p), col = lampColor(now), cs = col.join(','), k = A.kick, I = 0.5 + S.intensity;
   c.save();
   // wall arm
@@ -437,7 +505,8 @@ function drawFixture(c, now) {
     c.fillStyle = lg; c.globalAlpha = Math.min(1, (.75 + .25 * k)); rr(c, F.x + F.h * .4, F.y + F.h * .55, F.w - F.h * .8, F.h * .38, F.h * .19); c.fill();
     c.globalAlpha = Math.min(1, (.55 + .45 * k) * I); c.fillStyle = `rgba(${cs},0.9)`; rr(c, F.x + F.h * .4, F.y + F.h * .62, F.w - F.h * .8, F.h * .26, F.h * .13); c.fill();
   } else {
-    c.fillStyle = '#3a2a14'; rr(c, p.x + p.w * .12, F.y, p.w * .76, F.h * .45, F.h * .2); c.fill();
+    c.restore(); drawBarOnly(c, now); c.save(); c.shadowColor = `rgba(${cs},${Math.min(1, (.7 + .3 * k) * I)})`; // spot heads hang under the bar
+    F.y += F.h * 1.05;
     for (const u of [.2, .5, .8]) {
       const x = p.x + p.w * u, s = F.h * 1.1;
       c.shadowBlur = (14 + 14 * k) * L.dpr; c.fillStyle = '#6b4f26'; rr(c, x - s * .55, F.y, s * 1.1, s * 1.2, s * .3); c.fill();
@@ -447,6 +516,19 @@ function drawFixture(c, now) {
   }
   c.restore();
 }
+// v2476.66: every preset that throws R/G/B light gets the gallery's brass picture-light bar (柔光呼吸 unchanged).
+function drawBarOnly(c, now) {
+  const p = L.p, F = fixture(p), col = lampColor(now), cs = col.join(','), k = A.kick, I = 0.5 + S.intensity;
+  c.save(); c.fillStyle = '#2a2016'; c.fillRect(p.x + p.w / 2 - 2, F.y + F.h * .5, 4, Math.max(0, p.y - F.y - F.h * .5));
+  c.shadowColor = `rgba(${cs},${Math.min(1, (.7 + .3 * k) * I)})`; c.shadowBlur = (18 + 18 * k) * L.dpr;
+  const bg = c.createLinearGradient(0, F.y, 0, F.y + F.h); bg.addColorStop(0, '#d9b46a'); bg.addColorStop(.45, '#7a5a2a'); bg.addColorStop(1, '#3a2a14');
+  c.fillStyle = bg; rr(c, F.x, F.y, F.w, F.h, F.h / 2); c.fill(); c.shadowBlur = 0;
+  const lg = c.createLinearGradient(F.x, 0, F.x + F.w, 0); lg.addColorStop(0, `rgba(${cs},0.35)`); lg.addColorStop(.5, 'rgba(255,252,244,0.95)'); lg.addColorStop(1, `rgba(${cs},0.35)`);
+  c.fillStyle = lg; c.globalAlpha = Math.min(1, (.75 + .25 * k)); rr(c, F.x + F.h * .4, F.y + F.h * .55, F.w - F.h * .8, F.h * .38, F.h * .19); c.fill();
+  c.globalAlpha = Math.min(1, (.55 + .45 * k) * I); c.fillStyle = `rgba(${cs},0.9)`; rr(c, F.x + F.h * .4, F.y + F.h * .62, F.w - F.h * .8, F.h * .26, F.h * .13); c.fill();
+  c.restore(); FX.bar = (FX.bar || 0) + 1;
+}
+const FX = {};
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 /* glints (v2476.65): soft specular highlights + varnish sheen (replaces the 4-point star sparkles) */
 let sparks = [];
@@ -493,6 +575,7 @@ function ledColor(u, t) { // smooth chase gradient around perimeter, warm-biased
 
 /* ---------- front overlay (Canvas 2D, screen-blended): LED strip, aura rings, glints ---------- */
 const fx = $('#front').getContext('2d');
+const cxC = $('#coin').getContext('2d'); // v2476.66 coins: normal blending so the gold reads as solid metal (front layer is screen-blended)
 $('#front').style.mixBlendMode = 'screen';
 let glints = [];
 function perimeterPoint(u, r) { // u in [0,1) along rect r
@@ -546,7 +629,7 @@ function drawFront(now) {
     }
     drawSparks(c, now, ox, oy);
   } else { glints.length = 0; sparks.length = 0; }
-  drawCones(c, now); drawLasers(c, now); drawTaps(c, now); drawGame(c, now);
+  drawCones(c, now); drawLasers(c, now); drawTaps(c, now); drawGlow(c, now); drawGame(c, now);
   c.save(); c.globalCompositeOperation = 'source-over'; drawFixture(c, now); c.restore();
   drawBlooms(c, now);
   c.globalAlpha = 1; c.shadowBlur = 0;
@@ -677,7 +760,7 @@ function drawLook(now, dt) {
   if (window.AELooks.draw(c, w, h, { x: 0, y: 0, w, h }, LK.ph, LK.idx[S.look], 1, false, 1, vals)) LK.draws++;
 }
 function frontVis() { // nothing to draw above the painting -> remove the overlay layer entirely, so the <img> is composited exactly as on its own
-  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || GAME.marks.length > 0 || GAME.trail.length > 0 || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
+  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || GAME.marks.length > 0 || GAME.trail.length > 0 || GLOW.strokes.length > 0 || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
   const d = any ? '' : 'none'; if ($('#front').style.display !== d) $('#front').style.display = d;
 }
 function syncButtons() {
@@ -690,7 +773,7 @@ function syncButtons() {
   frontVis();
   $('#burst').classList.toggle('on', !!S.bloom); $('#burst').setAttribute('aria-pressed', String(!!S.bloom));
   document.querySelectorAll('.st').forEach(b => b.classList.toggle('on', b.dataset.s === S.rgbStyle));
-  document.querySelectorAll('.pr').forEach(b => { b.classList.toggle('on', b.dataset.p === S.preset); b.setAttribute('aria-pressed', String(b.dataset.p === S.preset)); });
+  document.querySelectorAll('.pr[data-p]').forEach(b => { b.classList.toggle('on', b.dataset.p === S.preset); b.setAttribute('aria-pressed', String(b.dataset.p === S.preset)); });
   if (S.mode !== 'rgb') { $('#rgb').classList.remove('on'); }
   $('#rgb').style.display = S.mode === 'rgb' ? '' : 'none';
   document.body.dataset.mode = S.mode; document.body.dataset.original = saved ? '1' : '0';
@@ -718,7 +801,7 @@ function bindZoom() {
   st.addEventListener('pointermove', e => { if (!Z.pts.has(e.pointerId)) return; const pr = Z.pts.get(e.pointerId); Z.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (Z.pts.size === 2) { const [a, b] = [...Z.pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y), cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
       if (!Z.st) Z.st = { d, s: Z.s, cx, cy }; else { Z.x += cx - Z.st.cx; Z.y += cy - Z.st.cy; Z.st.cx = cx; Z.st.cy = cy; zoomAt(cx, cy, Z.st.s * d / Z.st.d); } }
-    else if (Z.pts.size === 1 && Z.s > 1) { Z.x += e.clientX - pr.x; Z.y += e.clientY - pr.y; applyZoom(); } });
+    else if (Z.pts.size === 1 && Z.s > 1 && !GLOW.on) { Z.x += e.clientX - pr.x; Z.y += e.clientY - pr.y; applyZoom(); } });
   const up = e => { Z.pts.delete(e.pointerId); Z.st = null; if (!Z.pts.size) setTimeout(() => { Z.pinching = false; }, 50); };
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => st.addEventListener(ev, up));
   st.addEventListener('pointerup', e => { const n = Date.now(), g = Z.g; if (!g || Z.pts.size) return; Z.g = null; const tap = !g.multi && n - g.t < 280 && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 12; if (!tap) { Z.lastTap = 0; return; } if (!Z.consumed) { const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) artTap(x, y); else if (Z.s === 1) showUI(); } if (n - Z.lastTap < 320 && Z.s > 1) { resetZoom(); Z.lastTap = 0; } else Z.lastTap = n; });
@@ -731,7 +814,13 @@ function bindUI() {
   // v2476.63: the painting is for art interaction only. Panel opens from ⚙ or a tap on the empty area beside the painting;
   // while it is open a tap anywhere outside it (backdrop) closes it.
   st.addEventListener('pointerdown', e => { onPointer(e); if (document.body.classList.contains('ui') && Z.pts.size <= 1) { hideUI(); Z.consumed = true; } else if (Z.pts.size <= 1) Z.consumed = false; });
-  st.addEventListener('pointermove', e => { onPointer(e); gameTrail(e); });
+  st.addEventListener('pointermove', e => { onPointer(e); if (GLOW.on) glowMove(e); else gameTrail(e); });
+  st.addEventListener('pointerdown', e => { if (GLOW.on) setTimeout(() => glowDown(e), 0); });
+  ['pointerup', 'pointercancel'].forEach(ev => st.addEventListener(ev, () => { GLOW.cur = null; }));
+  $('#glowbtn').onclick = e => { e.stopPropagation(); setGlow(!GLOW.on); hideUI(); };
+  $('#glowclear').onclick = e => { e.stopPropagation(); GLOW.strokes.length = 0; frontVis(); };
+  $('#glowsave').onclick = e => { e.stopPropagation(); saveGlowCard(); };
+  $('#glowdone').onclick = e => { e.stopPropagation(); setGlow(false); };
   $('#open').onclick = e => { e.stopPropagation(); showUI(); };
   $('#panel').addEventListener('pointerdown', e => { e.stopPropagation(); showUI(); });
   $('#play').onclick = togglePlay;
@@ -744,7 +833,7 @@ function bindUI() {
   $('#int').oninput = e => { S.intensity = +e.target.value; S.preset = ''; syncButtons(); };
   const sk = $('#seek'); sk.addEventListener('pointerdown', () => { seeking = true; }); sk.addEventListener('input', () => { seeking = true; const d = audio.duration; if (Number.isFinite(d)) { $('#tcur').textContent = fmt(sk.value / 1000 * d); } });
   sk.addEventListener('change', () => { const d = audio.duration; if (Number.isFinite(d)) { A.started = 1; audio.currentTime = sk.value / 1000 * d; } seeking = false; progAt = 0; });
-  document.querySelectorAll('.pr').forEach(b => b.onclick = () => applyPreset(b.dataset.p));
+  document.querySelectorAll('.pr[data-p]').forEach(b => b.onclick = () => applyPreset(b.dataset.p));
   $('#close').onclick = e => { e.stopPropagation(); hideUI(); };
   ['pointerdown', 'pointermove', 'input', 'keydown', 'wheel'].forEach(ev => $('#panel').addEventListener(ev, bumpUI, { passive: true }));
   document.querySelectorAll('.tg').forEach(b => b.onclick = () => { S.preset = ''; leaveOriginal(); S[b.dataset.k] = !S[b.dataset.k]; syncButtons(); });
@@ -805,7 +894,7 @@ function syncGlyph() { const g = $('#artplay'); if (!g) return; const p = L.p; g
 audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setTimeout(syncGlyph, 50)); setTimeout(syncGlyph, 0); setInterval(syncGlyph, 1000);
 // v2476.64: main panel = presets + 只留燈光; 進階 reveals the full fine-control set (advanced panel).
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
-window.__premium = { OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
