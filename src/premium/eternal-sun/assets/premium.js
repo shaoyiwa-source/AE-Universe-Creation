@@ -1315,3 +1315,91 @@ function importSong81(f) {
   loadRings81(); sigSync81(); ringBar81();
 })();
 (function ex81() { if (window.__premium) Object.assign(window.__premium, { RE81, ringEdit81, importImage81, importSong81, FXR81, sigSync81, saveRings81, loadRings81 }); else setTimeout(ex81, 50); })();
+// ===== v82: 一般/進階 label, ring-spin reward game, imported-song trim loop =====
+(function adv82() {
+  const b = $('#adv'); if (!b) return;
+  const sync = () => { const on = document.body.classList.contains('adv-open'); b.dataset.zh = on ? '‹ 一般設定' : '進階設定 ›'; b.dataset.en = on ? '‹ Basic settings' : 'Advanced settings ›'; const t = b.dataset[S.lang] || b.dataset.zh; if (b.textContent !== t) b.textContent = t; };
+  new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  const lg = $('#lang'); if (lg) lg.addEventListener('click', () => setTimeout(sync, 0));
+  sync();
+})();
+var SPIN82 = { s: null, last: 0, hits: [], tiers: [
+  { n: 5, win: 6000, zh: '🎉 達成：光環旋風 5 圈！', en: '🎉 Unlocked: Halo Whirl ×5!', gzh: '小星星精靈', gen: 'Little Star Sprite', img: 'star', notes: [72, 76, 79, 84] },
+  { n: 10, win: 12000, zh: '💖 達成：光環龍捲風 10 圈！', en: '💖 Unlocked: Halo Tornado ×10!', gzh: '愛心小熊', gen: 'Heart Bear', img: 'bear', notes: [67, 71, 74, 79, 83, 86] },
+  { n: 20, win: 24000, zh: '🌸 傳說達成：光環銀河 20 圈！', en: '🌸 Legendary: Halo Galaxy ×20!', gzh: '永恆之花', gen: 'Eternal Flower', img: 'flower', notes: [60, 64, 67, 72, 76, 79, 84, 88] }] };
+function spinStart82(cx, cy, x, y) { SPIN82.s = { cx, cy, a: Math.atan2(y - cy, x - cx), acc: 0, t0: performance.now(), tm: performance.now(), got: 0 }; }
+function spinMove82(x, y) { try { const s = SPIN82.s; if (!s) return; const now = performance.now(); if (Math.hypot(x - s.cx, y - s.cy) < 8) return;
+  const a = Math.atan2(y - s.cy, x - s.cx); let d = a - s.a; if (d > Math.PI) d -= 6.2832; else if (d < -Math.PI) d += 6.2832; s.a = a; if (Math.abs(d) > 2.3) { if (Math.abs(s.acc) > 1.5 && Math.sign(d) !== Math.sign(s.acc)) d += Math.sign(s.acc) * 6.2832; else return; } // janky frame: big jump continues the current direction
+  if (Math.abs(d) > 0.004) { if (s.acc && Math.sign(d) !== Math.sign(s.acc) && Math.abs(s.acc) > 1) { spinStart82(s.cx, s.cy, x, y); return; } s.acc += d; s.tm = now; }
+  else if (now - s.tm > 1200) { spinStart82(s.cx, s.cy, x, y); return; }
+  (s.h || (s.h = [])).push([now, s.acc]); while (s.h.length > 2 && now - s.h[0][0] > 25000) s.h.shift();
+  for (let k = SPIN82.tiers.length - 1; k >= s.got; k--) { const T = SPIN82.tiers[k]; let base = s.h[0]; if (now - s.t0 > T.win) { for (const hh of s.h) if (now - hh[0] <= T.win) { base = hh; break; } } else base = [s.t0, 0];
+    if (Math.abs(s.acc - base[1]) / 6.2832 >= T.n && now - SPIN82.last > 2500) { s.got = k + 1; reward82(k); break; } }
+  } catch (e) { SPIN82.s = null; } }
+function spinEnd82() { SPIN82.s = null; }
+function chime82(notes) { try { const c = acx(), t0 = c.currentTime + 0.03; const out = c.createGain(); out.gain.value = 0.55; const cmp = c.createDynamicsCompressor(); cmp.threshold.value = -18; cmp.ratio.value = 4; out.connect(cmp); cmp.connect(c.destination);
+  notes.forEach((m, i) => { const f = 440 * Math.pow(2, (m - 69) / 12), t = t0 + i * 0.095;
+    [['sine', 1, 0.32], ['triangle', 2, 0.06]].forEach(([ty, mul, g0]) => { const o = c.createOscillator(), g = c.createGain(); o.type = ty; o.frequency.value = f * mul; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(g0, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1); o.connect(g); g.connect(out); o.start(t); o.stop(t + 1.2); }); });
+  const tl = t0 + notes.length * 0.095; [0, 4, 7, 12].forEach(s => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = 440 * Math.pow(2, (notes[0] + s - 69) / 12); g.gain.setValueAtTime(0.0001, tl); g.gain.exponentialRampToValueAtTime(0.09, tl + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, tl + 1.8); o.connect(g); g.connect(out); o.start(tl); o.stop(tl + 1.9); });
+  } catch (e) {} }
+function giftSVG82(kind) {
+  if (kind === 'bear') return '<svg viewBox="0 0 120 120" width="120" height="120"><circle cx="34" cy="32" r="14" fill="#d9a06b"/><circle cx="86" cy="32" r="14" fill="#d9a06b"/><circle cx="34" cy="32" r="7" fill="#f6c9a8"/><circle cx="86" cy="32" r="7" fill="#f6c9a8"/><circle cx="60" cy="62" r="38" fill="#e3b07c"/><ellipse cx="60" cy="74" rx="17" ry="13" fill="#f8dcc0"/><circle cx="46" cy="56" r="4.5" fill="#3a2418"/><circle cx="74" cy="56" r="4.5" fill="#3a2418"/><circle cx="47.5" cy="54.5" r="1.4" fill="#fff"/><circle cx="75.5" cy="54.5" r="1.4" fill="#fff"/><ellipse cx="60" cy="69" rx="5" ry="3.6" fill="#3a2418"/><path d="M54 77q6 5 12 0" stroke="#3a2418" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="38" cy="70" r="5" fill="#ff9bb0" opacity=".6"/><circle cx="82" cy="70" r="5" fill="#ff9bb0" opacity=".6"/><path d="M60 112c-14-9-22-16-22-24a8 8 0 0 1 22-5a8 8 0 0 1 22 5c0 8-8 15-22 24z" fill="#ff4f7a"/></svg>';
+  if (kind === 'flower') { let p = ''; for (let i = 0; i < 8; i++) p += `<ellipse cx="60" cy="30" rx="13" ry="24" fill="${i % 2 ? '#ffb3d1' : '#ffd36e'}" transform="rotate(${i * 45} 60 60)"/>`; return '<svg viewBox="0 0 120 120" width="120" height="120">' + p + '<circle cx="60" cy="60" r="20" fill="#fff3c4"/><circle cx="53" cy="57" r="3" fill="#3a2418"/><circle cx="67" cy="57" r="3" fill="#3a2418"/><path d="M53 66q7 6 14 0" stroke="#3a2418" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="47" cy="64" r="3.5" fill="#ff8fab" opacity=".7"/><circle cx="73" cy="64" r="3.5" fill="#ff8fab" opacity=".7"/></svg>'; }
+  return '<svg viewBox="0 0 120 120" width="120" height="120"><path d="M60 8l14 30 33 4-24 23 6 33-29-16-29 16 6-33-24-23 33-4z" fill="#ffd84d" stroke="#ffb400" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="56" r="4" fill="#3a2418"/><circle cx="70" cy="56" r="4" fill="#3a2418"/><circle cx="51.3" cy="54.6" r="1.3" fill="#fff"/><circle cx="71.3" cy="54.6" r="1.3" fill="#fff"/><path d="M53 66q7 6 14 0" stroke="#3a2418" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="43" cy="64" r="4" fill="#ff8fab" opacity=".7"/><circle cx="77" cy="64" r="4" fill="#ff8fab" opacity=".7"/></svg>';
+}
+var BURST82 = { cv: null, ps: [], raf: 0 };
+function burst82(k) { try {
+  let cv = BURST82.cv; if (!cv) { cv = BURST82.cv = document.createElement('canvas'); cv.id = 'burst82'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv); }
+  const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight; cv.width = W * dpr; cv.height = H * dpr;
+  const N = [70, 110, 160][k], cols = ['#ffd84d', '#ff6f9f', '#8fe3ff', '#b28bff', '#7dffb2', '#fff'];
+  for (let i = 0; i < N; i++) { const a = Math.random() * 6.2832, v = 3 + Math.random() * 7; BURST82.ps.push({ x: W / 2, y: H * 0.42, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 3, r: 3 + Math.random() * 4, c: cols[i % cols.length], s: i % 3, rot: Math.random() * 6, life: 0, max: 70 + Math.random() * 60 }); }
+  if (!BURST82.raf) { let prev = performance.now(); const step = now => { try { const f = Math.min(3, (now - prev) / 16.7); prev = now; const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+      BURST82.ps = BURST82.ps.filter(p => (p.life += f) < p.max); for (const p of BURST82.ps) { p.vy += 0.16 * f; p.vx *= Math.pow(0.985, f); p.x += p.vx * f; p.y += p.vy * f; p.rot += 0.1 * f; c.globalAlpha = Math.max(0, 1 - p.life / p.max); c.fillStyle = p.c; c.save(); c.translate(p.x, p.y); c.rotate(p.rot);
+        if (p.s === 0) c.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); else if (p.s === 1) { c.beginPath(); for (let j = 0; j < 10; j++) { const rr = j % 2 ? p.r * .45 : p.r * 1.3, aa = j * 0.6283; c.lineTo(Math.cos(aa) * rr, Math.sin(aa) * rr); } c.fill(); } else { const r = p.r * .9; c.beginPath(); c.moveTo(0, r * .8); c.bezierCurveTo(-r * 1.6, -r * .2, -r * .6, -r * 1.4, 0, -r * .5); c.bezierCurveTo(r * .6, -r * 1.4, r * 1.6, -r * .2, 0, r * .8); c.fill(); }
+        c.restore(); }
+      c.globalAlpha = 1; if (BURST82.ps.length) BURST82.raf = requestAnimationFrame(step); else { BURST82.raf = 0; c.clearRect(0, 0, W, H); } } catch (e) { BURST82.raf = 0; BURST82.ps = []; } }; BURST82.raf = requestAnimationFrame(step); }
+  } catch (e) {} }
+function reward82(k) { try { const T = SPIN82.tiers[k]; SPIN82.last = performance.now(); SPIN82.hits.push({ k, t: Date.now() });
+  burst82(k); chime82(T.notes); toast81(T.zh, T.en);
+  let g = $('#gift82'); if (!g) { g = document.createElement('div'); g.id = 'gift82'; g.setAttribute('role', 'dialog'); document.body.appendChild(g); ['pointerdown', 'pointerup', 'click', 'touchstart'].forEach(ev => g.addEventListener(ev, e => e.stopPropagation())); }
+  const en = S.lang === 'en'; g.dataset.tier = k + 1;
+  g.innerHTML = '<div class="g82in"><div class="g82t">' + (en ? 'Gift · Tier ' + (k + 1) : '獎勵 · 第 ' + (k + 1) + ' 階') + '</div>' + giftSVG82(T.img) + '<div class="g82n">' + (en ? T.gen : T.gzh) + '</div><div class="g82s">' + (en ? T.n + ' turns' + (k < 2 ? ' — keep spinning for more!' : ' — legendary!') : '光環轉了 ' + T.n + ' 圈' + (k < 2 ? ' — 繼續轉還有更多驚喜！' : ' — 傳說級成就！')) + '</div><button id="g82x">' + (en ? 'Collect ✓' : '收下 ✓') + '</button></div>';
+  g.classList.add('on'); g.querySelector('#g82x').onclick = () => g.classList.remove('on'); clearTimeout(g._h); g._h = setTimeout(() => g.classList.remove('on'), 9000);
+  } catch (e) {} }
+(function spinHooks82() { // angles are measured in client (screen) px so beat shake / zoom of #stage can't break the count
+  const cl = (sx, sy) => { const r = $('#stage').getBoundingClientRect(); return [r.left + sx * (r.width || 1) / L.W, r.top + sy * (r.height || 1) / L.H]; };
+  const ov = $('#ringedit'); if (ov) {
+    ov.addEventListener('pointerdown', e => { if (RE81.pts.size !== 1) { spinEnd82(); return; } const q = RE81.list[RE81.sel], p = L.p; if (q && RE81.g) { const [cx, cy] = cl(p.x + p.w * q.x, p.y + p.h * q.y); spinStart82(cx, cy, e.clientX, e.clientY); } });
+    ov.addEventListener('pointermove', e => { if (RE81.pts.size === 1 && SPIN82.s) spinMove82(e.clientX, e.clientY); });
+    ['pointerup', 'pointercancel'].forEach(ev => ov.addEventListener(ev, spinEnd82)); }
+  const st = $('#stage'); if (st) { // simple drag on a visible ring (outside edit mode): observe only
+    st.addEventListener('pointerdown', e => { try { if (RE81.on || !S.aura || !e.isPrimary) return; const pt = toStage81(e), p = L.p; for (const q of RE81.list) { const cx = p.x + p.w * q.x, cy = p.y + p.h * q.y, R = q.r * p.w; if (Math.hypot(pt.x - cx, pt.y - cy) < Math.max(40, R * 1.25)) { const [x, y] = cl(cx, cy); spinStart82(x, y, e.clientX, e.clientY); return; } } } catch (er) {} });
+    st.addEventListener('pointermove', e => { if (!RE81.on && SPIN82.s && e.isPrimary) spinMove82(e.clientX, e.clientY); });
+    ['pointerup', 'pointercancel'].forEach(ev => st.addEventListener(ev, () => { if (!RE81.on) spinEnd82(); })); }
+})();
+// --- imported song trim loop (session only) ---
+const fmt82 = s => { s = Math.max(0, s || 0); const m = Math.floor(s / 60), r = s - m * 60; return m + ':' + (r < 10 ? '0' : '') + r.toFixed(1); };
+function trimGet82() { const d = audio.duration; if (!TR || !TR.user || !Number.isFinite(d)) return null; const t = TR.trim || (TR.trim = { a: 0, b: d }); t.b = Math.min(t.b, d); return t; }
+function trimSet82(a, b) { const d = audio.duration; if (!TR || !TR.user || !Number.isFinite(d)) return; a = Math.max(0, Math.min(d - 0.5, a)); b = Math.max(a + 0.5, Math.min(d, b)); TR.trim = { a, b }; TR.cue = a; if (audio.currentTime < a || audio.currentTime > b) try { audio.currentTime = a; } catch (e) {} trimUI82(); }
+function trimUI82() { const row = $('#trimrow'); if (!row) return; const t = trimGet82(); row.hidden = !t; if (!t) return; const d = audio.duration, A = $('#trA'), B = $('#trB');
+  A.max = B.max = d.toFixed(1); if (document.activeElement !== A) A.value = t.a.toFixed(1); if (document.activeElement !== B) B.value = t.b.toFixed(1); $('#trAv').textContent = fmt82(t.a); $('#trBv').textContent = fmt82(t.b); $('#trLen').textContent = (S.lang === 'en' ? 'Loop ' : '循環 ') + fmt82(t.b - t.a); }
+function trimTick82() { try { const t = TR && TR.user && TR.trim; if (!t || audio.paused) return; const ct = audio.currentTime; if (ct >= t.b - 0.03 || ct < t.a - 0.25) audio.currentTime = t.a; } catch (e) {} }
+(function trim82() {
+  const imp = $('#improw'); if (!imp) return; const row = document.createElement('div'); row.className = 'row presets r81'; row.id = 'trimrow'; row.hidden = true;
+  row.innerHTML = '<span class="lab" data-zh="剪輯" data-en="Trim"></span><div class="tr82"><label><span data-zh="開始" data-en="Start"></span> <b id="trAv">0:00.0</b><input id="trA" type="range" min="0" step="0.1" value="0" aria-label="trim start"></label><button class="pr b81" id="trAn" data-zh="⤓ 設為目前位置" data-en="⤓ Set from current"></button>' +
+    '<label><span data-zh="結束" data-en="End"></span> <b id="trBv">0:00.0</b><input id="trB" type="range" min="0" step="0.1" value="0" aria-label="trim end"></label><button class="pr b81" id="trBn" data-zh="⤒ 設為目前位置" data-en="⤒ Set from current"></button>' +
+    '<span id="trLen"></span><button class="pr b81" id="trX" data-zh="↺ 整首" data-en="↺ Whole song"></button><div class="note81" data-zh="只循環播放選取的段落（例如副歌）；只在這次瀏覽有效，檔案不會上傳。" data-en="Loops only the chosen part (e.g. the chorus); this session only, never uploaded."></div></div>';
+  imp.parentNode.insertBefore(row, imp.nextSibling);
+  const lab = () => row.querySelectorAll('[data-zh]').forEach(e => { e.textContent = e.dataset[S.lang] || e.dataset.zh; }); lab(); $('#lang').addEventListener('click', () => setTimeout(() => { lab(); trimUI82(); }, 0));
+  ['pointerdown', 'click'].forEach(ev => row.addEventListener(ev, e => e.stopPropagation()));
+  $('#trA').addEventListener('input', e => { const t = trimGet82(); if (t) { trimSet82(+e.target.value, t.b); try { audio.currentTime = TR.trim.a; } catch (er) {} } });
+  $('#trB').addEventListener('input', e => { const t = trimGet82(); if (t) { trimSet82(t.a, +e.target.value); try { audio.currentTime = Math.max(TR.trim.a, TR.trim.b - 2); } catch (er) {} } });
+  $('#trAn').onclick = () => { const t = trimGet82(); if (t) trimSet82(audio.currentTime, t.b); };
+  $('#trBn').onclick = () => { const t = trimGet82(); if (t) trimSet82(t.a, audio.currentTime); };
+  $('#trX').onclick = () => { if (TR && TR.user) { TR.trim = null; TR.cue = 0; trimUI82(); } };
+  ['loadedmetadata', 'durationchange', 'emptied'].forEach(ev => audio.addEventListener(ev, trimUI82));
+  audio.addEventListener('timeupdate', trimTick82); setInterval(trimTick82, 60);
+  audio.addEventListener('ended', () => { const t = TR && TR.user && TR.trim; if (t && USER.want) { try { audio.currentTime = t.a; } catch (e) {} const p = audio.play(); if (p && p.catch) p.catch(() => {}); } });
+  audio.addEventListener('play', () => { const t = TR && TR.user && TR.trim; if (t && (audio.currentTime < t.a || audio.currentTime >= t.b)) try { audio.currentTime = t.a; } catch (e) {} });
+})();
+(function ex82() { if (window.__premium) Object.assign(window.__premium, { SPIN82, reward82, spinStart82, spinMove82, trimSet82, trimGet82 }); else setTimeout(ex82, 50); })();

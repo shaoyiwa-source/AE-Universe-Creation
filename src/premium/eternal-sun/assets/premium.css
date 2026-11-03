@@ -158,3 +158,15 @@ body.ringedit #hint,body.ringedit #openhint,body.ringedit #panel{display:none!im
 #toast81.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #panel .r81 .note81{flex-basis:100%;text-align:center;font-size:11px;color:#cdbb8e;opacity:.85;line-height:1.4}
 #panel .r81[hidden]{display:none!important}
+/* v82 */
+#burst82{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:45}
+#gift82{position:fixed;left:50%;top:50%;transform:translate(-50%,-46%) scale(.9);z-index:46;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s cubic-bezier(.2,1.4,.4,1)}
+#gift82.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+#gift82 .g82in{width:min(260px,80vw);padding:16px 16px 14px;border-radius:20px;text-align:center;background:linear-gradient(160deg,rgba(40,26,52,.94),rgba(14,10,8,.94));border:1.5px solid rgba(255,214,120,.7);box-shadow:0 0 40px rgba(255,190,120,.35);color:#f8ecd0}
+#gift82 svg{display:block;margin:6px auto;filter:drop-shadow(0 4px 10px rgba(255,200,120,.45));animation:g82b 1.6s ease-in-out infinite}
+@keyframes g82b{50%{transform:translateY(-6px) rotate(-3deg)}}
+#gift82 .g82t{font-size:12px;letter-spacing:.12em;color:#ffd98a}#gift82 .g82n{font-size:18px;font-weight:600;margin-top:2px}#gift82 .g82s{font-size:12px;opacity:.8;margin:4px 0 10px}
+#gift82 button{border:0;border-radius:999px;padding:8px 20px;background:#ffd36e;color:#2a1a08;font-weight:600;font-size:14px}
+#trimrow .tr82{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;flex:1}#trimrow label{display:flex;align-items:center;gap:6px;flex:1 1 100%;font-size:12px}#trimrow input[type=range]{flex:1}#trimrow b{font-variant-numeric:tabular-nums;min-width:52px}#trLen{font-size:12px;opacity:.8}
+@media (prefers-reduced-motion:reduce){#gift82 svg{animation:none}}
+body.ringedit #toast81{top:calc(max(10px,env(safe-area-inset-top)) + 150px)}
