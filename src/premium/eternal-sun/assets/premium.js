@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.75, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.76, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -242,7 +242,7 @@ function lampColor(now) {
    soft light pools, beat rings; flying depth bolts on each kick; small music spots. Coordinates mapped to the painting rect. */
 const LASER = ['#ff416d', '#57ffa0', '#ffe28d', '#65dbff', '#c987ff', '#ffac68'];
 const LZ = { pat: 0, hit: -1e9 };
-const LWM = { thin: 1, mid: 1.9, thick: 3 }; const lwk = () => LWM[S.lw] || 1.9; // v75 雷射粗細 細/中/粗
+const LWM = { thin: 1, mid: 1.9, thick: 2.5 }; const gk76 = () => lwk() > 2.2 ? .6 : 1; // v76: 粗 toned down + weaker halo const lwk = () => LWM[S.lw] || 1.9; // v75 雷射粗細 細/中/粗
 let bolts = [], musicSpots = [], spots = [];
 function fireBolts() {}
 const variation = seed => { const n = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return n - Math.floor(n); };
@@ -305,8 +305,8 @@ function drawLasers(ctx, now) {
       const originX = i % 3 === 0 ? G.X0 - G.W * .08 : i % 3 === 1 ? G.X0 + G.W * 1.08 : G.X0 + G.W * (.15 + i * .12), originY = i % 3 === 2 ? G.T - 20 : G.T + G.H * (.15 + (i % 4) * .20);
       const tg = hpDest(i, sweep, now), targetX = tg.x, targetY = tg.y;
       const power = Math.min(1, ((b.stage === 'build' ? .06 + b.buildProgress * .06 : .07) + energy * .035 + pulse * .85 + (b.dropPulse || 0) * .12) * Math.min(1, 0.6 + 0.6 * S.intensity) + (S.playing ? 0 : .12));
-      const W0 = (1.2 + pulse * 2.4) * lwk(); ctx.save(); ctx.globalCompositeOperation = S.night ? 'screen' : 'source-over'; ctx.lineCap = 'round'; ctx.strokeStyle = colors[i]; ctx.shadowColor = colors[i]; ctx.shadowBlur = lite ? 0 : W0 * 3;
-      ctx.globalAlpha = power * .22; ctx.lineWidth = W0 * 4.2; ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke(); ctx.globalAlpha = power * .4; ctx.lineWidth = W0 * 2; ctx.stroke(); ctx.restore(); // v75 coloured outer halo
+      const W0 = (1.2 + pulse * 2.4) * lwk(); ctx.save(); ctx.globalCompositeOperation = S.night ? 'screen' : 'source-over'; ctx.lineCap = 'round'; ctx.strokeStyle = colors[i]; ctx.shadowColor = colors[i]; ctx.shadowBlur = lite ? 0 : Math.min(W0 * 3, 10);
+      ctx.globalAlpha = power * .22 * gk76(); ctx.lineWidth = W0 * (lwk() > 2.2 ? 3 : 4.2); ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke(); ctx.globalAlpha = power * .4 * gk76(); ctx.lineWidth = W0 * 1.8; ctx.stroke(); ctx.restore(); // v75 coloured outer halo
       ctx.shadowColor = colors[i]; ctx.shadowBlur = lite ? 0 : 14 + pulse * 25;
       ctx.strokeStyle = colors[i]; ctx.globalAlpha = Math.min(1, power * 1.3 + .1); ctx.lineWidth = W0;
       ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke();
@@ -314,7 +314,7 @@ function drawLasers(ctx, now) {
       ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke();
       // v75: the 3-line prismatic split at the landing point is gone — the round pool below is the single impact light spot
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-      const pool = ctx.createRadialGradient(targetX, targetY, 1, targetX, targetY, (44 + pulse * 54) * (.85 + .15 * lwk()));
+      const pool = ctx.createRadialGradient(targetX, targetY, 1, targetX, targetY, (40 + pulse * 46) * (.9 + .08 * lwk()));
       pool.addColorStop(0, `rgba(255,249,218,${power * .60})`); pool.addColorStop(.18, colors[i] + Math.round(power * 75).toString(16).padStart(2, '0')); pool.addColorStop(1, colors[i] + '00');
       ctx.fillStyle = pool; ctx.fillRect(targetX - 90, targetY - 90, 180, 180);
       ctx.strokeStyle = colors[i]; ctx.lineWidth = .7; ctx.globalAlpha = pulse * .6; ctx.beginPath(); ctx.arc(targetX, targetY, Math.max(0, 8 + Math.min(1, b.phase) * 28), 0, Math.PI * 2); ctx.stroke();
@@ -364,6 +364,7 @@ function drawTaps(ctx, now) {
   ctx.restore(); ctx.globalAlpha = 1;
 }
 function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
+  V75.focus = { x, y, t: performance.now() }; V75.foci = (V75.foci || 0) + 1; // v76: searchlights swing to the tap point
   if (window.aeHomeReplica && document.body.dataset.original !== '1') window.aeHomeReplica.tap(x, y); // v70: homepage tap beams + gold ripple in ALL modes
   if (S.home && window.aeHomeReplica) { if (!A.started && !S.playing) togglePlay(); RG.taps = (RG.taps || 0) + 1; tapSound(x); return; } // v2476.69: homepage tap (beams + gold ripples)
   if (!A.started && !S.playing) { togglePlay(); tapSound(x); return; } // v2476.65: first tap on the painting starts the music
@@ -396,26 +397,36 @@ const TAPSND = { mode: (() => { try { return localStorage.getItem('ae-premium-ta
 /* v75 808-style kick: deep sub sine sweep (~155→45 Hz) with a long tail, a separate 45 Hz sub layer, a click transient;
    輕/中/重 differ in length, sub weight and click; 重 adds tanh saturation + the longest boom. All kicks go through a
    compressor + brick-wall limiter bus so stacked taps never clip. */
-const KICKS = { k1: { f0: 150, f1: 55, pd: 0.06, d: 0.32, g: 0.55, sub: 0.0, click: 0.28, drive: 0 },
-                k2: { f0: 155, f1: 47, pd: 0.085, d: 0.7, g: 0.8, sub: 0.45, click: 0.4, drive: 0 },
-                k3: { f0: 160, f1: 43, pd: 0.11, d: 1.35, g: 0.95, sub: 0.8, click: 0.55, drive: 5 } };
+/* v76 kick: louder than v75 (at least as loud as the track), a low-mid body (2nd/3rd harmonics ~90–140 Hz so phone speakers
+   reproduce the punch), saturation on every level (輕 light → 重 heavy), the track is ducked ~2.5 dB for ~0.25 s under each kick
+   (audio.volume; iOS Safari ignores element volume, so there the kick is just louder). Compressor + limiter bus prevents clipping. */
+const KICKS = { k1: { f0: 160, f1: 58, pd: 0.05, d: 0.3, g: 0.9, sub: 0.0, body: 0.35, click: 0.35, drive: 1.6, duck: 0.85 },
+                k2: { f0: 165, f1: 50, pd: 0.075, d: 0.65, g: 1.25, sub: 0.5, body: 0.6, click: 0.5, drive: 2.6, duck: 0.75 },
+                k3: { f0: 175, f1: 44, pd: 0.1, d: 1.3, g: 1.6, sub: 0.9, body: 0.95, click: 0.7, drive: 6, duck: 0.68 } };
 function kbus(c) { if (GAME.kbus && GAME.kbus.context === c) return GAME.kbus;
-  const comp = c.createDynamicsCompressor(); comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
-  const lim = c.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;
-  const mg = c.createGain(); mg.gain.value = 0.9; comp.connect(lim); lim.connect(mg); mg.connect(c.destination); GAME.kbus = comp; return comp; }
-function kick(lv) {
-  try { const K = KICKS[lv] || KICKS.k2, c = acx(), t = c.currentTime + 0.004, duck = S.playing ? 0.75 : 1, out = c.createGain(); out.gain.value = K.g * duck; out.connect(kbus(c));
-    let body = out;
-    if (K.drive) { const ws = c.createWaveShaper(), cv = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; cv[i] = Math.tanh(x * K.drive) / Math.tanh(K.drive); } ws.curve = cv; ws.oversample = '4x';
-      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; ws.connect(lp); lp.connect(out); const pre = c.createGain(); pre.gain.value = 1.4; pre.connect(ws); body = pre; }
+  const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 6; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.22;
+  const mk = c.createGain(); mk.gain.value = 1.8; // make-up gain after the glue compressor
+  const lim = c.createDynamicsCompressor(); lim.threshold.value = -2.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;
+  comp.connect(mk); mk.connect(lim); lim.connect(c.destination); if (!(c instanceof (window.OfflineAudioContext || Object))) GAME.kbus = comp; return comp; }
+const DUCK = { until: 0, base: null, n: 0 };
+function duckMusic(f) { if (!S.playing || audio.muted) return; if (DUCK.base == null) DUCK.base = audio.volume; const v = DUCK.base * f; audio.volume = Math.min(audio.volume, v); DUCK.n++; DUCK.until = performance.now() + 260;
+  clearTimeout(DUCK.tm); const rel = () => { const left = DUCK.until - performance.now(); if (left > 0) { DUCK.tm = setTimeout(rel, left); return; } let k = 0; const step = () => { k++; audio.volume = Math.min(DUCK.base, audio.volume + (DUCK.base - audio.volume) * 0.35 + 0.01); if (k < 12 && audio.volume < DUCK.base - 0.005) DUCK.tm = setTimeout(step, 16); else { audio.volume = DUCK.base; DUCK.base = null; } }; step(); }; DUCK.tm = setTimeout(rel, 260); }
+function kick(lv, ctxOverride) {
+  try { const K = KICKS[lv] || KICKS.k2, c = ctxOverride || acx(), t = c.currentTime + 0.004, out = c.createGain(); out.gain.value = K.g; out.connect(kbus(c));
+    const ws = c.createWaveShaper(), cv = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; cv[i] = Math.tanh(x * K.drive) / Math.tanh(K.drive); } ws.curve = cv; ws.oversample = '4x';
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = lv === 'k3' ? 2200 : 3000; ws.connect(lp); lp.connect(out);
+    const pk = c.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 110; pk.Q.value = 0.9; pk.gain.value = 4; pk.connect(ws); const body = pk; // low-mid emphasis
     const o = c.createOscillator(), v = c.createGain(); o.type = 'sine';
     o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.pd); o.frequency.linearRampToValueAtTime(K.f1 * 0.94, t + K.d);
-    v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(1, t + 0.0015); v.gain.setTargetAtTime(0.55, t + 0.01, 0.06); v.gain.setTargetAtTime(0.0001, t + 0.08, K.d / 4); o.connect(v); v.connect(body); o.start(t); o.stop(t + K.d + 0.15);
-    if (K.sub) { const so = c.createOscillator(), sg = c.createGain(); so.type = 'sine'; so.frequency.value = K.f1 * 0.98; sg.gain.setValueAtTime(0, t); sg.gain.linearRampToValueAtTime(K.sub, t + 0.02); sg.gain.setTargetAtTime(0.0001, t + 0.12, K.d / 3.5); so.connect(sg); sg.connect(body); so.start(t); so.stop(t + K.d + 0.2); }
+    v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(1, t + 0.0015); v.gain.setTargetAtTime(0.6, t + 0.01, 0.07); v.gain.setTargetAtTime(0.0001, t + 0.09, K.d / 4); o.connect(v); v.connect(body); o.start(t); o.stop(t + K.d + 0.15);
+    // harmonic body: 2nd + 3rd partials of the sweep (≈90–150 Hz), what a phone speaker can actually play
+    for (const [m, gm] of [[2, K.body], [3, K.body * 0.45]]) { const h = c.createOscillator(), hg = c.createGain(); h.type = 'sine'; h.frequency.setValueAtTime(K.f0 * m, t); h.frequency.exponentialRampToValueAtTime(K.f1 * m, t + K.pd); h.frequency.linearRampToValueAtTime(K.f1 * m * 0.94, t + K.d);
+      hg.gain.setValueAtTime(0, t); hg.gain.linearRampToValueAtTime(gm, t + 0.002); hg.gain.setTargetAtTime(0.0001, t + 0.03, K.d / 5); h.connect(hg); hg.connect(body); h.start(t); h.stop(t + K.d + 0.1); }
+    if (K.sub) { const so = c.createOscillator(), sg = c.createGain(); so.type = 'sine'; so.frequency.value = K.f1 * 0.98; sg.gain.setValueAtTime(0, t); sg.gain.linearRampToValueAtTime(K.sub, t + 0.02); sg.gain.setTargetAtTime(0.0001, t + 0.12, K.d / 3.5); so.connect(sg); sg.connect(out); so.start(t); so.stop(t + K.d + 0.2); }
     const n = c.createBuffer(1, Math.round(c.sampleRate * 0.005), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length) ** 2;
     const ns = c.createBufferSource(), hp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; hp.type = 'highpass'; hp.frequency.value = 2500; ng.gain.value = K.click; ns.connect(hp); hp.connect(ng); ng.connect(out); ns.start(t);
     const bo = c.createOscillator(), bg = c.createGain(); bo.type = 'triangle'; bo.frequency.setValueAtTime(1200, t); bo.frequency.exponentialRampToValueAtTime(300, t + 0.012); bg.gain.setValueAtTime(K.click * 0.6, t); bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.014); bo.connect(bg); bg.connect(out); bo.start(t); bo.stop(t + 0.02);
-    TAPSND.n++; GAME.sounds = (GAME.sounds || 0) + 1;
+    if (!ctxOverride) { duckMusic(K.duck); TAPSND.n++; GAME.sounds = (GAME.sounds || 0) + 1; }
   } catch (e) {}
 }
 function tapSound(x) { if (TAPSND.mode !== 'scale') { kick(TAPSND.mode); return true; } if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {} return false; }
@@ -1030,7 +1041,7 @@ audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setT
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
 document.querySelectorAll('.ts').forEach(b => b.classList.toggle('on', b.dataset.s === TAPSND.mode));
 document.querySelectorAll('.lw').forEach(b => b.onclick = e => { e.stopPropagation(); setLw(b.dataset.w); }); setLw(S.lw, true);
-window.__premium = { V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
@@ -1050,6 +1061,7 @@ function v75Beat(now, bass, heavy, b) {
 }
 const fx75 = (() => { const c = document.createElement('canvas'); c.id = 'fx75'; c.setAttribute('aria-hidden', 'true'); c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none'; const st = $('#stage'), co = $('#coin'); st.insertBefore(c, co); return c.getContext('2d'); })();
 const dip75 = (() => { const d = document.createElement('div'); d.id = 'dip75'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;inset:0;pointer-events:none;background:#000;opacity:0'; $('#art').appendChild(d); return d; })();
+function focusW(now) { const F = V75.focus; if (!F) return 0; const t = now - F.t, e = u => u * u * (3 - 2 * u); if (t < 0) return 0; if (t < 450) return e(t / 450); if (t < 2000) return 1; if (t < 3000) return e(1 - (t - 2000) / 1000); return 0; } // v76: swing in 0.45 s, hold to 2 s, ease back by 3 s
 function drawV75(now) {
   const c = fx75, cv = c.canvas, k = L.dpr || 1, orig = document.body.dataset.original === '1';
   const W = Math.round(L.W * k), H = Math.round(L.H * k); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
@@ -1068,18 +1080,20 @@ function drawV75(now) {
     c.save(); c.beginPath(); c.rect(0, 0, L.W, L.H); c.clip(); c.globalCompositeOperation = S.night ? 'screen' : 'source-over'; // day: a warm haze over the bright art (additive would vanish into the light colours)
     for (let i = 0; i < n; i++) {
       const u = n === 1 ? 0.5 : i / (n - 1), bx = p.x + p.w * (0.12 + 0.76 * u), base = -(u - 0.5) * 0.38;
-      const ang = -Math.PI / 2 + base + Math.sin(V75.sway * (0.8 + i * 0.17) + i * 1.9) * 0.32, half = 0.1 + 0.025 * Math.sin(V75.sway * 0.6 + i);
-      const a = Math.min(0.7, (0.3 + 0.18 * lvl + 0.2 * kk) * (0.7 + 0.45 * S.intensity));
-      const ex = bx + Math.cos(ang) * len, ey = by + Math.sin(ang) * len;
+      let ang = -Math.PI / 2 + base + Math.sin(V75.sway * (0.8 + i * 0.17) + i * 1.9) * 0.32, half = 0.1 + 0.025 * Math.sin(V75.sway * 0.6 + i);
+      let L0 = len, fa = 1; const fw = focusW(now); if (fw > 0) { const F = V75.focus, at = Math.atan2(F.y - by, F.x - bx), dist = Math.hypot(F.x - bx, F.y - by); ang = ang + (at - ang) * fw; half *= 1 - 0.4 * fw; L0 = len * (1 - fw) + dist * 1.08 * fw; fa = 1 + 0.7 * fw; } // v76 tap focus: cones converge and end at the tap point
+      const a = fa * Math.min(0.7, (0.3 + 0.18 * lvl + 0.2 * kk) * (0.7 + 0.45 * S.intensity));
+      const ex = bx + Math.cos(ang) * L0, ey = by + Math.sin(ang) * L0;
       const g = c.createLinearGradient(bx, by, ex, ey); g.addColorStop(0, `rgba(255,248,226,${a})`); g.addColorStop(0.35, `rgba(255,240,205,${a * 0.6})`); g.addColorStop(1, 'rgba(255,236,200,0)');
       c.fillStyle = g; c.beginPath(); c.moveTo(bx + Math.cos(ang + Math.PI / 2) * 6, by + Math.sin(ang + Math.PI / 2) * 6);
-      c.lineTo(bx + Math.cos(ang - half) * len, by + Math.sin(ang - half) * len); c.lineTo(bx + Math.cos(ang + half) * len, by + Math.sin(ang + half) * len);
+      c.lineTo(bx + Math.cos(ang - half) * L0, by + Math.sin(ang - half) * L0); c.lineTo(bx + Math.cos(ang + half) * L0, by + Math.sin(ang + half) * L0);
       c.lineTo(bx + Math.cos(ang - Math.PI / 2) * 6, by + Math.sin(ang - Math.PI / 2) * 6); c.closePath(); c.fill();
       // soft inner core so the cone has a brighter centre line
       const g2 = c.createLinearGradient(bx, by, ex, ey); g2.addColorStop(0, `rgba(255,252,240,${a * 0.7})`); g2.addColorStop(0.5, `rgba(255,250,235,${a * 0.25})`); g2.addColorStop(1, 'rgba(255,250,235,0)');
-      c.fillStyle = g2; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + Math.cos(ang - half * 0.35) * len, by + Math.sin(ang - half * 0.35) * len); c.lineTo(bx + Math.cos(ang + half * 0.35) * len, by + Math.sin(ang + half * 0.35) * len); c.closePath(); c.fill();
+      c.fillStyle = g2; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + Math.cos(ang - half * 0.35) * L0, by + Math.sin(ang - half * 0.35) * L0); c.lineTo(bx + Math.cos(ang + half * 0.35) * L0, by + Math.sin(ang + half * 0.35) * L0); c.closePath(); c.fill();
       const lg = c.createRadialGradient(bx, by, 0, bx, by, 26); lg.addColorStop(0, `rgba(255,252,240,${Math.min(1, a * 2)})`); lg.addColorStop(1, 'rgba(255,240,210,0)'); c.fillStyle = lg; c.fillRect(bx - 26, by - 26, 52, 52); // lamp head
     }
+    const fw = focusW(now); if (fw > 0) { const F = V75.focus, R = Math.min(p.w * 0.16, 110), g = c.createRadialGradient(F.x, F.y, 0, F.x, F.y, R); g.addColorStop(0, `rgba(255,252,238,${0.55 * fw})`); g.addColorStop(0.45, `rgba(255,242,210,${0.25 * fw})`); g.addColorStop(1, 'rgba(255,240,205,0)'); c.fillStyle = g; c.fillRect(F.x - R, F.y - R, R * 2, R * 2); }
     c.restore();
   }
   if (strobing) { c.save(); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 0.5 * (1 - sq) ** 1.5; c.fillStyle = '#fff'; c.fillRect(p.x, p.y, p.w, p.h); c.restore(); }

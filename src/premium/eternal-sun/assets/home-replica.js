@@ -1,4 +1,4 @@
-/* AE-HOME-REPLICA v2476.75 (v75 hand patch on top of v2476.69 generator output) — premium /premium/eternal-sun/ default mode 「首頁重現」.
+/* AE-HOME-REPLICA v2476.76 (v75 hand patch on top of v2476.69 generator output) — premium /premium/eternal-sun/ default mode 「首頁重現」.
    GENERATED from /ae-home-light.js (homepage sound-light) by build_replica.py: the functions
    destination(), launchDepth(), draw(), drawFx(), artPoint(), fxGlow() are copied VERBATIM; only this
    shim maps the homepage's .hero / painting box / player clock onto the premium stage + #music element.
@@ -32,15 +32,16 @@
   const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
   /* v75 (hand-patched after build_replica.py): 雷射粗細 細/中/粗 width multiplier, coloured outer glow halo under every beam,
      one soft circular impact halo where a tapped beam lands (replaces the 3-line prismatic split). */
-  const LWM={thin:1,mid:1.9,thick:3};const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'mid']||1.9;};
+  const LWM={thin:1,mid:1.9,thick:2.5}; /* v76: 粗 toned down (was 3) */
+  const gk=()=>lw()>2.2?.6:1; /* v76: weaker glow/additive at 粗 */const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'mid']||1.9;};
   const hx=a=>Math.round(Math.max(0,Math.min(1,a))*255).toString(16).padStart(2,'0');
   let halos=[];
-  function beamGlow(ox,oy,tx,ty,col,w,a){ctx.save();ctx.globalCompositeOperation='source-over';ctx.lineCap='round';ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=lite?0:w*3;
-    ctx.globalAlpha=Math.min(1,a)*.22;ctx.lineWidth=w*4.2;ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(tx,ty);ctx.stroke();ctx.globalAlpha=Math.min(1,a)*.42;ctx.lineWidth=w*2;ctx.stroke();ctx.restore();}
+  function beamGlow(ox,oy,tx,ty,col,w,a){ctx.save();ctx.globalCompositeOperation='source-over';ctx.lineCap='round';ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=lite?0:Math.min(w*3,10);
+    ctx.globalAlpha=Math.min(1,a)*.22*gk();ctx.lineWidth=w*(lw()>2.2?3:4.2);ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(tx,ty);ctx.stroke();ctx.globalAlpha=Math.min(1,a)*.42*gk();ctx.lineWidth=w*1.8;ctx.stroke();ctx.restore();}
   function softHalo(x,y,col,a,R){if(a<=.003||R<=0)return;const g=ctx.createRadialGradient(x,y,0,x,y,R);g.addColorStop(0,`rgba(255,255,248,${Math.min(1,a)})`);g.addColorStop(.18,`rgba(255,250,228,${Math.min(1,a*.8)})`);g.addColorStop(.42,col+hx(a*.55));g.addColorStop(.75,col+hx(a*.2));g.addColorStop(1,col+'00');ctx.fillStyle=g;ctx.fillRect(x-R,y-R,R*2,R*2);}
-  function drawHalos(now){halos=halos.filter(h=>now-h.born<h.life);for(const h of halos){const t=(now-h.born)/h.life,rise=Math.min(1,(now-h.born)/260),a=rise*(1-t)**1.4,R=Math.min(artW*.2,120)*(.65+.35*rise+.25*t)*(.85+.15*lw());
-    ctx.save();ctx.globalCompositeOperation='source-over';softHalo(h.x,h.y,h.col,a*.95,R);ctx.globalCompositeOperation='lighter';softHalo(h.x,h.y,h.col,a*.35,R*.45);
-    ctx.globalCompositeOperation='source-over';ctx.strokeStyle=h.col;ctx.shadowColor=h.col;ctx.shadowBlur=lite?0:16;ctx.globalAlpha=a*.55;ctx.lineWidth=2.5+lw()*1.5;ctx.beginPath();ctx.arc(h.x,h.y,R*.62,0,Math.PI*2);ctx.stroke();ctx.restore();}}
+  function drawHalos(now){halos=halos.filter(h=>now-h.born<h.life);for(const h of halos){const t=(now-h.born)/h.life,rise=Math.min(1,(now-h.born)/260),a=rise*(1-t)**1.4,R=Math.min(artW*.17,100)*(.65+.35*rise+.2*t)*(.9+.08*lw()); /* v76: smaller, softer impact spot */
+    ctx.save();ctx.globalCompositeOperation='source-over';softHalo(h.x,h.y,h.col,a*.8,R);ctx.globalCompositeOperation='lighter';softHalo(h.x,h.y,h.col,a*.22,R*.42);
+    ctx.globalCompositeOperation='source-over';ctx.strokeStyle=h.col;ctx.shadowColor=h.col;ctx.shadowBlur=lite?0:16;ctx.globalAlpha=a*.55;ctx.lineWidth=2.5+lw()*.8;ctx.beginPath();ctx.arc(h.x,h.y,R*.62,0,Math.PI*2);ctx.stroke();ctx.restore();}}
   const variation=seed=>{const n=Math.sin(seed*12.9898+78.233)*43758.5453;return n-Math.floor(n);};
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
@@ -119,7 +120,7 @@
         ctx.shadowBlur=lite?0:4;ctx.strokeStyle='#ffffff';ctx.lineWidth=1.1*Math.sqrt(lw());ctx.globalAlpha=Math.min(1,power*1.2+.2); /* v74: white core */
         ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
         // v75: no 3-line prismatic split at the landing point — one soft round light spot instead (pool below + halo)
-        softHalo(targetX,targetY,colors[i],Math.min(1,power*.9+.1),(26+beat.pulse*30)*(.8+.2*lw()));
+        softHalo(targetX,targetY,colors[i],Math.min(1,power*.75+.08)*gk(),(24+beat.pulse*26)*(.85+.1*lw()));
         // Soft light pools sit on the unchanged painted surface, fading outward.
         ctx.globalAlpha=1;ctx.shadowBlur=0;
         if(!bare){
@@ -142,7 +143,7 @@
         const opacity=b.musical?window.aeHomeAudioEnergy.flightPower((now-b.born)/1000):Math.sin(Math.PI*p);
         const tipX=b.x+(b.ox-b.x)*near,tipY=b.y+(b.oy-b.y)*near,startX=b.x+(b.ox-b.x)*back,startY=b.y+(b.oy-b.y)*back;
         const streak=ctx.createLinearGradient(startX,startY,tipX,tipY);streak.addColorStop(0,b.color+'00');streak.addColorStop(1,b.color);
-        ctx.save();ctx.globalCompositeOperation='source-over';ctx.strokeStyle=b.color;ctx.globalAlpha=opacity*.25;ctx.lineWidth=(4+(1-p)*12)*lw();ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:18;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();ctx.restore(); /* v75 outer glow */
+        ctx.save();ctx.globalCompositeOperation='source-over';ctx.strokeStyle=b.color;ctx.globalAlpha=opacity*.25*gk();ctx.lineWidth=(4+(1-p)*10)*Math.pow(lw(),.7);ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:14;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();ctx.restore(); /* v75 outer glow */
         ctx.strokeStyle=streak;ctx.lineWidth=(1.4+(1-p)*7)*lw();ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:20;ctx.globalAlpha=opacity*.95;
         ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();
         ctx.strokeStyle='#fff9e9';ctx.lineWidth=(.7+(1-p)*1.5)*Math.sqrt(lw());ctx.globalAlpha=opacity*.85;
