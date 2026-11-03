@@ -15,7 +15,7 @@
   let lite=forceLite,liteLatch=forceLite,frameEma=16.7,presentMs=12,lights=true,playing=false,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,artX0=0,artW=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
-  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=true,offY=0,dpr=1;
+  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=true,lasersOn=true,offY=0,dpr=1;
   const DISPLAY_LEAD=.012;
   function displayTime(){const ct=audio.currentTime||0;return ct+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));}
   function clear(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(dpr,0,0,dpr,0,offY*dpr);}
@@ -79,7 +79,7 @@
       hero.dataset.musicTime=tt.toFixed(3);hero.dataset.musicStage=beat.stage;
       hero.dataset.accentCount=String(beat.accentCount);hero.dataset.dropPulse=beat.dropPulse.toFixed(3);
       if(!bare&&((beat.beat&&beat.stage!=='build')||(beat.accentBeat&&beat.stage==='build'))){
-        if(beat.stage!=='build')launchDepth(null,null,now,beat.count);
+        if(beat.stage!=='build'&&lasersOn)launchDepth(null,null,now,beat.count); // v71: 雷射 toggle
         for(let i=0;i<3;i++){const hit=destination(i*2,beat.sweep,now);musicSpots.push({...hit,born:now});}
         if(musicSpots.length>9)musicSpots.splice(0,musicSpots.length-9);
       }
@@ -95,7 +95,7 @@
       const targets=[],group=Math.floor(beat.count/4),pattern=Math.floor(variation(group+3)*3);
       const beamCount=beat.stage==='build'?(beat.buildProgress>.7?5:3):6;
       hero.dataset.laserPattern=String(pattern);hero.dataset.musicBeams=String(beamCount);
-      for(let i=0;i<beamCount;i++){
+      for(let i=0;i<(lasersOn?beamCount:0);i++){ // v71: 雷射 toggle hides the homepage ambient lasers (gold points stay)
         const originX=i%3===0?artX0-artW*.08:i%3===1?artX0+artW*1.08:artX0+artW*(.15+i*.12),originY=i%3===2?-20:artBottom*(.15+(i%4)*.20);
         const target=destination(i,sweep,now),targetX=target.x,targetY=target.y;targets.push({x:Math.round(targetX),y:Math.round(targetY)});
         const power=Math.min(1,(beat.stage==='build'?.06+beat.buildProgress*.06:.07)+energy*.035+beat.pulse*.85+beat.dropPulse*.12);
@@ -253,7 +253,8 @@
   // homepage ambientTick: the soft 發亮光 glow breathes on its own every 3.4 s while the music is not playing
   function ambientTick(){if(active&&ambient&&!document.hidden&&!reduced.matches&&!playing&&width>0)fxGlow({quiet:true,soft:true});setTimeout(ambientTick,3400);}
   setTimeout(ambientTick,700);
+  function setLasers(on){on=!!on;if(on===lasersOn)return;lasersOn=on;if(!on)bolts=bolts.filter(b=>!b.musical);schedule();}
   function setAmbient(on){on=!!on;if(on===ambient)return;ambient=on;musicSpots=[];glows=[];focus=null;if(!on)clear();schedule();}
-  window.aeHomeReplica={tap,setActive,setAmbient,get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length})};
+  window.aeHomeReplica={tap,setActive,setAmbient,setLasers,get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length})};
   const boot=()=>{if(window.__premium){resize();sync();}else setTimeout(boot,50);};boot();
 })();

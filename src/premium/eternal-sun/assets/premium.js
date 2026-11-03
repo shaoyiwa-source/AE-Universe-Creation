@@ -285,6 +285,7 @@ function drawLaserShow(ctx, now, G, lite) {
   }
 }
 function drawLasers(ctx, now) {
+  if (S.home && document.body.dataset.original !== '1') return; // v71: with 歡樂派對 on, 雷射 = the homepage lasers only (no stacked premium set)
   const G = hpGeom(), lite = S.engine === 'lite';
   ctx.save(); ctx.beginPath(); ctx.rect(G.X0, G.T, G.W, G.H); ctx.clip();
   if (S.laser) {
@@ -953,7 +954,7 @@ function bindUI() {
 /* ---------- 7 curated presets (模式), each with its own tuned motion speed (no speed slider) ---------- */
 const BASE = { party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
 const PRESETS = {
-  home:    { ...BASE, mode: 'natural', frame: true, intensity: 0.7, speed: 1 },                                                       // v2476.69 首頁重現 (default): homepage sound-light replica (home-replica.js), all premium layers off
+  home:    { ...BASE, mode: 'natural', frame: true, laser: true, intensity: 0.7, speed: 1 },                                                       // v2476.69 首頁重現 (default): homepage sound-light replica (home-replica.js), all premium layers off
   golden:  { ...BASE, mode: 'natural', led: true, aura: true, glint: true, bloom: true, impact: true, intensity: 0.75, speed: 1 },        // 金色綻放: gold LED + aura + sun blooms + heavy-beat impact
   gallery: { ...BASE, mode: 'rgb', rgbStyle: 'bar', glint: true, intensity: 0.75, speed: 1 },                                               // 畫廊燈: fixed picture-light bar
   breath:  { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', aura: true, intensity: 0.55, speed: 0.45 },                                // 柔光呼吸: slow cool blue-violet wash + breathing ring, no LED/sparks
@@ -965,7 +966,7 @@ const PRESETS = {
 };
 function applyPreset(k) { saved = null; Object.assign(S, PRESETS[k]); S.preset = k; if (k === 'home') S.home = true; else if (k === 'lights') S.home = false; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
   $('#int').value = S.intensity; syncButtons(); }
-function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; document.body.classList.toggle('home-mode', on); const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
+function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; document.body.classList.toggle('home-mode', on); const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); if (R.setLasers && R.lasers !== !!S.laser) R.setLasers(!!S.laser); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
 
 /* ---------- loop ---------- */
 let slow = 0, frames = 0, lastT = 0;

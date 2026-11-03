@@ -20,7 +20,7 @@ head=r"""/* AE-HOME-REPLICA v2476.69 — premium /premium/eternal-sun/ default m
   let lite=forceLite,liteLatch=forceLite,frameEma=16.7,presentMs=12,lights=true,playing=false,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,artX0=0,artW=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
-  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=true,offY=0,dpr=1;
+  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=true,lasersOn=true,offY=0,dpr=1;
   const DISPLAY_LEAD=.012;
   function displayTime(){const ct=audio.currentTime||0;return ct+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));}
   function clear(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(dpr,0,0,dpr,0,offY*dpr);}
@@ -57,8 +57,9 @@ tail=r"""
   // homepage ambientTick: the soft 發亮光 glow breathes on its own every 3.4 s while the music is not playing
   function ambientTick(){if(active&&ambient&&!document.hidden&&!reduced.matches&&!playing&&width>0)fxGlow({quiet:true,soft:true});setTimeout(ambientTick,3400);}
   setTimeout(ambientTick,700);
+  function setLasers(on){on=!!on;if(on===lasersOn)return;lasersOn=on;if(!on)bolts=bolts.filter(b=>!b.musical);schedule();}
   function setAmbient(on){on=!!on;if(on===ambient)return;ambient=on;musicSpots=[];glows=[];focus=null;if(!on)clear();schedule();}
-  window.aeHomeReplica={tap,setActive,setAmbient,get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length})};
+  window.aeHomeReplica={tap,setActive,setAmbient,setLasers,get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length})};
   const boot=()=>{if(window.__premium){resize();sync();}else setTimeout(boot,50);};boot();
 })();
 """
@@ -66,4 +67,8 @@ body='\n'.join(seg)
 A='    if(!reduced.matches){\n      let bass=0'
 assert A in body
 body=body.replace(A,'    if(!reduced.matches&&ambient){ // v70: ambient homepage show only in 歡樂派對; tap beams/ripples below are global\n      let bass=0',1)
+B1="        if(beat.stage!=='build')launchDepth(null,null,now,beat.count);"
+assert B1 in body;body=body.replace(B1,"        if(beat.stage!=='build'&&lasersOn)launchDepth(null,null,now,beat.count); // v71: 雷射 toggle",1)
+B2="      for(let i=0;i<beamCount;i++){"
+assert B2 in body;body=body.replace(B2,"      for(let i=0;i<(lasersOn?beamCount:0);i++){ // v71: 雷射 toggle hides the homepage ambient lasers (gold points stay)",1)
 open('premium/eternal-sun/assets/home-replica.js','w').write(head+body+tail)
