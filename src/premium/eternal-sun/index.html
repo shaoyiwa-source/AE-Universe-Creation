@@ -15,8 +15,9 @@
     <img id="painting" src="/assets/eternal-sun-canonical-1110x1536.jpg" alt="盛明 Eternal Sun — original painting" draggable="false">
     <canvas id="look" aria-hidden="true"></canvas>
     <canvas id="rgb" aria-hidden="true"></canvas>
+    <div id="homeveil" aria-hidden="true"></div>
   </div>
-  <canvas id="front" aria-hidden="true"></canvas><canvas id="coin" aria-hidden="true"></canvas>
+  <canvas id="front" aria-hidden="true"></canvas><canvas id="homefx" aria-hidden="true"></canvas><canvas id="coin" aria-hidden="true"></canvas>
 </div>
 <div id="hint" data-zh="點畫作播放 · 跟著節拍點擊 · 雙指縮放" data-en="Tap the art to play · tap on the beat · pinch to zoom"></div>
 <button id="open" aria-label="settings" title="設定 / Settings">⚙</button>
@@ -29,7 +30,8 @@
   <button id="close" aria-label="close" title="關閉 / Close">✕</button>
   <div class="row presets">
     <span class="lab" data-zh="模式" data-en="Preset"></span>
-    <button class="pr on" data-p="golden" data-zh="金色綻放" data-en="Golden bloom"></button>
+    <button class="pr on" data-p="home" data-zh="首頁重現" data-en="Homepage show"></button>
+    <button class="pr" data-p="golden" data-zh="金色綻放" data-en="Golden bloom"></button>
     <button class="pr" data-p="gallery" data-zh="畫廊燈" data-en="Gallery light"></button>
     <button class="pr" data-p="breath" data-zh="柔光呼吸" data-en="Soft breathing"></button>
     <button class="pr" data-p="stage" data-zh="RGB 舞台" data-en="RGB stage"></button>
@@ -83,5 +85,6 @@
 <script src="./assets/onsets.js"></script>
 <script src="/ae-chime.js"></script>
 <script type="module" src="./assets/premium.js"></script>
+<script src="./assets/home-replica.js"></script>
 </body>
 </html>

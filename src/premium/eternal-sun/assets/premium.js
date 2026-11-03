@@ -8,7 +8,7 @@ const SUN = { x: 0.515, y: 0.50 };            // sun focal point of the painting
 const AR = 1110 / 1536;
 const S = {
   lang: Q.get('lang') === 'en' ? 'en' : 'zh', mode: 'natural', intensity: 0.7, speed: 1,
-  frame: true, led: true, aura: true, glint: true, laser: false, bloom: true, rgbStyle: 'bar', lamp: 'auto', preset: 'golden', look: '', impact: true,
+  frame: true, led: true, aura: true, glint: true, laser: false, bloom: true, rgbStyle: 'bar', lamp: 'auto', preset: 'home', look: '', impact: true,
   engine: 'webgl', playing: false
 };
 if (Q.get('fx') === '0') Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, bloom: false });
@@ -68,6 +68,8 @@ for (const ev of ['waiting', 'stalled', 'seeking']) audio.addEventListener(ev, (
 for (const ev of ['playing', 'seeked', 'canplay']) audio.addEventListener(ev, () => { CK.stall = 0; CK.ok = 0; });
 
 async function togglePlay() {
+  // v2476.69: start the media element FIRST, synchronously inside the tap (iOS Safari refuses play() issued after an await → stall)
+  let early = null; if (audio.paused) { if (!A.started) { A.started = 1; startAtCue(); } try { early = audio.play(); if (early && early.catch) early.catch(() => {}); } catch (e) {} }
   measureLatency();
   if (!A.ctx && !RH) {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -79,7 +81,8 @@ async function togglePlay() {
     try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); } catch (e) {}
   }
   try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission && !A.asked) { A.asked = 1; DeviceOrientationEvent.requestPermission().catch(() => {}); } } catch (e) {}
-  if (A.ctx && A.ctx.state === 'suspended') await A.ctx.resume();
+  if (A.ctx && A.ctx.state === 'suspended') A.ctx.resume().catch(() => {});
+  if (early) { try { await early; } catch (e) {} syncPlay(); return; }
   if (audio.paused) { if (!A.started) { A.started = 1; startAtCue(); } try { await audio.play(); } catch (e) {} }
   else audio.pause();
   syncPlay();
@@ -361,6 +364,7 @@ function drawTaps(ctx, now) {
   ctx.restore(); ctx.globalAlpha = 1;
 }
 function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
+  if (S.preset === 'home' && window.aeHomeReplica) { if (!A.started && !S.playing) togglePlay(); window.aeHomeReplica.tap(x, y); RG.taps = (RG.taps || 0) + 1; if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {} return; } // v2476.69: homepage tap (beams + gold ripples)
   if (!A.started && !S.playing) { togglePlay(); const now0 = performance.now(); spots.push({ x, y, born: now0 }); return; } // v2476.65: first tap on the painting starts the music
   if (S.playing) beatTap(x, y);
   const now = performance.now(); spots.push({ x, y, born: now }); if (spots.length > 6) spots.shift(); RG.taps = (RG.taps || 0) + 1;
@@ -904,7 +908,7 @@ function bindZoom() {
     else if (Z.pts.size === 1 && Z.s > 1 && !GLOW.on) { Z.x += e.clientX - pr.x; Z.y += e.clientY - pr.y; applyZoom(); } });
   const up = e => { Z.pts.delete(e.pointerId); Z.st = null; if (!Z.pts.size) setTimeout(() => { Z.pinching = false; }, 50); };
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => st.addEventListener(ev, up));
-  st.addEventListener('pointerup', e => { const n = Date.now(), g = Z.g; if (!g || Z.pts.size) return; Z.g = null; const tap = !g.multi && n - g.t < 280 && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 12; if (!tap) { Z.lastTap = 0; return; } if (!Z.consumed) { const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) artTap(x, y); else if (Z.s === 1) showUI(); } if (n - Z.lastTap < 320 && Z.s > 1) { resetZoom(); Z.lastTap = 0; } else Z.lastTap = n; });
+  st.addEventListener('pointerup', e => { const n = Date.now(), g = Z.g; if (!g || Z.pts.size) return; Z.g = null; const tap = !g.multi && n - g.t < 280 && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 12; if (!tap) { Z.lastTap = 0; return; } if (!Z.consumed) { const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) artTap(x, y); else if (!A.started && !S.playing) togglePlay(); else if (Z.s === 1) showUI(); } if (n - Z.lastTap < 320 && Z.s > 1) { resetZoom(); Z.lastTap = 0; } else Z.lastTap = n; });
   st.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Z.s * Math.exp(-e.deltaY * 0.002)); }, { passive: false });
   $('#zreset').onclick = e => { e.stopPropagation(); resetZoom(); };
 }
@@ -950,6 +954,7 @@ function bindUI() {
 /* ---------- 7 curated presets (模式), each with its own tuned motion speed (no speed slider) ---------- */
 const BASE = { party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
 const PRESETS = {
+  home:    { ...BASE, mode: 'natural', frame: false, intensity: 0.7, speed: 1 },                                                       // v2476.69 首頁重現 (default): homepage sound-light replica (home-replica.js), all premium layers off
   golden:  { ...BASE, mode: 'natural', led: true, aura: true, glint: true, bloom: true, impact: true, intensity: 0.75, speed: 1 },        // 金色綻放: gold LED + aura + sun blooms + heavy-beat impact
   gallery: { ...BASE, mode: 'rgb', rgbStyle: 'bar', glint: true, intensity: 0.75, speed: 1 },                                               // 畫廊燈: fixed picture-light bar
   breath:  { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', aura: true, intensity: 0.55, speed: 0.45 },                                // 柔光呼吸: slow cool blue-violet wash + breathing ring, no LED/sparks
@@ -960,6 +965,7 @@ const PRESETS = {
   gem:     { ...BASE, mode: 'natural', look: 'gem', glint: true, impact: true, intensity: 0.75, speed: 1 }                                   // 寶石 Gem: faceted, white streaks along facet edges flash on beats
 };
 function applyPreset(k) { saved = null; Object.assign(S, PRESETS[k]); S.preset = k; $('#int').value = S.intensity; syncButtons(); }
+function homeSync() { const on = S.preset === 'home' && document.body.dataset.original !== '1'; document.body.classList.toggle('home-mode', on); if (window.aeHomeReplica && window.aeHomeReplica.active !== on) window.aeHomeReplica.setActive(on); }
 
 /* ---------- loop ---------- */
 let slow = 0, frames = 0, lastT = 0;
@@ -967,7 +973,7 @@ function loop(now) {
   const dt = now - (lastT || now); lastT = now;
   if (!Number.isFinite(T.tx)) T.tx = 0; if (!Number.isFinite(T.ty)) T.ty = 0;
   T.x += (T.tx - T.x) * 0.06; T.y += (T.ty - T.y) * 0.06;
-  analyse(now);
+  analyse(now); homeSync();
   gl.render(now); drawRGB(now); drawLook(now, dt); frontVis(); drawFront(now); drawImpact(fx, now); updateProg(now);
   if (gl.kind === 'webgl' && !Q.has('nofallback') && document.visibilityState === 'visible') {
     frames++; if (dt > 45) slow++;
@@ -977,7 +983,7 @@ function loop(now) {
 }
 
 async function start() {
-  bindUI(); applyLang(); syncButtons();
+  bindUI(); applyLang(); if (Q.get('fx') !== '0') { const qp = Q.get('preset'); applyPreset(PRESETS[qp] ? qp : 'home'); } syncButtons();
   if (weakDevice()) { S.engine = 'lite'; initLite(); }
   else { try { await initWebGL(); } catch (e) { console.warn('WebGL unavailable, using Canvas 2D', e && e.message); swapToLite(); } }
   layout(); updateEngineNote();

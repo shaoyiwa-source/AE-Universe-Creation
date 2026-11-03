@@ -424,7 +424,7 @@
   const CUE=window.aeHomeAudioEnergy.openingTime(timeline),OPENING=15,FADE=.8,VOL=.55,DISPLAY_LEAD=.012;
   const P={phase:'idle',sound:'none',reason:'',heard:false,seq:0,lightAnchor:null,openingEnd:0,log:[]};
   const subs=new Set();
-  let waiting=false,anchorT=0,anchorP=0,lastCT=-1,lastCTP=0,moved=false,tick=0,loadTimer=0;
+  let loadAnchor=null,waiting=false,anchorT=0,anchorP=0,lastCT=-1,lastCTP=0,moved=false,tick=0,loadTimer=0;
   function stamp(ev,extra){const e={ev,phase:P.phase,sound:P.sound,track:+trackTime().toFixed(3),perf:+performance.now().toFixed(1),...(extra||{})};P.log.push(e);if(P.log.length>300)P.log.shift();return e;}
   // Track clock: native media time. Between coarse currentTime updates, advance with the
   // wall clock at playbackRate. Light-only opening uses performance.now mapped onto the cue.
@@ -432,6 +432,9 @@
     const now=performance.now();
     const rate=audio.playbackRate>0&&isFinite(audio.playbackRate)?audio.playbackRate:1;
     if(P.lightAnchor)return P.lightAnchor.t+(now-P.lightAnchor.p)/1000*rate;
+    // v2476.69: while a tap-started track is still buffering, keep the light clock running from the cue
+    // (before, the clock sat on the paused media time and the whole show froze until the audio arrived).
+    if(loadAnchor&&busy&&(audio.paused||audio.readyState<3))return loadAnchor.t+(now-loadAnchor.p)/1000;
     const ct=audio.currentTime;
     if(!isFinite(ct))return 0;
     if(audio.paused||waiting){lastCT=ct;anchorT=ct;anchorP=now;lastCTP=now;moved=false;return ct;}
@@ -467,7 +470,7 @@
   function publish(){
     updateHint();
     hero.dataset.playerPhase=P.phase;hero.dataset.playerSound=P.sound;hero.dataset.playerReason=P.reason;
-    playing=P.phase==='music'&&!audio.paused;
+    playing=P.phase==='music'&&(!audio.paused||(busy&&!!loadAnchor));
     if(tapSound&&!busy&&P.sound!=='audio'&&P.sound!=='loading')tapSound=false;
     labels();for(const f of subs){try{f(P.phase,P.sound,P.reason);}catch(e){}}schedule();
   }
@@ -498,7 +501,7 @@
   }
   // Must be called synchronously inside a click/tap (or at load for autoplay).
   function play(from,phase,source){
-    const my=++P.seq;stopTick();P.lightAnchor=null;audio.loop=true;
+    const my=++P.seq;stopTick();loadAnchor={t:from!=null?from:(isFinite(audio.currentTime)?audio.currentTime:0),p:performance.now()};P.lightAnchor=null;audio.loop=true;
     try{audio.volume=VOL;}catch(e){}
     // play() first: on a never-loaded element it runs the load algorithm, which would reset an
     // earlier seek to 0. Seeking right after keeps the cue (applied at loadedmetadata if needed).
@@ -509,13 +512,13 @@
       loadTimer=setTimeout(()=>{if(my===P.seq&&P.sound==='loading'){++P.seq;audio.pause();busy=false;lightOnly(from==null?CUE:from,'slow-network');}},6000);}
     return Promise.resolve(pr).then(()=>{
       if(my!==P.seq)return false;
-      clearTimeout(loadTimer);busy=false;P.heard=true;P.sound='audio';
+      clearTimeout(loadTimer);loadAnchor=null;lastCT=-1;busy=false;P.heard=true;P.sound='audio';
       try{ensureTapAudio();if(audioContext.state!=='running')audioContext.resume().catch(()=>{});tapSound=true;}catch(e){}
       if(!hero.dataset.musicOpening)hero.dataset.musicOpening=CUE.toFixed(2);
       stamp('playing',{source});publish();return true;
     },err=>{
       if(my!==P.seq)return false;
-      busy=false;stamp('play-refused',{source,err:String(err&&err.name||err)});
+      loadAnchor=null;busy=false;stamp('play-refused',{source,err:String(err&&err.name||err)});
       if(phase==='opening'){lightOnly(from==null?CUE:from,'autoplay-blocked');return false;}
       if(source==='first-gesture'||source==='resume'){setPhase(P.heard?'paused':'idle','none','autoplay-blocked');if(wantSound())armGesture();return false;}
       setPhase(P.heard?'paused':'idle','none','refused');message=zh()?'音樂未能播放，請再試一次。':'Music could not play. Please try again.';labels();return false;
