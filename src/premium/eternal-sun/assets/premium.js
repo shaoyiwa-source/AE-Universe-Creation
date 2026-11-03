@@ -5,7 +5,31 @@
 const $ = s => document.querySelector(s);
 const Q = new URLSearchParams(location.search);
 const SUN = { x: 0.515, y: 0.50 };            // sun focal point of the painting (normalized)
-const AR = 1110 / 1536;
+const AR0 = 1110 / 1536; let AR = AR0;
+/* v2476.80 換畫 / 換歌: real AE works already hosted on the site (artwall works list, names as published there). No new / generated art or music. */
+const ARTS = [
+  { id: 'sun', zh: '盛明', en: 'Eternal Sun', src: '/assets/eternal-sun-canonical-1110x1536.jpg', thumb: '/assets/artwall/t-4e0991885a9649ea.webp', w: 1110, h: 1536, sun: [0.515, 0.5], looks: true },
+  { id: 'flower-heart-bloom', en: 'Flower Heart Bloom', src: '/assets/selected-works-v2/flower-heart-bloom.webp', w: 1106, h: 1536 },
+  { id: 'heart-energy', en: 'Heart Energy', src: '/assets/selected-works-v2/heart-energy.webp', w: 1098, h: 1536 },
+  { id: 'infinite-love-strength', en: 'Infinite Love Strength', src: '/assets/selected-works-v2/infinite-love-strength.webp', w: 1152, h: 1536 },
+  { id: 'natures-strength', en: 'Nature’s Strength', src: '/assets/selected-works-v2/natures-strength.webp', w: 1096, h: 1536 },
+  { id: 'heart-recovery', en: 'Heart Recovery', src: '/assets/selected-works-v2/heart-recovery.webp', w: 1040, h: 1536 },
+  { id: 'love-embrace', en: 'Love Embrace', src: '/assets/selected-works-v2/love-embrace.webp', w: 1536, h: 1120 },
+  { id: 'colorful-flow', en: 'Colorful Flow', src: '/assets/selected-works-v2/colorful-flow.webp', w: 1536, h: 1035 },
+  { id: 'fun-universe', en: 'Fun Universe', src: '/assets/selected-works-v2/fun-universe.webp', w: 1536, h: 1025 },
+  { id: 'marvellous-energy-world', en: 'Marvellous Energy World', src: '/assets/selected-works-v2/marvellous-energy-world.webp', w: 1536, h: 1043 },
+  { id: 'expansion', en: 'Expansion', src: '/assets/selected-works-v2/expansion.webp', w: 1536, h: 1018 },
+  { id: 'heart-rebuild', en: 'Heart Rebuild', src: '/assets/selected-works-v2/heart-rebuild.webp', w: 1536, h: 1014 },
+  { id: 'heart-fly', en: 'Heart Fly', src: '/assets/selected-works-v2/heart-fly.webp', w: 1536, h: 1027 },
+  { id: 'love-energy-field', en: 'Love Energy Field', src: '/assets/selected-works-v2/love-energy-field.webp', w: 1536, h: 1055 }
+].map(a => ({ thumb: '/assets/artwall/t-' + a.id + '.webp', zh: a.en, ...a }));
+const TRACKS = [ // only one distinct song is hosted (the homepage /media/aurelia-techno-eternal-148bpm.m4a is the same audio, sample-identical loudness curve)
+  { id: 'eternal', zh: '盛明 Eternal Sun · Techno', en: 'Eternal Sun · Techno', src: '/player/eternal-sun/assets/ae-eternal-stream.m4a', beats: 'timeline', cue: 58.3 }
+];
+if (Q.has('tracktest')) TRACKS.push({ id: 'live-test', zh: '測試 · 即時節拍分析', en: 'Test · live beat analysis', src: '/player/eternal-sun/assets/ae-eternal-stream.m4a', beats: 'live', cue: 0 });
+const pickIdx = (list, key, q) => { const v = Q.get(q) || (() => { try { return localStorage.getItem(key); } catch (e) { return null; } })(); const i = list.findIndex(x => x.id === v); return i < 0 ? 0 : i; };
+let ART = ARTS[pickIdx(ARTS, 'ae-premium-art', 'art')], TR = TRACKS[pickIdx(TRACKS, 'ae-premium-track', 'track')];
+AR = ART.w / ART.h;
 const S = {
   lang: Q.get('lang') === 'en' ? 'en' : 'zh', mode: 'natural', intensity: 0.7, speed: 1,
   frame: true, led: true, aura: true, glint: true, laser: false, bloom: true, rgbStyle: 'bar', lamp: 'auto', preset: 'home', look: '', impact: true,
@@ -23,8 +47,8 @@ function applyLang() {
   updatePlayLabel(); updateEngineNote();
 }
 function updatePlayLabel() {
-  const b = $('#play');
-  b.textContent = S.playing ? (S.lang === 'en' ? '❚❚ Pause' : '❚❚ 暫停') : b.dataset[S.lang];
+  const d = $('#dplay'); if (d) { d.classList.toggle('playing', !!S.playing); d.setAttribute('aria-label', S.playing ? (S.lang === 'en' ? 'Pause' : '暫停') : (S.lang === 'en' ? 'Play' : '播放')); }
+  const b = $('#play'); if (b) b.textContent = S.playing ? (S.lang === 'en' ? '❚❚ Pause' : '❚❚ 暫停') : b.dataset[S.lang];
 }
 function updateEngineNote() {
   $('#engine').textContent = (S.engine === 'webgl' ? 'WebGL' : 'Canvas 2D') + ' · ' +
@@ -33,14 +57,16 @@ function updateEngineNote() {
 
 /* ---------- layout ---------- */
 const L = { W: 0, H: 0, dpr: 1, p: { x: 0, y: 0, w: 0, h: 0 }, F: 10 };
+function safeInsets() { let d = $('#sa80'); if (!d) { d = document.createElement('div'); d.id = 'sa80'; d.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0'; document.body.appendChild(d); } const cs = getComputedStyle(d); return { t: parseFloat(cs.paddingTop) || 0, b: parseFloat(cs.paddingBottom) || 0 }; }
 function layout() {
   L.W = innerWidth; L.H = innerHeight; L.dpr = Math.min(devicePixelRatio || 1, 2);
-  const portrait = L.H > L.W;
-  const mx = portrait ? 0.14 : 0.12, my = portrait ? 0.16 : 0.12;
-  let w = L.W * (1 - mx), h = w / AR;
-  if (h > L.H * (1 - my)) { h = L.H * (1 - my); w = h * AR; }
+  const portrait = L.H > L.W, sa = safeInsets();
+  // v80: reserve the top (painting switcher) and bottom (play dock) bands so the painting's tap area never sits under a control
+  const top = sa.t + (portrait ? 96 : 118), bot = sa.b + (portrait ? 156 : 158), mx = portrait ? 0.12 : 0.1;
+  let w = L.W * (1 - mx), h = w / AR; const availH = Math.max(120, L.H - top - bot);
+  if (h > availH) { h = availH; w = h * AR; }
   w = Math.round(w); h = Math.round(h);
-  L.p = { x: Math.round((L.W - w) / 2), y: Math.round((L.H - h) / 2), w, h };
+  L.p = { x: Math.round((L.W - w) / 2), y: Math.round(top + (availH - h) / 2), w, h };
   L.F = Math.max(9, Math.round(w * 0.03));
   const a = $('#art').style;
   a.left = L.p.x + 'px'; a.top = L.p.y + 'px'; a.width = w + 'px'; a.height = h + 'px';
@@ -73,13 +99,8 @@ async function togglePlay() {
   USER.want = audio.paused; if (audio.paused) try { routeMusic(); } catch (e) {}
   let early = null; if (audio.paused) { if (!A.started) { A.started = 1; startAtCue(); } try { early = audio.play(); if (early && early.catch) early.catch(() => {}); } catch (e) {} }
   measureLatency();
-  if (!A.ctx && !RH) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    A.ctx = new AC();
-    const src = A.ctx.createMediaElementSource(audio);
-    A.an = A.ctx.createAnalyser(); A.an.fftSize = 1024; A.an.smoothingTimeConstant = 0.6;
-    src.connect(A.an); A.an.connect(A.ctx.destination);
-    A.buf = new Uint8Array(A.an.frequencyBinCount);
+  if (TR.beats !== 'timeline' && !A.an) {
+    ensureGraph(true);
     try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); } catch (e) {}
   }
   try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission && !A.asked) { A.asked = 1; DeviceOrientationEvent.requestPermission().catch(() => {}); } } catch (e) {}
@@ -91,7 +112,7 @@ async function togglePlay() {
 }
 // v2476.60: the button always mirrors the REAL audio state (iOS pauses media when you leave Safari) -> one tap resumes
 const CUE = 58.3; // v2476.61: first play starts at the climax (0:58)
-function startAtCue() { const go = () => { try { audio.currentTime = CUE; } catch (e) {} }; if (audio.readyState >= 1) go(); else { go(); audio.addEventListener('loadedmetadata', go, { once: true }); } }
+function startAtCue() { const go = () => { try { audio.currentTime = TR.cue || 0; } catch (e) {} }; if (audio.readyState >= 1) go(); else { go(); audio.addEventListener('loadedmetadata', go, { once: true }); } }
 const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 let seeking = false, progAt = 0;
 function updateProg(now) { if (now - progAt < 250) return; progAt = now; const d = audio.duration; $('#tdur').textContent = Number.isFinite(d) ? fmt(d) : '0:00'; if (!seeking) { $('#tcur').textContent = fmt(audio.currentTime); $('#seek').value = Number.isFinite(d) && d > 0 ? Math.round(audio.currentTime / d * 1000) : 0; } }
@@ -100,9 +121,13 @@ const MUSICVOL = 0.5; // v79: music -6 dB (v78 -3 dB) for kick headroom (iOS: vi
 audio.addEventListener('play', () => { if (!USER.want) { try { audio.pause(); } catch (e) {} } });
 audio.addEventListener('pause', () => { if (!document.hidden && !audio.ended) USER.want = false; }); // a pause while visible (button, headset, OS) = user paused
 try { if (navigator.mediaSession) { navigator.mediaSession.setActionHandler('play', () => { USER.want = true; audio.play().catch(() => {}); }); navigator.mediaSession.setActionHandler('pause', () => { USER.want = false; audio.pause(); }); } } catch (e) {}
+function ensureGraph(needAn) { // v80: ONE MediaElementSource for the element (a second one throws): src -> gain(MUSICVOL) -> out, + analyser tap for live-beat tracks
+  const c = acx(); if (!A.src) { A.src = c.createMediaElementSource(audio); const g = c.createGain(); g.gain.value = MUSICVOL; A.src.connect(g); g.connect(c.destination); A.mg = { g, c }; audio.volume = 1; DUCK.base = null; }
+  if (needAn && !A.an) { A.ctx = c; A.an = c.createAnalyser(); A.an.fftSize = 1024; A.an.smoothingTimeConstant = 0.5; const z = c.createGain(); z.gain.value = 0; A.src.connect(A.an); A.an.connect(z); z.connect(c.destination); A.buf = new Uint8Array(A.an.frequencyBinCount); }
+  if (c.state === 'suspended') c.resume().catch(() => {}); }
 function routeMusic() { // iOS ignores audio.volume -> put the element through a WebAudio gain (created inside the play gesture)
-  if (A.mg) return; audio.volume = MUSICVOL; if (Math.abs(audio.volume - MUSICVOL) < 0.01 && !Q.has('routemusic')) { A.mg = { el: true }; return; }
-  try { const c = acx(); const src = c.createMediaElementSource(audio), g = c.createGain(); g.gain.value = MUSICVOL; src.connect(g); g.connect(c.destination); A.mg = { g, c }; audio.volume = 1; } catch (e) { A.mg = { el: true }; } }
+  if (A.mg) { if (TR.beats !== 'timeline' && !A.an) try { ensureGraph(true); } catch (e) {} return; } audio.volume = MUSICVOL; if (Math.abs(audio.volume - MUSICVOL) < 0.01 && !Q.has('routemusic')) { A.mg = { el: true }; return; }
+  try { ensureGraph(false); } catch (e) { A.mg = { el: true }; } }
 function syncPlay() { S.playing = !audio.paused && !audio.ended; updatePlayLabel(); }
 ['play', 'playing', 'pause', 'ended', 'emptied', 'stalled', 'suspend', 'waiting'].forEach(ev => audio.addEventListener(ev, syncPlay));
 document.addEventListener('visibilitychange', syncPlay); addEventListener('pageshow', syncPlay); addEventListener('focus', syncPlay);
@@ -113,7 +138,7 @@ const EN = window.aeHomeAudioEnergy, TL = window.aeHomeBeatTimeline;
 const RH = EN && TL && TL.events ? EN.createRhythm(TL.events, TL.accents || [], TL.sections || []) : null;
 function analyse(now) {
   let bass = 0;
-  if (RH && S.playing) {
+  if (RH && TR.beats === 'timeline' && S.playing) {
     // v2476.60 sync: beat time = audio.currentTime every frame (smoothed between coarse currentTime updates, re-locked if off by >40 ms).
     // Independent of the Speed slider and of frame rate, so it cannot drift over long playback or after seeking / looping.
     const ct = audio.currentTime, rate = audio.playbackRate || 1;
@@ -145,7 +170,13 @@ function analyse(now) {
     for (let i = 1; i <= n; i++) bass += A.buf[i];
     bass /= n * 255;
     A.avg = A.avg * 0.96 + bass * 0.04;
-    if (bass > A.avg * 1.18 + 0.04 && bass > 0.35 && now - A.lastKick > 280) onKick(now, bass);
+    // v80 live beat fallback (tracks without a precomputed map): bass-flux onset + tempo estimate -> same beat object the timeline gives
+    const LB = A.lb || (A.lb = { beat: false, count: 0, pulse: 0, phase: 0, interval: 0.5, stage: 'groove', dropPulse: 0, buildProgress: 0, accentCount: 0, sweep: 0, last: -9, pk: 0.3 });
+    const tt = audio.currentTime; A.t = tt; LB.beat = false; LB.pk = Math.max(bass, LB.pk * 0.995);
+    if (bass > A.avg * 1.15 + 0.03 && bass > LB.pk * 0.55 && tt - LB.last > Math.max(0.24, LB.interval * 0.6)) { const iv = tt - LB.last; if (iv > 0.25 && iv < 1.2) LB.interval += (iv - LB.interval) * 0.2; LB.last = tt; LB.count++; LB.beat = true; A.count = LB.count; onKick(now, bass);
+      const heavy = LB.count % 4 === 1 && bass > LB.pk * 0.8; v75Beat(now, bass, heavy, LB); if (heavy) { IMP.t = now; IMP.n++; partyHeavy(now); } if (LB.count % 2 === 0) launchDepth(null, null, now, LB.count); }
+    if (tt < LB.last) LB.last = tt - LB.interval; const since = Math.max(0, tt - LB.last); LB.pulse = Math.exp(-since / 0.12); LB.phase = since / LB.interval; LB.sweep = (LB.count % 8) / 8 + LB.phase / 8;
+    A.b = LB; A.since = since; A.kick = A.kickQ = Math.exp(-since / 0.095); A.phase = LB.phase; A.bass = bass; A.level += (bass - A.level) * 0.25; return;
   } else {
     // idle: slow breathing, a gentle ring every ~3.2 s
     bass = 0.25 + 0.15 * Math.sin(now / 900);
@@ -203,7 +234,7 @@ function lampResponse(r, g, b, c) {
   return [r * .22 + b * .25 + 20, g * .10 + fl * 1.25, b * .80 + r * .25 + w * .25 + 40];   // blue-violet: greens fluoresce
 }
 function buildRGB(img) {
-  const w = 555, h = 768, t = document.createElement('canvas'); t.width = w; t.height = h;
+  const w = AR >= 1 ? 768 : Math.round(768 * AR), h = AR >= 1 ? Math.round(768 / AR) : 768, t = document.createElement('canvas'); t.width = w; t.height = h;
   const x = t.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, w, h);
   const src = x.getImageData(0, 0, w, h).data;
   for (const col of LAMPS) {
@@ -389,7 +420,7 @@ function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
    off-beat: just the normal ring. Consecutive on-beat taps build a combo (shown as a small fading ×N), dragging leaves a light trail. */
 const GAME = { combo: 0, best: 0, last: 0, hits: 0, perfect: 0, taps: 0, marks: [], trail: [], ac: null };
 const PENTA = [554.37, 659.25, 739.99, 830.61, 987.77, 1108.73, 1318.51, 1479.98];
-function beatErr() { const ev = TL && TL.events; if (!ev || !ev.length) return 9; const t = CK.tt != null ? CK.tt : A.t; let lo = 0, hi = ev.length; while (lo < hi) { const m = (lo + hi) >> 1; if (ev[m] <= t) lo = m + 1; else hi = m; } const a = lo ? t - ev[lo - 1] : 9, b = lo < ev.length ? ev[lo] - t : 9; return a < b ? a : -b; }
+function beatErr() { if (TR.beats !== 'timeline') { const lb = A.lb; if (!lb) return 9; const d = audio.currentTime - lb.last, iv = lb.interval; return Math.abs(d) < iv / 2 ? d : d - iv; } const ev = TL && TL.events; if (!ev || !ev.length) return 9; const t = CK.tt != null ? CK.tt : A.t; let lo = 0, hi = ev.length; while (lo < hi) { const m = (lo + hi) >> 1; if (ev[m] <= t) lo = m + 1; else hi = m; } const a = lo ? t - ev[lo - 1] : 9, b = lo < ev.length ? ev[lo] - t : 9; return a < b ? a : -b; }
 // v2476.66 tap sounds: only the song's tonic C# and its fifth G#, very quiet, high-passed so they sit above the mix
 // like a glass/coin "ting"; plus a 4 ms filtered click. No scale climbing, nothing that can clash with the track.
 const TONE = { root: 1108.73, fifth: 1661.22, vol: 0.022 };
@@ -910,7 +941,7 @@ function showUI() { document.body.classList.add('ui'); $('#panel').hidden = fals
    above the painting; phase flows continuously and surges on every beat. 原畫 hides the canvas -> painting pixels untouched. */
 const LK = { ph: 0, ready: false, draws: 0, idx: { gem: 1, amber: 2 } };
 function drawLook(now, dt) {
-  const cv = $('#look'), on = !!S.look && LK.ready;
+  const cv = $('#look'), on = !!S.look && LK.ready && !!ART.looks; // v80: gem/amber masks exist for 盛明 only -> other works keep frame/LED/lasers/searchlights
   if (cv.style.display !== (on ? 'block' : 'none')) cv.style.display = on ? 'block' : 'none';
   if (!on) return;
   const w = Math.round(L.p.w * L.dpr * (L.W < 600 ? 0.8 : 0.7)), h = Math.round(w / AR); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
@@ -1066,7 +1097,7 @@ audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setT
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
 document.querySelectorAll('.ts').forEach(b => b.classList.toggle('on', b.dataset.s === TAPSND.mode));
 document.querySelectorAll('.lw').forEach(b => b.onclick = e => { e.stopPropagation(); setLw(b.dataset.w); }); setLw(S.lw, true);
-window.__premium = { MUSICVOL, KV, PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { ARTS, TRACKS, setArt: (...a) => setArt(...a), setTrack: (...a) => setTrack(...a), art: () => ART, track: () => TR, liveBeat: () => (TR.beats !== 'timeline' && S.playing ? A.lb : null), USER, MUSICVOL, KV, PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
@@ -1128,3 +1159,58 @@ function drawV75(now) {
   if (strobing) { c.save(); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 0.5 * (1 - sq) ** 1.5; c.fillStyle = '#fff'; c.fillRect(p.x, p.y, p.w, p.h); c.restore(); }
 }
 start(); // v75: after the v75 overlay declarations
+
+/* ---------- v2476.80 換畫 / 換歌 + bottom play dock ---------- */
+const SW = { tok: 0, busy: false, lum: 0.5 };
+function artLum(img) { try { const c = document.createElement('canvas'); c.width = 32; c.height = 32; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, 32, 32); const d = x.getImageData(0, 0, 32, 32).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; return s / (d.length / 4) / 255; } catch (e) { return 0.5; } }
+const preload = a => { if (!a || a._img) return a && a._img; const i = new Image(); i.decoding = 'async'; i.src = a.src; a._img = i; return i; };
+function artLabel() { const n = $('#artname'); if (n) n.textContent = S.lang === 'en' || ART.zh === ART.en ? ART.en : ART.zh + ' ' + ART.en; document.querySelectorAll('#artstrip button').forEach(b => { const on = b.dataset.id === ART.id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); }
+function trackLabel() { const n = $('#trackname'); if (n) n.textContent = S.lang === 'en' ? TR.en : TR.zh; const one = TRACKS.length < 2; for (const id of ['#dprev', '#dnext']) { const b = $(id); if (b) { b.disabled = one; b.title = one ? (S.lang === 'en' ? 'only one song for now' : '目前只有一首歌') : ''; } } }
+function applyArtGeometry(img) {
+  AR = ART.w / ART.h; const sp = ART.sun || [0.5, 0.5]; SUN.x = sp[0]; SUN.y = sp[1];
+  layout(); dispatchEvent(new Event('resize')); if (V75) { V75.cones = null; V75.fp = null; V75.focus = null; }
+  try { if (img && img.naturalWidth) buildRGB(img); } catch (e) {}
+  SW.lum = img ? artLum(img) : 0.5; document.body.dataset.artLum = SW.lum < 0.35 ? 'dark' : SW.lum > 0.65 ? 'bright' : 'mid'; document.body.dataset.art = ART.id;
+  const t = $('#title'); if (t) { t.dataset.zh = (ART.zh === ART.en ? ART.en : ART.zh) + ' · 精裝版'; t.dataset.en = ART.en + ' · Premium'; t.textContent = t.dataset[S.lang]; }
+}
+async function setArt(i, instant) {
+  const n = ARTS.length; i = ((i % n) + n) % n; const a = ARTS[i]; if (a === ART && !instant) return; const tok = ++SW.tok;
+  const img = preload(a); try { await (img.decode ? img.decode() : new Promise(r => { img.onload = r; })); } catch (e) { if (!img.naturalWidth) return; }
+  if (tok !== SW.tok) return; const veil = $('#swap80'), pimg = $('#painting');
+  if (!instant && veil) { veil.classList.add('on'); await new Promise(r => setTimeout(r, 230)); if (tok !== SW.tok) return; }
+  ART = a; pimg.src = a.src; pimg.alt = (a.zh === a.en ? a.en : a.zh + ' ' + a.en) + ' — original painting';
+  try { await (pimg.decode ? pimg.decode() : Promise.resolve()); } catch (e) {}
+  applyArtGeometry(pimg); artLabel(); try { localStorage.setItem('ae-premium-art', a.id); } catch (e) {}
+  if (!S.home && S.look && !a.looks) {} // gem/amber shader quietly off for works without masks (drawLook guard)
+  requestAnimationFrame(() => veil && veil.classList.remove('on'));
+  preload(ARTS[(i + 1) % n]); preload(ARTS[(i - 1 + n) % n]);
+}
+function setTrack(i) {
+  const n = TRACKS.length; i = ((i % n) + n) % n; const t = TRACKS[i]; if (t === TR) return;
+  const wasPlaying = !audio.paused && USER.want; TR = t; try { localStorage.setItem('ae-premium-track', t.id); } catch (e) {}
+  CK.ok = 0; CK.last = -1; A.count = 0; A.b = null; A.lb = null; if (OM.sub) { OM.i = 0; OM.last = -1; }
+  audio.src = t.src; audio.load(); trackLabel();
+  if (t.beats !== 'timeline' && A.started) try { ensureGraph(true); } catch (e) {}
+  if (wasPlaying) { USER.want = true; A.started = 1; if (t.cue) startAtCue(); else { try { audio.currentTime = 0; } catch (e) {} } const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
+  else { if (A.started) startAtCue(); syncPlay(); } // paused stays paused (cue position prepared, no play())
+}
+(function dock80() {
+  const veil = document.createElement('div'); veil.id = 'swap80'; veil.setAttribute('aria-hidden', 'true'); $('#stage').appendChild(veil);
+  const top = document.createElement('div'); top.id = 'artsw'; top.innerHTML = '<button id="aprev" aria-label="上一幅畫 previous painting">‹</button><span class="lab80" data-zh="換畫" data-en="Painting"></span><span id="artname"></span><button id="anext" aria-label="下一幅畫 next painting">›</button>';
+  document.body.appendChild(top);
+  const d = document.createElement('div'); d.id = 'dock'; d.innerHTML = '<div id="trackname"></div><div class="btns"><button id="dprev" aria-label="上一首 previous song">⏮</button><button id="dplay" aria-label="播放"><svg viewBox="0 0 100 100" aria-hidden="true"><path class="pl" d="M38 28 L74 50 L38 72 Z"/><path class="pa" d="M33 28h11v44H33zM56 28h11v44H56z"/></svg></button><button id="dnext" aria-label="下一首 next song">⏭</button></div>';
+  document.body.appendChild(d);
+  const strip = document.createElement('div'); strip.className = 'row artrow'; strip.innerHTML = '<span class="lab" data-zh="換畫" data-en="Painting"></span><div id="artstrip"></div>';
+  ARTS.forEach(a => { const b = document.createElement('button'); b.dataset.id = a.id; b.title = a.en; b.innerHTML = `<img src="${a.thumb}" alt="${a.en}" loading="lazy" decoding="async">`; b.onclick = e => { e.stopPropagation(); setArt(ARTS.indexOf(a)); }; strip.lastChild.appendChild(b); });
+  const pr = $('#panel .presets'); pr.parentNode.insertBefore(strip, pr.nextSibling);
+  const stop = e => e.stopPropagation();
+  for (const el of [top, d]) { el.addEventListener('pointerdown', stop); el.addEventListener('pointerup', stop); el.addEventListener('click', stop); }
+  $('#aprev').onclick = () => setArt(ARTS.indexOf(ART) - 1); $('#anext').onclick = () => setArt(ARTS.indexOf(ART) + 1);
+  $('#dplay').onclick = () => togglePlay(); $('#dprev').onclick = () => setTrack(TRACKS.indexOf(TR) - 1); $('#dnext').onclick = () => setTrack(TRACKS.indexOf(TR) + 1);
+  addEventListener('keydown', e => { if (e.target && e.target.closest && e.target.closest('input')) return; if (e.key === 'ArrowRight') setArt(ARTS.indexOf(ART) + 1); else if (e.key === 'ArrowLeft') setArt(ARTS.indexOf(ART) - 1); else if (e.key === ' ') { e.preventDefault(); togglePlay(); } });
+  $('#lang').addEventListener('click', () => setTimeout(() => { artLabel(); trackLabel(); updatePlayLabel(); top.querySelector('.lab80').textContent = top.querySelector('.lab80').dataset[S.lang]; }, 0));
+  top.querySelector('.lab80').textContent = top.querySelector('.lab80').dataset[S.lang]; strip.firstChild.textContent = strip.firstChild.dataset[S.lang];
+  if (audio.getAttribute('src') !== TR.src) { audio.src = TR.src; }
+  artLabel(); trackLabel(); updatePlayLabel();
+  if (ART.id !== 'sun') setArt(ARTS.indexOf(ART), true); else { const pi = $('#painting'); const go = () => applyArtGeometry(pi); if (pi.complete && pi.naturalWidth) go(); else pi.addEventListener('load', go, { once: true }); preload(ARTS[1]); }
+})();

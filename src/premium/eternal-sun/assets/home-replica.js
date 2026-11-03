@@ -25,7 +25,7 @@
     const P=window.__premium;if(!P)return;const p=P.L.p;dpr=Math.min(devicePixelRatio||1,2);
     const W=innerWidth,H=innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
     offY=p.y;width=W;height=H;artX0=p.x;artW=p.w;artBottom=p.h;
-    const paintWidth=p.w,left=p.x;sunX=left+.52*paintWidth;sunY=Math.min(artBottom-20,paintWidth*1536/1110*.522);
+    const paintWidth=p.w,left=p.x;sunX=left+.52*paintWidth;sunY=Math.min(artBottom-20,p.h*.522); /* v80: any aspect */
     ctx.setTransform(dpr,0,0,dpr,0,offY*dpr);needsStatic=true;
   }
   function schedule(){if(!frame&&active&&!document.hidden)frame=requestAnimationFrame(draw);}
@@ -84,8 +84,8 @@
       // One frame of lead so the kick is the one on screen when the frame presents.
       // Never more than 40ms ahead of the media clock the ear is compared against.
       const tt=displayTime();
-      bass=window.aeHomeAudioEnergy.energyAt(timeline,tt);
-      beat=rhythm.update(bass,tt);
+      const LBv=window.__premium&&window.__premium.liveBeat&&window.__premium.liveBeat(); /* v80: tracks without a beat map -> premium live analyser */
+      if(LBv){bass=window.__premium.A.bass||0;beat=LBv;}else{bass=window.__premium&&window.__premium.track&&window.__premium.track().beats!=='timeline'?0:window.aeHomeAudioEnergy.energyAt(timeline,tt);beat=LBv||rhythm.update(bass,tt);}
       musicFrame=beat;
       hero.dataset.beatCount=String(beat.count);hero.dataset.beatPulse=beat.pulse.toFixed(3);hero.dataset.beatInterval=beat.interval.toFixed(3);
       hero.dataset.musicTime=tt.toFixed(3);hero.dataset.musicStage=beat.stage;
