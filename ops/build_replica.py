@@ -79,4 +79,10 @@ B5="      ctx.shadowBlur=0;\n    }\n    bolts=bolts.filter"
 assert B5 in body;body=body.replace(B5,"      ctx.shadowBlur=0;}\n    }\n    bolts=bolts.filter",1)
 B2="      for(let i=0;i<beamCount;i++){"
 assert B2 in body;body=body.replace(B2,"      for(let i=0;i<(lasersOn?beamCount:0);i++){ // v71: 雷射 toggle hides the homepage ambient lasers (gold points stay)",1)
+B6="ctx.fillStyle=shade;ctx.fillRect(0,0,width,artBottom);"
+assert B6 in body;body=body.replace(B6,"/* v74: 歡樂派對 is daytime — no bottom dimming on the art */",1)
+for a,c in [("ctx.strokeStyle=colors[i];ctx.globalAlpha=power;ctx.lineWidth=.8+beat.pulse*2.2;","ctx.strokeStyle=colors[i];ctx.globalAlpha=Math.min(1,power*1.5+.14);ctx.lineWidth=1.4+beat.pulse*2.6; /* v74 day: stronger beams on the bright art */"),
+ ("ctx.strokeStyle='#fff9df';ctx.lineWidth=.65;ctx.globalAlpha=power*.72;","ctx.strokeStyle='#ffffff';ctx.lineWidth=1.1;ctx.globalAlpha=Math.min(1,power*1.2+.2); /* v74: white core */"),
+ ("opacity=(1-life)*(musicFrame.stage==='build'?.55+musicFrame.buildProgress*.25:.65)","opacity=(1-life)*(musicFrame.stage==='build'?.75+musicFrame.buildProgress*.25:.95)")]:
+  assert a in body,a;body=body.replace(a,c,1)
 open('premium/eternal-sun/assets/home-replica.js','w').write(head+body+tail)

@@ -86,7 +86,7 @@
       }
       energy=Math.max(bass,energy*.84);hero.dataset.audioEnergy=energy.toFixed(3);
       if(ambient){ // v72: veil glow + lasers only in 歡樂派對
-      const shade=ctx.createLinearGradient(0,Math.max(0,artBottom-100),0,artBottom);shade.addColorStop(0,'rgba(2,5,4,.40)');shade.addColorStop(1,'rgba(2,5,4,0)');ctx.fillStyle=shade;ctx.fillRect(0,0,width,artBottom);
+      const shade=ctx.createLinearGradient(0,Math.max(0,artBottom-100),0,artBottom);shade.addColorStop(0,'rgba(2,5,4,.40)');shade.addColorStop(1,'rgba(2,5,4,0)');/* v74: 歡樂派對 is daytime — no bottom dimming on the art */
       const glow=ctx.createRadialGradient(sunX,sunY,3,sunX,sunY,Math.min(width*.42,190));
       glow.addColorStop(0,`rgba(255,223,115,${energy*.16+beat.pulse*.35})`);glow.addColorStop(.45,`rgba(243,178,48,${energy*.08+beat.pulse*.18})`);glow.addColorStop(1,'rgba(240,170,45,0)');
       ctx.fillStyle=glow;ctx.fillRect(0,0,width,artBottom);
@@ -101,10 +101,10 @@
         const target=destination(i,sweep,now),targetX=target.x,targetY=target.y;targets.push({x:Math.round(targetX),y:Math.round(targetY)});
         const power=Math.min(1,(beat.stage==='build'?.06+beat.buildProgress*.06:.07)+energy*.035+beat.pulse*.85+beat.dropPulse*.12);
         ctx.shadowColor=colors[i];ctx.shadowBlur=lite?0:14+beat.pulse*25;
-        ctx.strokeStyle=colors[i];ctx.globalAlpha=power;ctx.lineWidth=.8+beat.pulse*2.2;
+        ctx.strokeStyle=colors[i];ctx.globalAlpha=Math.min(1,power*1.5+.14);ctx.lineWidth=1.4+beat.pulse*2.6; /* v74 day: stronger beams on the bright art */
         ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
         // Narrow pale core and prismatic rays give the beam a refracted edge.
-        ctx.shadowBlur=lite?0:4;ctx.strokeStyle='#fff9df';ctx.lineWidth=.65;ctx.globalAlpha=power*.72;
+        ctx.shadowBlur=lite?0:4;ctx.strokeStyle='#ffffff';ctx.lineWidth=1.1;ctx.globalAlpha=Math.min(1,power*1.2+.2); /* v74: white core */
         ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
         if(!lite)for(let j=-1;j<=1;j++){
           const angle=Math.atan2(targetY-originY,targetX-originX)+j*(pattern===0?.12:pattern===1?.34:.52)+Math.sin(sweep)*.18;
@@ -156,7 +156,7 @@
     const musicLife=musicFrame.stage==='build'?90:150;
     musicSpots=musicSpots.filter(s=>now-s.born<musicLife);
     for(const s of musicSpots){
-      const life=(now-s.born)/musicLife,opacity=(1-life)*(musicFrame.stage==='build'?.55+musicFrame.buildProgress*.25:.65),radius=musicFrame.stage==='build'?24+life*44:18+life*38;
+      const life=(now-s.born)/musicLife,opacity=(1-life)*(musicFrame.stage==='build'?.75+musicFrame.buildProgress*.25:.95),radius=musicFrame.stage==='build'?24+life*44:18+life*38;
       const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,radius);
       g.addColorStop(0,`rgba(255,247,207,${opacity})`);g.addColorStop(1,'rgba(255,210,80,0)');
       ctx.fillStyle=g;ctx.fillRect(s.x-radius,s.y-radius,radius*2,radius*2);
