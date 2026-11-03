@@ -9,7 +9,7 @@ const AR = 1110 / 1536;
 const S = {
   lang: Q.get('lang') === 'en' ? 'en' : 'zh', mode: 'natural', intensity: 0.7, speed: 1,
   frame: true, led: true, aura: true, glint: true, laser: false, bloom: true, rgbStyle: 'bar', lamp: 'auto', preset: 'home', look: '', impact: true,
-  engine: 'webgl', playing: false
+  engine: 'webgl', playing: false, home: true
 };
 if (Q.get('fx') === '0') Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, bloom: false });
 if (['rgb', 'uv'].includes(Q.get('mode'))) S.mode = 'rgb'; 
@@ -364,13 +364,12 @@ function drawTaps(ctx, now) {
   ctx.restore(); ctx.globalAlpha = 1;
 }
 function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
-  if (S.preset === 'home' && window.aeHomeReplica) { if (!A.started && !S.playing) togglePlay(); window.aeHomeReplica.tap(x, y); RG.taps = (RG.taps || 0) + 1; if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {} return; } // v2476.69: homepage tap (beams + gold ripples)
-  if (!A.started && !S.playing) { togglePlay(); const now0 = performance.now(); spots.push({ x, y, born: now0 }); return; } // v2476.65: first tap on the painting starts the music
+  if (window.aeHomeReplica && document.body.dataset.original !== '1') window.aeHomeReplica.tap(x, y); // v70: homepage tap beams + gold ripple in ALL modes
+  if (S.home && window.aeHomeReplica) { if (!A.started && !S.playing) togglePlay(); RG.taps = (RG.taps || 0) + 1; if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {} return; } // v2476.69: homepage tap (beams + gold ripples)
+  if (!A.started && !S.playing) { togglePlay(); return; } // v2476.65: first tap on the painting starts the music
   if (S.playing) beatTap(x, y);
-  const now = performance.now(); spots.push({ x, y, born: now }); if (spots.length > 6) spots.shift(); RG.taps = (RG.taps || 0) + 1;
-  const b = document.createElement('span'); b.className = 'ae-gold-burst'; b.style.left = x + 'px'; b.style.top = y + 'px'; $('#stage').appendChild(b); setTimeout(() => b.remove(), 1650);
+  const now = performance.now(); RG.taps = (RG.taps || 0) + 1; // ring + gold burst now come from the global homepage tap layer
   if (S.glint || S.preset === 'gallery') for (let i = 0; i < 10; i++) { const an = Math.random() * 6.2832, d = 30 + Math.random() * 90; tapStars.push({ t: now, x, y, vx: Math.cos(an) * d, vy: Math.sin(an) * d, s: 3 + Math.random() * 5, life: 700 + Math.random() * 600 }); }
-  if (S.laser && !S.playing) launchDepth(x, y, now, RG.taps);
   if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {}
 }
 /* v2476.65 beat taps: while playing, a tap is judged against the audio beat grid (same clock as the lights).
@@ -877,7 +876,7 @@ function syncButtons() {
   frontVis();
   $('#burst').classList.toggle('on', !!S.bloom); $('#burst').setAttribute('aria-pressed', String(!!S.bloom));
   document.querySelectorAll('.st').forEach(b => b.classList.toggle('on', b.dataset.s === S.rgbStyle));
-  document.querySelectorAll('.pr[data-p]').forEach(b => { b.classList.toggle('on', b.dataset.p === S.preset); b.setAttribute('aria-pressed', String(b.dataset.p === S.preset)); });
+  document.querySelectorAll('.pr[data-p]').forEach(b => { const on = b.dataset.p === 'home' ? !!S.home : b.dataset.p === S.preset; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
   if (S.mode !== 'rgb') { $('#rgb').classList.remove('on'); }
   $('#rgb').style.display = S.mode === 'rgb' ? '' : 'none';
   document.body.dataset.mode = S.mode; document.body.dataset.original = saved ? '1' : '0';
@@ -954,7 +953,7 @@ function bindUI() {
 /* ---------- 7 curated presets (模式), each with its own tuned motion speed (no speed slider) ---------- */
 const BASE = { party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
 const PRESETS = {
-  home:    { ...BASE, mode: 'natural', frame: false, intensity: 0.7, speed: 1 },                                                       // v2476.69 首頁重現 (default): homepage sound-light replica (home-replica.js), all premium layers off
+  home:    { ...BASE, mode: 'natural', frame: true, intensity: 0.7, speed: 1 },                                                       // v2476.69 首頁重現 (default): homepage sound-light replica (home-replica.js), all premium layers off
   golden:  { ...BASE, mode: 'natural', led: true, aura: true, glint: true, bloom: true, impact: true, intensity: 0.75, speed: 1 },        // 金色綻放: gold LED + aura + sun blooms + heavy-beat impact
   gallery: { ...BASE, mode: 'rgb', rgbStyle: 'bar', glint: true, intensity: 0.75, speed: 1 },                                               // 畫廊燈: fixed picture-light bar
   breath:  { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', aura: true, intensity: 0.55, speed: 0.45 },                                // 柔光呼吸: slow cool blue-violet wash + breathing ring, no LED/sparks
@@ -964,8 +963,9 @@ const PRESETS = {
   lights:  { ...BASE, mode: 'natural', intensity: 0.7, speed: 1 },                                                                          // 只留燈光 (v2476.64): every effect off, base picture lighting only
   gem:     { ...BASE, mode: 'natural', look: 'gem', glint: true, impact: true, intensity: 0.75, speed: 1 }                                   // 寶石 Gem: faceted, white streaks along facet edges flash on beats
 };
-function applyPreset(k) { saved = null; Object.assign(S, PRESETS[k]); S.preset = k; $('#int').value = S.intensity; syncButtons(); }
-function homeSync() { const on = S.preset === 'home' && document.body.dataset.original !== '1'; document.body.classList.toggle('home-mode', on); if (window.aeHomeReplica && window.aeHomeReplica.active !== on) window.aeHomeReplica.setActive(on); }
+function applyPreset(k) { saved = null; Object.assign(S, PRESETS[k]); S.preset = k; if (k === 'home') S.home = true; else if (k === 'lights') S.home = false; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
+  $('#int').value = S.intensity; syncButtons(); }
+function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; document.body.classList.toggle('home-mode', on); const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
 
 /* ---------- loop ---------- */
 let slow = 0, frames = 0, lastT = 0;
