@@ -242,7 +242,8 @@ function lampColor(now) {
    soft light pools, beat rings; flying depth bolts on each kick; small music spots. Coordinates mapped to the painting rect. */
 const LASER = ['#ff416d', '#57ffa0', '#ffe28d', '#65dbff', '#c987ff', '#ffac68'];
 const LZ = { pat: 0, hit: -1e9 };
-const LWM = { thin: 1, mid: 1.9, thick: 2.5 }; const gk76 = () => lwk() > 2.2 ? .6 : 1; // v76: 粗 toned down + weaker halo const lwk = () => LWM[S.lw] || 1.9; // v75 雷射粗細 細/中/粗
+const LWM = { thin: 1, mid: 1.9, thick: 2.5 }; const lwk = () => LWM[S.lw] || 1.9; // v75 雷射粗細 細/中/粗
+const gk76 = () => lwk() > 2.2 ? .6 : 1; // v76: 粗 toned down + weaker halo (v77: restored lwk, which v76 had commented out -> ReferenceError froze the loop in non-歡樂派對 modes)
 let bolts = [], musicSpots = [], spots = [];
 function fireBolts() {}
 const variation = seed => { const n = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return n - Math.floor(n); };
@@ -288,7 +289,7 @@ function drawLaserShow(ctx, now, G, lite) {
 }
 function drawLasers(ctx, now) {
   if (S.home && document.body.dataset.original !== '1') return; // v71: with 歡樂派對 on, 雷射 = the homepage lasers only (no stacked premium set)
-  const G = hpGeom(), lite = S.engine === 'lite';
+  const G = hpGeom(), lite = S.engine === 'lite' || PERF.low; // v77: drop shadowBlur once the device is struggling
   ctx.save(); ctx.beginPath(); ctx.rect(G.X0, G.T, G.W, G.H); ctx.clip();
   if (S.laser) {
     const b = S.playing && A.b ? A.b : { count: RG.beats, pulse: A.kick, phase: 0, stage: 'groove', dropPulse: 0, buildProgress: 0, sweep: now / 405 };
@@ -400,9 +401,10 @@ const TAPSND = { mode: (() => { try { return localStorage.getItem('ae-premium-ta
 /* v76 kick: louder than v75 (at least as loud as the track), a low-mid body (2nd/3rd harmonics ~90–140 Hz so phone speakers
    reproduce the punch), saturation on every level (輕 light → 重 heavy), the track is ducked ~2.5 dB for ~0.25 s under each kick
    (audio.volume; iOS Safari ignores element volume, so there the kick is just louder). Compressor + limiter bus prevents clipping. */
-const KICKS = { k1: { f0: 160, f1: 58, pd: 0.05, d: 0.3, g: 0.9, sub: 0.0, body: 0.35, click: 0.35, drive: 1.6, duck: 0.85 },
-                k2: { f0: 165, f1: 50, pd: 0.075, d: 0.65, g: 1.25, sub: 0.5, body: 0.6, click: 0.5, drive: 2.6, duck: 0.75 },
-                k3: { f0: 175, f1: 44, pd: 0.1, d: 1.3, g: 1.6, sub: 0.9, body: 0.95, click: 0.7, drive: 6, duck: 0.68 } };
+const KICKS = { // v77: clean 808-style - fast 120->50 Hz sweep then steady, no waveshaper/peaking/harmonics, low-passed body, short click
+  k1: { f0: 115, f1: 58, pd: 0.06, d: 0.28, g: 2.6, hold: 0.02, sub: 0.0, thump: 0.35, click: 0.22, lp: 200, duck: 0.85 },
+  k2: { f0: 120, f1: 52, pd: 0.07, d: 0.45, g: 3.0, hold: 0.05, sub: 0.35, thump: 0.55, click: 0.28, lp: 190, duck: 0.75 },
+  k3: { f0: 120, f1: 48, pd: 0.075, d: 0.65, g: 3.2, hold: 0.1, sub: 0.75, thump: 0.8, click: 0.3, lp: 170, duck: 0.68 } };
 function kbus(c) { if (GAME.kbus && GAME.kbus.context === c) return GAME.kbus;
   const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 6; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.22;
   const mk = c.createGain(); mk.gain.value = 1.8; // make-up gain after the glue compressor
@@ -413,19 +415,18 @@ function duckMusic(f) { if (!S.playing || audio.muted) return; if (DUCK.base == 
   clearTimeout(DUCK.tm); const rel = () => { const left = DUCK.until - performance.now(); if (left > 0) { DUCK.tm = setTimeout(rel, left); return; } let k = 0; const step = () => { k++; audio.volume = Math.min(DUCK.base, audio.volume + (DUCK.base - audio.volume) * 0.35 + 0.01); if (k < 12 && audio.volume < DUCK.base - 0.005) DUCK.tm = setTimeout(step, 16); else { audio.volume = DUCK.base; DUCK.base = null; } }; step(); }; DUCK.tm = setTimeout(rel, 260); }
 function kick(lv, ctxOverride) {
   try { const K = KICKS[lv] || KICKS.k2, c = ctxOverride || acx(), t = c.currentTime + 0.004, out = c.createGain(); out.gain.value = K.g; out.connect(kbus(c));
-    const ws = c.createWaveShaper(), cv = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; cv[i] = Math.tanh(x * K.drive) / Math.tanh(K.drive); } ws.curve = cv; ws.oversample = '4x';
-    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = lv === 'k3' ? 2200 : 3000; ws.connect(lp); lp.connect(out);
-    const pk = c.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 110; pk.Q.value = 0.9; pk.gain.value = 4; pk.connect(ws); const body = pk; // low-mid emphasis
-    const o = c.createOscillator(), v = c.createGain(); o.type = 'sine';
-    o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.pd); o.frequency.linearRampToValueAtTime(K.f1 * 0.94, t + K.d);
-    v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(1, t + 0.0015); v.gain.setTargetAtTime(0.6, t + 0.01, 0.07); v.gain.setTargetAtTime(0.0001, t + 0.09, K.d / 4); o.connect(v); v.connect(body); o.start(t); o.stop(t + K.d + 0.15);
-    // harmonic body: 2nd + 3rd partials of the sweep (≈90–150 Hz), what a phone speaker can actually play
-    for (const [m, gm] of [[2, K.body], [3, K.body * 0.45]]) { const h = c.createOscillator(), hg = c.createGain(); h.type = 'sine'; h.frequency.setValueAtTime(K.f0 * m, t); h.frequency.exponentialRampToValueAtTime(K.f1 * m, t + K.pd); h.frequency.linearRampToValueAtTime(K.f1 * m * 0.94, t + K.d);
-      hg.gain.setValueAtTime(0, t); hg.gain.linearRampToValueAtTime(gm, t + 0.002); hg.gain.setTargetAtTime(0.0001, t + 0.03, K.d / 5); h.connect(hg); hg.connect(body); h.start(t); h.stop(t + K.d + 0.1); }
-    if (K.sub) { const so = c.createOscillator(), sg = c.createGain(); so.type = 'sine'; so.frequency.value = K.f1 * 0.98; sg.gain.setValueAtTime(0, t); sg.gain.linearRampToValueAtTime(K.sub, t + 0.02); sg.gain.setTargetAtTime(0.0001, t + 0.12, K.d / 3.5); so.connect(sg); sg.connect(out); so.start(t); so.stop(t + K.d + 0.2); }
-    const n = c.createBuffer(1, Math.round(c.sampleRate * 0.005), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length) ** 2;
-    const ns = c.createBufferSource(), hp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; hp.type = 'highpass'; hp.frequency.value = 2500; ng.gain.value = K.click; ns.connect(hp); hp.connect(ng); ng.connect(out); ns.start(t);
-    const bo = c.createOscillator(), bg = c.createGain(); bo.type = 'triangle'; bo.frequency.setValueAtTime(1200, t); bo.frequency.exponentialRampToValueAtTime(300, t + 0.012); bg.gain.setValueAtTime(K.click * 0.6, t); bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.014); bo.connect(bg); bg.connect(out); bo.start(t); bo.stop(t + 0.02);
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = K.lp; lp.Q.value = -3; lp.connect(out); // ~Butterworth (Q in dB): no resonant peak
+    const env = (g, peak, hold, d) => { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.002); g.gain.setValueAtTime(peak, t + hold); g.gain.exponentialRampToValueAtTime(0.0001, t + d); };
+    // main body: fast pitch drop, then steady fundamental
+    const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.pd);
+    env(v, 1, K.hold, K.d); o.connect(v); v.connect(lp); o.start(t); o.stop(t + K.d + 0.02);
+    // low-mid thump: short ~100->70 Hz punch, gone in ~90 ms (this is the weight a phone speaker plays)
+    if (K.thump) { const h = c.createOscillator(), hg = c.createGain(); h.type = 'sine'; h.frequency.setValueAtTime(105, t); h.frequency.exponentialRampToValueAtTime(70, t + 0.05); env(hg, K.thump, 0.008, 0.09); h.connect(hg); hg.connect(lp); h.start(t); h.stop(t + 0.1); }
+    // sub reinforcement at the settled pitch (重 heaviness comes from here, not from a long tail)
+    if (K.sub) { const so = c.createOscillator(), sg = c.createGain(); so.type = 'sine'; so.frequency.value = K.f1; sg.gain.setValueAtTime(0, t + K.pd * 0.5); sg.gain.linearRampToValueAtTime(K.sub, t + K.pd); sg.gain.setValueAtTime(K.sub, t + K.hold + 0.04); sg.gain.exponentialRampToValueAtTime(0.0001, t + K.d); so.connect(sg); sg.connect(lp); so.start(t); so.stop(t + K.d + 0.02); }
+    // short click (3 ms filtered noise), bypasses the low-pass
+    const n = c.createBuffer(1, Math.round(c.sampleRate * 0.003), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length) ** 2;
+    const ns = c.createBufferSource(), hp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; hp.type = 'bandpass'; hp.frequency.value = 3000; hp.Q.value = 0.7; ng.gain.value = K.click; ns.connect(hp); hp.connect(ng); ng.connect(out); ns.start(t);
     if (!ctxOverride) { duckMusic(K.duck); TAPSND.n++; GAME.sounds = (GAME.sounds || 0) + 1; }
   } catch (e) {}
 }
@@ -1006,12 +1007,16 @@ function homeSync() { const orig = document.body.dataset.original === '1', on = 
 
 /* ---------- loop ---------- */
 let slow = 0, frames = 0, lastT = 0;
+const PERF = { ema: 16, slowN: 0, low: Q.has('perflow') ? 1 : 0, errs: 0, coarse: matchMedia('(pointer: coarse)').matches };
+const LOOPSTEPS = [function analyseS(n) { analyse(n); }, function homeSyncS() { homeSync(); }, function glS(n) { gl.render(n); }, function rgbS(n) { drawRGB(n); }, function lookS(n, d) { drawLook(n, d); },
+  function frontS(n) { frontVis(); drawFront(n); }, function impactS(n) { drawImpact(fx, n); }, function v75S(n) { drawV75(n); }, function progS(n) { updateProg(n); }];
 function loop(now) {
   const dt = now - (lastT || now); lastT = now;
   if (!Number.isFinite(T.tx)) T.tx = 0; if (!Number.isFinite(T.ty)) T.ty = 0;
   T.x += (T.tx - T.x) * 0.06; T.y += (T.ty - T.y) * 0.06;
-  analyse(now); homeSync();
-  gl.render(now); drawRGB(now); drawLook(now, dt); frontVis(); drawFront(now); drawImpact(fx, now); drawV75(now); updateProg(now);
+  PERF.ema += (Math.min(dt || 16, 200) - PERF.ema) * 0.05; if (!PERF.low && PERF.ema > 30 && ++PERF.slowN > 90) PERF.low = 1; else if (PERF.ema <= 30) PERF.slowN = 0;
+  // v77: every stage guarded - one throwing layer must never kill the rAF chain (that was the mode-switch freeze)
+  for (const f of LOOPSTEPS) { try { f(now, dt); } catch (e) { PERF.errs++; if (PERF.errs < 6) console.error('[premium loop]', f.name, e); } }
   if (gl.kind === 'webgl' && !Q.has('nofallback') && document.visibilityState === 'visible') {
     frames++; if (dt > 45) slow++;
     if (frames === 240) { if (slow > 150) swapToLite(); frames = 0; slow = 0; }
@@ -1041,7 +1046,7 @@ audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setT
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
 document.querySelectorAll('.ts').forEach(b => b.classList.toggle('on', b.dataset.s === TAPSND.mode));
 document.querySelectorAll('.lw').forEach(b => b.onclick = e => { e.stopPropagation(); setLw(b.dataset.w); }); setLw(S.lw, true);
-window.__premium = { DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
@@ -1061,9 +1066,10 @@ function v75Beat(now, bass, heavy, b) {
 }
 const fx75 = (() => { const c = document.createElement('canvas'); c.id = 'fx75'; c.setAttribute('aria-hidden', 'true'); c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none'; const st = $('#stage'), co = $('#coin'); st.insertBefore(c, co); return c.getContext('2d'); })();
 const dip75 = (() => { const d = document.createElement('div'); d.id = 'dip75'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;inset:0;pointer-events:none;background:#000;opacity:0'; $('#art').appendChild(d); return d; })();
+function focusT(now) { const F = V75.focus; if (!F) return 0; const t = now - F.t; if (t < 0) return 0; if (t < 2000) return 1; if (t < 3000) { const u = 1 - (t - 2000) / 1000; return u * u * (3 - 2 * u); } return 0; } // v77 target weight: only the hold timer resets on re-tap
 function focusW(now) { const F = V75.focus; if (!F) return 0; const t = now - F.t, e = u => u * u * (3 - 2 * u); if (t < 0) return 0; if (t < 450) return e(t / 450); if (t < 2000) return 1; if (t < 3000) return e(1 - (t - 2000) / 1000); return 0; } // v76: swing in 0.45 s, hold to 2 s, ease back by 3 s
 function drawV75(now) {
-  const c = fx75, cv = c.canvas, k = L.dpr || 1, orig = document.body.dataset.original === '1';
+  const c = fx75, cv = c.canvas, k = Math.min(L.dpr || 1, PERF.low ? 1 : PERF.coarse ? 1.5 : 2), orig = document.body.dataset.original === '1';
   const W = Math.round(L.W * k), H = Math.round(L.H * k); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   // beat-dip veil (art only, below the light layers)
   let da = 0; if (!orig && S.dip && !S.night) { const q = (now - V75.dip.t) / 120; da = q >= 0 && q < 1 ? V75.dip.a * (q < 0.25 ? q / 0.25 : 1 - (q - 0.25) / 0.75) : 0; }
@@ -1081,7 +1087,10 @@ function drawV75(now) {
     for (let i = 0; i < n; i++) {
       const u = n === 1 ? 0.5 : i / (n - 1), bx = p.x + p.w * (0.12 + 0.76 * u), base = -(u - 0.5) * 0.38;
       let ang = -Math.PI / 2 + base + Math.sin(V75.sway * (0.8 + i * 0.17) + i * 1.9) * 0.32, half = 0.1 + 0.025 * Math.sin(V75.sway * 0.6 + i);
-      let L0 = len, fa = 1; const fw = focusW(now); if (fw > 0) { const F = V75.focus, at = Math.atan2(F.y - by, F.x - bx), dist = Math.hypot(F.x - bx, F.y - by); ang = ang + (at - ang) * fw; half *= 1 - 0.4 * fw; L0 = len * (1 - fw) + dist * 1.08 * fw; fa = 1 + 0.7 * fw; } // v76 tap focus: cones converge and end at the tap point
+      // v77: persistent per-cone state eased toward its target, so a re-tap retargets from the CURRENT angle (no snap back to rest)
+      const C = (V75.cones || (V75.cones = []))[i] || (V75.cones[i] = { ang, L: len, w: 0 }), wT = focusT(now), F = V75.focus, ke = 1 - Math.exp(-dt / 0.14);
+      let tA = ang, tL = len; if (F && wT > 0) { const at = Math.atan2(F.y - by, F.x - bx); tA = ang + (at - ang) * wT; tL = len * (1 - wT) + Math.hypot(F.x - bx, F.y - by) * 1.08 * wT; }
+      C.ang += (tA - C.ang) * ke; C.L += (tL - C.L) * ke; C.w += (wT - C.w) * ke; ang = C.ang; const fw = C.w; half *= 1 - 0.4 * fw; let L0 = C.L, fa = 1 + 0.7 * fw;
       const a = fa * Math.min(0.7, (0.3 + 0.18 * lvl + 0.2 * kk) * (0.7 + 0.45 * S.intensity));
       const ex = bx + Math.cos(ang) * L0, ey = by + Math.sin(ang) * L0;
       const g = c.createLinearGradient(bx, by, ex, ey); g.addColorStop(0, `rgba(255,248,226,${a})`); g.addColorStop(0.35, `rgba(255,240,205,${a * 0.6})`); g.addColorStop(1, 'rgba(255,236,200,0)');
@@ -1093,7 +1102,7 @@ function drawV75(now) {
       c.fillStyle = g2; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + Math.cos(ang - half * 0.35) * L0, by + Math.sin(ang - half * 0.35) * L0); c.lineTo(bx + Math.cos(ang + half * 0.35) * L0, by + Math.sin(ang + half * 0.35) * L0); c.closePath(); c.fill();
       const lg = c.createRadialGradient(bx, by, 0, bx, by, 26); lg.addColorStop(0, `rgba(255,252,240,${Math.min(1, a * 2)})`); lg.addColorStop(1, 'rgba(255,240,210,0)'); c.fillStyle = lg; c.fillRect(bx - 26, by - 26, 52, 52); // lamp head
     }
-    const fw = focusW(now); if (fw > 0) { const F = V75.focus, R = Math.min(p.w * 0.16, 110), g = c.createRadialGradient(F.x, F.y, 0, F.x, F.y, R); g.addColorStop(0, `rgba(255,252,238,${0.55 * fw})`); g.addColorStop(0.45, `rgba(255,242,210,${0.25 * fw})`); g.addColorStop(1, 'rgba(255,240,205,0)'); c.fillStyle = g; c.fillRect(F.x - R, F.y - R, R * 2, R * 2); }
+    const C0 = V75.cones && V75.cones[0], fw = C0 ? C0.w : 0; if (V75.focus) { const F = V75.focus, P = V75.fp || (V75.fp = { x: F.x, y: F.y }), ke = 1 - Math.exp(-dt / 0.14); P.x += (F.x - P.x) * ke; P.y += (F.y - P.y) * ke; } if (fw > 0.01) { const F = V75.fp, R = Math.min(p.w * 0.16, 110), g = c.createRadialGradient(F.x, F.y, 0, F.x, F.y, R); g.addColorStop(0, `rgba(255,252,238,${0.55 * fw})`); g.addColorStop(0.45, `rgba(255,242,210,${0.25 * fw})`); g.addColorStop(1, 'rgba(255,240,205,0)'); c.fillStyle = g; c.fillRect(F.x - R, F.y - R, R * 2, R * 2); }
     c.restore();
   }
   if (strobing) { c.save(); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 0.5 * (1 - sq) ** 1.5; c.fillStyle = '#fff'; c.fillRect(p.x, p.y, p.w, p.h); c.restore(); }
