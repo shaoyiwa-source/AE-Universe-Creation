@@ -108,3 +108,10 @@ body.look-night #homeveil{display:block;background:radial-gradient(ellipse 74% 6
 body.look-night #stage{background:radial-gradient(ellipse at 50% 45%,#07080e 0%,#030308 65%,#010104 100%)}
 body.look-day #stage{background:radial-gradient(ellipse at 50% 45%,#2a2418 0%,#16130d 60%,#0b0a07 100%)}
 #panel .ts.on{border-color:currentColor;opacity:1}
+
+/* v73: visible hint beside the ⚙ settings button (outside the artwork) */
+#openhint{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(max(12px,env(safe-area-inset-bottom)) + 48px);z-index:25;min-height:0;height:24px;padding:0 11px;border-radius:12px;background:rgba(8,7,5,.62);color:#e9cf86;border:1px solid rgba(201,168,92,.5);font-size:12px;letter-spacing:.04em;line-height:22px;white-space:nowrap;box-shadow:0 0 12px rgba(233,190,90,.18);animation:aeHint 3.2s ease-in-out infinite}
+#openhint::after{content:" ›";opacity:.8}
+@keyframes aeHint{0%,100%{box-shadow:0 0 8px rgba(233,190,90,.12)}50%{box-shadow:0 0 16px rgba(233,190,90,.36)}}
+body.ui #openhint{opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){#openhint{animation:none}}

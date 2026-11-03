@@ -944,6 +944,7 @@ function bindUI() {
   $('#cardclose').onclick = e => { e.stopPropagation(); document.body.classList.remove('card-open'); };
   $('#partybtn').onclick = e => { e.stopPropagation(); S.party = !S.party; syncButtons(); };
   $('#open').onclick = e => { e.stopPropagation(); showUI(); };
+  if ($('#openhint')) { $('#openhint').onclick = e => { e.stopPropagation(); showUI(); document.body.classList.add('adv-open'); $('#adv').setAttribute('aria-expanded', 'true'); }; $('#openhint').addEventListener('pointerdown', e => e.stopPropagation()); } // v73: hint opens settings with 進階 shown
   $('#panel').addEventListener('pointerdown', e => { e.stopPropagation(); showUI(); });
   $('#play').onclick = togglePlay;
   $('#mNat').onclick = () => { S.preset = ''; leaveOriginal(); S.mode = 'natural'; syncButtons(); };
