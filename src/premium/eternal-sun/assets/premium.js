@@ -96,7 +96,7 @@ const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60
 let seeking = false, progAt = 0;
 function updateProg(now) { if (now - progAt < 250) return; progAt = now; const d = audio.duration; $('#tdur').textContent = Number.isFinite(d) ? fmt(d) : '0:00'; if (!seeking) { $('#tcur').textContent = fmt(audio.currentTime); $('#seek').value = Number.isFinite(d) && d > 0 ? Math.round(audio.currentTime / d * 1000) : 0; } }
 const USER = { want: false }; // v78: user's play intent; nothing may start the music unless the user asked for it
-const MUSICVOL = 0.708; // v78: music -3 dB for kick headroom (iOS: via WebAudio gain, see routeMusic)
+const MUSICVOL = 0.5; // v79: music -6 dB (v78 -3 dB) for kick headroom (iOS: via WebAudio gain, see routeMusic)
 audio.addEventListener('play', () => { if (!USER.want) { try { audio.pause(); } catch (e) {} } });
 audio.addEventListener('pause', () => { if (!document.hidden && !audio.ended) USER.want = false; }); // a pause while visible (button, headset, OS) = user paused
 try { if (navigator.mediaSession) { navigator.mediaSession.setActionHandler('play', () => { USER.want = true; audio.play().catch(() => {}); }); navigator.mediaSession.setActionHandler('pause', () => { USER.want = false; audio.pause(); }); } } catch (e) {}
@@ -411,32 +411,42 @@ const TAPSND = { mode: (() => { try { return localStorage.getItem('ae-premium-ta
 /* v76 kick: louder than v75 (at least as loud as the track), a low-mid body (2nd/3rd harmonics ~90–140 Hz so phone speakers
    reproduce the punch), saturation on every level (輕 light → 重 heavy), the track is ducked ~2.5 dB for ~0.25 s under each kick
    (audio.volume; iOS Safari ignores element volume, so there the kick is just louder). Compressor + limiter bus prevents clipping. */
-const KICKS = { // v77: clean 808-style - fast 120->50 Hz sweep then steady, no waveshaper/peaking/harmonics, low-passed body, short click
-  k1: { f0: 115, f1: 60, pd: 0.06, d: 0.32, g: 4.2, hold: 0.06, sub: 0.35, thump: 0.7, click: 0.22, lp: 200, duck: 0.85 },
-  k2: { f0: 120, f1: 54, pd: 0.07, d: 0.5, g: 5.0, hold: 0.12, sub: 0.7, thump: 0.9, click: 0.28, lp: 190, duck: 0.75 },
-  k3: { f0: 120, f1: 50, pd: 0.075, d: 0.7, g: 6.0, hold: 0.2, sub: 1.0, thump: 1.1, click: 0.3, lp: 170, duck: 0.68 } };
+const KICKS = { // v79: phone-speaker kick - beater (1-3 kHz) + 150-300 Hz thud carry the loudness; sub kept small so it doesn't eat limiter headroom
+  k1: { f0: 120, f1: 60, pd: 0.06, d: 0.25, g: 1.7, sub: 0.2, thud: 0.9, td: 0.1, beat: 0.55, duck: 0.5 },
+  k2: { f0: 120, f1: 56, pd: 0.07, d: 0.4, g: 2.3, sub: 0.3, thud: 1.3, td: 0.15, beat: 0.75, duck: 0.4 },
+  k3: { f0: 120, f1: 52, pd: 0.075, d: 0.6, g: 3.0, sub: 0.4, thud: 1.7, td: 0.27, beat: 0.95, duck: 0.32 } }; // duck: -6 / -8 / -10 dB
+const KV = []; // live voices (cap 4)
 function kbus(c) { if (GAME.kbus && GAME.kbus.context === c) return GAME.kbus;
-  const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 6; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.22;
-  const mk = c.createGain(); mk.gain.value = 1.8; // make-up gain after the glue compressor
-  const lim = c.createDynamicsCompressor(); lim.threshold.value = -2.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;
-  comp.connect(mk); mk.connect(lim); lim.connect(c.destination); if (!(c instanceof (window.OfflineAudioContext || Object))) GAME.kbus = comp; return comp; }
+  const pre = c.createGain(); pre.gain.value = 1;
+  const comp = c.createDynamicsCompressor(); comp.threshold.value = -8; comp.knee.value = 4; comp.ratio.value = 2.5; comp.attack.value = 0.003; comp.release.value = 0.12; // light glue only
+  const mk = c.createGain(); mk.gain.value = 1.5;
+  const lim = c.createDynamicsCompressor(); lim.threshold.value = -1.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.06;
+  const sc = c.createWaveShaper(), cv = new Float32Array(2048); for (let i = 0; i < 2048; i++) { const x = i / 1024 - 1, a = Math.abs(x); cv[i] = Math.sign(x) * (a < 0.8 ? a : 0.8 + 0.19 * Math.tanh((a - 0.8) / 0.19)); } sc.curve = cv; sc.oversample = '4x'; // v79 safety ceiling 0.99 (only touches overshoots the 1 ms limiter misses)
+  pre.connect(comp); comp.connect(mk); mk.connect(lim); lim.connect(sc); sc.connect(c.destination); if (!(c instanceof (window.OfflineAudioContext || Object))) GAME.kbus = pre; return pre; }
 const DUCK = { until: 0, base: null, n: 0 };
-function duckMusic(f) { if (!S.playing || audio.muted) return; if (A.mg && A.mg.g) { const g = A.mg.g.gain, t = A.mg.c.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(MUSICVOL * f, t + 0.01); g.setValueAtTime(MUSICVOL * f, t + 0.26); g.linearRampToValueAtTime(MUSICVOL, t + 0.45); DUCK.n++; return; } if (DUCK.base == null) DUCK.base = audio.volume; const v = DUCK.base * f; audio.volume = Math.min(audio.volume, v); DUCK.n++; DUCK.until = performance.now() + 260;
+function duckMusic(f) { if (!S.playing || audio.muted) return; if (A.mg && A.mg.g) { const g = A.mg.g.gain, t = A.mg.c.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(MUSICVOL * f, t + 0.01); g.setValueAtTime(MUSICVOL * f, t + 0.2); g.linearRampToValueAtTime(MUSICVOL, t + 0.32); DUCK.n++; return; } if (DUCK.base == null) DUCK.base = audio.volume; const v = DUCK.base * f; audio.volume = Math.min(audio.volume, v); DUCK.n++; DUCK.until = performance.now() + 200;
   clearTimeout(DUCK.tm); const rel = () => { const left = DUCK.until - performance.now(); if (left > 0) { DUCK.tm = setTimeout(rel, left); return; } let k = 0; const step = () => { k++; audio.volume = Math.min(DUCK.base, audio.volume + (DUCK.base - audio.volume) * 0.35 + 0.01); if (k < 12 && audio.volume < DUCK.base - 0.005) DUCK.tm = setTimeout(step, 16); else { audio.volume = DUCK.base; DUCK.base = null; } }; step(); }; DUCK.tm = setTimeout(rel, 260); }
 function kick(lv, ctxOverride) {
-  try { const K = KICKS[lv] || KICKS.k2, c = ctxOverride || acx(), t = c.currentTime + 0.004, out = c.createGain(); out.gain.value = K.g; out.connect(kbus(c));
-    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = K.lp; lp.Q.value = -3; lp.connect(out); // ~Butterworth (Q in dB): no resonant peak
-    const env = (g, peak, hold, d) => { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.002); g.gain.setValueAtTime(peak, t + hold); g.gain.exponentialRampToValueAtTime(0.0001, t + d); };
-    // main body: fast pitch drop, then steady fundamental
-    const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.pd);
-    env(v, 1, K.hold, K.d); o.connect(v); v.connect(lp); o.start(t); o.stop(t + K.d + 0.02);
-    // low-mid thump: short ~100->70 Hz punch, gone in ~90 ms (this is the weight a phone speaker plays)
-    if (K.thump) { const h = c.createOscillator(), hg = c.createGain(); h.type = 'sine'; h.frequency.setValueAtTime(118, t); h.frequency.exponentialRampToValueAtTime(82, t + 0.06); env(hg, K.thump, 0.02, 0.13); h.connect(hg); hg.connect(lp); h.start(t); h.stop(t + 0.14); }
-    // sub reinforcement at the settled pitch (重 heaviness comes from here, not from a long tail)
-    if (K.sub) { const so = c.createOscillator(), sg = c.createGain(); so.type = 'sine'; so.frequency.value = K.f1; sg.gain.setValueAtTime(0, t + K.pd * 0.5); sg.gain.linearRampToValueAtTime(K.sub, t + K.pd); sg.gain.setValueAtTime(K.sub, t + K.hold + 0.04); sg.gain.exponentialRampToValueAtTime(0.0001, t + K.d); so.connect(sg); sg.connect(lp); so.start(t); so.stop(t + K.d + 0.02); }
-    // short click (3 ms filtered noise), bypasses the low-pass
-    const n = c.createBuffer(1, Math.round(c.sampleRate * 0.003), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length) ** 2;
-    const ns = c.createBufferSource(), hp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; hp.type = 'bandpass'; hp.frequency.value = 3000; hp.Q.value = 0.7; ng.gain.value = K.click; ns.connect(hp); hp.connect(ng); ng.connect(out); ns.start(t);
+  try { const K = KICKS[lv] || KICKS.k2, c = ctxOverride || acx(), t = c.currentTime + 0.004, out = c.createGain();
+    // rapid taps: cap 4 overlapping voices, fade the oldest quickly, slight per-voice trim when stacking
+    if (!ctxOverride) { for (let i = KV.length - 1; i >= 0; i--) if (KV[i].end < t) KV.splice(i, 1); while (KV.length >= 4) { const o = KV.shift(); try { o.g.gain.cancelScheduledValues(t); o.g.gain.setValueAtTime(o.g.gain.value, t); o.g.gain.linearRampToValueAtTime(0, t + 0.012); } catch (e) {} } }
+    const vg = K.g * (ctxOverride ? 1 : 1 / Math.sqrt(1 + 0.35 * KV.length)); out.gain.value = vg; out.connect(kbus(c)); if (!ctxOverride) KV.push({ g: out, end: t + K.d });
+    const env = (g, peak, hold, d, at = 0.0015) => { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + at); g.gain.setValueAtTime(peak, t + hold); g.gain.exponentialRampToValueAtTime(0.0001, t + d); };
+    // sub/body: fast 120 -> ~55 Hz drop, low-passed, small share
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 160; lp.Q.value = -3; lp.connect(out);
+    const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.pd); env(v, K.sub, 0.03, K.d); o.connect(v); v.connect(lp); o.start(t); o.stop(t + K.d + 0.02);
+    // thud: 150-300 Hz body (what a phone speaker actually plays) - pitch-dropping so it never rings as a tone
+    const tl = c.createBiquadFilter(); tl.type = 'lowpass'; tl.frequency.value = 420; tl.Q.value = -3; tl.connect(out);
+    const h = c.createOscillator(), hg = c.createGain(); h.type = 'sine'; h.frequency.setValueAtTime(300, t); h.frequency.exponentialRampToValueAtTime(170, t + 0.06); env(hg, K.thud, 0.015, K.td); h.connect(hg); hg.connect(tl); h.start(t); h.stop(t + K.td + 0.02);
+    // gentle parallel saturation on the thud only (soft tanh, adds 300-600 Hz presence; low-passed so it cannot ring)
+    const ws = c.createWaveShaper(), cv = new Float32Array(512); for (let i = 0; i < 512; i++) { const x = i / 256 - 1; cv[i] = Math.tanh(x * 2) / Math.tanh(2); } ws.curve = cv; const sg = c.createGain(); sg.gain.value = 0.35; hg.connect(ws); ws.connect(sg); sg.connect(tl);
+    // noise thud (150-400 Hz band): body without a pitch, so a longer thud can't ring as a note
+    const nb = c.createBuffer(1, Math.round(c.sampleRate * (K.td + 0.02)), c.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const nbs = c.createBufferSource(), nbp = c.createBiquadFilter(), nbg = c.createGain(); nbs.buffer = nb; nbp.type = 'bandpass'; nbp.frequency.value = 260; nbp.Q.value = 0.7; env(nbg, K.thud * 0.9, 0.01, K.td); nbs.connect(nbp); nbp.connect(nbg); nbg.connect(out); nbs.start(t);
+    // beater: 1-3 kHz knock, ~8 ms noise + 5 ms falling blip
+    const n = c.createBuffer(1, Math.round(c.sampleRate * 0.012), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * Math.exp(-i / (c.sampleRate * 0.003));
+    const ns = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.8; ng.gain.value = K.beat * 1.4; ns.connect(bp); bp.connect(ng); ng.connect(out); ns.start(t);
+    const bo = c.createOscillator(), bg = c.createGain(); bo.type = 'triangle'; bo.frequency.setValueAtTime(2600, t); bo.frequency.exponentialRampToValueAtTime(900, t + 0.008); env(bg, K.beat * 0.5, 0.001, 0.012, 0.0005); bo.connect(bg); bg.connect(out); bo.start(t); bo.stop(t + 0.02);
     if (!ctxOverride) { duckMusic(K.duck); TAPSND.n++; GAME.sounds = (GAME.sounds || 0) + 1; }
   } catch (e) {}
 }
@@ -1056,7 +1066,7 @@ audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setT
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
 document.querySelectorAll('.ts').forEach(b => b.classList.toggle('on', b.dataset.s === TAPSND.mode));
 document.querySelectorAll('.lw').forEach(b => b.onclick = e => { e.stopPropagation(); setLw(b.dataset.w); }); setLw(S.lw, true);
-window.__premium = { PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { MUSICVOL, KV, PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
