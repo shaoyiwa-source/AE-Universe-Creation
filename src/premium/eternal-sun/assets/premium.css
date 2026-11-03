@@ -142,3 +142,19 @@ body:not(.adv-open) #panel .row.artrow{display:flex!important}
 #zreset{bottom:auto!important;top:calc(max(10px,env(safe-area-inset-top)) + 34px)!important;right:12px!important}
 #glowbar{bottom:calc(max(14px,env(safe-area-inset-bottom)) + 104px)!important}
 body.glow-on #dock,body.glow-on #artsw{opacity:.25}
+
+/* v2476.81 rings editor, signature light, import */
+#ringedit{position:fixed;inset:0;z-index:22;display:none;touch-action:none;cursor:grab}
+body.ringedit #ringedit{display:block}
+#ringbar{position:fixed;left:50%;transform:translateX(-50%);top:calc(max(10px,env(safe-area-inset-top)) + 66px);z-index:26;display:none;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;padding:6px 8px;border-radius:14px;background:rgba(8,12,16,.78);border:1px solid rgba(140,220,255,.45);color:#d9f2ff;font-size:12px;width:max-content;max-width:calc(100vw - 20px);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.ringedit #ringbar{display:flex}
+#ringbar button{min-height:32px;padding:0 10px;border-radius:999px;background:rgba(140,220,255,.12);color:#e6f7ff;border:1px solid rgba(140,220,255,.5);font-size:12px}
+#ringbar button:disabled{opacity:.35}
+#ringbar #rdone{background:rgba(140,220,255,.32);font-weight:600}
+#ringbar .rtip{flex-basis:100%;text-align:center;opacity:.75;font-size:11px}
+#rcount{opacity:.7;font-variant-numeric:tabular-nums}
+body.ringedit #hint,body.ringedit #openhint,body.ringedit #panel{display:none!important}
+#toast81{position:fixed;left:50%;top:calc(max(10px,env(safe-area-inset-top)) + 76px);transform:translateX(-50%) translateY(-6px);z-index:40;max-width:calc(100vw - 32px);padding:8px 14px;border-radius:12px;background:rgba(10,8,6,.86);border:1px solid rgba(214,178,106,.45);color:#f1e3bb;font-size:12.5px;line-height:1.45;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
+#toast81.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#panel .r81 .note81{flex-basis:100%;text-align:center;font-size:11px;color:#cdbb8e;opacity:.85;line-height:1.4}
+#panel .r81[hidden]{display:none!important}

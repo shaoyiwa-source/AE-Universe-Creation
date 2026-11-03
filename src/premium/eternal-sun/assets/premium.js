@@ -9,7 +9,9 @@ const AR0 = 1110 / 1536; let AR = AR0;
 /* v2476.80 換畫 / 換歌: real AE works already hosted on the site (artwall works list, names as published there). No new / generated art or music. */
 const ARTS = [
   { id: 'sun', zh: '盛明', en: 'Eternal Sun', src: '/assets/eternal-sun-canonical-1110x1536.jpg', thumb: '/assets/artwall/t-4e0991885a9649ea.webp', w: 1110, h: 1536, sun: [0.515, 0.5], looks: true },
-  { id: 'flower-heart-bloom', en: 'Flower Heart Bloom', src: '/assets/selected-works-v2/flower-heart-bloom.webp', w: 1106, h: 1536 },
+  { id: 'flower-heart-bloom', en: 'Flower Heart Bloom', src: '/assets/selected-works-v2/flower-heart-bloom.webp', w: 1106, h: 1536,
+    // v81 signature effect (data-driven): ♾️ ribbon joining the two hearts. a/b = heart centres located by eye on the original (fraction of width/height)
+    fx: [{ type: 'infinity', a: [0.335, 0.508], b: [0.778, 0.41], sy: 1.15 }] },
   { id: 'heart-energy', en: 'Heart Energy', src: '/assets/selected-works-v2/heart-energy.webp', w: 1098, h: 1536 },
   { id: 'infinite-love-strength', en: 'Infinite Love Strength', src: '/assets/selected-works-v2/infinite-love-strength.webp', w: 1152, h: 1536 },
   { id: 'natures-strength', en: 'Nature’s Strength', src: '/assets/selected-works-v2/natures-strength.webp', w: 1096, h: 1536 },
@@ -800,15 +802,7 @@ function drawFront(now) {
     }
     c.shadowBlur = 0;
   }
-  if (S.aura) {
-    const cx = p.x + p.w * SUN.x, cy = p.y + p.h * SUN.y, br = S.playing ? 0.5 + 0.5 * Math.cos(6.2832 * ((A.count + Math.min(1, A.phase)) / 8)) : 0.5 + 0.5 * Math.sin(now / 1000 * 1.4 * S.speed);
-    const rad = p.w * (0.30 + 0.012 * br + 0.022 * A.kick), a = Math.min(1, (0.55 + 0.15 * br + 0.4 * A.kick) * (0.5 + I));
-    const gr = c.createRadialGradient(cx, cy, rad * 0.82, cx, cy, rad * 1.12);
-    gr.addColorStop(0, 'rgba(255,214,150,0)'); gr.addColorStop(0.5, `rgba(255,226,170,${a * 0.6})`); gr.addColorStop(1, 'rgba(255,200,120,0)');
-    c.fillStyle = gr; c.beginPath(); c.arc(cx, cy, rad * 1.12, 0, 6.2832); c.fill();
-    c.strokeStyle = `rgba(255,250,232,${a})`; c.lineWidth = Math.max(2, p.w * .006); c.shadowColor = 'rgba(255,220,150,1)'; c.shadowBlur = 14 * k;
-    c.beginPath(); c.arc(cx, cy, rad, 0, 6.2832); c.stroke(); c.shadowBlur = 0;
-  }
+  drawRings81(c, now, I); drawSig81(c, now, I);
   if (S.glint) {
     if (Math.random() < 0.0025 * S.speed * (0.5 + I)) sparkle(now, 1); if (!S.playing && Math.random() < 0.0007) sheen(now); if (false) glints.push({ t: now, u: Math.random(), s: 0.6 + Math.random() * 0.6 });
     const g = S.frame ? L.F * 0.5 : 2, r = { x: p.x - g + ox, y: p.y - g + oy, w: p.w + 2 * g, h: p.h + 2 * g };
@@ -954,7 +948,7 @@ function drawLook(now, dt) {
   if (window.AELooks.draw(c, w, h, { x: 0, y: 0, w, h }, LK.ph, LK.idx[S.look], 1, false, 1, vals)) LK.draws++;
 }
 function frontVis() { // nothing to draw above the painting -> remove the overlay layer entirely, so the <img> is composited exactly as on its own
-  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || GAME.marks.length > 0 || GAME.trail.length > 0 || GLOW.strokes.length > 0 || S.party || PT.conf.length > 0 || S.led || S.aura || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
+  const any = (S.impact && performance.now() - IMP.t < 800) || spots.length > 0 || tapStars.length > 0 || GAME.marks.length > 0 || GAME.trail.length > 0 || GLOW.strokes.length > 0 || S.party || PT.conf.length > 0 || S.led || S.aura || (RE81 && (RE81.on || (S.sig && ART.fx))) || S.glint || S.laser || S.bloom || blooms.length > 0 || S.mode !== 'natural';
   const d = any ? '' : 'none'; if ($('#front').style.display !== d) $('#front').style.display = d;
 }
 function syncButtons() {
@@ -1170,7 +1164,7 @@ function applyArtGeometry(img) {
   AR = ART.w / ART.h; const sp = ART.sun || [0.5, 0.5]; SUN.x = sp[0]; SUN.y = sp[1];
   layout(); dispatchEvent(new Event('resize')); if (V75) { V75.cones = null; V75.fp = null; V75.focus = null; }
   try { if (img && img.naturalWidth) buildRGB(img); } catch (e) {}
-  SW.lum = img ? artLum(img) : 0.5; document.body.dataset.artLum = SW.lum < 0.35 ? 'dark' : SW.lum > 0.65 ? 'bright' : 'mid'; document.body.dataset.art = ART.id;
+  SW.lum = img ? artLum(img) : 0.5; document.body.dataset.artLum = SW.lum < 0.35 ? 'dark' : SW.lum > 0.65 ? 'bright' : 'mid'; document.body.dataset.art = ART.id; if (RE81) try { loadRings81(); sigSync81(); } catch (e) {}
   const t = $('#title'); if (t) { t.dataset.zh = (ART.zh === ART.en ? ART.en : ART.zh) + ' · 精裝版'; t.dataset.en = ART.en + ' · Premium'; t.textContent = t.dataset[S.lang]; }
 }
 async function setArt(i, instant) {
@@ -1180,14 +1174,14 @@ async function setArt(i, instant) {
   if (!instant && veil) { veil.classList.add('on'); await new Promise(r => setTimeout(r, 230)); if (tok !== SW.tok) return; }
   ART = a; pimg.src = a.src; pimg.alt = (a.zh === a.en ? a.en : a.zh + ' ' + a.en) + ' — original painting';
   try { await (pimg.decode ? pimg.decode() : Promise.resolve()); } catch (e) {}
-  applyArtGeometry(pimg); artLabel(); try { localStorage.setItem('ae-premium-art', a.id); } catch (e) {}
+  applyArtGeometry(pimg); artLabel(); if (!a.user) try { localStorage.setItem('ae-premium-art', a.id); } catch (e) {}
   if (!S.home && S.look && !a.looks) {} // gem/amber shader quietly off for works without masks (drawLook guard)
   requestAnimationFrame(() => veil && veil.classList.remove('on'));
   preload(ARTS[(i + 1) % n]); preload(ARTS[(i - 1 + n) % n]);
 }
 function setTrack(i) {
   const n = TRACKS.length; i = ((i % n) + n) % n; const t = TRACKS[i]; if (t === TR) return;
-  const wasPlaying = !audio.paused && USER.want; TR = t; try { localStorage.setItem('ae-premium-track', t.id); } catch (e) {}
+  const wasPlaying = !audio.paused && USER.want; TR = t; if (!t.user) try { localStorage.setItem('ae-premium-track', t.id); } catch (e) {}
   CK.ok = 0; CK.last = -1; A.count = 0; A.b = null; A.lb = null; if (OM.sub) { OM.i = 0; OM.last = -1; }
   audio.src = t.src; audio.load(); trackLabel();
   if (t.beats !== 'timeline' && A.started) try { ensureGraph(true); } catch (e) {}
@@ -1214,3 +1208,110 @@ function setTrack(i) {
   artLabel(); trackLabel(); updatePlayLabel();
   if (ART.id !== 'sun') setArt(ARTS.indexOf(ART), true); else { const pi = $('#painting'); const go = () => applyArtGeometry(pi); if (pi.complete && pi.naturalWidth) go(); else pi.addEventListener('load', go, { once: true }); preload(ARTS[1]); }
 })();
+
+/* ---------- v2476.81: movable / resizable / duplicable 柔光呼吸 rings, local import, per-painting signature effects ---------- */
+var RE81 = { on: false, list: [], sel: 0, pts: new Map(), g: null, fxu: 0, fxt: 0, n: 0 };
+S.sig = true;
+const ringKey = () => 'ae-premium-rings-' + ART.id;
+const defRings = () => [{ x: SUN.x, y: SUN.y, r: 0.30 }];
+function loadRings81() { let l = null; try { l = JSON.parse(localStorage.getItem(ringKey()) || 'null'); } catch (e) {} RE81.list = Array.isArray(l) && l.length && l.every(q => [q.x, q.y, q.r].every(Number.isFinite)) ? l.slice(0, 6) : defRings(); RE81.sel = Math.min(RE81.sel, RE81.list.length - 1); }
+function saveRings81() { if (ART.user) return; try { localStorage.setItem(ringKey(), JSON.stringify(RE81.list.map(q => ({ x: +q.x.toFixed(4), y: +q.y.toFixed(4), r: +q.r.toFixed(4) })))); } catch (e) {} }
+function drawRings81(c, now, I) {
+  if (!RE81 || (!S.aura && !RE81.on)) return; const p = L.p, k = L.dpr;
+  RE81.list.forEach((q, n) => {
+    const cx = p.x + p.w * q.x, cy = p.y + p.h * q.y, off = n * 0.9; // each copy breathes with the beat, slightly staggered
+    const br = S.playing ? 0.5 + 0.5 * Math.cos(6.2832 * ((A.count + Math.min(1, A.phase)) / 8) + off) : 0.5 + 0.5 * Math.sin(now / 1000 * 1.4 * S.speed + off);
+    const rad = p.w * (q.r + 0.012 * br + 0.022 * A.kick) * (q.r / 0.30 < 1 ? 1 : 1), a = Math.min(1, (0.55 + 0.15 * br + 0.4 * A.kick) * (0.5 + I));
+    const gr = c.createRadialGradient(cx, cy, rad * 0.82, cx, cy, rad * 1.12);
+    gr.addColorStop(0, 'rgba(255,214,150,0)'); gr.addColorStop(0.5, `rgba(255,226,170,${a * 0.6})`); gr.addColorStop(1, 'rgba(255,200,120,0)');
+    c.fillStyle = gr; c.beginPath(); c.arc(cx, cy, rad * 1.12, 0, 6.2832); c.fill();
+    c.strokeStyle = `rgba(255,250,232,${a})`; c.lineWidth = Math.max(2, p.w * .006); c.shadowColor = 'rgba(255,220,150,1)'; c.shadowBlur = PERF.low ? 0 : 14 * k;
+    c.beginPath(); c.arc(cx, cy, rad, 0, 6.2832); c.stroke(); c.shadowBlur = 0;
+    if (RE81.on) { const R = q.r * p.w, on = n === RE81.sel; c.save(); c.setLineDash([6, 6]); c.lineWidth = on ? 2 : 1; c.strokeStyle = on ? 'rgba(140,220,255,.95)' : 'rgba(140,220,255,.45)'; c.beginPath(); c.arc(cx, cy, R, 0, 6.2832); c.stroke(); c.setLineDash([]);
+      c.fillStyle = on ? 'rgba(140,220,255,.95)' : 'rgba(140,220,255,.5)'; c.beginPath(); c.arc(cx, cy, 5, 0, 6.2832); c.fill();
+      if (on) { const hx = cx + R * .7071, hy = cy + R * .7071; c.beginPath(); c.arc(hx, hy, 11, 0, 6.2832); c.fill(); c.strokeStyle = '#0a0806'; c.lineWidth = 2; c.beginPath(); c.moveTo(hx - 5, hy - 5); c.lineTo(hx + 5, hy + 5); c.moveTo(hx + 1, hy + 5); c.lineTo(hx + 5, hy + 5); c.lineTo(hx + 5, hy + 1); c.stroke(); }
+      c.restore(); }
+  });
+}
+/* signature effects: registry keyed by ART.fx[].type, so other paintings can get their own later */
+const FXR81 = {
+  infinity(c, p, f, now, I, E, dt) {
+    const ax = p.x + f.a[0] * p.w, ay = p.y + f.a[1] * p.h, bx = p.x + f.b[0] * p.w, by = p.y + f.b[1] * p.h;
+    const mx = (ax + bx) / 2, my = (ay + by) / 2, hl = Math.hypot(bx - ax, by - ay) / 2, an = Math.atan2(by - ay, bx - ax), ca = Math.cos(an), sa = Math.sin(an);
+    const Sx = hl / 0.62, Sy = Sx * (f.sy || 1.1), sc = p.w / 400;
+    const pt = t => { const s1 = Math.sin(t), c1 = Math.cos(t), d = 1 + s1 * s1, X = c1 / d * Sx, Y = s1 * c1 / d * Sy; return [mx + X * ca - Y * sa, my + X * sa + Y * ca]; }; // lemniscate: lobes centred on the two hearts
+    const hue0 = (now * 0.03 + (A.count || 0) * 28) % 360, N = PERF.low ? 72 : 132, CH = 18, P = []; for (let i = 0; i <= N; i++) P.push(pt(i / N * 6.2832));
+    c.save(); c.globalCompositeOperation = 'lighter'; c.lineCap = 'round'; c.lineJoin = 'round';
+    for (const [lw, al] of [[9 * sc, .10 + .14 * E], [3.2 * sc, .30 + .30 * E], [1.2 * sc, .65 + .35 * E]]) {
+      c.lineWidth = lw; for (let k = 0; k < CH; k++) { const i0 = Math.floor(k * N / CH), i1 = Math.floor((k + 1) * N / CH); c.strokeStyle = `hsla(${(hue0 + k / CH * 360) % 360},100%,66%,${Math.min(1, al * (0.5 + I))})`; c.beginPath(); c.moveTo(P[i0][0], P[i0][1]); for (let i = i0 + 1; i <= i1; i++) c.lineTo(P[i][0], P[i][1]); c.stroke(); } }
+    RE81.fxu = (RE81.fxu + Math.min(dt, 100) / 1000 * (0.045 + 0.06 * S.speed + 0.35 * E)) % 1; // flow speeds up on every beat
+    const M = PERF.low ? 16 : 30;
+    for (let j = 0; j < M; j++) { const u = (j / M + RE81.fxu) % 1, big = j % 5 === 0, hue = (hue0 + u * 360 + 180) % 360;
+      for (let tr = 0; tr < (PERF.low ? 2 : 4); tr++) { const [x, y] = pt((u - tr * 0.006) * 6.2832), rr = (big ? 2.6 : 1.5) * sc * (1 + 1.2 * E) * (1 - tr * 0.22), a = (0.75 + 0.25 * E) * (1 - tr * 0.28);
+        c.fillStyle = `hsla(${hue},100%,${tr ? 70 : 88}%,${a})`; c.beginPath(); c.arc(x, y, rr, 0, 6.2832); c.fill(); if (!tr && big) { c.fillStyle = `hsla(${hue},100%,70%,${.18 + .25 * E})`; c.beginPath(); c.arc(x, y, rr * 4, 0, 6.2832); c.fill(); } } }
+    c.restore();
+  }
+};
+function drawSig81(c, now, I) { if (!RE81) return; const dt = now - (RE81.fxt || now); RE81.fxt = now; if (!S.sig || !ART.fx || saved) return; const E = S.playing ? Math.min(1, A.kick) : 0.25 + 0.15 * Math.sin(now / 700);
+  for (const f of ART.fx) { const fn = FXR81[f.type]; if (fn) fn(c, L.p, f, now, I, E, dt); } }
+function sigSync81() { let v = null; try { v = localStorage.getItem('ae-premium-sig-' + ART.id); } catch (e) {} S.sig = v !== '0'; const row = $('#sigrow'), b = $('#sigbtn'); if (row) row.hidden = !ART.fx; if (b) { b.classList.toggle('on', S.sig); b.setAttribute('aria-pressed', String(S.sig)); } }
+function toast81(zh, en) { const t = $('#toast81'); if (!t) return; t.textContent = S.lang === 'en' ? en : zh; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 4200); }
+function ringEdit81(on) { RE81.on = !!on; document.body.classList.toggle('ringedit', RE81.on); if (RE81.on) { S.aura = true; resetZoom(); hideUI(true); syncButtons(); } else saveRings81(); ringBar81(); }
+function ringBar81() { const n = RE81.list.length; const d = $('#rdup'), x = $('#rdel'); if (d) d.disabled = n >= 6; if (x) x.disabled = n <= 1; const c = $('#rcount'); if (c) c.textContent = n + '/6'; }
+function toStage81(e) { const r = $('#stage').getBoundingClientRect(); return { x: (e.clientX - r.left) * L.W / (r.width || 1), y: (e.clientY - r.top) * L.H / (r.height || 1) }; }
+function thumb81(a) { const b = document.createElement('button'); b.dataset.id = a.id; b.title = a.en; const im = document.createElement('img'); im.src = a.thumb; im.alt = a.en; im.loading = 'lazy'; im.decoding = 'async'; b.appendChild(im); b.onclick = e => { e.stopPropagation(); setArt(ARTS.indexOf(a)); }; const st = $('#artstrip'); if (st) st.appendChild(b); }
+function importImage81(f) {
+  const heic = /hei[cf]/i.test(f.type) || /\.hei[cf]$/i.test(f.name), base = f.name.replace(/\.[^.]+$/, '').slice(0, 28) || 'image', url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => { const a = { id: 'user-img-' + (++RE81.n), zh: '我的圖片 · ' + base, en: 'My image · ' + base, src: url, thumb: url, w: img.naturalWidth, h: img.naturalHeight, user: true }; a._img = img; ARTS.push(a); thumb81(a); setArt(ARTS.length - 1); toast81('已載入「' + base + '」— 只在你的裝置上，不會上傳', 'Loaded "' + base + '" — stays on your device, never uploaded'); };
+  img.onerror = () => { URL.revokeObjectURL(url); if (heic) toast81('這個瀏覽器無法開啟 HEIC 圖片，請先轉成 JPG 或 PNG 再匯入', 'This browser can’t open HEIC — please convert to JPG or PNG first'); else toast81('無法開啟這個圖片檔', 'Couldn’t open this image file'); };
+  img.src = url;
+}
+function importSong81(f) {
+  const base = f.name.replace(/\.[^.]+$/, '').slice(0, 32) || 'song', url = URL.createObjectURL(f);
+  if (f.type && !audio.canPlayType(f.type) && !/\.(mp3|m4a|aac|wav|ogg|oga|flac|opus|webm|mp4)$/i.test(f.name)) { URL.revokeObjectURL(url); toast81('這個瀏覽器無法播放這種音訊格式', 'This browser can’t play this audio format'); return; }
+  const t = { id: 'user-song-' + (++RE81.n), zh: '我的歌 · ' + base, en: 'My song · ' + base, src: url, beats: 'live', cue: 0, user: true }; TRACKS.push(t); setTrack(TRACKS.length - 1);
+  toast81('已加入「' + base + '」— 即時節拍分析，只在你的裝置上', 'Added "' + base + '" — live beat sync, stays on your device');
+}
+(function ui81() {
+  const ov = document.createElement('div'); ov.id = 'ringedit'; document.body.appendChild(ov);
+  const bar = document.createElement('div'); bar.id = 'ringbar'; bar.innerHTML = '<button id="rdup" data-zh="＋ 複製光環" data-en="＋ Duplicate ring"></button><button id="rdel" data-zh="刪除" data-en="Delete"></button><button id="rreset" data-zh="重設" data-en="Reset"></button><span id="rcount"></span><button id="rdone" data-zh="✓ 完成" data-en="✓ Done"></button><div class="rtip" data-zh="拖曳移動 · 雙指或拖曳藍點縮放 · 滾輪也可縮放" data-en="Drag to move · pinch or drag the blue dot to resize · wheel resizes"></div>';
+  document.body.appendChild(bar);
+  const tst = document.createElement('div'); tst.id = 'toast81'; tst.setAttribute('role', 'status'); document.body.appendChild(tst);
+  const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*,.heic,.heif'; fi.hidden = true; fi.id = 'fimg';
+  const fa = document.createElement('input'); fa.type = 'file'; fa.accept = 'audio/*,.mp3,.m4a,.wav,.aac,.ogg,.flac'; fa.hidden = true; fa.id = 'fsong';
+  document.body.append(fi, fa);
+  const rows = document.createElement('div'); rows.innerHTML =
+    '<div class="row presets r81" id="ringrow"><span class="lab" data-zh="光環" data-en="Rings"></span><button class="pr b81" id="redit" data-zh="✥ 編輯光環（移動 / 縮放 / 複製）" data-en="✥ Edit rings (move / resize / copy)"></button></div>' +
+    '<div class="row presets r81" id="sigrow"><span class="lab" data-zh="專屬" data-en="Signature"></span><button class="pr b81" id="sigbtn" data-zh="♾️ 專屬光效" data-en="♾️ Signature light"></button></div>' +
+    '<div class="row presets r81" id="improw"><span class="lab" data-zh="匯入" data-en="Import"></span><button class="pr b81" id="isong" data-zh="🎵 匯入歌曲" data-en="🎵 Import song"></button><button class="pr b81" id="iimg" data-zh="🖼 匯入圖片" data-en="🖼 Import image"></button><div class="note81" data-zh="檔案只在你的裝置上播放與顯示，不會上傳到伺服器；重新整理後需再匯入。" data-en="Files stay on your device and are never uploaded; re-import after reloading."></div></div>';
+  const after = $('#panel .artrow') || $('#panel .presets'); let ref = after; for (const el of [...rows.children]) { ref.parentNode.insertBefore(el, ref.nextSibling); ref = el; }
+  const lab = () => document.querySelectorAll('#ringbar [data-zh], .r81 [data-zh]').forEach(e => { e.textContent = e.dataset[S.lang] || e.dataset.zh; });
+  lab(); $('#lang').addEventListener('click', () => setTimeout(lab, 0));
+  for (const el of [bar, tst]) { el.addEventListener('pointerdown', e => e.stopPropagation()); el.addEventListener('click', e => e.stopPropagation()); }
+  $('#redit').onclick = e => { e.stopPropagation(); ringEdit81(true); };
+  $('#rdone').onclick = () => ringEdit81(false);
+  $('#rdup').onclick = () => { if (RE81.list.length >= 6) return; const q = RE81.list[RE81.sel] || defRings()[0]; RE81.list.push({ x: Math.min(.95, q.x + .08), y: Math.min(.95, q.y + .06), r: Math.max(.06, q.r * .7) }); RE81.sel = RE81.list.length - 1; saveRings81(); ringBar81(); };
+  $('#rdel').onclick = () => { if (RE81.list.length <= 1) return; RE81.list.splice(RE81.sel, 1); RE81.sel = Math.max(0, RE81.sel - 1); saveRings81(); ringBar81(); };
+  $('#rreset').onclick = () => { RE81.list = defRings(); RE81.sel = 0; try { localStorage.removeItem(ringKey()); } catch (e) {} ringBar81(); };
+  $('#sigbtn').onclick = e => { e.stopPropagation(); S.sig = !S.sig; try { localStorage.setItem('ae-premium-sig-' + ART.id, S.sig ? '1' : '0'); } catch (er) {} sigSync81(); };
+  $('#isong').onclick = e => { e.stopPropagation(); fa.click(); }; $('#iimg').onclick = e => { e.stopPropagation(); fi.click(); };
+  fi.onchange = () => { const f = fi.files && fi.files[0]; if (f) importImage81(f); fi.value = ''; };
+  fa.onchange = () => { const f = fa.files && fa.files[0]; if (f) importSong81(f); fa.value = ''; };
+  audio.addEventListener('error', () => { if (TR.user) toast81('無法播放這個音訊檔', 'Couldn’t play this audio file'); });
+  // edit-mode gestures live on their own layer, so dragging never fires tap lasers
+  const hit = pt => { const p = L.p; for (let n = RE81.list.length - 1; n >= 0; n--) { const q = RE81.list[n], cx = p.x + p.w * q.x, cy = p.y + p.h * q.y, R = q.r * p.w; if (n === RE81.sel && Math.hypot(pt.x - (cx + R * .7071), pt.y - (cy + R * .7071)) < 24) return { n, m: 'resize' }; if (Math.hypot(pt.x - cx, pt.y - cy) < Math.max(30, R * 1.08)) return { n, m: 'move', dx: pt.x - cx, dy: pt.y - cy }; } return null; };
+  ov.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); try { ov.setPointerCapture(e.pointerId); } catch (er) {} const pt = toStage81(e); RE81.pts.set(e.pointerId, pt);
+    if (RE81.pts.size === 1) { const h = hit(pt); if (h) RE81.sel = h.n; RE81.g = h; }
+    else if (RE81.pts.size === 2) { const [a, b] = [...RE81.pts.values()]; const q = RE81.list[RE81.sel]; RE81.g = { m: 'pinch', d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, r0: q ? q.r : .3 }; } });
+  ov.addEventListener('pointermove', e => { if (!RE81.pts.has(e.pointerId)) return; const pt = toStage81(e); RE81.pts.set(e.pointerId, pt); const g = RE81.g, q = RE81.list[RE81.sel], p = L.p; if (!g || !q) return;
+    if (g.m === 'move') { q.x = Math.min(1.05, Math.max(-.05, (pt.x - g.dx - p.x) / p.w)); q.y = Math.min(1.05, Math.max(-.05, (pt.y - g.dy - p.y) / p.h)); }
+    else if (g.m === 'resize') q.r = Math.min(.8, Math.max(.04, Math.hypot(pt.x - (p.x + p.w * q.x), pt.y - (p.y + p.h * q.y)) / p.w));
+    else if (g.m === 'pinch' && RE81.pts.size >= 2) { const [a, b] = [...RE81.pts.values()]; q.r = Math.min(.8, Math.max(.04, g.r0 * Math.hypot(a.x - b.x, a.y - b.y) / g.d0)); } });
+  const up = e => { RE81.pts.delete(e.pointerId); if (!RE81.pts.size) { RE81.g = null; saveRings81(); } else if (RE81.g && RE81.g.m === 'pinch') RE81.g = null; };
+  ov.addEventListener('pointerup', up); ov.addEventListener('pointercancel', up);
+  ov.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); const q = RE81.list[RE81.sel]; if (q) { q.r = Math.min(.8, Math.max(.04, q.r * Math.exp(-e.deltaY * 0.0015))); clearTimeout(RE81.wt); RE81.wt = setTimeout(saveRings81, 300); } }, { passive: false });
+  ov.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && RE81.on) ringEdit81(false); });
+  loadRings81(); sigSync81(); ringBar81();
+})();
+(function ex81() { if (window.__premium) Object.assign(window.__premium, { RE81, ringEdit81, importImage81, importSong81, FXR81, sigSync81, saveRings81, loadRings81 }); else setTimeout(ex81, 50); })();
