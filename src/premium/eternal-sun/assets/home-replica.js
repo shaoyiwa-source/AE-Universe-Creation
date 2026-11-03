@@ -33,7 +33,7 @@
   /* v75 (hand-patched after build_replica.py): 雷射粗細 細/中/粗 width multiplier, coloured outer glow halo under every beam,
      one soft circular impact halo where a tapped beam lands (replaces the 3-line prismatic split). */
   const LWM={thin:1,mid:1.9,thick:2.5}; /* v76: 粗 toned down (was 3) */
-  const gk=()=>lw()>2.2?.6:1; /* v76: weaker glow/additive at 粗 */const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'mid']||1.9;};
+  const gk=()=>lw()>2.2?.6:1; /* v76: weaker glow/additive at 粗 */const tb=()=>Math.min(lw(),2.2)*.5; /* v78 tap beams: half width at 中, 粗 capped */const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'mid']||1.9;};
   const hx=a=>Math.round(Math.max(0,Math.min(1,a))*255).toString(16).padStart(2,'0');
   let halos=[];
   function beamGlow(ox,oy,tx,ty,col,w,a){ctx.save();ctx.globalCompositeOperation='source-over';ctx.lineCap='round';ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=lite?0:Math.min(w*3,10);
@@ -143,10 +143,10 @@
         const opacity=b.musical?window.aeHomeAudioEnergy.flightPower((now-b.born)/1000):Math.sin(Math.PI*p);
         const tipX=b.x+(b.ox-b.x)*near,tipY=b.y+(b.oy-b.y)*near,startX=b.x+(b.ox-b.x)*back,startY=b.y+(b.oy-b.y)*back;
         const streak=ctx.createLinearGradient(startX,startY,tipX,tipY);streak.addColorStop(0,b.color+'00');streak.addColorStop(1,b.color);
-        ctx.save();ctx.globalCompositeOperation='source-over';ctx.strokeStyle=b.color;ctx.globalAlpha=opacity*.25*gk();ctx.lineWidth=(4+(1-p)*10)*Math.pow(lw(),.7);ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:14;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();ctx.restore(); /* v75 outer glow */
-        ctx.strokeStyle=streak;ctx.lineWidth=(1.4+(1-p)*7)*lw();ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:20;ctx.globalAlpha=opacity*.95;
+        ctx.save();ctx.globalCompositeOperation='source-over';ctx.strokeStyle=b.color;ctx.globalAlpha=opacity*.25*gk();ctx.lineWidth=(4+(1-p)*10)*Math.pow(tb(),.7);ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:8;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();ctx.restore(); /* v75 outer glow */
+        ctx.strokeStyle=streak;ctx.lineWidth=(1.4+(1-p)*7)*tb();ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:12;ctx.globalAlpha=opacity*.95;
         ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();
-        ctx.strokeStyle='#fff9e9';ctx.lineWidth=(.7+(1-p)*1.5)*Math.sqrt(lw());ctx.globalAlpha=opacity*.85;
+        ctx.strokeStyle='#fff9e9';ctx.lineWidth=(.7+(1-p)*1.5)*Math.sqrt(Math.max(tb(),.6));ctx.globalAlpha=opacity*.85;
         ctx.beginPath();ctx.moveTo(startX+(tipX-startX)*.5,startY+(tipY-startY)*.5);ctx.lineTo(tipX,tipY);ctx.stroke();
         ctx.fillStyle='#fff6d2';ctx.beginPath();ctx.arc(tipX,tipY,Math.max(0,1.5+(1-p)*2),0,Math.PI*2);ctx.fill();
       }

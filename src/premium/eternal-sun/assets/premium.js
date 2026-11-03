@@ -70,6 +70,7 @@ for (const ev of ['playing', 'seeked', 'canplay']) audio.addEventListener(ev, ()
 
 async function togglePlay() {
   // v2476.69: start the media element FIRST, synchronously inside the tap (iOS Safari refuses play() issued after an await → stall)
+  USER.want = audio.paused; if (audio.paused) try { routeMusic(); } catch (e) {}
   let early = null; if (audio.paused) { if (!A.started) { A.started = 1; startAtCue(); } try { early = audio.play(); if (early && early.catch) early.catch(() => {}); } catch (e) {} }
   measureLatency();
   if (!A.ctx && !RH) {
@@ -94,6 +95,14 @@ function startAtCue() { const go = () => { try { audio.currentTime = CUE; } catc
 const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 let seeking = false, progAt = 0;
 function updateProg(now) { if (now - progAt < 250) return; progAt = now; const d = audio.duration; $('#tdur').textContent = Number.isFinite(d) ? fmt(d) : '0:00'; if (!seeking) { $('#tcur').textContent = fmt(audio.currentTime); $('#seek').value = Number.isFinite(d) && d > 0 ? Math.round(audio.currentTime / d * 1000) : 0; } }
+const USER = { want: false }; // v78: user's play intent; nothing may start the music unless the user asked for it
+const MUSICVOL = 0.708; // v78: music -3 dB for kick headroom (iOS: via WebAudio gain, see routeMusic)
+audio.addEventListener('play', () => { if (!USER.want) { try { audio.pause(); } catch (e) {} } });
+audio.addEventListener('pause', () => { if (!document.hidden && !audio.ended) USER.want = false; }); // a pause while visible (button, headset, OS) = user paused
+try { if (navigator.mediaSession) { navigator.mediaSession.setActionHandler('play', () => { USER.want = true; audio.play().catch(() => {}); }); navigator.mediaSession.setActionHandler('pause', () => { USER.want = false; audio.pause(); }); } } catch (e) {}
+function routeMusic() { // iOS ignores audio.volume -> put the element through a WebAudio gain (created inside the play gesture)
+  if (A.mg) return; audio.volume = MUSICVOL; if (Math.abs(audio.volume - MUSICVOL) < 0.01 && !Q.has('routemusic')) { A.mg = { el: true }; return; }
+  try { const c = acx(); const src = c.createMediaElementSource(audio), g = c.createGain(); g.gain.value = MUSICVOL; src.connect(g); g.connect(c.destination); A.mg = { g, c }; audio.volume = 1; } catch (e) { A.mg = { el: true }; } }
 function syncPlay() { S.playing = !audio.paused && !audio.ended; updatePlayLabel(); }
 ['play', 'playing', 'pause', 'ended', 'emptied', 'stalled', 'suspend', 'waiting'].forEach(ev => audio.addEventListener(ev, syncPlay));
 document.addEventListener('visibilitychange', syncPlay); addEventListener('pageshow', syncPlay); addEventListener('focus', syncPlay);
@@ -243,6 +252,7 @@ function lampColor(now) {
 const LASER = ['#ff416d', '#57ffa0', '#ffe28d', '#65dbff', '#c987ff', '#ffac68'];
 const LZ = { pat: 0, hit: -1e9 };
 const LWM = { thin: 1, mid: 1.9, thick: 2.5 }; const lwk = () => LWM[S.lw] || 1.9; // v75 雷射粗細 細/中/粗
+const tb78 = () => Math.min(lwk(), 2.2) * 0.5; // v78: tap beams half width at 中, 粗 capped
 const gk76 = () => lwk() > 2.2 ? .6 : 1; // v76: 粗 toned down + weaker halo (v77: restored lwk, which v76 had commented out -> ReferenceError froze the loop in non-歡樂派對 modes)
 let bolts = [], musicSpots = [], spots = [];
 function fireBolts() {}
@@ -328,9 +338,9 @@ function drawLasers(ctx, now) {
       const opacity = q.musical ? EN.flightPower((now - q.born) / 1000) : Math.sin(Math.PI * pr);
       const tipX = q.x + (q.ox - q.x) * near, tipY = q.y + (q.oy - q.y) * near, startX = q.x + (q.ox - q.x) * back, startY = q.y + (q.oy - q.y) * back;
       const streak = ctx.createLinearGradient(startX, startY, tipX, tipY); streak.addColorStop(0, q.color + '00'); streak.addColorStop(1, q.color);
-      ctx.strokeStyle = streak; ctx.lineWidth = (1.4 + (1 - pr) * 7) * lwk(); ctx.shadowColor = q.color; ctx.shadowBlur = lite ? 0 : 20; ctx.globalAlpha = opacity * .95;
+      ctx.strokeStyle = streak; ctx.lineWidth = (1.4 + (1 - pr) * 7) * tb78(); ctx.shadowColor = q.color; ctx.shadowBlur = lite ? 0 : 12; ctx.globalAlpha = opacity * .95;
       ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(tipX, tipY); ctx.stroke();
-      ctx.strokeStyle = '#fff9e9'; ctx.lineWidth = (.7 + (1 - pr) * 1.5) * Math.sqrt(lwk()); ctx.globalAlpha = opacity * .85;
+      ctx.strokeStyle = '#fff9e9'; ctx.lineWidth = (.7 + (1 - pr) * 1.5) * Math.sqrt(Math.max(tb78(), .6)); ctx.globalAlpha = opacity * .85;
       ctx.beginPath(); ctx.moveTo(startX + (tipX - startX) * .5, startY + (tipY - startY) * .5); ctx.lineTo(tipX, tipY); ctx.stroke();
       ctx.fillStyle = '#fff6d2'; ctx.beginPath(); ctx.arc(tipX, tipY, Math.max(0, 1.5 + (1 - pr) * 2), 0, Math.PI * 2); ctx.fill();
     }
@@ -402,16 +412,16 @@ const TAPSND = { mode: (() => { try { return localStorage.getItem('ae-premium-ta
    reproduce the punch), saturation on every level (輕 light → 重 heavy), the track is ducked ~2.5 dB for ~0.25 s under each kick
    (audio.volume; iOS Safari ignores element volume, so there the kick is just louder). Compressor + limiter bus prevents clipping. */
 const KICKS = { // v77: clean 808-style - fast 120->50 Hz sweep then steady, no waveshaper/peaking/harmonics, low-passed body, short click
-  k1: { f0: 115, f1: 58, pd: 0.06, d: 0.28, g: 2.6, hold: 0.02, sub: 0.0, thump: 0.35, click: 0.22, lp: 200, duck: 0.85 },
-  k2: { f0: 120, f1: 52, pd: 0.07, d: 0.45, g: 3.0, hold: 0.05, sub: 0.35, thump: 0.55, click: 0.28, lp: 190, duck: 0.75 },
-  k3: { f0: 120, f1: 48, pd: 0.075, d: 0.65, g: 3.2, hold: 0.1, sub: 0.75, thump: 0.8, click: 0.3, lp: 170, duck: 0.68 } };
+  k1: { f0: 115, f1: 60, pd: 0.06, d: 0.32, g: 4.2, hold: 0.06, sub: 0.35, thump: 0.7, click: 0.22, lp: 200, duck: 0.85 },
+  k2: { f0: 120, f1: 54, pd: 0.07, d: 0.5, g: 5.0, hold: 0.12, sub: 0.7, thump: 0.9, click: 0.28, lp: 190, duck: 0.75 },
+  k3: { f0: 120, f1: 50, pd: 0.075, d: 0.7, g: 6.0, hold: 0.2, sub: 1.0, thump: 1.1, click: 0.3, lp: 170, duck: 0.68 } };
 function kbus(c) { if (GAME.kbus && GAME.kbus.context === c) return GAME.kbus;
   const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 6; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.22;
   const mk = c.createGain(); mk.gain.value = 1.8; // make-up gain after the glue compressor
   const lim = c.createDynamicsCompressor(); lim.threshold.value = -2.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;
   comp.connect(mk); mk.connect(lim); lim.connect(c.destination); if (!(c instanceof (window.OfflineAudioContext || Object))) GAME.kbus = comp; return comp; }
 const DUCK = { until: 0, base: null, n: 0 };
-function duckMusic(f) { if (!S.playing || audio.muted) return; if (DUCK.base == null) DUCK.base = audio.volume; const v = DUCK.base * f; audio.volume = Math.min(audio.volume, v); DUCK.n++; DUCK.until = performance.now() + 260;
+function duckMusic(f) { if (!S.playing || audio.muted) return; if (A.mg && A.mg.g) { const g = A.mg.g.gain, t = A.mg.c.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(MUSICVOL * f, t + 0.01); g.setValueAtTime(MUSICVOL * f, t + 0.26); g.linearRampToValueAtTime(MUSICVOL, t + 0.45); DUCK.n++; return; } if (DUCK.base == null) DUCK.base = audio.volume; const v = DUCK.base * f; audio.volume = Math.min(audio.volume, v); DUCK.n++; DUCK.until = performance.now() + 260;
   clearTimeout(DUCK.tm); const rel = () => { const left = DUCK.until - performance.now(); if (left > 0) { DUCK.tm = setTimeout(rel, left); return; } let k = 0; const step = () => { k++; audio.volume = Math.min(DUCK.base, audio.volume + (DUCK.base - audio.volume) * 0.35 + 0.01); if (k < 12 && audio.volume < DUCK.base - 0.005) DUCK.tm = setTimeout(step, 16); else { audio.volume = DUCK.base; DUCK.base = null; } }; step(); }; DUCK.tm = setTimeout(rel, 260); }
 function kick(lv, ctxOverride) {
   try { const K = KICKS[lv] || KICKS.k2, c = ctxOverride || acx(), t = c.currentTime + 0.004, out = c.createGain(); out.gain.value = K.g; out.connect(kbus(c));
@@ -421,7 +431,7 @@ function kick(lv, ctxOverride) {
     const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.pd);
     env(v, 1, K.hold, K.d); o.connect(v); v.connect(lp); o.start(t); o.stop(t + K.d + 0.02);
     // low-mid thump: short ~100->70 Hz punch, gone in ~90 ms (this is the weight a phone speaker plays)
-    if (K.thump) { const h = c.createOscillator(), hg = c.createGain(); h.type = 'sine'; h.frequency.setValueAtTime(105, t); h.frequency.exponentialRampToValueAtTime(70, t + 0.05); env(hg, K.thump, 0.008, 0.09); h.connect(hg); hg.connect(lp); h.start(t); h.stop(t + 0.1); }
+    if (K.thump) { const h = c.createOscillator(), hg = c.createGain(); h.type = 'sine'; h.frequency.setValueAtTime(118, t); h.frequency.exponentialRampToValueAtTime(82, t + 0.06); env(hg, K.thump, 0.02, 0.13); h.connect(hg); hg.connect(lp); h.start(t); h.stop(t + 0.14); }
     // sub reinforcement at the settled pitch (重 heaviness comes from here, not from a long tail)
     if (K.sub) { const so = c.createOscillator(), sg = c.createGain(); so.type = 'sine'; so.frequency.value = K.f1; sg.gain.setValueAtTime(0, t + K.pd * 0.5); sg.gain.linearRampToValueAtTime(K.sub, t + K.pd); sg.gain.setValueAtTime(K.sub, t + K.hold + 0.04); sg.gain.exponentialRampToValueAtTime(0.0001, t + K.d); so.connect(sg); sg.connect(lp); so.start(t); so.stop(t + K.d + 0.02); }
     // short click (3 ms filtered noise), bypasses the low-pass
