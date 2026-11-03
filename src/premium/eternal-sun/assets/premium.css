@@ -97,10 +97,14 @@ body.card-open #cardview{display:flex}
 
 /* v2476.69 首頁重現: homepage replica overlay (from /ae-home-light.css .ae-gold-burst) */
 #homefx{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
-body.home-mode #stage{background:radial-gradient(ellipse at 50% 45%,#0b0f0d 0%,#050807 60%,#020403 100%)}
+
 .ae-gold-burst{position:absolute;width:100px;height:100px;margin:-50px 0 0 -50px;border:3px solid #ffe79a;border-radius:50%;pointer-events:none;z-index:2;background:radial-gradient(circle,#fff5cdb3 0%,#ffd65d55 28%,#efae2b00 65%);box-shadow:0 0 16px #ffefc0,inset 0 0 20px #ffd255,0 0 42px #f8b42bb3;animation:ae-gold-bloom 1.6s ease-out forwards;}
 @keyframes ae-gold-bloom{0%{opacity:1;transform:scale(.4)}25%{opacity:1;transform:scale(.9)}100%{opacity:0;transform:scale(1.6)}}
 @media(prefers-reduced-motion:reduce){.ae-gold-burst{animation:none;transform:scale(.55);background:#ffd65d33;box-shadow:0 0 10px #ffd255;}}
 /* v2476.69 首頁重現: the homepage's dark ambience (.hero::after gradient, 1440 desktop) as a removable veil OVER the art — the image itself is untouched */
 #homeveil{position:absolute;inset:0;pointer-events:none;display:none;background:radial-gradient(ellipse 78% 70% at 52% 48%,rgba(5,6,6,0) 45%,rgba(5,6,6,.42) 100%),linear-gradient(180deg,rgba(5,5,5,.13) 0%,rgba(6,6,7,.18) 40%,rgba(5,6,6,.34) 100%)}
-body.home-mode #homeveil{display:block}
+/* v72: 白天 (歡樂派對/尊榮寶石) = bright, no dark veil; 夜晚 (沈浸夜店/柔光呼吸) = dark room veil */
+body.look-night #homeveil{display:block;background:radial-gradient(ellipse 74% 66% at 52% 48%,rgba(3,4,8,0) 38%,rgba(3,4,8,.55) 100%),linear-gradient(180deg,rgba(4,4,10,.22) 0%,rgba(4,4,10,.26) 50%,rgba(3,3,8,.42) 100%)}
+body.look-night #stage{background:radial-gradient(ellipse at 50% 45%,#07080e 0%,#030308 65%,#010104 100%)}
+body.look-day #stage{background:radial-gradient(ellipse at 50% 45%,#2a2418 0%,#16130d 60%,#0b0a07 100%)}
+#panel .ts.on{border-color:currentColor;opacity:1}

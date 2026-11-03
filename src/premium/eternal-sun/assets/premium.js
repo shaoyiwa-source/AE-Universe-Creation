@@ -366,12 +366,12 @@ function drawTaps(ctx, now) {
 }
 function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
   if (window.aeHomeReplica && document.body.dataset.original !== '1') window.aeHomeReplica.tap(x, y); // v70: homepage tap beams + gold ripple in ALL modes
-  if (S.home && window.aeHomeReplica) { if (!A.started && !S.playing) togglePlay(); RG.taps = (RG.taps || 0) + 1; if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {} return; } // v2476.69: homepage tap (beams + gold ripples)
-  if (!A.started && !S.playing) { togglePlay(); return; } // v2476.65: first tap on the painting starts the music
+  if (S.home && window.aeHomeReplica) { if (!A.started && !S.playing) togglePlay(); RG.taps = (RG.taps || 0) + 1; tapSound(x); return; } // v2476.69: homepage tap (beams + gold ripples)
+  if (!A.started && !S.playing) { togglePlay(); tapSound(x); return; } // v2476.65: first tap on the painting starts the music
   if (S.playing) beatTap(x, y);
   const now = performance.now(); RG.taps = (RG.taps || 0) + 1; // ring + gold burst now come from the global homepage tap layer
   if (S.glint || S.preset === 'gallery') for (let i = 0; i < 10; i++) { const an = Math.random() * 6.2832, d = 30 + Math.random() * 90; tapStars.push({ t: now, x, y, vx: Math.cos(an) * d, vy: Math.sin(an) * d, s: 3 + Math.random() * 5, life: 700 + Math.random() * 600 }); }
-  if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {}
+  tapSound(x);
 }
 /* v2476.65 beat taps: while playing, a tap is judged against the audio beat grid (same clock as the lights).
    on-beat (<=70 ms, perfect <=35 ms): warm halo + a soft bell note from C# minor pentatonic (the song's key), climbing with the combo;
@@ -392,11 +392,27 @@ function ting(perfect) {
     GAME.sounds = (GAME.sounds || 0) + 1;
   } catch (e) {}
 }
+/* v72 tap sound setting: 音階 (scale chime / ting, as before) or EDM kick 輕/中/重 — short, tight, sub-heavy, ducked under the track */
+const TAPSND = { mode: (() => { try { return localStorage.getItem('ae-premium-tapsnd') || 'scale'; } catch (e) { return 'scale'; } })(), n: 0 };
+const KICKS = { k1: { f0: 170, f1: 62, d: 0.13, g: 0.22, click: 0.10, drive: 0 }, k2: { f0: 140, f1: 50, d: 0.22, g: 0.34, click: 0.22, drive: 1.5 }, k3: { f0: 115, f1: 40, d: 0.38, g: 0.42, click: 0.32, drive: 3.5 } };
+function kick(lv) {
+  try { const K = KICKS[lv] || KICKS.k2, c = acx(), t = c.currentTime + 0.004, duck = S.playing ? 0.6 : 1, out = c.createGain(); out.gain.value = K.g * duck;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = lv === 'k1' ? 2600 : 1800; lp.connect(out); out.connect(c.destination);
+    let node = lp; if (K.drive) { const ws = c.createWaveShaper(), cv = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; cv[i] = Math.tanh(x * K.drive) / Math.tanh(K.drive); } ws.curve = cv; ws.connect(lp); node = ws; }
+    const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.d * 0.45);
+    v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(1, t + 0.002); v.gain.exponentialRampToValueAtTime(0.0008, t + K.d); o.connect(v); v.connect(node); o.start(t); o.stop(t + K.d + 0.03);
+    const n = c.createBuffer(1, Math.round(c.sampleRate * 0.006), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length) ** 2;
+    const ns = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; bp.type = 'bandpass'; bp.frequency.value = lv === 'k3' ? 1800 : 3200; ng.gain.value = K.click; ns.connect(bp); bp.connect(ng); ng.connect(out); ns.start(t);
+    TAPSND.n++; GAME.sounds = (GAME.sounds || 0) + 1;
+  } catch (e) {}
+}
+function tapSound(x) { if (TAPSND.mode !== 'scale') { kick(TAPSND.mode); return true; } if (!S.playing && window.aeChime && window.aeChime.tap) try { window.aeChime.tap((x - L.p.x) / Math.max(L.p.w, 1)); } catch (e) {} return false; }
+function setTapSound(m) { TAPSND.mode = m; try { localStorage.setItem('ae-premium-tapsnd', m); } catch (e) {} document.querySelectorAll('.ts').forEach(b => { b.classList.toggle('on', b.dataset.s === m); b.setAttribute('aria-pressed', String(b.dataset.s === m)); }); if (m !== 'scale') kick(m); }
 function beatTap(x, y) {
   const now = performance.now(), e = beatErr(), ae = Math.abs(e); GAME.taps++; GAME.lastErr = Math.round(e * 1000);
   if (ae <= 0.07) { GAME.combo = now - GAME.last < 2600 ? GAME.combo + 1 : 1; GAME.last = now; GAME.hits++; const perfect = ae <= 0.035; if (perfect) GAME.perfect++;
     GAME.best = Math.max(GAME.best, GAME.combo); if (perfect) bloom(now, x, y);
-    ting(perfect);
+    if (TAPSND.mode === 'scale') ting(perfect);
     GAME.marks.push({ t: now, x, y, n: GAME.combo, perfect }); if (GAME.marks.length > 4) GAME.marks.shift();
   } else { GAME.combo = 0; }
 }
@@ -843,7 +859,7 @@ function swapToLite() { // auto-fallback when WebGL is slow; replace the canvas 
 /* ---------- UI ---------- */
 let uiTimer = 0;
 const UI_MS = 5000;
-function hideUI() { clearTimeout(uiTimer); document.body.classList.remove('ui', 'adv-open'); }
+function hideUI(force) { clearTimeout(uiTimer); if (force !== true && document.body.classList.contains('adv-open')) return; document.body.classList.remove('ui', 'adv-open'); $('#adv').setAttribute('aria-expanded', 'false'); } // v72: 進階 open -> panel stays until ✕
 function bumpUI() { if (document.body.classList.contains('ui')) { clearTimeout(uiTimer); uiTimer = setTimeout(hideUI, UI_MS); } }
 function showUI() { document.body.classList.add('ui'); $('#panel').hidden = false; clearTimeout(uiTimer); uiTimer = setTimeout(hideUI, UI_MS); } // auto-close after 5 s without interaction (no :hover check — it sticks on touch screens)
 /* 琥珀 Amber / 寶石 Gem (v2476.61): AE Living Wallpaper looks (琉璃 glass + 寶石 gem shaders, looks.js) on their own canvas
@@ -877,7 +893,7 @@ function syncButtons() {
   frontVis();
   $('#burst').classList.toggle('on', !!S.bloom); $('#burst').setAttribute('aria-pressed', String(!!S.bloom));
   document.querySelectorAll('.st').forEach(b => b.classList.toggle('on', b.dataset.s === S.rgbStyle));
-  document.querySelectorAll('.pr[data-p]').forEach(b => { const on = b.dataset.p === 'home' ? !!S.home : b.dataset.p === S.preset; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  document.querySelectorAll('.pr[data-p]').forEach(b => { const on = b.dataset.p === S.preset; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
   if (S.mode !== 'rgb') { $('#rgb').classList.remove('on'); }
   $('#rgb').style.display = S.mode === 'rgb' ? '' : 'none';
   document.body.dataset.mode = S.mode; document.body.dataset.original = saved ? '1' : '0';
@@ -921,7 +937,7 @@ function bindUI() {
   st.addEventListener('pointermove', e => { onPointer(e); if (GLOW.on) glowMove(e); else gameTrail(e); });
   st.addEventListener('pointerdown', e => { if (GLOW.on) setTimeout(() => glowDown(e), 0); });
   ['pointerup', 'pointercancel'].forEach(ev => st.addEventListener(ev, () => { GLOW.cur = null; }));
-  $('#glowbtn').onclick = e => { e.stopPropagation(); setGlow(!GLOW.on); hideUI(); };
+  $('#glowbtn').onclick = e => { e.stopPropagation(); setGlow(!GLOW.on); hideUI(true); };
   $('#glowclear').onclick = e => { e.stopPropagation(); GLOW.strokes.length = 0; frontVis(); };
   $('#glowsave').onclick = e => { e.stopPropagation(); saveGlowCard(); };
   $('#glowdone').onclick = e => { e.stopPropagation(); setGlow(false); };
@@ -940,9 +956,10 @@ function bindUI() {
   const sk = $('#seek'); sk.addEventListener('pointerdown', () => { seeking = true; }); sk.addEventListener('input', () => { seeking = true; const d = audio.duration; if (Number.isFinite(d)) { $('#tcur').textContent = fmt(sk.value / 1000 * d); } });
   sk.addEventListener('change', () => { const d = audio.duration; if (Number.isFinite(d)) { A.started = 1; audio.currentTime = sk.value / 1000 * d; } seeking = false; progAt = 0; });
   document.querySelectorAll('.pr[data-p]').forEach(b => b.onclick = () => applyPreset(b.dataset.p));
-  $('#close').onclick = e => { e.stopPropagation(); hideUI(); };
+  document.querySelectorAll('.ts').forEach(b => b.onclick = e => { e.stopPropagation(); setTapSound(b.dataset.s); }); setTapSound.init = 1;
+  $('#close').onclick = e => { e.stopPropagation(); hideUI(true); };
   ['pointerdown', 'pointermove', 'input', 'keydown', 'wheel'].forEach(ev => $('#panel').addEventListener(ev, bumpUI, { passive: true }));
-  document.querySelectorAll('.tg').forEach(b => b.onclick = () => { S.preset = ''; leaveOriginal(); S[b.dataset.k] = !S[b.dataset.k]; syncButtons(); });
+  document.querySelectorAll('.tg').forEach(b => b.onclick = () => { leaveOriginal(); S[b.dataset.k] = !S[b.dataset.k]; syncButtons(); });
   $('#orig').onclick = setOriginal;
   addEventListener('resize', layout);
   // page zoom locked: iOS ignores user-scalable=no, so also cancel its pinch / double-tap gestures (painting always fits the screen)
@@ -953,20 +970,15 @@ function bindUI() {
 
 /* ---------- 7 curated presets (模式), each with its own tuned motion speed (no speed slider) ---------- */
 const BASE = { party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
-const PRESETS = {
-  home:    { ...BASE, mode: 'natural', frame: true, laser: true, intensity: 0.7, speed: 1 },                                                       // v2476.69 首頁重現 (default): homepage sound-light replica (home-replica.js), all premium layers off
-  golden:  { ...BASE, mode: 'natural', led: true, aura: true, glint: true, bloom: true, impact: true, intensity: 0.75, speed: 1 },        // 金色綻放: gold LED + aura + sun blooms + heavy-beat impact
-  gallery: { ...BASE, mode: 'rgb', rgbStyle: 'bar', glint: true, intensity: 0.75, speed: 1 },                                               // 畫廊燈: fixed picture-light bar
-  breath:  { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', aura: true, intensity: 0.55, speed: 0.45 },                                // 柔光呼吸: slow cool blue-violet wash + breathing ring, no LED/sparks
-  stage:   { ...BASE, mode: 'rgb', rgbStyle: 'spot', led: true, glint: true, bloom: true, impact: true, party: true, intensity: 0.85, speed: 1.2 },       // RGB 舞台: 3 spots + impact
-  club:    { ...BASE, mode: 'natural', frame: true, led: true, laser: true, impact: false, party: true, intensity: 0.85, speed: 1.1 },     // v2476.67: lite v0.1.0 laser look (no colour wash; additive beams on the unchanged painting)       // 夜店雷射: lasers projected on the painting
-  //amber removed v2476.63: { ...BASE, mode: 'natural', look: 'amber', led: true, impact: true, intensity: 0.5, speed: 1 },                                  // 琥珀 Amber (琉璃 glass): golden light flowing along curved veins
-  lights:  { ...BASE, mode: 'natural', intensity: 0.7, speed: 1 },                                                                          // 只留燈光 (v2476.64): every effect off, base picture lighting only
-  gem:     { ...BASE, mode: 'natural', look: 'gem', glint: true, impact: true, intensity: 0.75, speed: 1 }                                   // 寶石 Gem: faceted, white streaks along facet edges flash on beats
+const PRESETS = { // v72: exactly four exclusive modes (1,4 day · 2,3 night); toggles still combine on top
+  home:   { ...BASE, mode: 'natural', frame: true, laser: true, spots3: true, idle: true, look: '', intensity: 0.7, speed: 1, night: false },                        // 歡樂派對 ☀: homepage sound-light replica
+  club:   { ...BASE, mode: 'rgb', rgbStyle: 'bar', lamp: 'auto', frame: true, laser: true, led: true, spots3: false, idle: false, intensity: 0.85, speed: 1.1, night: true }, // 沈浸夜店 ☾: dark club, clean lasers + RGB light bar on beat
+  breath: { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', frame: true, aura: true, spots3: false, idle: false, intensity: 0.55, speed: 0.45, night: true },   // 柔光呼吸 ☾: calm dark, soft breathing wash + aura, gentle frame light, no lasers
+  gem:    { ...BASE, mode: 'natural', look: 'gem', frame: true, led: true, glint: true, impact: true, spots3: false, idle: false, intensity: 0.75, speed: 1, night: false } // 尊榮寶石 ☀: bright, gold frame + gem/pearl sparkle + gallery light, no lasers
 };
-function applyPreset(k) { saved = null; Object.assign(S, PRESETS[k]); S.preset = k; if (k === 'home') S.home = true; else if (k === 'lights') S.home = false; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
+function applyPreset(k) { if (!PRESETS[k]) k = 'home'; saved = null; Object.assign(S, PRESETS[k]); S.preset = k; S.home = k === 'home'; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
   $('#int').value = S.intensity; syncButtons(); }
-function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; document.body.classList.toggle('home-mode', on); const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); if (R.setLasers && R.lasers !== !!S.laser) R.setLasers(!!S.laser); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
+function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; document.body.classList.toggle('home-mode', on); /* v72: 三光點/待機漣漪 work in every mode */ const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); if (R.setLasers && R.lasers !== !!S.laser) R.setLasers(!!S.laser); if (R.setSpots && R.spots3 !== !!S.spots3) R.setSpots(!!S.spots3); if (R.setIdle && R.idle !== !!S.idle) R.setIdle(!!S.idle); document.body.classList.toggle('look-night', !orig && !!S.night); document.body.classList.toggle('look-day', !orig && !S.night); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
 
 /* ---------- loop ---------- */
 let slow = 0, frames = 0, lastT = 0;
@@ -1003,7 +1015,8 @@ function syncGlyph() { const g = $('#artplay'); if (!g) return; const p = L.p; g
 audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setTimeout(syncGlyph, 50)); setTimeout(syncGlyph, 0); setInterval(syncGlyph, 1000);
 // v2476.64: main panel = presets + 只留燈光; 進階 reveals the full fine-control set (advanced panel).
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
-window.__premium = { L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+document.querySelectorAll('.ts').forEach(b => b.classList.toggle('on', b.dataset.s === TAPSND.mode));
+window.__premium = { TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }

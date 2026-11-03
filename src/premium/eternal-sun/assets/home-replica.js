@@ -15,7 +15,7 @@
   let lite=forceLite,liteLatch=forceLite,frameEma=16.7,presentMs=12,lights=true,playing=false,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,artX0=0,artW=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
-  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=true,lasersOn=true,offY=0,dpr=1;
+  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=true,lasersOn=true,spotsOn=true,idleOn=true,offY=0,dpr=1;
   const DISPLAY_LEAD=.012;
   function displayTime(){const ct=audio.currentTime||0;return ct+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));}
   function clear(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(dpr,0,0,dpr,0,offY*dpr);}
@@ -66,7 +66,7 @@
     const bare=lite&&frameEma>45;
     hero.dataset.lightLite=lite?'1':'0';hero.dataset.lightBare=bare?'1':'0';
     needsStatic=false;ctx.clearRect(0,0,width,height);ctx.save();ctx.beginPath();ctx.rect(artX0,0,artW,artBottom);ctx.clip();
-    if(!reduced.matches&&ambient){ // v70: ambient homepage show only in 歡樂派對; tap beams/ripples below are global
+    if(!reduced.matches&&(ambient||spotsOn)){ // v72: beat clock runs for 歡樂派對 or the 三光點 toggle; v70: ambient homepage show only in 歡樂派對; tap beams/ripples below are global
       let bass=0,beat={beat:false,count:Number(hero.dataset.beatCount)||0,pulse:0,phase:0,interval:60/148,stage:'groove',dropPulse:0,buildProgress:0,accentCount:0};
       if(playing){
       // One frame of lead so the kick is the one on screen when the frame presents.
@@ -79,12 +79,13 @@
       hero.dataset.musicTime=tt.toFixed(3);hero.dataset.musicStage=beat.stage;
       hero.dataset.accentCount=String(beat.accentCount);hero.dataset.dropPulse=beat.dropPulse.toFixed(3);
       if(!bare&&((beat.beat&&beat.stage!=='build')||(beat.accentBeat&&beat.stage==='build'))){
-        if(beat.stage!=='build'&&lasersOn)launchDepth(null,null,now,beat.count); // v71: 雷射 toggle
-        for(let i=0;i<3;i++){const hit=destination(i*2,beat.sweep,now);musicSpots.push({...hit,born:now});}
+        if(beat.stage!=='build'&&lasersOn&&ambient)launchDepth(null,null,now,beat.count); // v71: 雷射 toggle
+        if(spotsOn)for(let i=0;i<3;i++){const hit=destination(i*2,beat.sweep,now);musicSpots.push({...hit,born:now});} // v72: 三光點 toggle
         if(musicSpots.length>9)musicSpots.splice(0,musicSpots.length-9);
       }
       }
       energy=Math.max(bass,energy*.84);hero.dataset.audioEnergy=energy.toFixed(3);
+      if(ambient){ // v72: veil glow + lasers only in 歡樂派對
       const shade=ctx.createLinearGradient(0,Math.max(0,artBottom-100),0,artBottom);shade.addColorStop(0,'rgba(2,5,4,.40)');shade.addColorStop(1,'rgba(2,5,4,0)');ctx.fillStyle=shade;ctx.fillRect(0,0,width,artBottom);
       const glow=ctx.createRadialGradient(sunX,sunY,3,sunX,sunY,Math.min(width*.42,190));
       glow.addColorStop(0,`rgba(255,223,115,${energy*.16+beat.pulse*.35})`);glow.addColorStop(.45,`rgba(243,178,48,${energy*.08+beat.pulse*.18})`);glow.addColorStop(1,'rgba(240,170,45,0)');
@@ -125,7 +126,7 @@
       hero.dataset.laserTargets=JSON.stringify(targets);if(focus&&focus.until-now>600){hero.dataset.lastFocusTargets=JSON.stringify(targets);hero.dataset.lastFocusPaintTime=now.toFixed(1);}
       hero.dataset.laserFocus=focus&&focus.until>now?'active':'ambient';
       ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
-      ctx.shadowBlur=0;
+      ctx.shadowBlur=0;}
     }
     bolts=bolts.filter(b=>now-b.born<b.life);
     if(!reduced.matches){
@@ -251,10 +252,12 @@
   addEventListener('resize',()=>setTimeout(()=>{resize();schedule();},60));
   document.addEventListener('visibilitychange',()=>schedule());
   // homepage ambientTick: the soft 發亮光 glow breathes on its own every 3.4 s while the music is not playing
-  function ambientTick(){if(active&&ambient&&!document.hidden&&!reduced.matches&&!playing&&width>0)fxGlow({quiet:true,soft:true});setTimeout(ambientTick,3400);}
+  function ambientTick(){if(active&&idleOn&&!document.hidden&&!reduced.matches&&!playing&&width>0)fxGlow({quiet:true,soft:true});setTimeout(ambientTick,3400);}
   setTimeout(ambientTick,700);
   function setLasers(on){on=!!on;if(on===lasersOn)return;lasersOn=on;if(!on)bolts=bolts.filter(b=>!b.musical);schedule();}
+  function setSpots(on){spotsOn=!!on;if(!spotsOn)musicSpots=[];schedule();}
+  function setIdle(on){idleOn=!!on;if(!idleOn)glows=glows.filter(g=>!g.soft);schedule();}
   function setAmbient(on){on=!!on;if(on===ambient)return;ambient=on;musicSpots=[];glows=[];focus=null;if(!on)clear();schedule();}
-  window.aeHomeReplica={tap,setActive,setAmbient,setLasers,get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length})};
+  window.aeHomeReplica={tap,setActive,setAmbient,setLasers,setSpots,setIdle,get spots3(){return spotsOn},get idle(){return idleOn},get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length})};
   const boot=()=>{if(window.__premium){resize();sync();}else setTimeout(boot,50);};boot();
 })();

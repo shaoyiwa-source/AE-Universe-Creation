@@ -30,14 +30,10 @@
   <button id="close" aria-label="close" title="關閉 / Close">✕</button>
   <div class="row presets">
     <span class="lab" data-zh="模式" data-en="Preset"></span>
-    <button class="pr on" data-p="home" data-zh="歡樂派對" data-en="Joyful party"></button>
-    <button class="pr" data-p="golden" data-zh="金色綻放" data-en="Golden bloom"></button>
-    <button class="pr" data-p="gallery" data-zh="畫廊燈" data-en="Gallery light"></button>
-    <button class="pr" data-p="breath" data-zh="柔光呼吸" data-en="Soft breathing"></button>
-    <button class="pr" data-p="stage" data-zh="RGB 舞台" data-en="RGB stage"></button>
-    <button class="pr" data-p="club" data-zh="夜店雷射" data-en="Club lasers"></button>
-    <button class="pr" data-p="gem" data-zh="寶石 Gem" data-en="Gem"></button>
-    <button class="pr reset" data-p="lights" data-zh="只留燈光" data-en="Lighting only"></button>
+    <button class="pr on day" data-p="home" data-zh="歡樂派對 ☀" data-en="Joyful party ☀"></button>
+    <button class="pr night" data-p="club" data-zh="沈浸夜店 ☾" data-en="Immersive club ☾"></button>
+    <button class="pr night" data-p="breath" data-zh="柔光呼吸 ☾" data-en="Soft breathing ☾"></button>
+    <button class="pr day" data-p="gem" data-zh="尊榮寶石 ☀" data-en="Royal gem ☀"></button>
     <button id="partybtn" class="pr partybtn" aria-pressed="false" data-zh="彩帶粒子" data-en="Confetti"></button>
     <button id="glowbtn" class="pr glowbtn" data-zh="光繪" data-en="Light painting"></button>
     <button id="adv" class="advbtn" aria-expanded="false" data-zh="進階 ›" data-en="Advanced ›"></button>
@@ -67,12 +63,21 @@
   <div class="row sync">
     <label><span data-zh="對拍微調" data-en="Beat sync"></span><input id="syncoff" type="range" min="-200" max="200" step="5" value="0" aria-label="beat sync offset ms"><output id="syncval">0 ms</output></label>
   </div>
+  <div class="row tapsnd" role="group">
+    <span class="lab" data-zh="點擊音效" data-en="Tap sound"></span>
+    <button class="ts on" data-s="scale" data-zh="音階" data-en="Scale"></button>
+    <button class="ts" data-s="k1" data-zh="輕鼓" data-en="Light kick"></button>
+    <button class="ts" data-s="k2" data-zh="中鼓" data-en="Mid kick"></button>
+    <button class="ts" data-s="k3" data-zh="重鼓" data-en="Heavy kick"></button>
+  </div>
   <div class="row toggles">
     <button class="tg" data-k="laser" data-zh="雷射光" data-en="Laser"></button>
     <button class="tg on" data-k="frame" data-zh="畫框" data-en="Frame"></button>
     <button class="tg on" data-k="led" data-zh="燈帶" data-en="LED"></button>
     <button class="tg on" data-k="aura" data-zh="光環" data-en="Aura"></button>
     <button class="tg on" data-k="glint" data-zh="閃光" data-en="Glints"></button>
+    <button class="tg" data-k="spots3" data-zh="三光點" data-en="Three lights"></button>
+    <button class="tg" data-k="idle" data-zh="待機漣漪" data-en="Idle ripples"></button>
     <button id="burst" class="tg2 on" aria-pressed="true" data-zh="✦ 綻放" data-en="✦ Bloom"></button>
     <button id="orig" aria-pressed="false" data-zh="原畫" data-en="Original art"></button>
   </div>
