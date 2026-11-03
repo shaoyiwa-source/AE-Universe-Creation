@@ -1,4 +1,4 @@
-/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.68, Preview trial).
+/* 盛明 Eternal Sun — Premium Edition dynamic wallpaper (site v2476.75, Preview trial).
    ART RULE: the painting is a plain, untouched <img>. Every effect is a separate layer behind it
    (wall / back-glow / gold frame) or a toggleable overlay above it (LED, aura, UV, glints).
    With all effects off the painting pixels are exactly the original image. */
@@ -9,9 +9,10 @@ const AR = 1110 / 1536;
 const S = {
   lang: Q.get('lang') === 'en' ? 'en' : 'zh', mode: 'natural', intensity: 0.7, speed: 1,
   frame: true, led: true, aura: true, glint: true, laser: false, bloom: true, rgbStyle: 'bar', lamp: 'auto', preset: 'home', look: '', impact: true,
-  engine: 'webgl', playing: false, home: true
+  engine: 'webgl', playing: false, home: true,
+  search: true, dip: true, lw: (() => { try { return localStorage.getItem('ae-premium-lw') || 'mid'; } catch (e) { return 'mid'; } })() // v75: 探照燈 / beat-dip / 雷射粗細
 };
-if (Q.get('fx') === '0') Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, bloom: false });
+if (Q.get('fx') === '0') Object.assign(S, { search: false, dip: false, frame: false, led: false, aura: false, glint: false, laser: false, bloom: false });
 if (['rgb', 'uv'].includes(Q.get('mode'))) S.mode = 'rgb'; 
 
 /* ---------- i18n ---------- */
@@ -120,7 +121,7 @@ function analyse(now) {
     A.t = tt; bass = Math.min(1, EN.energyAt(TL, tt));
     const b = RH.update(bass, tt);
     if (b.count < A.count) A.count = b.count; // loop / seek back
-    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); if (isHeavy(b, tt, bass)) { IMP.t = now; IMP.at = TL.events[b.count - 1]; IMP.n++; partyHeavy(now); } if (b.stage !== 'build' || b.accentBeat) { if (b.stage !== 'build') launchDepth(null, null, now, b.count); for (let i = 0; i < 3; i++) { musicSpots.push({ ...hpDest(i * 2, b.sweep, now), born: now }); } if (musicSpots.length > 9) musicSpots.splice(0, musicSpots.length - 9); } partyBeat(b, now); }
+    if (b.beat) { A.count = b.count; onKick(now, 0.6 + 0.4 * bass); const hv75 = isHeavy(b, tt, bass); v75Beat(now, bass, hv75, b); if (hv75) { IMP.t = now; IMP.at = TL.events[b.count - 1]; IMP.n++; partyHeavy(now); } if (b.stage !== 'build' || b.accentBeat) { if (b.stage !== 'build') launchDepth(null, null, now, b.count); for (let i = 0; i < 3; i++) { musicSpots.push({ ...hpDest(i * 2, b.sweep, now), born: now }); } if (musicSpots.length > 9) musicSpots.splice(0, musicSpots.length - 9); } partyBeat(b, now); }
     A.b = b; A.since = b.count ? Math.max(0, tt - TL.events[b.count - 1]) : 9; // seconds since the last grid kick (audio time)
     A.bass = bass; A.level += (bass - A.level) * 0.25; A.kick = A.kickQ = Math.exp(-A.since / 0.095); // quarter-note kick (grid)
     // v2476.65 onset map: the builds accelerate to 8th/16th snare rolls and the bass goes double-time after each drop.
@@ -241,6 +242,7 @@ function lampColor(now) {
    soft light pools, beat rings; flying depth bolts on each kick; small music spots. Coordinates mapped to the painting rect. */
 const LASER = ['#ff416d', '#57ffa0', '#ffe28d', '#65dbff', '#c987ff', '#ffac68'];
 const LZ = { pat: 0, hit: -1e9 };
+const LWM = { thin: 1, mid: 1.9, thick: 3 }; const lwk = () => LWM[S.lw] || 1.9; // v75 雷射粗細 細/中/粗
 let bolts = [], musicSpots = [], spots = [];
 function fireBolts() {}
 const variation = seed => { const n = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return n - Math.floor(n); };
@@ -303,19 +305,16 @@ function drawLasers(ctx, now) {
       const originX = i % 3 === 0 ? G.X0 - G.W * .08 : i % 3 === 1 ? G.X0 + G.W * 1.08 : G.X0 + G.W * (.15 + i * .12), originY = i % 3 === 2 ? G.T - 20 : G.T + G.H * (.15 + (i % 4) * .20);
       const tg = hpDest(i, sweep, now), targetX = tg.x, targetY = tg.y;
       const power = Math.min(1, ((b.stage === 'build' ? .06 + b.buildProgress * .06 : .07) + energy * .035 + pulse * .85 + (b.dropPulse || 0) * .12) * Math.min(1, 0.6 + 0.6 * S.intensity) + (S.playing ? 0 : .12));
+      const W0 = (1.2 + pulse * 2.4) * lwk(); ctx.save(); ctx.globalCompositeOperation = S.night ? 'screen' : 'source-over'; ctx.lineCap = 'round'; ctx.strokeStyle = colors[i]; ctx.shadowColor = colors[i]; ctx.shadowBlur = lite ? 0 : W0 * 3;
+      ctx.globalAlpha = power * .22; ctx.lineWidth = W0 * 4.2; ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke(); ctx.globalAlpha = power * .4; ctx.lineWidth = W0 * 2; ctx.stroke(); ctx.restore(); // v75 coloured outer halo
       ctx.shadowColor = colors[i]; ctx.shadowBlur = lite ? 0 : 14 + pulse * 25;
-      ctx.strokeStyle = colors[i]; ctx.globalAlpha = power; ctx.lineWidth = .8 + pulse * 2.2;
+      ctx.strokeStyle = colors[i]; ctx.globalAlpha = Math.min(1, power * 1.3 + .1); ctx.lineWidth = W0;
       ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke();
-      ctx.shadowBlur = lite ? 0 : 4; ctx.strokeStyle = '#fff9df'; ctx.lineWidth = .65; ctx.globalAlpha = power * .72;
+      ctx.shadowBlur = lite ? 0 : 4; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = .9 * Math.sqrt(lwk()); ctx.globalAlpha = Math.min(1, power * 1.1 + .15);
       ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(targetX, targetY); ctx.stroke();
-      for (let k = -1; k <= 1; k++) {
-        const angle = Math.atan2(targetY - originY, targetX - originX) + k * (pattern === 0 ? .12 : pattern === 1 ? .34 : .52) + Math.sin(sweep) * .18;
-        const reach = Math.min(G.W * .24, 150) * (1 + pulse * .22), endX = targetX + Math.cos(angle) * reach, endY = targetY + Math.sin(angle) * reach;
-        const trail = ctx.createLinearGradient(targetX, targetY, endX, endY); trail.addColorStop(0, colors[(i + k + colors.length) % colors.length]); trail.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.strokeStyle = trail; ctx.globalAlpha = power * .72; ctx.lineWidth = .8 + pulse; ctx.beginPath(); ctx.moveTo(targetX, targetY); ctx.lineTo(endX, endY); ctx.stroke();
-      }
+      // v75: the 3-line prismatic split at the landing point is gone — the round pool below is the single impact light spot
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-      const pool = ctx.createRadialGradient(targetX, targetY, 1, targetX, targetY, 38 + pulse * 48);
+      const pool = ctx.createRadialGradient(targetX, targetY, 1, targetX, targetY, (44 + pulse * 54) * (.85 + .15 * lwk()));
       pool.addColorStop(0, `rgba(255,249,218,${power * .60})`); pool.addColorStop(.18, colors[i] + Math.round(power * 75).toString(16).padStart(2, '0')); pool.addColorStop(1, colors[i] + '00');
       ctx.fillStyle = pool; ctx.fillRect(targetX - 90, targetY - 90, 180, 180);
       ctx.strokeStyle = colors[i]; ctx.lineWidth = .7; ctx.globalAlpha = pulse * .6; ctx.beginPath(); ctx.arc(targetX, targetY, Math.max(0, 8 + Math.min(1, b.phase) * 28), 0, Math.PI * 2); ctx.stroke();
@@ -328,9 +327,9 @@ function drawLasers(ctx, now) {
       const opacity = q.musical ? EN.flightPower((now - q.born) / 1000) : Math.sin(Math.PI * pr);
       const tipX = q.x + (q.ox - q.x) * near, tipY = q.y + (q.oy - q.y) * near, startX = q.x + (q.ox - q.x) * back, startY = q.y + (q.oy - q.y) * back;
       const streak = ctx.createLinearGradient(startX, startY, tipX, tipY); streak.addColorStop(0, q.color + '00'); streak.addColorStop(1, q.color);
-      ctx.strokeStyle = streak; ctx.lineWidth = 1.4 + (1 - pr) * 7; ctx.shadowColor = q.color; ctx.shadowBlur = lite ? 0 : 20; ctx.globalAlpha = opacity * .95;
+      ctx.strokeStyle = streak; ctx.lineWidth = (1.4 + (1 - pr) * 7) * lwk(); ctx.shadowColor = q.color; ctx.shadowBlur = lite ? 0 : 20; ctx.globalAlpha = opacity * .95;
       ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(tipX, tipY); ctx.stroke();
-      ctx.strokeStyle = '#fff9e9'; ctx.lineWidth = .7 + (1 - pr) * 1.5; ctx.globalAlpha = opacity * .85;
+      ctx.strokeStyle = '#fff9e9'; ctx.lineWidth = (.7 + (1 - pr) * 1.5) * Math.sqrt(lwk()); ctx.globalAlpha = opacity * .85;
       ctx.beginPath(); ctx.moveTo(startX + (tipX - startX) * .5, startY + (tipY - startY) * .5); ctx.lineTo(tipX, tipY); ctx.stroke();
       ctx.fillStyle = '#fff6d2'; ctx.beginPath(); ctx.arc(tipX, tipY, Math.max(0, 1.5 + (1 - pr) * 2), 0, Math.PI * 2); ctx.fill();
     }
@@ -394,15 +393,28 @@ function ting(perfect) {
 }
 /* v72 tap sound setting: 音階 (scale chime / ting, as before) or EDM kick 輕/中/重 — short, tight, sub-heavy, ducked under the track */
 const TAPSND = { mode: (() => { try { return localStorage.getItem('ae-premium-tapsnd') || 'scale'; } catch (e) { return 'scale'; } })(), n: 0 };
-const KICKS = { k1: { f0: 170, f1: 62, d: 0.13, g: 0.22, click: 0.10, drive: 0 }, k2: { f0: 140, f1: 50, d: 0.22, g: 0.34, click: 0.22, drive: 1.5 }, k3: { f0: 115, f1: 40, d: 0.38, g: 0.42, click: 0.32, drive: 3.5 } };
+/* v75 808-style kick: deep sub sine sweep (~155→45 Hz) with a long tail, a separate 45 Hz sub layer, a click transient;
+   輕/中/重 differ in length, sub weight and click; 重 adds tanh saturation + the longest boom. All kicks go through a
+   compressor + brick-wall limiter bus so stacked taps never clip. */
+const KICKS = { k1: { f0: 150, f1: 55, pd: 0.06, d: 0.32, g: 0.55, sub: 0.0, click: 0.28, drive: 0 },
+                k2: { f0: 155, f1: 47, pd: 0.085, d: 0.7, g: 0.8, sub: 0.45, click: 0.4, drive: 0 },
+                k3: { f0: 160, f1: 43, pd: 0.11, d: 1.35, g: 0.95, sub: 0.8, click: 0.55, drive: 5 } };
+function kbus(c) { if (GAME.kbus && GAME.kbus.context === c) return GAME.kbus;
+  const comp = c.createDynamicsCompressor(); comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
+  const lim = c.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;
+  const mg = c.createGain(); mg.gain.value = 0.9; comp.connect(lim); lim.connect(mg); mg.connect(c.destination); GAME.kbus = comp; return comp; }
 function kick(lv) {
-  try { const K = KICKS[lv] || KICKS.k2, c = acx(), t = c.currentTime + 0.004, duck = S.playing ? 0.6 : 1, out = c.createGain(); out.gain.value = K.g * duck;
-    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = lv === 'k1' ? 2600 : 1800; lp.connect(out); out.connect(c.destination);
-    let node = lp; if (K.drive) { const ws = c.createWaveShaper(), cv = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; cv[i] = Math.tanh(x * K.drive) / Math.tanh(K.drive); } ws.curve = cv; ws.connect(lp); node = ws; }
-    const o = c.createOscillator(), v = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.d * 0.45);
-    v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(1, t + 0.002); v.gain.exponentialRampToValueAtTime(0.0008, t + K.d); o.connect(v); v.connect(node); o.start(t); o.stop(t + K.d + 0.03);
-    const n = c.createBuffer(1, Math.round(c.sampleRate * 0.006), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length) ** 2;
-    const ns = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; bp.type = 'bandpass'; bp.frequency.value = lv === 'k3' ? 1800 : 3200; ng.gain.value = K.click; ns.connect(bp); bp.connect(ng); ng.connect(out); ns.start(t);
+  try { const K = KICKS[lv] || KICKS.k2, c = acx(), t = c.currentTime + 0.004, duck = S.playing ? 0.75 : 1, out = c.createGain(); out.gain.value = K.g * duck; out.connect(kbus(c));
+    let body = out;
+    if (K.drive) { const ws = c.createWaveShaper(), cv = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; cv[i] = Math.tanh(x * K.drive) / Math.tanh(K.drive); } ws.curve = cv; ws.oversample = '4x';
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; ws.connect(lp); lp.connect(out); const pre = c.createGain(); pre.gain.value = 1.4; pre.connect(ws); body = pre; }
+    const o = c.createOscillator(), v = c.createGain(); o.type = 'sine';
+    o.frequency.setValueAtTime(K.f0, t); o.frequency.exponentialRampToValueAtTime(K.f1, t + K.pd); o.frequency.linearRampToValueAtTime(K.f1 * 0.94, t + K.d);
+    v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(1, t + 0.0015); v.gain.setTargetAtTime(0.55, t + 0.01, 0.06); v.gain.setTargetAtTime(0.0001, t + 0.08, K.d / 4); o.connect(v); v.connect(body); o.start(t); o.stop(t + K.d + 0.15);
+    if (K.sub) { const so = c.createOscillator(), sg = c.createGain(); so.type = 'sine'; so.frequency.value = K.f1 * 0.98; sg.gain.setValueAtTime(0, t); sg.gain.linearRampToValueAtTime(K.sub, t + 0.02); sg.gain.setTargetAtTime(0.0001, t + 0.12, K.d / 3.5); so.connect(sg); sg.connect(body); so.start(t); so.stop(t + K.d + 0.2); }
+    const n = c.createBuffer(1, Math.round(c.sampleRate * 0.005), c.sampleRate), dd = n.getChannelData(0); for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length) ** 2;
+    const ns = c.createBufferSource(), hp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = n; hp.type = 'highpass'; hp.frequency.value = 2500; ng.gain.value = K.click; ns.connect(hp); hp.connect(ng); ng.connect(out); ns.start(t);
+    const bo = c.createOscillator(), bg = c.createGain(); bo.type = 'triangle'; bo.frequency.setValueAtTime(1200, t); bo.frequency.exponentialRampToValueAtTime(300, t + 0.012); bg.gain.setValueAtTime(K.click * 0.6, t); bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.014); bo.connect(bg); bg.connect(out); bo.start(t); bo.stop(t + 0.02);
     TAPSND.n++; GAME.sounds = (GAME.sounds || 0) + 1;
   } catch (e) {}
 }
@@ -898,7 +910,7 @@ function syncButtons() {
   $('#rgb').style.display = S.mode === 'rgb' ? '' : 'none';
   document.body.dataset.mode = S.mode; document.body.dataset.original = saved ? '1' : '0';
 }
-let saved = null; const KEYS = ['frame', 'led', 'aura', 'glint', 'laser', 'bloom', 'mode', 'look', 'impact'];
+let saved = null; const KEYS = ['search', 'dip', 'frame', 'led', 'aura', 'glint', 'laser', 'bloom', 'mode', 'look', 'impact'];
 function setOriginal() { // toggle: 1st press = untouched original art, 2nd press = restore previous effects
   if (saved) { Object.assign(S, saved); saved = null; }
   else { saved = Object.fromEntries(KEYS.map(k => [k, S[k]])); Object.assign(S, { frame: false, led: false, aura: false, glint: false, laser: false, bloom: false, mode: 'natural', look: '', impact: false }); T.tx = T.ty = 0; rings.length = 0; bolts.length = 0; blooms.length = 0; }
@@ -970,9 +982,9 @@ function bindUI() {
 }
 
 /* ---------- 7 curated presets (模式), each with its own tuned motion speed (no speed slider) ---------- */
-const BASE = { party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
+const BASE = { search: false, dip: true, party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
 const PRESETS = { // v72: exactly four exclusive modes (1,4 day · 2,3 night); toggles still combine on top
-  home:   { ...BASE, mode: 'natural', frame: true, laser: true, spots3: true, idle: true, look: '', intensity: 0.7, speed: 1, night: false },                        // 歡樂派對 ☀: homepage sound-light replica
+  home:   { ...BASE, mode: 'natural', frame: true, laser: true, search: true, spots3: true, idle: true, look: '', intensity: 0.7, speed: 1, night: false },                        // 歡樂派對 ☀: homepage sound-light replica
   club:   { ...BASE, mode: 'rgb', rgbStyle: 'bar', lamp: 'auto', frame: true, laser: true, led: true, spots3: false, idle: false, intensity: 0.85, speed: 1.1, night: true }, // 沈浸夜店 ☾: dark club, clean lasers + RGB light bar on beat
   breath: { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', frame: true, aura: true, spots3: false, idle: false, intensity: 0.55, speed: 0.45, night: true },   // 柔光呼吸 ☾: calm dark, soft breathing wash + aura, gentle frame light, no lasers
   gem:    { ...BASE, mode: 'natural', look: 'gem', frame: true, led: true, glint: true, impact: true, spots3: false, idle: false, intensity: 0.75, speed: 1, night: false } // 尊榮寶石 ☀: bright, gold frame + gem/pearl sparkle + gallery light, no lasers
@@ -988,7 +1000,7 @@ function loop(now) {
   if (!Number.isFinite(T.tx)) T.tx = 0; if (!Number.isFinite(T.ty)) T.ty = 0;
   T.x += (T.tx - T.x) * 0.06; T.y += (T.ty - T.y) * 0.06;
   analyse(now); homeSync();
-  gl.render(now); drawRGB(now); drawLook(now, dt); frontVis(); drawFront(now); drawImpact(fx, now); updateProg(now);
+  gl.render(now); drawRGB(now); drawLook(now, dt); frontVis(); drawFront(now); drawImpact(fx, now); drawV75(now); updateProg(now);
   if (gl.kind === 'webgl' && !Q.has('nofallback') && document.visibilityState === 'visible') {
     frames++; if (dt > 45) slow++;
     if (frames === 240) { if (slow > 150) swapToLite(); frames = 0; slow = 0; }
@@ -1017,8 +1029,59 @@ audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setT
 // v2476.64: main panel = presets + 只留燈光; 進階 reveals the full fine-control set (advanced panel).
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
 document.querySelectorAll('.ts').forEach(b => b.classList.toggle('on', b.dataset.s === TAPSND.mode));
-window.__premium = { TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+document.querySelectorAll('.lw').forEach(b => b.onclick = e => { e.stopPropagation(); setLw(b.dataset.w); }); setLw(S.lw, true);
+window.__premium = { V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
-start();
+
+/* ---------- v2476.75 overlays (never touch the painting pixels) ----------
+   探照燈 searchlights: 2–4 wide soft cones sweeping up from below the frame, swaying slowly with the music.
+   beat-dip: day modes stay fully bright, but a strong beat briefly lays a 10–15 % dark veil (≈120 ms) over the art so the lasers pop.
+   閃光 strobe: a short white flash on heavy beats (max ~2/s, off with prefers-reduced-motion). */
+const V75 = { dip: { t: -1e9, a: 0 }, strobe: { t: -1e9, last: -1e9, n: 0 }, dips: 0, sway: 0, lastNow: 0 };
+const RM75 = matchMedia('(prefers-reduced-motion: reduce)');
+function setLw(w, quiet) { if (!LWM[w]) w = 'mid'; S.lw = w; if (!quiet) try { localStorage.setItem('ae-premium-lw', w); } catch (e) {} document.querySelectorAll('.lw').forEach(b => { b.classList.toggle('on', b.dataset.w === w); b.setAttribute('aria-pressed', String(b.dataset.w === w)); }); }
+function v75Beat(now, bass, heavy, b) {
+  if (document.body.dataset.original === '1') return;
+  const strong = heavy || (b && (b.dropPulse || 0) > 0.3) || bass > 0.78;
+  if (strong && S.dip && !S.night && (heavy || now - V75.dip.t > 1500)) { V75.dip.t = now; V75.dip.a = heavy ? 0.15 : 0.1; V75.dips++; } // heavy beats, otherwise at most one light dip per 1.5 s
+  if ((heavy || (b && (b.dropPulse || 0) > 0.3)) && S.glint && !RM75.matches && now - V75.strobe.last >= 450) { V75.strobe.last = V75.strobe.t = now; V75.strobe.n++; }
+}
+const fx75 = (() => { const c = document.createElement('canvas'); c.id = 'fx75'; c.setAttribute('aria-hidden', 'true'); c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none'; const st = $('#stage'), co = $('#coin'); st.insertBefore(c, co); return c.getContext('2d'); })();
+const dip75 = (() => { const d = document.createElement('div'); d.id = 'dip75'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;inset:0;pointer-events:none;background:#000;opacity:0'; $('#art').appendChild(d); return d; })();
+function drawV75(now) {
+  const c = fx75, cv = c.canvas, k = L.dpr || 1, orig = document.body.dataset.original === '1';
+  const W = Math.round(L.W * k), H = Math.round(L.H * k); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  // beat-dip veil (art only, below the light layers)
+  let da = 0; if (!orig && S.dip && !S.night) { const q = (now - V75.dip.t) / 120; da = q >= 0 && q < 1 ? V75.dip.a * (q < 0.25 ? q / 0.25 : 1 - (q - 0.25) / 0.75) : 0; }
+  dip75.style.opacity = da.toFixed(3); V75.dipNow = da;
+  const st = V75.strobe, sq = (now - st.t) / 90, strobing = !orig && S.glint && !RM75.matches && sq >= 0 && sq < 1;
+  if (!S.search && !strobing || orig) { if (V75.drawn) { c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); V75.drawn = 0; } cv.style.display = orig ? 'none' : ''; return; }
+  cv.style.display = ''; V75.drawn = 1;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); c.setTransform(k, 0, 0, k, 0, 0);
+  const p = L.p, dt = Math.min(0.05, (now - (V75.lastNow || now)) / 1000); V75.lastNow = now;
+  if (S.search) {
+    const lvl = S.playing ? A.level : 0.25, kk = S.playing ? A.kick : 0;
+    V75.sway += dt * (S.playing ? 0.5 + 0.9 * lvl : 0.35) * (RM75.matches ? 0.15 : 1);
+    const n = p.w < 420 ? 2 : p.w < 700 ? 3 : 4, by = p.y + p.h + Math.max(20, p.w * 0.06), len = p.h * 1.35 + 60;
+    c.save(); c.beginPath(); c.rect(0, 0, L.W, L.H); c.clip(); c.globalCompositeOperation = S.night ? 'screen' : 'source-over'; // day: a warm haze over the bright art (additive would vanish into the light colours)
+    for (let i = 0; i < n; i++) {
+      const u = n === 1 ? 0.5 : i / (n - 1), bx = p.x + p.w * (0.12 + 0.76 * u), base = -(u - 0.5) * 0.38;
+      const ang = -Math.PI / 2 + base + Math.sin(V75.sway * (0.8 + i * 0.17) + i * 1.9) * 0.32, half = 0.1 + 0.025 * Math.sin(V75.sway * 0.6 + i);
+      const a = Math.min(0.7, (0.3 + 0.18 * lvl + 0.2 * kk) * (0.7 + 0.45 * S.intensity));
+      const ex = bx + Math.cos(ang) * len, ey = by + Math.sin(ang) * len;
+      const g = c.createLinearGradient(bx, by, ex, ey); g.addColorStop(0, `rgba(255,248,226,${a})`); g.addColorStop(0.35, `rgba(255,240,205,${a * 0.6})`); g.addColorStop(1, 'rgba(255,236,200,0)');
+      c.fillStyle = g; c.beginPath(); c.moveTo(bx + Math.cos(ang + Math.PI / 2) * 6, by + Math.sin(ang + Math.PI / 2) * 6);
+      c.lineTo(bx + Math.cos(ang - half) * len, by + Math.sin(ang - half) * len); c.lineTo(bx + Math.cos(ang + half) * len, by + Math.sin(ang + half) * len);
+      c.lineTo(bx + Math.cos(ang - Math.PI / 2) * 6, by + Math.sin(ang - Math.PI / 2) * 6); c.closePath(); c.fill();
+      // soft inner core so the cone has a brighter centre line
+      const g2 = c.createLinearGradient(bx, by, ex, ey); g2.addColorStop(0, `rgba(255,252,240,${a * 0.7})`); g2.addColorStop(0.5, `rgba(255,250,235,${a * 0.25})`); g2.addColorStop(1, 'rgba(255,250,235,0)');
+      c.fillStyle = g2; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + Math.cos(ang - half * 0.35) * len, by + Math.sin(ang - half * 0.35) * len); c.lineTo(bx + Math.cos(ang + half * 0.35) * len, by + Math.sin(ang + half * 0.35) * len); c.closePath(); c.fill();
+      const lg = c.createRadialGradient(bx, by, 0, bx, by, 26); lg.addColorStop(0, `rgba(255,252,240,${Math.min(1, a * 2)})`); lg.addColorStop(1, 'rgba(255,240,210,0)'); c.fillStyle = lg; c.fillRect(bx - 26, by - 26, 52, 52); // lamp head
+    }
+    c.restore();
+  }
+  if (strobing) { c.save(); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 0.5 * (1 - sq) ** 1.5; c.fillStyle = '#fff'; c.fillRect(p.x, p.y, p.w, p.h); c.restore(); }
+}
+start(); // v75: after the v75 overlay declarations

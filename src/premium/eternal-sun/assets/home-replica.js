@@ -1,4 +1,4 @@
-/* AE-HOME-REPLICA v2476.69 — premium /premium/eternal-sun/ default mode 「首頁重現」.
+/* AE-HOME-REPLICA v2476.75 (v75 hand patch on top of v2476.69 generator output) — premium /premium/eternal-sun/ default mode 「首頁重現」.
    GENERATED from /ae-home-light.js (homepage sound-light) by build_replica.py: the functions
    destination(), launchDepth(), draw(), drawFx(), artPoint(), fxGlow() are copied VERBATIM; only this
    shim maps the homepage's .hero / painting box / player clock onto the premium stage + #music element.
@@ -30,6 +30,17 @@
   }
   function schedule(){if(!frame&&active&&!document.hidden)frame=requestAnimationFrame(draw);}
   const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
+  /* v75 (hand-patched after build_replica.py): 雷射粗細 細/中/粗 width multiplier, coloured outer glow halo under every beam,
+     one soft circular impact halo where a tapped beam lands (replaces the 3-line prismatic split). */
+  const LWM={thin:1,mid:1.9,thick:3};const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'mid']||1.9;};
+  const hx=a=>Math.round(Math.max(0,Math.min(1,a))*255).toString(16).padStart(2,'0');
+  let halos=[];
+  function beamGlow(ox,oy,tx,ty,col,w,a){ctx.save();ctx.globalCompositeOperation='source-over';ctx.lineCap='round';ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=lite?0:w*3;
+    ctx.globalAlpha=Math.min(1,a)*.22;ctx.lineWidth=w*4.2;ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(tx,ty);ctx.stroke();ctx.globalAlpha=Math.min(1,a)*.42;ctx.lineWidth=w*2;ctx.stroke();ctx.restore();}
+  function softHalo(x,y,col,a,R){if(a<=.003||R<=0)return;const g=ctx.createRadialGradient(x,y,0,x,y,R);g.addColorStop(0,`rgba(255,255,248,${Math.min(1,a)})`);g.addColorStop(.18,`rgba(255,250,228,${Math.min(1,a*.8)})`);g.addColorStop(.42,col+hx(a*.55));g.addColorStop(.75,col+hx(a*.2));g.addColorStop(1,col+'00');ctx.fillStyle=g;ctx.fillRect(x-R,y-R,R*2,R*2);}
+  function drawHalos(now){halos=halos.filter(h=>now-h.born<h.life);for(const h of halos){const t=(now-h.born)/h.life,rise=Math.min(1,(now-h.born)/260),a=rise*(1-t)**1.4,R=Math.min(artW*.2,120)*(.65+.35*rise+.25*t)*(.85+.15*lw());
+    ctx.save();ctx.globalCompositeOperation='source-over';softHalo(h.x,h.y,h.col,a*.95,R);ctx.globalCompositeOperation='lighter';softHalo(h.x,h.y,h.col,a*.35,R*.45);
+    ctx.globalCompositeOperation='source-over';ctx.strokeStyle=h.col;ctx.shadowColor=h.col;ctx.shadowBlur=lite?0:16;ctx.globalAlpha=a*.55;ctx.lineWidth=2.5+lw()*1.5;ctx.beginPath();ctx.arc(h.x,h.y,R*.62,0,Math.PI*2);ctx.stroke();ctx.restore();}}
   const variation=seed=>{const n=Math.sin(seed*12.9898+78.233)*43758.5453;return n-Math.floor(n);};
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
@@ -100,20 +111,15 @@
         const originX=i%3===0?artX0-artW*.08:i%3===1?artX0+artW*1.08:artX0+artW*(.15+i*.12),originY=i%3===2?-20:artBottom*(.15+(i%4)*.20);
         const target=destination(i,sweep,now),targetX=target.x,targetY=target.y;targets.push({x:Math.round(targetX),y:Math.round(targetY)});
         const power=Math.min(1,(beat.stage==='build'?.06+beat.buildProgress*.06:.07)+energy*.035+beat.pulse*.85+beat.dropPulse*.12);
+        beamGlow(originX,originY,targetX,targetY,colors[i],(1.4+beat.pulse*2.6)*lw(),Math.min(1,power*1.5+.14));
         ctx.shadowColor=colors[i];ctx.shadowBlur=lite?0:14+beat.pulse*25;
-        ctx.strokeStyle=colors[i];ctx.globalAlpha=Math.min(1,power*1.5+.14);ctx.lineWidth=1.4+beat.pulse*2.6; /* v74 day: stronger beams on the bright art */
+        ctx.strokeStyle=colors[i];ctx.globalAlpha=Math.min(1,power*1.5+.14);ctx.lineWidth=(1.4+beat.pulse*2.6)*lw(); /* v74 day: stronger beams on the bright art */
         ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
         // Narrow pale core and prismatic rays give the beam a refracted edge.
-        ctx.shadowBlur=lite?0:4;ctx.strokeStyle='#ffffff';ctx.lineWidth=1.1;ctx.globalAlpha=Math.min(1,power*1.2+.2); /* v74: white core */
+        ctx.shadowBlur=lite?0:4;ctx.strokeStyle='#ffffff';ctx.lineWidth=1.1*Math.sqrt(lw());ctx.globalAlpha=Math.min(1,power*1.2+.2); /* v74: white core */
         ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
-        if(!lite)for(let j=-1;j<=1;j++){
-          const angle=Math.atan2(targetY-originY,targetX-originX)+j*(pattern===0?.12:pattern===1?.34:.52)+Math.sin(sweep)*.18;
-          const reach=Math.min(width*.24,150)*(1+beat.pulse*.22);
-          const endX=targetX+Math.cos(angle)*reach,endY=targetY+Math.sin(angle)*reach;
-          const trail=ctx.createLinearGradient(targetX,targetY,endX,endY);trail.addColorStop(0,colors[(i+j+colors.length)%colors.length]);trail.addColorStop(1,'rgba(255,255,255,0)');
-          ctx.strokeStyle=trail;ctx.globalAlpha=power*.72;ctx.lineWidth=.8+beat.pulse;
-          ctx.beginPath();ctx.moveTo(targetX,targetY);ctx.lineTo(endX,endY);ctx.stroke();
-        }
+        // v75: no 3-line prismatic split at the landing point — one soft round light spot instead (pool below + halo)
+        softHalo(targetX,targetY,colors[i],Math.min(1,power*.9+.1),(26+beat.pulse*30)*(.8+.2*lw()));
         // Soft light pools sit on the unchanged painted surface, fading outward.
         ctx.globalAlpha=1;ctx.shadowBlur=0;
         if(!bare){
@@ -136,14 +142,16 @@
         const opacity=b.musical?window.aeHomeAudioEnergy.flightPower((now-b.born)/1000):Math.sin(Math.PI*p);
         const tipX=b.x+(b.ox-b.x)*near,tipY=b.y+(b.oy-b.y)*near,startX=b.x+(b.ox-b.x)*back,startY=b.y+(b.oy-b.y)*back;
         const streak=ctx.createLinearGradient(startX,startY,tipX,tipY);streak.addColorStop(0,b.color+'00');streak.addColorStop(1,b.color);
-        ctx.strokeStyle=streak;ctx.lineWidth=1.4+(1-p)*7;ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:20;ctx.globalAlpha=opacity*.95;
+        ctx.save();ctx.globalCompositeOperation='source-over';ctx.strokeStyle=b.color;ctx.globalAlpha=opacity*.25;ctx.lineWidth=(4+(1-p)*12)*lw();ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:18;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();ctx.restore(); /* v75 outer glow */
+        ctx.strokeStyle=streak;ctx.lineWidth=(1.4+(1-p)*7)*lw();ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:20;ctx.globalAlpha=opacity*.95;
         ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();
-        ctx.strokeStyle='#fff9e9';ctx.lineWidth=.7+(1-p)*1.5;ctx.globalAlpha=opacity*.85;
+        ctx.strokeStyle='#fff9e9';ctx.lineWidth=(.7+(1-p)*1.5)*Math.sqrt(lw());ctx.globalAlpha=opacity*.85;
         ctx.beginPath();ctx.moveTo(startX+(tipX-startX)*.5,startY+(tipY-startY)*.5);ctx.lineTo(tipX,tipY);ctx.stroke();
         ctx.fillStyle='#fff6d2';ctx.beginPath();ctx.arc(tipX,tipY,Math.max(0,1.5+(1-p)*2),0,Math.PI*2);ctx.fill();
       }
       ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.shadowBlur=0;
     }
+    drawHalos(now);ctx.globalAlpha=1;ctx.shadowBlur=0;
     const touchLife=reduced.matches?240:1100; // Owner: the tap ring looks the same with sound & light on or off
     spots=spots.filter(s=>now-s.born<touchLife);
     for(const s of spots){
@@ -238,6 +246,7 @@
     if(!active)return;const x=sx,y=sy-offY,now=performance.now();
     if(y<0||y>=artBottom||x<artX0||x>artX0+artW)return;
     spots.push({x,y,born:now});if(spots.length>6)spots.shift();
+    halos.push({x,y,born:now,life:1500,col:laserColors[(Number(hero.dataset.touchCount)||0)%laserColors.length]});if(halos.length>4)halos.shift(); // v75 impact halo
     hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);
     const was=playing;playing=false; // homepage idle tap look: 6 beams, 650 ms flight (as recorded by the Owner)
     if(!was&&ambient)focus={x,y,until:now+2400};
@@ -248,7 +257,7 @@
   }
   function sync(){const was=playing;playing=!audio.paused&&!audio.ended;if(was&&!playing){energy=0;rhythm.reset();musicSpots=[];musicFrame={stage:'groove',dropPulse:0,buildProgress:0};}if(!was&&playing)rhythm.reset();schedule();}
   for(const ev of ['play','playing','pause','ended','seeked'])audio.addEventListener(ev,sync);
-  function setActive(on){active=!!on;canvas.style.display=active?'':'none';if(!active){if(frame)cancelAnimationFrame(frame);frame=0;spots=[];bolts=[];musicSpots=[];glows=[];clear();}else{resize();schedule();}}
+  function setActive(on){active=!!on;canvas.style.display=active?'':'none';if(!active){if(frame)cancelAnimationFrame(frame);frame=0;spots=[];halos=[];bolts=[];musicSpots=[];glows=[];clear();}else{resize();schedule();}}
   addEventListener('resize',()=>setTimeout(()=>{resize();schedule();},60));
   document.addEventListener('visibilitychange',()=>schedule());
   // homepage ambientTick: the soft 發亮光 glow breathes on its own every 3.4 s while the music is not playing
@@ -258,6 +267,6 @@
   function setSpots(on){spotsOn=!!on;if(!spotsOn)musicSpots=[];schedule();}
   function setIdle(on){idleOn=!!on;if(!idleOn)glows=glows.filter(g=>!g.soft);schedule();}
   function setAmbient(on){on=!!on;if(on===ambient)return;ambient=on;musicSpots=[];glows=[];focus=null;if(!on)clear();schedule();}
-  window.aeHomeReplica={tap,setActive,setAmbient,setLasers,setSpots,setIdle,get spots3(){return spotsOn},get idle(){return idleOn},get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length})};
+  window.aeHomeReplica={tap,setActive,setAmbient,setLasers,setSpots,setIdle,get spots3(){return spotsOn},get idle(){return idleOn},get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length,halos:halos.length})};
   const boot=()=>{if(window.__premium){resize();sync();}else setTimeout(boot,50);};boot();
 })();

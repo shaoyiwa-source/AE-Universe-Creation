@@ -86,3 +86,4 @@ for a,c in [("ctx.strokeStyle=colors[i];ctx.globalAlpha=power;ctx.lineWidth=.8+b
  ("opacity=(1-life)*(musicFrame.stage==='build'?.55+musicFrame.buildProgress*.25:.65)","opacity=(1-life)*(musicFrame.stage==='build'?.75+musicFrame.buildProgress*.25:.95)")]:
   assert a in body,a;body=body.replace(a,c,1)
 open('premium/eternal-sun/assets/home-replica.js','w').write(head+body+tail)
+# v75: home-replica.js is hand-patched on top of this output (/workspace/v75patch.py: 雷射粗細 multiplier, beam glow halo, single impact halo replaces 3-ray split)

@@ -116,3 +116,4 @@ body.look-day #stage{background:radial-gradient(ellipse at 50% 45%,#2a2418 0%,#1
 body.ui #openhint{opacity:0;pointer-events:none}
 @media (prefers-reduced-motion:reduce){#openhint{animation:none}}
 body.look-day #look{filter:brightness(1.035)} /* v74: 尊榮寶石 daytime — gem overlay never darker than the original */
+#panel .lw.on{border-color:currentColor;opacity:1} /* v75 雷射粗細 */
