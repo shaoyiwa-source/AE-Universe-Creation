@@ -109,7 +109,18 @@ module.exports = async (req, res) => {
       if (!L.secret()) return send(res, 503, { error: '登入功能尚未設定完成' });
       const un = String(b.username || '').trim().toLowerCase();
       const u = USER_RE.test(un) && await L.getJSON('users/' + un + '.json');
-      if (!u || !L.verifyPassword(b.password || '', u.hash)) { await wait(600); return send(res, 401, { error: '帳號或密碼不正確' }); }
+      if (!u) {
+        await wait(600);
+        const apps = USER_RE.test(un) ? (await L.listJSON('apps/')).filter(x => x.username === un).sort((x, y) => y.createdAt - x.createdAt) : [];
+        if (apps[0] && apps[0].status === 'pending') return send(res, 403, { error: '你的申請還在審核中，尚未核准。核准後管理者會給你一組臨時密碼，再用它登入。', code: 'pending' });
+        if (apps[0] && apps[0].status === 'rejected') return send(res, 403, { error: '這個帳號的申請未通過，目前無法登入。如有疑問請聯絡管理者。', code: 'rejected' });
+        return send(res, 401, { error: '找不到這個帳號名稱，請確認拼字（英文小寫），或先申請帳號。', code: 'no_user' });
+      }
+      if (!L.verifyPassword(b.password || '', u.hash)) {
+        await wait(600);
+        if (u.must_change) return send(res, 401, { error: '密碼不正確。第一次登入請使用管理者核准時給你的「臨時密碼」（不是申請時自己想的密碼）。忘記了可以請管理者重設。', code: 'temp_pw' });
+        return send(res, 401, { error: '密碼不正確，請再試一次；忘記密碼請聯絡管理者重設。', code: 'bad_pw' });
+      }
       if (u.disabled) return send(res, 403, { error: '這個帳號目前已停用' });
       L.setCookie(res, req, L.SESSION, L.sign({ t: 'u', u: u.username, v: u.pwv, exp: Date.now() + 14 * DAY * 1000 }), 14 * DAY);
       return send(res, 200, { ok: true, me: pubUser(u) });
