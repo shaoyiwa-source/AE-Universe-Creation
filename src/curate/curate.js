@@ -11,3 +11,12 @@ window.CU={
   esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
   $(s,r){return (r||document).querySelector(s)}
 };
+// Show/hide toggle (👀) for every password field.
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('input[type=password]').forEach(i=>{
+  const w=document.createElement('span');w.className='cu-pw';i.parentNode.insertBefore(w,i);w.appendChild(i);
+  const b=document.createElement('button');b.type='button';b.className='cu-eye';b.textContent='👀';b.setAttribute('aria-label','顯示密碼');b.setAttribute('aria-pressed','false');
+  b.addEventListener('click',e=>{e.preventDefault();const show=i.type==='password';i.type=show?'text':'password';b.setAttribute('aria-label',show?'隱藏密碼':'顯示密碼');b.setAttribute('aria-pressed',String(show));b.classList.toggle('on',show);
+    const p=i.selectionStart;i.focus({preventScroll:true});try{i.setSelectionRange(p,p)}catch(_){}});
+  w.appendChild(b);
+  const f=i.form;if(f)f.addEventListener('submit',()=>{if(i.type==='text'){i.type='password';b.setAttribute('aria-label','顯示密碼');b.setAttribute('aria-pressed','false');b.classList.remove('on')}},true);
+})});
