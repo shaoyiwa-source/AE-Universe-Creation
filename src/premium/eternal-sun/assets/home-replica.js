@@ -15,7 +15,7 @@
   let lite=forceLite,liteLatch=forceLite,frameEma=16.7,presentMs=12,lights=true,playing=false,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,artX0=0,artW=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
-  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=true,lasersOn=true,spotsOn=true,idleOn=true,offY=0,dpr=1;
+  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=false,lasersOn=false,spotsOn=false,idleOn=false,tapBeams=false,ready=false,offY=0,dpr=1; /* v83: everything OFF until the premium mode is applied (no laser flash on load) */
   const DISPLAY_LEAD=.012;
   function displayTime(){const ct=audio.currentTime||0;return ct+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));}
   function clear(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(dpr,0,0,dpr,0,offY*dpr);}
@@ -32,8 +32,8 @@
   const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
   /* v75 (hand-patched after build_replica.py): 雷射粗細 細/中/粗 width multiplier, coloured outer glow halo under every beam,
      one soft circular impact halo where a tapped beam lands (replaces the 3-line prismatic split). */
-  const LWM={thin:1,mid:1.9,thick:2.5}; /* v76: 粗 toned down (was 3) */
-  const gk=()=>lw()>2.2?.6:1; /* v76: weaker glow/additive at 粗 */const tb=()=>Math.min(lw(),2.2)*.5; /* v78 tap beams: half width at 中, 粗 capped */const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'mid']||1.9;};
+  const LWM={xthin:.6,thin:1,mid:1.9,thick:2.5}; /* v76: 粗 toned down (was 3) */
+  const gk=()=>lw()>2.2?.6:1; /* v76: weaker glow/additive at 粗 */const tb=()=>Math.min(lw(),2.2)*.5; /* v78 tap beams: half width at 中, 粗 capped */const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'xthin']||.6;};
   const hx=a=>Math.round(Math.max(0,Math.min(1,a))*255).toString(16).padStart(2,'0');
   let halos=[];
   function beamGlow(ox,oy,tx,ty,col,w,a){ctx.save();ctx.globalCompositeOperation='source-over';ctx.lineCap='round';ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=lite?0:Math.min(w*3,10);
@@ -45,7 +45,7 @@
   const variation=seed=>{const n=Math.sin(seed*12.9898+78.233)*43758.5453;return n-Math.floor(n);};
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
-    const angle=i*Math.PI/3+phase*.24+variation(group+1)*1.7;
+    const angle=i*Math.PI/3+phase*.24+variation(group+1)*1.7+now/1000*1.25*(1+.12*i)*(i%2?1:-1); /* v83: lasers scan faster (searchlights keep their slow sway) */
     const ambient={x:artX0+artW*(.16+.68*(.5+.5*Math.sin(angle))),y:Math.max(30,artBottom*(.20+.60*(.5+.5*Math.cos(angle*1.3))))};
     const remaining=focus?focus.until-now:0;
     const weight=remaining>0?Math.min(1,remaining/600):0;
@@ -66,7 +66,7 @@
   }
   function draw(now){
     frame=0;
-    if(!lights||document.hidden||!viewable){clear();return;}
+    if(!lights||!ready||document.hidden||!viewable){clear();return;}
     if(now-lastPaint>0&&now-lastPaint<8){schedule();return;}
     // presentMs is how long the previous frame took to come back. The beat is drawn for that
     // far ahead so a slow frame still lands on the kick that is playing when it appears.
@@ -247,11 +247,11 @@
     if(!active)return;const x=sx,y=sy-offY,now=performance.now();
     if(y<0||y>=artBottom||x<artX0||x>artX0+artW)return;
     spots.push({x,y,born:now});if(spots.length>6)spots.shift();
-    halos.push({x,y,born:now,life:1500,col:laserColors[(Number(hero.dataset.touchCount)||0)%laserColors.length]});if(halos.length>4)halos.shift(); // v75 impact halo
+    if(tapBeams)halos.push({x,y,born:now,life:1500,col:laserColors[(Number(hero.dataset.touchCount)||0)%laserColors.length]});if(halos.length>4)halos.shift(); // v75 impact halo
     hero.dataset.touchCount=String((Number(hero.dataset.touchCount)||0)+1);
     const was=playing;playing=false; // homepage idle tap look: 6 beams, 650 ms flight (as recorded by the Owner)
     if(!was&&ambient)focus={x,y,until:now+2400};
-    launchDepth(x,y,now,Number(hero.dataset.touchCount)||1);playing=was;
+    if(tapBeams)launchDepth(x,y,now,Number(hero.dataset.touchCount)||1);playing=was;
     const burst=document.createElement('span');burst.className='ae-gold-burst';burst.setAttribute('aria-hidden','true');burst.style.left=sx+'px';burst.style.top=sy+'px';
     hero.appendChild(burst);setTimeout(()=>burst.remove(),reduced.matches?240:1650);
     schedule();
@@ -267,7 +267,9 @@
   function setLasers(on){on=!!on;if(on===lasersOn)return;lasersOn=on;if(!on)bolts=bolts.filter(b=>!b.musical);schedule();}
   function setSpots(on){spotsOn=!!on;if(!spotsOn)musicSpots=[];schedule();}
   function setIdle(on){idleOn=!!on;if(!idleOn)glows=glows.filter(g=>!g.soft);schedule();}
+  function setTapBeams(on){tapBeams=!!on;if(!tapBeams){bolts=bolts.filter(b=>b.musical);halos=[];}schedule();}
+  function setReady(on){ready=!!on;schedule();return ready;}
   function setAmbient(on){on=!!on;if(on===ambient)return;ambient=on;musicSpots=[];glows=[];focus=null;if(!on)clear();schedule();}
-  window.aeHomeReplica={tap,setActive,setAmbient,setLasers,setSpots,setIdle,get spots3(){return spotsOn},get idle(){return idleOn},get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length,halos:halos.length})};
+  window.aeHomeReplica={tap,setTapBeams,setReady,get tapBeams(){return tapBeams},setActive,setAmbient,setLasers,setSpots,setIdle,get spots3(){return spotsOn},get idle(){return idleOn},get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length,halos:halos.length})};
   const boot=()=>{if(window.__premium){resize();sync();}else setTimeout(boot,50);};boot();
 })();

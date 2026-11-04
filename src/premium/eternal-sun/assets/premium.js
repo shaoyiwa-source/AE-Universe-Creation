@@ -26,7 +26,8 @@ const ARTS = [
   { id: 'love-energy-field', en: 'Love Energy Field', src: '/assets/selected-works-v2/love-energy-field.webp', w: 1536, h: 1055 }
 ].map(a => ({ thumb: '/assets/artwall/t-' + a.id + '.webp', zh: a.en, ...a }));
 const TRACKS = [ // only one distinct song is hosted (the homepage /media/aurelia-techno-eternal-148bpm.m4a is the same audio, sample-identical loudness curve)
-  { id: 'eternal', zh: '盛明 Eternal Sun · Techno', en: 'Eternal Sun · Techno', src: '/player/eternal-sun/assets/ae-eternal-stream.m4a', beats: 'timeline', cue: 58.3 }
+  { id: 'eternal', zh: '盛明 Eternal Sun · Techno', en: 'Eternal Sun · Techno', src: '/player/eternal-sun/assets/ae-eternal-stream.m4a', beats: 'timeline', cue: 58.3 },
+  { id: 'calm-ambient', zh: '靜謐漫步 Calm Ambient', en: 'Calm Ambient (lyrical)', src: '/premium/eternal-sun/assets/audio/calm-ambient-3.m4a', beats: 'live', cue: 0, calm: true, credit: 'cynicmusic · CC0' } // v83: slow/lyrical test track (CC0, OpenGameArt cynicmusic)
 ];
 if (Q.has('tracktest')) TRACKS.push({ id: 'live-test', zh: '測試 · 即時節拍分析', en: 'Test · live beat analysis', src: '/player/eternal-sun/assets/ae-eternal-stream.m4a', beats: 'live', cue: 0 });
 const pickIdx = (list, key, q) => { const v = Q.get(q) || (() => { try { return localStorage.getItem(key); } catch (e) { return null; } })(); const i = list.findIndex(x => x.id === v); return i < 0 ? 0 : i; };
@@ -36,7 +37,7 @@ const S = {
   lang: Q.get('lang') === 'en' ? 'en' : 'zh', mode: 'natural', intensity: 0.7, speed: 1,
   frame: true, led: true, aura: true, glint: true, laser: false, bloom: true, rgbStyle: 'bar', lamp: 'auto', preset: 'home', look: '', impact: true,
   engine: 'webgl', playing: false, home: true,
-  search: true, dip: true, lw: (() => { try { return localStorage.getItem('ae-premium-lw') || 'mid'; } catch (e) { return 'mid'; } })() // v75: 探照燈 / beat-dip / 雷射粗細
+  search: false, dip: true, tapfx: true, lw: (() => { try { return localStorage.getItem('ae-premium-lw83') || 'xthin'; } catch (e) { return 'xthin'; } })() // v75: 探照燈 / beat-dip / 雷射粗細
 };
 if (Q.get('fx') === '0') Object.assign(S, { search: false, dip: false, frame: false, led: false, aura: false, glint: false, laser: false, bloom: false });
 if (['rgb', 'uv'].includes(Q.get('mode'))) S.mode = 'rgb'; 
@@ -97,6 +98,8 @@ for (const ev of ['waiting', 'stalled', 'seeking']) audio.addEventListener(ev, (
 for (const ev of ['playing', 'seeked', 'canplay']) audio.addEventListener(ev, () => { CK.stall = 0; CK.ok = 0; });
 
 async function togglePlay() {
+  // v83: back from the background the media element may still report playing while the WebAudio output is suspended/interrupted -> one tap = resume
+  if (!audio.paused && A.mg && A.mg.c && A.mg.c.state !== 'running') { USER.want = true; try { A.mg.c.resume(); } catch (e) {} const p = audio.play(); if (p && p.catch) p.catch(() => {}); syncPlay(); return; }
   // v2476.69: start the media element FIRST, synchronously inside the tap (iOS Safari refuses play() issued after an await → stall)
   USER.want = audio.paused; if (audio.paused) try { routeMusic(); } catch (e) {}
   let early = null; if (audio.paused) { if (!A.started) { A.started = 1; startAtCue(); } try { early = audio.play(); if (early && early.catch) early.catch(() => {}); } catch (e) {} }
@@ -118,7 +121,7 @@ function startAtCue() { const go = () => { try { audio.currentTime = TR.cue || 0
 const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 let seeking = false, progAt = 0;
 function updateProg(now) { if (now - progAt < 250) return; progAt = now; const d = audio.duration; $('#tdur').textContent = Number.isFinite(d) ? fmt(d) : '0:00'; if (!seeking) { $('#tcur').textContent = fmt(audio.currentTime); $('#seek').value = Number.isFinite(d) && d > 0 ? Math.round(audio.currentTime / d * 1000) : 0; } }
-const USER = { want: false }; // v78: user's play intent; nothing may start the music unless the user asked for it
+const USER = { want: false }; const HID83 = { paused: 0 }; // v78: user's play intent; nothing may start the music unless the user asked for it
 const MUSICVOL = 0.5; // v79: music -6 dB (v78 -3 dB) for kick headroom (iOS: via WebAudio gain, see routeMusic)
 audio.addEventListener('play', () => { if (!USER.want) { try { audio.pause(); } catch (e) {} } });
 audio.addEventListener('pause', () => { if (!document.hidden && !audio.ended) USER.want = false; }); // a pause while visible (button, headset, OS) = user paused
@@ -130,7 +133,10 @@ function ensureGraph(needAn) { // v80: ONE MediaElementSource for the element (a
 function routeMusic() { // iOS ignores audio.volume -> put the element through a WebAudio gain (created inside the play gesture)
   if (A.mg) { if (TR.beats !== 'timeline' && !A.an) try { ensureGraph(true); } catch (e) {} return; } audio.volume = MUSICVOL; if (Math.abs(audio.volume - MUSICVOL) < 0.01 && !Q.has('routemusic')) { A.mg = { el: true }; return; }
   try { ensureGraph(false); } catch (e) { A.mg = { el: true }; } }
-function syncPlay() { S.playing = !audio.paused && !audio.ended; updatePlayLabel(); }
+function syncPlay() { S.playing = !audio.paused && !audio.ended && !(A.mg && A.mg.c && (A.mg.c.state === 'suspended' || A.mg.c.state === 'interrupted') && document.hidden); updatePlayLabel(); }
+// v83: leaving the app pauses the music for real (element paused, intent cleared) so the button shows ▶ and ONE tap resumes
+document.addEventListener('visibilitychange', () => { if (document.hidden) { if (!audio.paused) { USER.want = false; HID83.paused = 1; try { audio.pause(); } catch (e) {} } } else { try { if (A.mg && A.mg.c && A.mg.c.state !== 'running' && A.mg.c.state !== 'closed') A.mg.c.resume().catch(() => {}); } catch (e) {} } syncPlay(); });
+addEventListener('pagehide', () => { if (!audio.paused) { USER.want = false; HID83.paused = 1; try { audio.pause(); } catch (e) {} } });
 ['play', 'playing', 'pause', 'ended', 'emptied', 'stalled', 'suspend', 'waiting'].forEach(ev => audio.addEventListener(ev, syncPlay));
 document.addEventListener('visibilitychange', syncPlay); addEventListener('pageshow', syncPlay); addEventListener('focus', syncPlay);
 let rings = [];
@@ -166,26 +172,58 @@ function analyse(now) {
       if (k) { const ds = tt - ss[k - 1]; OM.since = ds; OM.n = k; const sub = Math.exp(-ds / 0.075) * (0.35 + 0.4 * OM.st[k - 1]); if (ds < 0.012 && OM.last !== k) { OM.last = k; OM.hits++; } A.kick = Math.max(A.kick, sub); } } A.drop = b.dropPulse || 0; A.phase = b.phase; return;
   }
   CK.ok = 0;
-  if (A.an && S.playing) {
-    A.an.getByteFrequencyData(A.buf);
-    const hz = A.ctx.sampleRate / A.an.fftSize; const n = Math.max(2, Math.round(140 / hz));
-    for (let i = 1; i <= n; i++) bass += A.buf[i];
-    bass /= n * 255;
-    A.avg = A.avg * 0.96 + bass * 0.04;
-    // v80 live beat fallback (tracks without a precomputed map): bass-flux onset + tempo estimate -> same beat object the timeline gives
-    const LB = A.lb || (A.lb = { beat: false, count: 0, pulse: 0, phase: 0, interval: 0.5, stage: 'groove', dropPulse: 0, buildProgress: 0, accentCount: 0, sweep: 0, last: -9, pk: 0.3 });
-    const tt = audio.currentTime; A.t = tt; LB.beat = false; LB.pk = Math.max(bass, LB.pk * 0.995);
-    if (bass > A.avg * 1.15 + 0.03 && bass > LB.pk * 0.55 && tt - LB.last > Math.max(0.24, LB.interval * 0.6)) { const iv = tt - LB.last; if (iv > 0.25 && iv < 1.2) LB.interval += (iv - LB.interval) * 0.2; LB.last = tt; LB.count++; LB.beat = true; A.count = LB.count; onKick(now, bass);
-      const heavy = LB.count % 4 === 1 && bass > LB.pk * 0.8; v75Beat(now, bass, heavy, LB); if (heavy) { IMP.t = now; IMP.n++; partyHeavy(now); } if (LB.count % 2 === 0) launchDepth(null, null, now, LB.count); }
-    if (tt < LB.last) LB.last = tt - LB.interval; const since = Math.max(0, tt - LB.last); LB.pulse = Math.exp(-since / 0.12); LB.phase = since / LB.interval; LB.sweep = (LB.count % 8) / 8 + LB.phase / 8;
-    A.b = LB; A.since = since; A.kick = A.kickQ = Math.exp(-since / 0.095); A.phase = LB.phase; A.bass = bass; A.level += (bass - A.level) * 0.25; return;
-  } else {
+  if (TR.beats !== 'timeline' && S.playing) { liveBeat83(now); return; }
+  {
     // idle: slow breathing, a gentle ring every ~3.2 s
     bass = 0.25 + 0.15 * Math.sin(now / 900);
     if (now - A.lastKick > 3200 / S.speed) onKick(now, 0.5);
   }
   A.bass = bass; A.level += (bass - A.level) * 0.15;
   A.kick *= 0.9;
+}
+/* v83 live beat tracker for every track without a beat map (imported songs, Calm Ambient).
+   Root cause of the v80-82 "floating cities" bug: onsets were only accepted when the <140 Hz bass jumped 15 % + 0.03 above its
+   own slow average. Slow/ambient songs have a sustained bass pad (no kick transients) -> zero beats while playing, so lamps,
+   pulses and RGB (which step on beats) froze; with the music stopped the idle clock kept animating them.
+   Now: broadband + bass spectral flux with an adaptive (mean + k·sd) threshold, an inter-onset tempo estimator (reset per song),
+   and a phase-locked beat "flywheel" on audio.currentTime so visuals keep the song's tempo between soft onsets, plus a
+   clock fallback when the analyser returns silence (some iOS routes). */
+function newLB83() { return { beat: false, count: 0, pulse: 0, phase: 0, interval: 0.6, stage: 'groove', dropPulse: 0, buildProgress: 0, accentCount: 0, sweep: 0, last: -9, grid: -9, pk: 0.3,
+  fm: 0, fv: 0.0004, on: [], onsets: 0, bpm: 0, conf: 0, zero: 0, silent: 0, lvl: 0, lvlAvg: 0, prev: null, t0: -1, lastOn: -9, ct: -1, mode: 'onset' }; }
+function tempo83(LB) { const o = LB.on; if (o.length < 5) return; const H = new Float32Array(68); // 0.33..1.0 s in 10 ms bins (60..180 BPM)
+  for (let i = 0; i < o.length; i++) for (let j = i + 1; j < Math.min(o.length, i + 5); j++) { let v = o[j] - o[i]; if (v < 0.12 || v > 2.4) continue; while (v < 0.33) v *= 2; while (v > 1.0) v /= 2; const k = Math.round((v - 0.33) * 100); for (let d = -2; d <= 2; d++) if (k + d >= 0 && k + d < 68) H[k + d] += Math.exp(-d * d / 2) / (j - i); }
+  let bk = 0; for (let k = 1; k < 68; k++) if (H[k] > H[bk]) bk = k; let tot = 0; for (let k = 0; k < 68; k++) tot += H[k];
+  const iv = 0.33 + bk / 100; LB.conf = tot ? H[bk] / tot : 0; LB.interval += (iv - LB.interval) * (LB.bpm ? 0.25 : 1); LB.bpm = Math.round(60 / LB.interval); }
+function liveBeat83(now) {
+  const LB = A.lb || (A.lb = newLB83()), tt = audio.currentTime, dtA = LB.ct < 0 ? 0 : Math.max(0, Math.min(0.1, tt - LB.ct)); LB.ct = tt; A.t = tt; LB.beat = false;
+  if (tt + 0.05 < LB.last) { LB.last = LB.grid = tt - LB.interval; LB.lastOn = tt - 1; } // loop / seek back
+  let bass = 0, lvl = 0, flux = 0;
+  if (A.an && A.buf) {
+    if (A.an.smoothingTimeConstant !== 0.2) A.an.smoothingTimeConstant = 0.2;
+    A.an.getByteFrequencyData(A.buf); const B = A.buf, hz = A.ctx.sampleRate / A.an.fftSize, nb = Math.max(2, Math.round(150 / hz)), nt = Math.min(B.length - 1, Math.round(6000 / hz));
+    let sum = 0; for (let i = 1; i <= nb; i++) bass += B[i]; for (let i = 1; i <= nt; i++) sum += B[i]; bass /= nb * 255; lvl = sum / (nt * 255);
+    const P = LB.prev || (LB.prev = new Uint8Array(B.length)); let fb = 0, ft = 0; for (let i = 1; i <= nt; i++) { const d = B[i] - P[i]; if (d > 0) { if (i <= nb) fb += d; ft += d; } } P.set(B);
+    flux = 0.55 * fb / (nb * 255) + 0.45 * ft / (nt * 255) * 3;
+    if (sum === 0 && dtA > 0) LB.zero += dtA; else if (sum > 0) LB.zero = 0;
+    LB.silent = LB.zero > 1.5 ? 1 : 0;
+  } else LB.silent = 1;
+  if (dtA <= 0 && !LB.silent) { /* element clock not advancing (buffering) */ }
+  // adaptive threshold on flux
+  const d0 = flux - LB.fm; LB.fm += d0 * 0.03; LB.fv += (d0 * d0 - LB.fv) * 0.03; const sd = Math.sqrt(Math.max(1e-6, LB.fv));
+  LB.lvl = lvl; LB.lvlAvg += (lvl - LB.lvlAvg) * 0.01;
+  const onset = !LB.silent && dtA > 0 && flux > LB.fm + 1.2 * sd && flux > 0.003 && tt - LB.lastOn > Math.max(0.16, LB.interval * 0.45);
+  if (onset) { LB.lastOn = tt; LB.onsets++; LB.on.push(tt); if (LB.on.length > 32) LB.on.shift(); if (LB.onsets >= 5) tempo83(LB); }
+  // beat flywheel: ticks every interval on the song clock; onsets near a tick pull its phase
+  if (LB.grid < 0 && onset) LB.grid = tt - LB.interval;
+  if (LB.grid < -1) LB.grid = tt - LB.interval;
+  if (onset) { const ph = tt - (LB.grid + LB.interval); if (Math.abs(ph) < LB.interval * 0.3) LB.grid += ph * 0.5; }
+  if (dtA > 0 && tt >= LB.grid + LB.interval) { LB.grid = Math.max(LB.grid + LB.interval, tt - LB.interval * 0.25); LB.last = LB.grid; LB.count++; LB.beat = true; }
+  if (LB.silent) { bass = 0.3 + 0.25 * Math.exp(-Math.max(0, tt - LB.last) / 0.2); lvl = bass; }
+  const lv = Math.max(bass, lvl * 1.4); A.avg = A.avg * 0.96 + lv * 0.04; LB.pk = Math.max(lv, LB.pk * 0.995);
+  if (LB.beat) { A.count = LB.count; const k = Math.min(1, 0.45 + lv); onKick(now, k); const heavy = !(V83 && V83.soft) && LB.count % 4 === 1 && lv > LB.pk * 0.7; v75Beat(now, lv, heavy, LB); if (heavy) { IMP.t = now; IMP.n++; partyHeavy(now); } if (LB.count % 2 === 0) launchDepth(null, null, now, LB.count); }
+  const since = Math.max(0, tt - LB.last); LB.pulse = Math.exp(-since / 0.12); LB.phase = Math.min(1, since / LB.interval); LB.sweep = (LB.count % 8) / 8 + LB.phase / 8;
+  A.b = LB; A.since = since; A.kick = A.kickQ = Math.exp(-since / 0.095); A.phase = LB.phase; A.bass = lv; A.level += (lv - A.level) * 0.25;
+  if (window.__beatLog83) { const L8 = window.__beatLog83; if (LB.beat) L8.push({ t: +tt.toFixed(2), n: LB.count, bpm: LB.bpm, iv: +LB.interval.toFixed(3), on: LB.onsets, silent: LB.silent }); }
 }
 const IMP = { t: -1e9, n: 0, s: 1 };
 const GROOVE = [[64.871, 116.79], [129.736, 1e9]];
@@ -284,7 +322,7 @@ function lampColor(now) {
    soft light pools, beat rings; flying depth bolts on each kick; small music spots. Coordinates mapped to the painting rect. */
 const LASER = ['#ff416d', '#57ffa0', '#ffe28d', '#65dbff', '#c987ff', '#ffac68'];
 const LZ = { pat: 0, hit: -1e9 };
-const LWM = { thin: 1, mid: 1.9, thick: 2.5 }; const lwk = () => LWM[S.lw] || 1.9; // v75 雷射粗細 細/中/粗
+const LWM = { xthin: 0.6, thin: 1, mid: 1.9, thick: 2.5 }; const lwk = () => LWM[S.lw] || 0.6; // v83: 極細 default // v75 雷射粗細 細/中/粗
 const tb78 = () => Math.min(lwk(), 2.2) * 0.5; // v78: tap beams half width at 中, 粗 capped
 const gk76 = () => lwk() > 2.2 ? .6 : 1; // v76: 粗 toned down + weaker halo (v77: restored lwk, which v76 had commented out -> ReferenceError froze the loop in non-歡樂派對 modes)
 let bolts = [], musicSpots = [], spots = [];
@@ -292,7 +330,7 @@ function fireBolts() {}
 const variation = seed => { const n = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return n - Math.floor(n); };
 function hpGeom() { const p = L.p; return { X0: p.x, W: p.w, T: p.y, H: p.h, sx: p.x + p.w * SUN.x, sy: p.y + p.h * SUN.y }; }
 function hpDest(i, phase, now) {
-  const G = hpGeom(), group = Math.floor((A.count || RG.beats) / 4), angle = i * Math.PI / 3 + phase * .24 + variation(group + 1) * 1.7;
+  const G = hpGeom(), group = Math.floor((A.count || RG.beats) / 4), angle = i * Math.PI / 3 + phase * .24 + variation(group + 1) * 1.7 + now / 1000 * 1.25 * (1 + .12 * i) * (i % 2 ? 1 : -1); // v83: lasers scan faster than searchlights
   const t = { x: G.X0 + G.W * (.16 + .68 * (.5 + .5 * Math.sin(angle))), y: G.T + Math.max(30, G.H * (.20 + .60 * (.5 + .5 * Math.cos(angle * 1.3)))) };
   const impact = S.playing ? Math.min(1, (A.drop || 0) * 1.8) : 0;
   return { x: t.x * (1 - impact) + G.sx * impact, y: t.y * (1 - impact) + G.sy * impact };
@@ -927,7 +965,7 @@ function swapToLite() { // auto-fallback when WebGL is slow; replace the canvas 
 
 /* ---------- UI ---------- */
 let uiTimer = 0;
-const UI_MS = 5000;
+const UI_MS = 60000; // v83: panel closes on outside tap / ✕ (auto-close only after 60 s idle)
 function hideUI(force) { clearTimeout(uiTimer); if (force !== true && document.body.classList.contains('adv-open')) return; document.body.classList.remove('ui', 'adv-open'); $('#adv').setAttribute('aria-expanded', 'false'); } // v72: 進階 open -> panel stays until ✕
 function bumpUI() { if (document.body.classList.contains('ui')) { clearTimeout(uiTimer); uiTimer = setTimeout(hideUI, UI_MS); } }
 function showUI() { document.body.classList.add('ui'); $('#panel').hidden = false; clearTimeout(uiTimer); uiTimer = setTimeout(hideUI, UI_MS); } // auto-close after 5 s without interaction (no :hover check — it sticks on touch screens)
@@ -1002,7 +1040,7 @@ function bindUI() {
   const st = $('#stage');
   // v2476.63: the painting is for art interaction only. Panel opens from ⚙ or a tap on the empty area beside the painting;
   // while it is open a tap anywhere outside it (backdrop) closes it.
-  st.addEventListener('pointerdown', e => { onPointer(e); if (document.body.classList.contains('ui') && Z.pts.size <= 1) { hideUI(); Z.consumed = true; } else if (Z.pts.size <= 1) Z.consumed = false; });
+  st.addEventListener('pointerdown', e => { onPointer(e); if ((document.body.classList.contains('ui') || performance.now() - (window.__closedAt83 || 0) < 400) && Z.pts.size <= 1) { hideUI(); Z.consumed = true; } else if (Z.pts.size <= 1) Z.consumed = false; });
   st.addEventListener('pointermove', e => { onPointer(e); if (GLOW.on) glowMove(e); else gameTrail(e); });
   st.addEventListener('pointerdown', e => { if (GLOW.on) setTimeout(() => glowDown(e), 0); });
   ['pointerup', 'pointercancel'].forEach(ev => st.addEventListener(ev, () => { GLOW.cur = null; }));
@@ -1039,16 +1077,17 @@ function bindUI() {
 }
 
 /* ---------- 7 curated presets (模式), each with its own tuned motion speed (no speed slider) ---------- */
-const BASE = { search: false, dip: true, party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
-const PRESETS = { // v72: exactly four exclusive modes (1,4 day · 2,3 night); toggles still combine on top
+const BASE = { tapfx: true, search: false, dip: true, party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
+const PRESETS = { // v83: 原畫風情 (calm, default) first; then the v72 four modes
+  calm:   { ...BASE, mode: 'natural', frame: true, dip: false, laser: false, search: false, spots3: false, idle: false, tapfx: false, look: '', intensity: 0.6, speed: 0.5, night: false }, // 原畫風情 ✧: only the soft backlight behind the painting slowly changes colour
   home:   { ...BASE, mode: 'natural', frame: true, laser: true, search: true, spots3: true, idle: true, look: '', intensity: 0.7, speed: 1, night: false },                        // 歡樂派對 ☀: homepage sound-light replica
   club:   { ...BASE, mode: 'rgb', rgbStyle: 'bar', lamp: 'auto', frame: true, laser: true, led: true, spots3: false, idle: false, intensity: 0.85, speed: 1.1, night: true }, // 沈浸夜店 ☾: dark club, clean lasers + RGB light bar on beat
   breath: { ...BASE, mode: 'rgb', rgbStyle: 'wash', lamp: 'blue', frame: true, aura: true, spots3: false, idle: false, intensity: 0.55, speed: 0.45, night: true },   // 柔光呼吸 ☾: calm dark, soft breathing wash + aura, gentle frame light, no lasers
   gem:    { ...BASE, mode: 'natural', look: 'gem', frame: true, led: true, glint: true, impact: true, spots3: false, idle: false, intensity: 0.75, speed: 1, night: false } // 尊榮寶石 ☀: bright, gold frame + gem/pearl sparkle + gallery light, no lasers
 };
-function applyPreset(k) { if (!PRESETS[k]) k = 'home'; saved = null; Object.assign(S, PRESETS[k]); S.preset = k; S.home = k === 'home'; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
+function applyPreset(k) { if (!PRESETS[k]) k = 'calm'; saved = null; Object.assign(S, PRESETS[k]); S.preset = k; S.home = k === 'home'; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
   $('#int').value = S.intensity; syncButtons(); }
-function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; document.body.classList.toggle('home-mode', on); /* v72: 三光點/待機漣漪 work in every mode */ const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); if (R.setLasers && R.lasers !== !!S.laser) R.setLasers(!!S.laser); if (R.setSpots && R.spots3 !== !!S.spots3) R.setSpots(!!S.spots3); if (R.setIdle && R.idle !== !!S.idle) R.setIdle(!!S.idle); document.body.classList.toggle('look-night', !orig && !!S.night); document.body.classList.toggle('look-day', !orig && !S.night); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
+function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; document.body.classList.toggle('home-mode', on); /* v72: 三光點/待機漣漪 work in every mode */ const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); if (R.setLasers && R.lasers !== !!S.laser) R.setLasers(!!S.laser); if (R.setSpots && R.spots3 !== !!S.spots3) R.setSpots(!!S.spots3); if (R.setIdle && R.idle !== !!S.idle) R.setIdle(!!S.idle); if (R.setTapBeams && R.tapBeams !== (S.tapfx !== false)) R.setTapBeams(S.tapfx !== false); if (!R.ready83) R.ready83 = R.setReady && R.setReady(true); document.body.classList.toggle('look-night', !orig && !!S.night); document.body.classList.toggle('look-day', !orig && !S.night); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
 
 /* ---------- loop ---------- */
 let slow = 0, frames = 0, lastT = 0;
@@ -1070,7 +1109,7 @@ function loop(now) {
 }
 
 async function start() {
-  bindUI(); applyLang(); if (Q.get('fx') !== '0') { const qp = Q.get('preset'); applyPreset(PRESETS[qp] ? qp : 'home'); } syncButtons();
+  bindUI(); applyLang(); if (Q.get('fx') !== '0') { const qp = Q.get('preset'); applyPreset(PRESETS[qp] ? qp : 'calm'); } syncButtons();
   if (weakDevice()) { S.engine = 'lite'; initLite(); }
   else { try { await initWebGL(); } catch (e) { console.warn('WebGL unavailable, using Canvas 2D', e && e.message); swapToLite(); } }
   layout(); updateEngineNote();
@@ -1102,7 +1141,7 @@ window.__premium = { ARTS, TRACKS, setArt: (...a) => setArt(...a), setTrack: (..
    閃光 strobe: a short white flash on heavy beats (max ~2/s, off with prefers-reduced-motion). */
 const V75 = { dip: { t: -1e9, a: 0 }, strobe: { t: -1e9, last: -1e9, n: 0 }, dips: 0, sway: 0, lastNow: 0 };
 const RM75 = matchMedia('(prefers-reduced-motion: reduce)');
-function setLw(w, quiet) { if (!LWM[w]) w = 'mid'; S.lw = w; if (!quiet) try { localStorage.setItem('ae-premium-lw', w); } catch (e) {} document.querySelectorAll('.lw').forEach(b => { b.classList.toggle('on', b.dataset.w === w); b.setAttribute('aria-pressed', String(b.dataset.w === w)); }); }
+function setLw(w, quiet) { if (!LWM[w]) w = 'xthin'; S.lw = w; if (!quiet) try { localStorage.setItem('ae-premium-lw83', w); } catch (e) {} document.querySelectorAll('.lw').forEach(b => { b.classList.toggle('on', b.dataset.w === w); b.setAttribute('aria-pressed', String(b.dataset.w === w)); }); }
 function v75Beat(now, bass, heavy, b) {
   if (document.body.dataset.original === '1') return;
   const strong = heavy || (b && (b.dropPulse || 0) > 0.3) || bass > 0.78;
@@ -1403,3 +1442,183 @@ function trimTick82() { try { const t = TR && TR.user && TR.trim; if (!t || audi
   audio.addEventListener('play', () => { const t = TR && TR.user && TR.trim; if (t && (audio.currentTime < t.a || audio.currentTime >= t.b)) try { audio.currentTime = t.a; } catch (e) {} });
 })();
 (function ex82() { if (window.__premium) Object.assign(window.__premium, { SPIN82, reward82, spinStart82, spinMove82, trimSet82, trimGet82 }); else setTimeout(ex82, 50); })();
+
+/* ===================== v2476.83 =====================
+   原畫風情 default · tabs · outside-tap close · swipe / side buttons · first-visit hint · slideshow + transitions ·
+   overview grid · multi-song import · tempo-aware softening + slow-song suggestion. Painting pixels are never altered:
+   transitions only move / fade the whole <img> display, every light is still an overlay. */
+var V83 = { soft: false, sug: {}, pt: 0, lastT: 0, ss: { on: false, iv: 15, tr: 'fade', t: 0 }, grid: 'ratio', swipes: 0, busy: false };
+const tx83 = (zh, en) => S.lang === 'en' ? en : zh;
+const ls83 = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
+const stopAll83 = el => ['pointerdown', 'pointerup', 'click', 'touchstart'].forEach(ev => el.addEventListener(ev, e => e.stopPropagation()));
+const lab83 = root => (root || document).querySelectorAll('[data-zh]').forEach(e => { e.textContent = e.dataset[S.lang] || e.dataset.zh; });
+try { const o = JSON.parse(ls83('ae-premium-ss83') || 'null'); if (o) Object.assign(V83.ss, { iv: [8, 15, 30].includes(o.iv) ? o.iv : 15, tr: ['fade', 'slide', 'zoom', 'glow'].includes(o.tr) ? o.tr : 'fade', on: false }); } catch (e) {}
+V83.grid = ls83('ae-premium-grid83') === 'square' ? 'square' : 'ratio';
+
+/* ---- painting change with a whole-image transition ---- */
+async function goArt83(i, dir, tr) {
+  if (V83.busy) return; const n = ARTS.length; i = ((i % n) + n) % n; if (ARTS[i] === ART) return; tr = tr || V83.ss.tr; dir = dir || 1;
+  V83.busy = true; V83.ss.t = performance.now();
+  try {
+    const img = preload(ARTS[i]); try { await (img.decode ? img.decode() : Promise.resolve()); } catch (e) {}
+    const art = $('#art'), old = $('#painting'), p = { ...L.p }, gh = document.createElement('img');
+    gh.className = 'ghost83'; gh.alt = ''; gh.draggable = false; gh.src = old.currentSrc || old.src; Object.assign(gh.style, { left: p.x + 'px', top: p.y + 'px', width: p.w + 'px', height: p.h + 'px' }); art.after(gh);
+    art.style.opacity = '0'; await setArt(i, true); art.style.opacity = '';
+    const D = tr === 'glow' ? 1200 : tr === 'slide' ? 620 : 900, ez = 'cubic-bezier(.4,0,.2,1)', W = innerWidth * (dir < 0 ? -1 : 1);
+    let ka, kb, del = 0;
+    if (tr === 'slide') { ka = [{ transform: 'translateX(0)' }, { transform: `translateX(${-W}px)` }]; kb = [{ transform: `translateX(${W}px)` }, { transform: 'translateX(0)' }]; }
+    else if (tr === 'zoom') { ka = [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.08)', opacity: 0 }]; kb = [{ transform: 'scale(.93)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }]; }
+    else if (tr === 'glow') { ka = [{ opacity: 1 }, { opacity: 0 }]; kb = [{ opacity: 0 }, { opacity: 1 }]; del = D * 0.3; }
+    else { ka = [{ opacity: 1 }, { opacity: 0 }]; kb = [{ opacity: 0 }, { opacity: 1 }]; }
+    const a1 = gh.animate(ka, { duration: tr === 'glow' ? D * 0.55 : D, easing: ez, fill: 'forwards' }); art.animate(kb, { duration: tr === 'glow' ? D * 0.7 : D, delay: del, easing: ez, fill: 'backwards' });
+    if (tr === 'glow') { const f = document.createElement('div'); f.className = 'flash83'; const q = L.p, R = Math.max(q.w, q.h) * 0.75; Object.assign(f.style, { left: (q.x + q.w / 2 - R) + 'px', top: (q.y + q.h / 2 - R) + 'px', width: 2 * R + 'px', height: 2 * R + 'px' }); $('#stage').appendChild(f);
+      f.animate([{ opacity: 0, transform: 'scale(.55)' }, { opacity: .9, transform: 'scale(1)', offset: .42 }, { opacity: 0, transform: 'scale(1.2)' }], { duration: D, easing: 'ease-in-out' }).onfinish = () => f.remove(); }
+    a1.onfinish = () => gh.remove(); setTimeout(() => gh.remove(), D + 300);
+    await new Promise(r => setTimeout(r, Math.min(D, 500)));
+  } finally { V83.busy = false; V83.ss.t = performance.now(); gridMark83(); }
+}
+
+/* ---- tabs in the settings panel + outside tap closes it ---- */
+(function tabs83() {
+  const panel = $('#panel'); if (!panel) return;
+  const T = [['mode', '模式 / 燈光', 'Mode / Light'], ['music', '音樂', 'Music'], ['art', '畫作', 'Paintings'], ['fx', '進階 / 特效', 'Advanced / FX']];
+  const bar = document.createElement('div'); bar.className = 'tabs83'; bar.setAttribute('role', 'tablist');
+  bar.innerHTML = T.map(([k, zh, en]) => `<button role="tab" data-tab="${k}" data-zh="${zh}" data-en="${en}"></button>`).join('');
+  $('#close').after(bar);
+  // music tab: song list, tempo readout, credit
+  const songs = document.createElement('div'); songs.className = 'row presets'; songs.id = 'songs83'; songs.innerHTML = '<span class="lab" data-zh="歌曲" data-en="Songs"></span><div id="songlist83"></div><div id="tempo83" class="note81"></div><div class="note81" id="credit83"></div>';
+  // art tab: overview + slideshow
+  const artc = document.createElement('div'); artc.className = 'row presets'; artc.id = 'ss83';
+  artc.innerHTML = '<span class="lab" data-zh="瀏覽" data-en="Browse"></span><button class="pr b81" id="gridbtn83" data-zh="▦ 總覽" data-en="▦ Overview"></button><button class="pr b81" id="sson83" aria-pressed="false" data-zh="▶ 自動播放" data-en="▶ Slideshow"></button>' +
+    '<div class="seg83" id="ssiv83" role="group"><button data-v="8">8s</button><button data-v="15">15s</button><button data-v="30">30s</button></div>' +
+    '<div class="seg83" id="sstr83" role="group"><button data-v="fade" data-zh="淡入淡出" data-en="Crossfade"></button><button data-v="slide" data-zh="滑動" data-en="Slide"></button><button data-v="zoom" data-zh="縮放漸變" data-en="Zoom fade"></button><button data-v="glow" data-zh="光暈過場" data-en="Glow"></button></div>' +
+    '<div class="note81" data-zh="手機：在畫上左右滑動換畫 · 電腦：畫作兩側 ‹ › 或鍵盤 ← →" data-en="Phone: swipe left/right on the art · Desktop: ‹ › beside the art or ← → keys"></div>';
+  const artrow = $('#panel .artrow'); if (artrow) artrow.after(artc); else panel.appendChild(artc);
+  const imp = $('#improw'); if (imp) { imp.before(songs); const ib = $('#iimg'); if (ib) artc.querySelector('#sson83').before(ib); const lb = imp.querySelector('.lab'); if (lb) { lb.dataset.zh = '匯入'; lb.dataset.en = 'Import'; } const sb = $('#isong'); if (sb) { sb.dataset.zh = '🎵 匯入歌曲（可多選）'; sb.dataset.en = '🎵 Import songs (multi-select)'; } } else panel.appendChild(songs);
+  const set = (sel, k) => document.querySelectorAll(sel).forEach(r => { r.dataset.t83 = k; });
+  set('#panel .row', 'fx');
+  const pres = [...document.querySelectorAll('#panel .row.presets')].find(r => r.querySelector('.pr[data-p]')); if (pres) pres.dataset.t83 = 'mode';
+  set('#panel .keeprow, #panel #lamps, #panel #styles', 'mode'); const ir = $('#int') && $('#int').closest('.row'); if (ir) ir.dataset.t83 = 'mode';
+  set('#panel .row.prog, #panel .row.sync, #panel #improw, #panel #trimrow, #panel #songs83', 'music');
+  set('#panel .artrow, #panel #ss83', 'art');
+  // redundant controls removed: 進階 › toggle (replaced by tabs), the duplicate ▶ button (dock has play), the "tap to customize" pill (first-visit hint replaces it)
+  for (const id of ['#adv', '#play', '#openhint']) { const el = $(id); if (el) el.hidden = true; }
+  document.body.classList.add('tabs83');
+  const pick = k => { panel.dataset.tab = k; bar.querySelectorAll('button').forEach(b => { const on = b.dataset.tab === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); }); ls83('ae-premium-tab83', k); panel.scrollTop = 0; };
+  bar.addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) { e.stopPropagation(); pick(b.dataset.tab); } });
+  pick(['mode', 'music', 'art', 'fx'].includes(ls83('ae-premium-tab83')) ? ls83('ae-premium-tab83') : 'mode');
+  V83.pickTab = pick;
+  // outside tap / click closes the panel (capture: runs before the painting gets the tap; that tap is then swallowed)
+  document.addEventListener('pointerdown', e => { if (!document.body.classList.contains('ui')) return; const t = e.target; if (t && t.closest && t.closest('#panel,#open,#hint83,#grid83,#sug83,#toast81,#gift82,#ringbar,#cardview')) return; window.__closedAt83 = performance.now(); hideUI(true); }, true);
+  lab83(panel);
+})();
+
+/* ---- song list, multi import, tempo readout ---- */
+function songs83() {
+  const box = $('#songlist83'); if (!box) return; box.innerHTML = '';
+  TRACKS.forEach((t, i) => { const b = document.createElement('button'); b.className = 'pr b81 song83' + (t === TR ? ' on' : ''); b.textContent = (t === TR ? '♪ ' : '') + (S.lang === 'en' ? t.en : t.zh); b.onclick = e => { e.stopPropagation(); setTrack(i); }; box.appendChild(b); });
+  const c = $('#credit83'); if (c) c.textContent = TR.credit ? (S.lang === 'en' ? 'Music: Calm Ambient 3 by cynicmusic — CC0 (public domain)' : '音樂：Calm Ambient 3 · cynicmusic — CC0 公眾領域') : '';
+}
+function tempoNote83() { const n = $('#tempo83'); if (!n) return; if (TR.beats === 'timeline') { n.textContent = tx83('節奏：內建節拍圖 148 BPM', 'Tempo: built-in beat map 148 BPM'); return; }
+  const lb = A.lb; n.textContent = !S.playing || !lb ? tx83('節奏：播放時即時偵測', 'Tempo: detected live while playing') : tx83('即時節奏 ≈ ', 'Live tempo ≈ ') + (lb.bpm || '…') + ' BPM' + (lb.silent ? tx83('（時脈模式）', ' (clock mode)') : '') + (V83.soft ? tx83(' · 慢歌：派對光效已柔化', ' · slow song: party lights softened') : ''); }
+function importSong83(f, select) {
+  const base = f.name.replace(/\.[^.]+$/, '').slice(0, 32) || 'song';
+  if (f.type && !audio.canPlayType(f.type) && !/\.(mp3|m4a|aac|wav|ogg|oga|flac|opus|webm|mp4)$/i.test(f.name)) return 0;
+  const url = URL.createObjectURL(f), t = { id: 'user-song-' + (++RE81.n), zh: '我的歌 · ' + base, en: 'My song · ' + base, src: url, beats: 'live', cue: 0, user: true, size: f.size }; TRACKS.push(t); if (select) setTrack(TRACKS.length - 1); return 1;
+}
+(function import83() {
+  const fa = $('#fsong'), fi = $('#fimg'); if (fa) { fa.multiple = true; fa.onchange = () => { const fs = [...(fa.files || [])]; let ok = 0; fs.forEach(f => { ok += importSong83(f, ok === 0); }); fa.value = ''; songs83();
+    if (ok) toast81('已加入 ' + ok + ' 首歌 — 切歌時會重新偵測每首歌的節奏；只在你的裝置上', 'Added ' + ok + ' song(s) — tempo is re-detected for each song; stays on your device'); else if (fs.length) toast81('這個瀏覽器無法播放這種音訊格式', 'This browser can’t play this audio format'); }; }
+  if (fi) { fi.multiple = true; fi.onchange = () => { const fs = [...(fi.files || [])]; fs.forEach(f => importImage81(f)); fi.value = ''; setTimeout(() => { gridRender83(); }, 800); }; }
+  const _st = setTrack; setTrack = function (i) { _st(i); V83.soft = false; V83.pt = 0; document.body.classList.remove('soft83'); hideSug83(); songs83(); tempoNote83(); }; // A.lb (tempo estimator) is reset inside setTrack
+  songs83(); $('#lang').addEventListener('click', () => setTimeout(() => { songs83(); tempoNote83(); gridLabels83(); }, 0));
+})();
+
+/* ---- tempo-aware softening + slow-song suggestion (never force-switches) ---- */
+function hideSug83() { const s = $('#sug83'); if (s) s.classList.remove('on'); }
+function showSug83() {
+  let s = $('#sug83'); if (!s) { s = document.createElement('div'); s.id = 'sug83'; s.setAttribute('role', 'status'); document.body.appendChild(s); stopAll83(s); }
+  s.innerHTML = `<span>${tx83('這首歌節奏較慢，建議用「原畫風情」模式', 'This song is slow — try the “Pure art” mode')}</span><button id="sugy83">${tx83('切換', 'Switch')}</button><button id="sugx83" aria-label="close">✕</button>`;
+  s.querySelector('#sugy83').onclick = () => { applyPreset('calm'); hideSug83(); }; s.querySelector('#sugx83').onclick = hideSug83;
+  s.classList.add('on'); clearTimeout(s._h); s._h = setTimeout(hideSug83, 12000);
+}
+setInterval(() => { try {
+  const now = performance.now(), dt = V83.lastT ? (now - V83.lastT) / 1000 : 0; V83.lastT = now; if (S.playing) V83.pt += dt;
+  if (S.playing && TR.beats !== 'timeline' && A.lb && V83.pt > 7) {
+    const lb = A.lb, rate = lb.onsets / Math.max(1, V83.pt), slow = !!TR.calm || (lb.bpm && lb.bpm < 95) || lb.lvlAvg < 0.1 || rate < 0.9;
+    if (slow !== V83.soft) { V83.soft = slow; document.body.classList.toggle('soft83', slow); }
+    if (slow && !V83.sug[TR.id] && !['calm', 'breath'].includes(S.preset)) { V83.sug[TR.id] = 1; V83.sugShown = (V83.sugShown || 0) + 1; showSug83(); }
+  }
+  tempoNote83();
+} catch (e) {} }, 1000);
+
+/* ---- swipe (phone) + side buttons (desktop) ---- */
+(function swipe83() {
+  const st = $('#stage'); if (!st) return; const G = {};
+  st.addEventListener('pointerdown', e => { if (!e.isPrimary) { if (G.g) G.g.multi = 1; return; } G.g = { x: e.clientX, y: e.clientY, t: performance.now(), spin: !!(SPIN82 && SPIN82.s), multi: Z.pts.size > 1 ? 1 : 0 }; });
+  st.addEventListener('pointermove', e => { if (G.g && Z.pts.size > 1) G.g.multi = 1; });
+  st.addEventListener('pointerup', e => { const g = G.g; G.g = null; if (!g || !e.isPrimary || g.multi || g.spin || RE81.on || GLOW.on || Z.s > 1.01 || Z.pinching) return;
+    const dx = e.clientX - g.x, dy = e.clientY - g.y, dt = performance.now() - g.t;
+    if (Math.abs(dx) >= 60 && Math.abs(dx) > 1.6 * Math.abs(dy) && dt < 1500) { V83.swipes++; goArt83(ARTS.indexOf(ART) + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); } });
+  const mk = (id, txt, d, aria) => { const b = document.createElement('button'); b.id = id; b.className = 'side83'; b.textContent = txt; b.setAttribute('aria-label', aria); stopAll83(b); b.onclick = () => goArt83(ARTS.indexOf(ART) + d, d); document.body.appendChild(b); return b; };
+  const l = mk('sprev83', '‹', -1, '上一幅畫 previous painting'), r = mk('snext83', '›', 1, '下一幅畫 next painting');
+  let key = ''; const pos = () => { const p = L.p, F = L.F || 10, y = p.y + p.h / 2, k = [p.x, p.y, p.w, p.h, innerWidth].join(); if (k === key) return; key = k;
+    l.style.top = r.style.top = y + 'px'; l.style.left = Math.max(8, p.x - F - 58) + 'px'; r.style.left = Math.min(innerWidth - 56, p.x + p.w + F + 10) + 'px'; };
+  pos(); setInterval(pos, 250); addEventListener('resize', () => setTimeout(pos, 80));
+  const ap = $('#aprev'), an = $('#anext'); if (ap) ap.onclick = () => goArt83(ARTS.indexOf(ART) - 1, -1); if (an) an.onclick = () => goArt83(ARTS.indexOf(ART) + 1, 1);
+  const gb = document.createElement('button'); gb.id = 'agrid83'; gb.textContent = '▦'; gb.setAttribute('aria-label', '總覽 overview'); gb.title = '總覽 / Overview'; gb.onclick = e => { e.stopPropagation(); openGrid83(); }; const sw = $('#artsw'); if (sw) sw.appendChild(gb);
+})();
+
+/* ---- slideshow ---- */
+(function ss83() {
+  const on = $('#sson83'), ivs = $('#ssiv83'), trs = $('#sstr83'); if (!on) return;
+  const save = () => ls83('ae-premium-ss83', JSON.stringify({ iv: V83.ss.iv, tr: V83.ss.tr }));
+  const sync = () => { on.classList.toggle('on', V83.ss.on); on.setAttribute('aria-pressed', String(V83.ss.on)); on.dataset.zh = V83.ss.on ? '❚❚ 停止自動播放' : '▶ 自動播放'; on.dataset.en = V83.ss.on ? '❚❚ Stop slideshow' : '▶ Slideshow'; on.textContent = on.dataset[S.lang];
+    ivs.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.v === V83.ss.iv)); trs.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === V83.ss.tr)); document.body.classList.toggle('ss83', V83.ss.on); };
+  on.onclick = e => { e.stopPropagation(); V83.ss.on = !V83.ss.on; V83.ss.t = performance.now(); sync(); };
+  ivs.onclick = e => { const b = e.target.closest('button'); if (!b) return; e.stopPropagation(); V83.ss.iv = +b.dataset.v; save(); sync(); };
+  trs.onclick = e => { const b = e.target.closest('button'); if (!b) return; e.stopPropagation(); V83.ss.tr = b.dataset.v; save(); sync(); };
+  V83.ssSync = sync; sync();
+  setInterval(() => { if (!V83.ss.on || document.hidden || RE81.on || GLOW.on || document.body.classList.contains('grid83-open') || V83.busy) return; if (performance.now() - V83.ss.t >= V83.ss.iv * 1000) goArt83(ARTS.indexOf(ART) + 1, 1); }, 250);
+})();
+
+/* ---- overview grid (依比例 / 正方形) ---- */
+function gridLabels83() { const g = $('#grid83'); if (g) lab83(g); }
+function gridMark83() { const g = $('#grid83'); if (!g) return; g.querySelectorAll('.cell83').forEach(c => c.classList.toggle('on', ARTS[+c.dataset.i] === ART)); }
+function gridRender83() {
+  const g = $('#grid83'); if (!g) return; const box = g.querySelector('.g83b'); box.innerHTML = ''; g.dataset.layout = V83.grid;
+  g.querySelectorAll('.g83seg button').forEach(b => { const on = b.dataset.g === V83.grid; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  ARTS.forEach((a, i) => { const ar = (a.w && a.h) ? a.w / a.h : 1, c = document.createElement('button'); c.className = 'cell83'; c.dataset.i = i; c.title = a.zh === a.en ? a.en : a.zh + ' ' + a.en;
+    if (V83.grid === 'ratio') { c.style.flexGrow = ar.toFixed(3); c.style.flexBasis = (ar * 120).toFixed(0) + 'px'; c.style.aspectRatio = ar.toFixed(4); }
+    const im = document.createElement('img'); im.src = a.thumb || a.src; im.alt = a.en; im.loading = 'lazy'; im.decoding = 'async'; im.draggable = false; c.appendChild(im);
+    c.onclick = e => { e.stopPropagation(); closeGrid83(); goArt83(i, i >= ARTS.indexOf(ART) ? 1 : -1); }; box.appendChild(c); });
+  if (V83.grid === 'ratio') { const sp = document.createElement('i'); sp.className = 'fill83'; box.appendChild(sp); }
+  gridMark83();
+}
+function openGrid83() {
+  let g = $('#grid83');
+  if (!g) { g = document.createElement('div'); g.id = 'grid83'; g.setAttribute('role', 'dialog'); g.setAttribute('aria-label', 'overview');
+    g.innerHTML = '<div class="g83h"><b data-zh="總覽" data-en="Overview"></b><div class="g83seg seg83" role="group"><button data-g="ratio" data-zh="依比例" data-en="Aspect"></button><button data-g="square" data-zh="正方形" data-en="Square"></button></div><button class="g83x" aria-label="close">✕</button></div><div class="g83b"></div>';
+    document.body.appendChild(g); stopAll83(g);
+    g.querySelector('.g83seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; V83.grid = b.dataset.g; ls83('ae-premium-grid83', V83.grid); gridRender83(); };
+    g.querySelector('.g83x').onclick = closeGrid83; addEventListener('keydown', e => { if (e.key === 'Escape') closeGrid83(); }); }
+  lab83(g); gridRender83(); hideUI(true); document.body.classList.add('grid83-open'); g.classList.add('on');
+}
+function closeGrid83() { const g = $('#grid83'); if (g) g.classList.remove('on'); document.body.classList.remove('grid83-open'); }
+{ const gb = $('#gridbtn83'); if (gb) gb.onclick = e => { e.stopPropagation(); openGrid83(); }; }
+
+/* ---- first-visit hint (once) ---- */
+(function hint83() {
+  if (ls83('ae-premium-hint83') === '1' && !Q.has('hint')) return;
+  setTimeout(() => {
+    const h = document.createElement('div'); h.id = 'hint83'; h.setAttribute('role', 'dialog'); h.setAttribute('aria-label', 'tips');
+    h.innerHTML = '<div class="h83t" data-zh="歡迎欣賞 ✧" data-en="Welcome ✧"></div>' +
+      '<p data-zh="點右下角 ⚙ 設定，可切換「原畫風情」「歡樂派對」等模式，欣賞畫作在不同燈光下的美。" data-en="Open ⚙ Settings (bottom right) to switch modes like “Pure art” and “Joyful party” and enjoy the painting under different lighting."></p>' +
+      '<p data-zh="在畫上用手指左右滑動即可換畫（電腦可按畫作兩側的 ‹ ›）；點畫作播放音樂。" data-en="Swipe left/right on the painting to change it (desktop: ‹ › beside the art); tap the art to play music."></p>' +
+      '<div class="h83b"><button id="h83set" data-zh="開啟設定" data-en="Open settings"></button><button id="h83ok" data-zh="知道了" data-en="Got it"></button></div>';
+    document.body.appendChild(h); stopAll83(h); lab83(h); requestAnimationFrame(() => h.classList.add('on'));
+    const done = () => { ls83('ae-premium-hint83', '1'); h.classList.remove('on'); setTimeout(() => h.remove(), 400); };
+    h.querySelector('#h83ok').onclick = done; h.querySelector('#h83set').onclick = () => { done(); showUI(); if (V83.pickTab) V83.pickTab('mode'); };
+  }, Q.has('hint') ? 300 : 1400);
+})();
+(function ex83() { if (window.__premium) Object.assign(window.__premium, { V83, goArt83, openGrid83, closeGrid83, importSong83, songs83, newLB83 }); else setTimeout(ex83, 50); })();

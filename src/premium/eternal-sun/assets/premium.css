@@ -170,3 +170,61 @@ body.ringedit #hint,body.ringedit #openhint,body.ringedit #panel{display:none!im
 #trimrow .tr82{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;flex:1}#trimrow label{display:flex;align-items:center;gap:6px;flex:1 1 100%;font-size:12px}#trimrow input[type=range]{flex:1}#trimrow b{font-variant-numeric:tabular-nums;min-width:52px}#trLen{font-size:12px;opacity:.8}
 @media (prefers-reduced-motion:reduce){#gift82 svg{animation:none}}
 body.ringedit #toast81{top:calc(max(10px,env(safe-area-inset-top)) + 150px)}
+/* ===== v2476.83 ===== */
+/* tabs */
+.tabs83{display:flex;gap:4px;justify-content:center;position:sticky;top:-12px;z-index:2;margin:-2px 30px 2px;padding:4px 0;background:rgba(8,7,5,.0)}
+.tabs83 button{flex:1;min-height:30px;padding:5px 6px;font-size:12px;border-radius:999px;border:1px solid rgba(201,168,92,.28);background:rgba(20,16,10,.55);color:#cdb98a;white-space:nowrap}
+.tabs83 button.on{color:#16110a;background:linear-gradient(180deg,#f1d995,#c9a35a);border-color:#e9cf86}
+body.tabs83 #panel .row{display:none!important}
+body.tabs83 #panel .note{display:none!important}
+body.tabs83 #panel[data-tab="mode"] .row[data-t83="mode"]:not([hidden]),body.tabs83 #panel[data-tab="music"] .row[data-t83="music"]:not([hidden]),body.tabs83 #panel[data-tab="art"] .row[data-t83="art"]:not([hidden]),body.tabs83 #panel[data-tab="fx"] .row[data-t83="fx"]:not([hidden]){display:flex!important}
+body.tabs83 #panel[data-tab="fx"] .note{display:block!important}
+body.tabs83 #panel .row.keeprow > :not(#play){display:inline-flex!important}
+body.tabs83 #panel .row.keeprow #play,#adv[hidden],#openhint[hidden]{display:none!important}
+@media (max-width:480px){.tabs83{margin:-2px 28px 2px 0}.tabs83 button{font-size:11.5px;padding:5px 4px}}
+.seg83{display:inline-flex;border:1px solid rgba(201,168,92,.35);border-radius:999px;overflow:hidden}
+.seg83 button{border:0!important;border-radius:0;background:transparent;color:#cdb98a;min-height:30px;padding:5px 10px;font-size:12px}
+.seg83 button.on{background:rgba(233,207,134,.22);color:#f6e7bd}
+#songlist83{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+#panel .song83.on{border-color:currentColor;color:#f6e7bd}
+#panel #sson83.on{border-color:currentColor;background:rgba(233,207,134,.15)}
+/* side buttons (desktop / mouse) */
+.side83{position:fixed;z-index:23;width:46px;height:46px;min-height:46px;margin-top:-23px;border-radius:50%;padding:0;font-size:30px;line-height:40px;color:#f0e2bb;background:rgba(10,8,6,.5);border:1px solid rgba(214,178,106,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;cursor:pointer;transition:opacity .3s,background .2s}
+.side83:hover{background:rgba(40,30,14,.75)}
+@media (hover:hover) and (pointer:fine){.side83{display:block}}
+body.ringedit .side83,body.glow-on .side83,body.grid83-open .side83{display:none!important}
+#artsw #agrid83{font-size:17px}
+/* transitions: whole-image display only */
+.ghost83{position:absolute;z-index:1;object-fit:fill;pointer-events:none;will-change:transform,opacity;-webkit-user-select:none;user-select:none}
+.flash83{position:absolute;z-index:3;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,246,220,.95) 0,rgba(255,214,140,.55) 28%,rgba(240,170,60,.18) 55%,rgba(240,170,60,0) 72%);mix-blend-mode:screen}
+/* overview grid */
+#grid83{position:fixed;inset:0;z-index:60;background:rgba(6,5,4,.96);display:none;flex-direction:column;color:#ecdcae}
+#grid83.on{display:flex}
+.g83h{display:flex;align-items:center;gap:10px;padding:calc(max(10px,env(safe-area-inset-top)) + 4px) 14px 10px;border-bottom:1px solid rgba(201,168,92,.2)}
+.g83h b{font-weight:500;letter-spacing:.2em;font-size:14px;flex:1}
+.g83x{width:36px;height:36px;min-height:36px;border-radius:50%;padding:0;background:transparent;border:1px solid rgba(214,178,106,.4);color:#f0e2bb;font-size:16px}
+.g83b{flex:1;overflow-y:auto;padding:4px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#grid83[data-layout="square"] .g83b{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:3px;align-content:start}
+@media (max-width:480px){#grid83[data-layout="square"] .g83b{grid-template-columns:repeat(3,1fr)}}
+#grid83[data-layout="square"] .cell83{aspect-ratio:1}
+#grid83[data-layout="ratio"] .g83b{display:flex;flex-wrap:wrap;gap:3px;align-content:flex-start}
+#grid83[data-layout="ratio"] .fill83{flex-grow:999;flex-basis:0}
+.cell83{position:relative;padding:0;margin:0;border:0;border-radius:2px;overflow:hidden;background:#15110b;min-height:0;cursor:pointer}
+.cell83 img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.cell83.on{outline:2px solid #e9cf86;outline-offset:-2px}
+/* first-visit hint */
+#hint83{position:fixed;left:50%;top:50%;z-index:70;width:min(340px,calc(100vw - 40px));transform:translate(-50%,-46%);opacity:0;transition:opacity .4s,transform .4s;padding:18px 18px 14px;border-radius:16px;background:rgba(12,10,7,.92);border:1px solid rgba(214,178,106,.55);box-shadow:0 10px 40px rgba(0,0,0,.6),0 0 24px rgba(233,190,90,.15);color:#efe0b6;font-size:14px;line-height:1.6;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#hint83.on{opacity:1;transform:translate(-50%,-50%)}
+#hint83 .h83t{font-size:16px;letter-spacing:.15em;color:#f3d991;margin-bottom:6px;text-align:center}
+#hint83 p{margin:6px 0}
+#hint83 .h83b{display:flex;gap:10px;justify-content:center;margin-top:12px}
+#hint83 button{min-height:36px;padding:6px 16px;border-radius:999px;border:1px solid rgba(214,178,106,.55);background:rgba(30,24,14,.8);color:#f0e2bb;font-size:13.5px}
+#hint83 #h83ok{background:linear-gradient(180deg,#f1d995,#c9a35a);color:#16110a;border-color:#e9cf86}
+/* slow-song suggestion */
+#sug83{position:fixed;left:50%;top:calc(max(10px,env(safe-area-inset-top)) + 76px);transform:translateX(-50%) translateY(-6px);z-index:41;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 24px);padding:7px 8px 7px 14px;border-radius:14px;background:rgba(10,8,6,.9);border:1px solid rgba(214,178,106,.5);color:#f1e3bb;font-size:12.5px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
+#sug83.on{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+#sug83 button{min-height:30px;padding:4px 12px;border-radius:999px;border:1px solid rgba(214,178,106,.55);background:rgba(233,207,134,.18);color:#f6e7bd;font-size:12.5px;white-space:nowrap}
+#sug83 #sugx83{background:transparent;border:0;padding:4px 6px}
+/* tempo-aware softening of party visuals on slow songs */
+body.soft83 #homefx{opacity:.5;transition:opacity 1.5s}
+body.soft83 #front{opacity:.75;transition:opacity 1.5s}
