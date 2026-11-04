@@ -32,8 +32,8 @@
   const laserColors=['#ff416d','#57ffa0','#ffe28d','#65dbff','#c987ff','#ffac68'];
   /* v75 (hand-patched after build_replica.py): 雷射粗細 細/中/粗 width multiplier, coloured outer glow halo under every beam,
      one soft circular impact halo where a tapped beam lands (replaces the 3-line prismatic split). */
-  const LWM={xthin:.6,thin:1,mid:1.9,thick:2.5}; /* v76: 粗 toned down (was 3) */
-  const gk=()=>lw()>2.2?.6:1; /* v76: weaker glow/additive at 粗 */const tb=()=>Math.min(lw(),2.2)*.5; /* v78 tap beams: half width at 中, 粗 capped */const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'xthin']||.6;};
+  const LWM={xthin:.6,thin:1,mid:1.9,thick:2.5}; /* v76: 粗 toned down (was 3); v84: default back to 細 */
+  const gk=()=>lw()>2.2?.6:1; /* v76: weaker glow/additive at 粗 */const tb=()=>Math.min(lw(),2.2)*.5; /* v78 tap beams: half width at 中, 粗 capped */const lw=()=>{const P=window.__premium;return LWM[(P&&P.S&&P.S.lw)||'thin']||1;};
   const hx=a=>Math.round(Math.max(0,Math.min(1,a))*255).toString(16).padStart(2,'0');
   let halos=[];
   function beamGlow(ox,oy,tx,ty,col,w,a){ctx.save();ctx.globalCompositeOperation='source-over';ctx.lineCap='round';ctx.strokeStyle=col;ctx.shadowColor=col;ctx.shadowBlur=lite?0:Math.min(w*3,10);
@@ -43,9 +43,29 @@
     ctx.save();ctx.globalCompositeOperation='source-over';softHalo(h.x,h.y,h.col,a*.8,R);ctx.globalCompositeOperation='lighter';softHalo(h.x,h.y,h.col,a*.22,R*.42);
     ctx.globalCompositeOperation='source-over';ctx.strokeStyle=h.col;ctx.shadowColor=h.col;ctx.shadowBlur=lite?0:16;ctx.globalAlpha=a*.55;ctx.lineWidth=2.5+lw()*.8;ctx.beginPath();ctx.arc(h.x,h.y,R*.62,0,Math.PI*2);ctx.stroke();ctx.restore();}}
   const variation=seed=>{const n=Math.sin(seed*12.9898+78.233)*43758.5453;return n-Math.floor(n);};
+  /* v84 nightclub beam (overlay only): hazy scatter cone + soft glow stack around a bright core, fast shimmer (~26 Hz) + micro jitter,
+     fog grain along the beam, and a clearly larger hotspot with a crisp white centre and a soft coloured halo. */
+  function clubBeam(c,ox,oy,tx,ty,col,w,a,lite,now,i,pulse){
+    pulse=pulse||0;const fl=.58+.42*variation(Math.floor(now/38)*1.37+i*7.31),st=variation(Math.floor(now/90)+i*3.1)>.86?1.25:1; // shimmer + occasional strobe pop
+    tx+=(variation(now*.071+i*1.9)-.5)*2.4;ty+=(variation(now*.093+i*3.7)-.5)*2.4; // micro jitter (≈1 px)
+    a=Math.min(1,a*fl*st);if(a<.01)return;
+    const dx=tx-ox,dy=ty-oy,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
+    c.save();c.globalCompositeOperation='screen';c.lineCap='round';c.shadowBlur=0;
+    const h0=w*1.6,h1=w*7.5,g=c.createLinearGradient(ox,oy,tx,ty);const ah=Math.max(a,.5*fl);g.addColorStop(0,col+hx(ah*.06));g.addColorStop(.65,col+hx(ah*.17));g.addColorStop(1,col+hx(ah*.3));
+    c.fillStyle=g;c.beginPath();c.moveTo(ox+nx*h0,oy+ny*h0);c.lineTo(tx+nx*h1,ty+ny*h1);c.lineTo(tx-nx*h1,ty-ny*h1);c.lineTo(ox-nx*h0,oy-ny*h0);c.closePath();c.fill(); // haze cone
+    c.strokeStyle=col;for(const [k,al] of (lite?[[3.2,.16],[1.3,.75]]:[[7,.06],[4.2,.10],[2.4,.2],[1.3,.8]])){c.globalAlpha=Math.min(1,a*al*(k>2?gk():1));c.lineWidth=w*k;c.beginPath();c.moveTo(ox,oy);c.lineTo(tx,ty);c.stroke();} // soft glow stack
+    c.strokeStyle='#fffdf4';c.globalAlpha=Math.min(1,ah*1.05+.15);c.lineWidth=Math.max(.8,w*.42);c.beginPath();c.moveTo(ox,oy);c.lineTo(tx,ty);c.stroke(); // bright core
+    if(!lite){c.fillStyle=col;for(let k=0;k<7;k++){const u=variation(Math.floor(now/60)+i*11+k*5.3),r=.6+variation(k*2.7+i)*1.2*w;c.globalAlpha=a*.5*variation(now*.013+k+i);c.beginPath();c.arc(ox+dx*u+nx*(u*h1)*(variation(k+i*9)-.5),oy+dy*u+ny*(u*h1)*(variation(k+i*9)-.5),r,0,6.2832);c.fill();}} // fog grain
+    c.globalAlpha=1;const R=Math.min(artW*.2,Math.max(30,w*14))*(1+.4*pulse)*(.92+.16*fl);
+    const hg=c.createRadialGradient(tx,ty,0,tx,ty,R);hg.addColorStop(0,`rgba(255,255,250,${Math.min(1,ah+.1)})`);hg.addColorStop(.09,`rgba(255,252,236,${Math.min(1,ah*.9)})`);hg.addColorStop(.22,col+hx(ah*.65));hg.addColorStop(.5,col+hx(ah*.24));hg.addColorStop(1,col+'00');
+    c.fillStyle=hg;c.fillRect(tx-R,ty-R,R*2,R*2); // soft halo
+    c.globalAlpha=Math.min(1,ah*.6);c.strokeStyle='#fffbe8';c.lineWidth=Math.max(.7,w*.35);const sR=R*.55;c.beginPath();c.moveTo(tx-sR,ty);c.lineTo(tx+sR,ty);c.moveTo(tx,ty-sR*.7);c.lineTo(tx,ty+sR*.7);c.stroke(); // small star flare
+    c.globalAlpha=Math.min(1,ah*1.3+.4);c.fillStyle='#ffffff';c.beginPath();c.arc(tx,ty,Math.max(4.2,w*2.6),0,6.2832);c.fill(); // crisp centre (v84: bigger)
+    c.restore();}
+  window.aeClubBeam=clubBeam;
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
-    const angle=i*Math.PI/3+phase*.24+variation(group+1)*1.7+now/1000*1.25*(1+.12*i)*(i%2?1:-1); /* v83: lasers scan faster (searchlights keep their slow sway) */
+    const angle=i*Math.PI/3+phase*.24+variation(group+1)*1.7+now/1000*1.9*(1+.12*i)*(i%2?1:-1)+Math.sin(now/1000*3.1+i*1.7)*.35; /* v84: quicker club sweeps with a whip; v83: lasers scan faster (searchlights keep their slow sway) */
     const ambient={x:artX0+artW*(.16+.68*(.5+.5*Math.sin(angle))),y:Math.max(30,artBottom*(.20+.60*(.5+.5*Math.cos(angle*1.3))))};
     const remaining=focus?focus.until-now:0;
     const weight=remaining>0?Math.min(1,remaining/600):0;
@@ -112,22 +132,7 @@
         const originX=i%3===0?artX0-artW*.08:i%3===1?artX0+artW*1.08:artX0+artW*(.15+i*.12),originY=i%3===2?-20:artBottom*(.15+(i%4)*.20);
         const target=destination(i,sweep,now),targetX=target.x,targetY=target.y;targets.push({x:Math.round(targetX),y:Math.round(targetY)});
         const power=Math.min(1,(beat.stage==='build'?.06+beat.buildProgress*.06:.07)+energy*.035+beat.pulse*.85+beat.dropPulse*.12);
-        beamGlow(originX,originY,targetX,targetY,colors[i],(1.4+beat.pulse*2.6)*lw(),Math.min(1,power*1.5+.14));
-        ctx.shadowColor=colors[i];ctx.shadowBlur=lite?0:14+beat.pulse*25;
-        ctx.strokeStyle=colors[i];ctx.globalAlpha=Math.min(1,power*1.5+.14);ctx.lineWidth=(1.4+beat.pulse*2.6)*lw(); /* v74 day: stronger beams on the bright art */
-        ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
-        // Narrow pale core and prismatic rays give the beam a refracted edge.
-        ctx.shadowBlur=lite?0:4;ctx.strokeStyle='#ffffff';ctx.lineWidth=1.1*Math.sqrt(lw());ctx.globalAlpha=Math.min(1,power*1.2+.2); /* v74: white core */
-        ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
-        // v75: no 3-line prismatic split at the landing point — one soft round light spot instead (pool below + halo)
-        softHalo(targetX,targetY,colors[i],Math.min(1,power*.75+.08)*gk(),(24+beat.pulse*26)*(.85+.1*lw()));
-        // Soft light pools sit on the unchanged painted surface, fading outward.
-        ctx.globalAlpha=1;ctx.shadowBlur=0;
-        if(!bare){
-          const pool=ctx.createRadialGradient(targetX,targetY,1,targetX,targetY,38+beat.pulse*48);
-          pool.addColorStop(0,`rgba(255,249,218,${power*.60})`);pool.addColorStop(.18,colors[i]+Math.round(power*75).toString(16).padStart(2,'0'));pool.addColorStop(1,colors[i]+'00');
-          ctx.fillStyle=pool;ctx.fillRect(targetX-90,targetY-90,180,180);
-        }
+        clubBeam(ctx,originX,originY,targetX,targetY,colors[i],(1.4+beat.pulse*2.6)*lw(),Math.min(1,power*1.5+.18),lite||bare,now,i,beat.pulse); /* v84: nightclub beam — haze, shimmer, jitter, big crisp hotspot */
         ctx.strokeStyle=colors[i];ctx.lineWidth=.7;ctx.globalAlpha=beat.pulse*.6;ctx.beginPath();ctx.arc(targetX,targetY,Math.max(0,8+beat.phase*28),0,Math.PI*2);ctx.stroke();
       }
       hero.dataset.laserTargets=JSON.stringify(targets);if(focus&&focus.until-now>600){hero.dataset.lastFocusTargets=JSON.stringify(targets);hero.dataset.lastFocusPaintTime=now.toFixed(1);}
