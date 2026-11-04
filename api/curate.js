@@ -6,6 +6,18 @@ const { send, clean, LIMITS } = L;
 const USER_RE = /^[a-z0-9_]{3,24}$/;
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,100}\.[^\s@]{2,}$/;
 const DAY = 86400;
+// Temp passwords are typed/pasted by hand: tolerate surrounding/inner whitespace, full-width chars, dash variants, missing dashes.
+function pwCandidates(raw, mustChange) {
+  const r = String(raw || ''); const out = [r];
+  if (mustChange) {
+    const n = r.normalize('NFKC').replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-').replace(/\s+/g, '');
+    out.push(n);
+    const bare = n.replace(/-/g, '');
+    if (bare.length === 14) out.push(bare.slice(0, 4) + '-' + bare.slice(4, 9) + '-' + bare.slice(9));
+  } else if (r.trim() !== r) out.push(r.trim());
+  return [...new Set(out)];
+}
+const pwOk = (raw, u) => pwCandidates(raw, u.must_change).some(p => L.verifyPassword(p, u.hash));
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 function pubUser(u) { return u && { username: u.username, name: u.name, can_curate: !!u.can_curate, can_publish_public: !!u.can_publish_public, disabled: !!u.disabled, must_change: !!u.must_change, createdAt: u.createdAt }; }
@@ -116,7 +128,7 @@ module.exports = async (req, res) => {
         if (apps[0] && apps[0].status === 'rejected') return send(res, 403, { error: '這個帳號的申請未通過，目前無法登入。如有疑問請聯絡管理者。', code: 'rejected' });
         return send(res, 401, { error: '找不到這個帳號名稱，請確認拼字（英文小寫），或先申請帳號。', code: 'no_user' });
       }
-      if (!L.verifyPassword(b.password || '', u.hash)) {
+      if (!pwOk(b.password, u)) {
         await wait(600);
         if (u.must_change) return send(res, 401, { error: '密碼不正確。第一次登入請使用管理者核准時給你的「臨時密碼」（不是申請時自己想的密碼）。忘記了可以請管理者重設。', code: 'temp_pw' });
         return send(res, 401, { error: '密碼不正確，請再試一次；忘記密碼請聯絡管理者重設。', code: 'bad_pw' });
@@ -130,7 +142,7 @@ module.exports = async (req, res) => {
     const u = await L.currentUser(req);
     if (!u) return send(res, 401, { error: '請先登入' });
     if (a === 'change-password') {
-      if (!L.verifyPassword(b.current || '', u.hash)) { await wait(500); return send(res, 401, { error: '目前密碼不正確' }); }
+      if (!pwOk(b.current, u)) { await wait(500); return send(res, 401, { error: '目前密碼不正確' }); }
       const np = String(b.next || '');
       if (np.length < 10 || np.length > 128) return send(res, 400, { error: '新密碼請至少 10 個字元' });
       if (L.verifyPassword(np, u.hash)) return send(res, 400, { error: '新密碼不能和臨時密碼相同' });
