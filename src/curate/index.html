@@ -43,7 +43,7 @@
 const E=CU.esc;let ME=null,EX=null,TPL=[],MAX=3*1024*1024;
 const show=id=>{CU.$('#home').hidden=id!=='home';CU.$('#ed').hidden=id!=='ed';scrollTo(0,0)};
 async function home(){const r=await CU.api('my-ex');show('home');
- CU.$('#mine').innerHTML=r.items&&r.items.length?r.items.map(x=>`<div class="cu-item"><h3>${E(x.title)}</h3><p class="cu-meta"><span class="cu-tag ${x.status==='published'?(x.visibility==='public'?'pub':'pri'):'dr'}">${x.status==='published'?(x.visibility==='public'?'公開展出中':'不公開連結'):'草稿'}</span>${x.works} 件作品 · ${new Date(x.updatedAt).toLocaleString('zh-TW')}</p><div class="cu-row"><button class="cu-btn small" data-edit="${E(x.id)}">編輯</button><a class="cu-btn ghost small" href="${E(x.url)}" target="_blank" rel="noopener">${x.status==='published'?'觀看展覽':'預覽'}</a></div></div>`).join(''):'<p class="cu-note">還沒有展覽。按「建立新展覽」開始吧！</p>'}
+ CU.$('#mine').innerHTML=r.items&&r.items.length?r.items.map(x=>`<div class="cu-item"><h3>${E(x.title)}</h3><p class="cu-meta"><span class="cu-tag ${x.status==='published'?(x.visibility==='public'?'pub':'pri'):'dr'}">${x.status==='published'?(x.visibility==='public'?'公開展出中':'不公開連結'):'草稿'}</span>${x.works} 件作品 · ${new Date(x.updatedAt).toLocaleString('zh-TW')}</p><div class="cu-row"><button class="cu-btn small" data-edit="${E(x.id)}">編輯</button><a class="cu-btn ghost small" href="${E(x.url)}" target="_blank" rel="noopener">${x.status==='published'?'觀看展覽':'預覽'}</a><button class="cu-btn danger small" data-del="${E(x.id)}">刪除</button></div></div>`).join(''):'<p class="cu-note">還沒有展覽。按「建立新展覽」開始吧！</p>'}
 function addWork(w){const n=CU.$('#wt').content.firstElementChild.cloneNode(true);n._img=w&&w.image||null;n._id=w&&w.id||'';
  n.querySelector('.wtitle').value=w?w.title:'';n.querySelector('.wstory').value=w?w.story:'';
  if(n._img&&n._img.kind==='url')n.querySelector('.wurl').value=n._img.url;thumb(n);
@@ -73,6 +73,7 @@ async function save(status){const em=CU.$('#em');CU.msg(em,'');
  ok.innerHTML=(status==='published'?(r.ex.visibility==='public'?'展覽已公開發布 ✦ 也會出現在 <a href="/ex">線上展覽列表</a>。':'展覽已發布為不公開連結 ✦ 只有拿到這個連結的人看得到：'):'草稿已儲存。預覽連結（只有你看得到）：')+`<br><a href="${E(r.ex.url)}" target="_blank" rel="noopener" id="exLink">${E(link)}</a>`}
 CU.$('#new').onclick=()=>edit(null);CU.$('#addw').onclick=()=>addWork();CU.$('#back').onclick=e=>{e.preventDefault();home()};
 CU.$('#saveDraft').onclick=()=>save('draft');CU.$('#publish').onclick=()=>save('published');
+document.addEventListener('click',async e=>{const d=e.target.dataset&&e.target.dataset.del;if(!d)return;if(!confirm('確定刪除這個展覽？刪除後無法復原。'))return;const r=await CU.api('ex-delete',{id:d});if(!r.ok)return alert(r.error||'刪除失敗');home()});
 document.addEventListener('click',async e=>{const id=e.target.dataset&&e.target.dataset.edit;if(!id)return;const r=await CU.api('ex-get&id='+encodeURIComponent(id));if(r.ex)edit(r.ex)});
 CU.$('#out').onclick=async()=>{await CU.api('logout',{});location.replace('/curate/login')};
 (async()=>{const s=await CU.api('status');if(!s.me||s.me.must_change)return location.replace('/curate/login');ME=s.me;TPL=s.templates;MAX=s.limits.imageBytes;

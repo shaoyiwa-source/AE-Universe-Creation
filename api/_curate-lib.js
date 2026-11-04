@@ -71,6 +71,13 @@ async function getImage(id) {
   return null;
 }
 
+async function delKey(key) {
+  key = P + key;
+  if (blobReady()) { const { del } = await import('@vercel/blob'); await del(key).catch(() => {}); return; }
+  if (devMemory()) { mem.delete(key); return; }
+  throw Object.assign(new Error('storage not configured'), { status: 503 });
+}
+
 // ---- crypto helpers ----
 function token(bytes) { return crypto.randomBytes(bytes || 16).toString('base64url'); }
 function safeEq(a, b) {
@@ -164,4 +171,4 @@ const TEMPLATES = [
   { id: 'story-scroll', name: '故事長卷', ready: false, note: '即將推出' }
 ];
 
-module.exports = { LIMITS, MAX_IMG, MAX_WORKS, TEMPLATES, storageName, getJSON, putJSON, listJSON, putImage, getImage, token, safeEq, hashPassword, verifyPassword, tempPassword, secret, sign, unsign, cookies, setCookie, SESSION, ADMIN, currentUser, isAdmin, adminConfigured, clean, esc, send, readBody };
+module.exports = { LIMITS, MAX_IMG, MAX_WORKS, TEMPLATES, storageName, getJSON, putJSON, listJSON, putImage, getImage, delKey, token, safeEq, hashPassword, verifyPassword, tempPassword, secret, sign, unsign, cookies, setCookie, SESSION, ADMIN, currentUser, isAdmin, adminConfigured, clean, esc, send, readBody };

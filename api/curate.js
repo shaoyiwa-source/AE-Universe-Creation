@@ -144,6 +144,14 @@ module.exports = async (req, res) => {
       await L.putImage(id, buf, type); // stored byte-for-byte, never re-encoded
       return send(res, 200, { ok: true, image: { kind: 'blob', id } });
     }
+    if (a === 'ex-delete') {
+      const id = String(b.id || '').replace(/[^A-Za-z0-9_-]/g, '');
+      const e = id && await L.getJSON('ex/' + id + '.json');
+      if (!e || e.owner !== u.username) return send(res, 404, { error: '找不到這個展覽' });
+      for (const w of e.works || []) if (w.image && w.image.kind === 'blob') await L.delKey('img/' + w.image.id);
+      await L.delKey('ex/' + id + '.json');
+      return send(res, 200, { ok: true });
+    }
     if (a === 'ex-save') {
       const id = String(b.id || '').replace(/[^A-Za-z0-9_-]/g, '');
       let prev = null;
