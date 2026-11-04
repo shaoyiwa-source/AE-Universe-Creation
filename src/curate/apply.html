@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.svg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/curate/curate.css?v=1"><script src="/curate/curate.js?v=1"></script><title>申請策展帳號｜AE 線上展覽</title></head><body class="cu">
+<header class="cu-top"><a href="/" aria-label="AE 首頁"><img src="/assets/ae-three-rings-transparent.webp" alt="AE Universe Creation"></a><nav><a href="/ex">線上展覽</a><a href="/curate/login">登入</a></nav></header>
+<main class="cu-main">
+<p class="cu-kicker">AE CURATOR · 小規模邀請試用</p>
+<h1>申請策展帳號</h1>
+<p class="cu-lead">想用自己的作品辦一場線上展覽嗎？留下你的資料，我們看過後會為你開通帳號。</p>
+<form class="cu-card" id="f" novalidate>
+<label for="name">你的名字</label><input type="text" id="name" maxlength="60" autocomplete="name" required>
+<label for="email">Email <small>開通後會用它聯絡你</small></label><input type="email" id="email" maxlength="120" autocomplete="email" required>
+<label for="intro">簡短的藝術家介紹 <small>創作媒材、想展出的作品…</small></label><textarea id="intro" maxlength="800" required></textarea>
+<label for="username">希望的帳號名稱 <small>3–24 個英文小寫、數字或底線</small></label><input type="text" id="username" maxlength="24" autocapitalize="none" autocomplete="username" spellcheck="false" pattern="[a-z0-9_]{3,24}" required>
+<div class="cu-row"><button class="cu-btn" type="submit">送出申請</button></div>
+<p class="cu-msg" id="m" role="status"></p>
+</form>
+<div class="cu-card" id="done" hidden><h2>謝謝你，申請已送出 ✦</h2><p class="cu-lead">我們會盡快看過你的資料。帳號開通後，管理者會把臨時密碼交給你，第一次登入時請換成自己的密碼。</p><a class="cu-btn ghost" href="/ex">先逛逛線上展覽</a></div>
+</main>
+<script>
+const f=CU.$('#f'),m=CU.$('#m');
+CU.$('#username').addEventListener('input',e=>{e.target.value=e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,'')});
+f.addEventListener('submit',async e=>{e.preventDefault();const b=f.querySelector('button');b.disabled=true;CU.msg(m,'');
+ const r=await CU.api('apply',{name:CU.$('#name').value,email:CU.$('#email').value,intro:CU.$('#intro').value,username:CU.$('#username').value});
+ b.disabled=false;if(r.ok){f.hidden=true;CU.$('#done').hidden=false;scrollTo(0,0)}else CU.msg(m,r.error||'送出失敗，請再試一次')});
+</script></body></html>

@@ -1,0 +1,41 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.svg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/curate/curate.css?v=1"><script src="/curate/curate.js?v=1"></script><title>策展帳號管理｜AE</title></head><body class="cu">
+<header class="cu-top"><a href="/" aria-label="AE 首頁"><img src="/assets/ae-three-rings-transparent.webp" alt="AE Universe Creation"></a><nav><a href="/curate">策展室</a><button class="cu-btn ghost small" id="out" hidden>登出管理</button></nav></header>
+<main class="cu-main">
+<p class="cu-kicker">OWNER · ADMIN</p>
+<h1>策展帳號管理</h1>
+<div class="cu-card" id="nc" hidden><h2>尚未設定（not configured）</h2><p class="cu-lead">管理密碼還沒有設定。請由 Owner 在 Vercel 環境變數加入 <code>CURATE_ADMIN_PASSWORD</code>（至少 8 個字元）後重新部署。</p></div>
+<form class="cu-card" id="af" hidden novalidate><label for="ap">管理密碼</label><input type="password" id="ap" autocomplete="current-password"><div class="cu-row"><button class="cu-btn" type="submit">進入管理</button></div><p class="cu-msg" id="m"></p></form>
+<div id="panel" hidden>
+<div class="cu-card" id="tempBox" hidden><h2>帳號已建立</h2><p class="cu-lead">這組臨時密碼只會顯示這一次，請直接交給 <b id="tu"></b>，對方第一次登入時會被要求更換。</p><div class="cu-temp" id="tp"></div><div class="cu-row"><button class="cu-btn ghost small" id="tcopy" type="button">複製</button><button class="cu-btn small" id="tclose" type="button">我已交給對方，關閉</button></div></div>
+<p class="cu-msg" id="pm"></p>
+<section class="cu-card"><h2>待審申請</h2><div class="cu-list" id="apps"></div></section>
+<section class="cu-card"><h2>策展帳號</h2><div class="cu-list" id="users"></div></section>
+<section class="cu-card"><h2>已處理的申請</h2><div class="cu-list" id="done"></div></section>
+</div>
+</main>
+<script>
+const E=CU.esc,pm=CU.$('#pm');
+async function load(){const r=await CU.api('admin-list');if(!r.ok){CU.$('#panel').hidden=true;CU.$('#af').hidden=false;return}
+ CU.$('#panel').hidden=false;CU.$('#af').hidden=true;CU.$('#out').hidden=false;
+ const pend=r.apps.filter(a=>a.status==='pending'),old=r.apps.filter(a=>a.status!=='pending');
+ CU.$('#apps').innerHTML=pend.length?pend.map(a=>`<div class="cu-item"><h3>${E(a.name)} <span class="cu-meta">@${E(a.username)}</span></h3><p class="cu-meta">${E(a.email)} · ${new Date(a.createdAt).toLocaleString('zh-TW')}</p><p>${E(a.intro).replace(/\n/g,'<br>')}</p><div class="cu-row"><button class="cu-btn small" data-approve="${E(a.id)}">核准並建立帳號</button><button class="cu-btn danger small" data-reject="${E(a.id)}">婉拒</button></div></div>`).join(''):'<p class="cu-note">目前沒有待審申請。</p>';
+ CU.$('#done').innerHTML=old.length?old.map(a=>`<div class="cu-meta">${E(a.name)} @${E(a.username)} — ${a.status==='approved'?'已核准':'已婉拒'}</div>`).join(''):'<p class="cu-note">—</p>';
+ CU.$('#users').innerHTML=r.users.length?r.users.map(u=>`<div class="cu-item" data-u="${E(u.username)}"><h3>${E(u.name)} <span class="cu-meta">@${E(u.username)}</span></h3><p class="cu-meta">${u.disabled?'<span class="cu-tag">已停用</span>':''}${u.must_change?'<span class="cu-tag">尚未更換臨時密碼</span>':''}</p>
+ <label class="cu-check"><input type="checkbox" data-k="can_curate" ${u.can_curate?'checked':''}>可以策展（建立展覽）</label>
+ <label class="cu-check"><input type="checkbox" data-k="can_publish_public" ${u.can_publish_public?'checked':''}>可以公開刊登到 /ex 展覽列表</label>
+ <label class="cu-check"><input type="checkbox" data-k="disabled" ${u.disabled?'checked':''}>停用這個帳號</label>
+ <div class="cu-row"><button class="cu-btn ghost small" data-reset>重設臨時密碼</button></div></div>`).join(''):'<p class="cu-note">還沒有帳號。</p>'}
+function showTemp(u,p){CU.$('#tu').textContent='@'+u;CU.$('#tp').textContent=p;CU.$('#tempBox').hidden=false;scrollTo(0,0)}
+CU.$('#tclose').onclick=()=>{CU.$('#tp').textContent='';CU.$('#tempBox').hidden=true};
+CU.$('#tcopy').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(CU.$('#tp').textContent).then(()=>CU.msg(pm,'已複製','ok'));
+document.addEventListener('click',async e=>{const t=e.target;
+ if(t.dataset.approve){t.disabled=true;const r=await CU.api('approve',{id:t.dataset.approve});if(!r.ok){t.disabled=false;return CU.msg(pm,r.error)}CU.msg(pm,'');await load();showTemp(r.user.username,r.tempPassword)}
+ if(t.dataset.reject){if(!confirm('確定婉拒這份申請？'))return;const r=await CU.api('reject',{id:t.dataset.reject});r.ok?load():CU.msg(pm,r.error)}
+ if(t.hasAttribute('data-reset')){const u=t.closest('[data-u]').dataset.u;if(!confirm('重設 @'+u+' 的密碼？對方目前的登入會失效。'))return;const r=await CU.api('reset-password',{username:u});if(!r.ok)return CU.msg(pm,r.error);await load();showTemp(u,r.tempPassword)}});
+document.addEventListener('change',async e=>{const t=e.target;if(!t.dataset.k)return;const u=t.closest('[data-u]').dataset.u;
+ const r=await CU.api('set-perms',{username:u,[t.dataset.k]:t.checked});if(!r.ok){t.checked=!t.checked;return CU.msg(pm,r.error)}CU.msg(pm,'已更新 @'+u+' 的設定','ok');load()});
+CU.$('#af').addEventListener('submit',async e=>{e.preventDefault();const r=await CU.api('admin-login',{password:CU.$('#ap').value});CU.$('#ap').value='';
+ if(r.notConfigured){CU.$('#af').hidden=true;CU.$('#nc').hidden=false;return}if(!r.ok)return CU.msg(CU.$('#m'),r.error||'登入失敗');load()});
+CU.$('#out').onclick=async()=>{await CU.api('admin-logout',{});location.reload()};
+(async()=>{const s=await CU.api('status');if(!s.adminConfigured){CU.$('#nc').hidden=false;return}s.admin?load():CU.$('#af').hidden=false})();
+</script></body></html>

@@ -1,0 +1,80 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.svg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/curate/curate.css?v=1"><script src="/curate/curate.js?v=1"></script><title>我的策展室｜AE 線上展覽</title></head><body class="cu">
+<header class="cu-top"><a href="/" aria-label="AE 首頁"><img src="/assets/ae-three-rings-transparent.webp" alt="AE Universe Creation"></a><nav><a href="/ex">線上展覽</a><button class="cu-btn ghost small" id="out">登出</button></nav></header>
+<main class="cu-main">
+<section id="home" hidden>
+<p class="cu-kicker">AE CURATOR</p>
+<h1>我的策展室</h1>
+<p class="cu-lead" id="hi"></p>
+<div class="cu-row" style="margin:0 0 18px"><button class="cu-btn" id="new">＋ 建立新展覽</button></div>
+<div class="cu-card"><h2>我的展覽</h2><div class="cu-list" id="mine"></div></div>
+</section>
+<form id="ed" hidden novalidate>
+<p class="cu-kicker"><a href="#" id="back">← 回到我的展覽</a></p>
+<h1 id="edh">建立新展覽</h1>
+<div class="cu-card"><h2>1　展覽資訊</h2>
+<label for="title">展覽名稱</label><input type="text" id="title" maxlength="80" required>
+<label for="openingDate">開展日期</label><input type="date" id="openingDate">
+<label for="description">展覽介紹 <small>想讓觀眾知道的故事</small></label><textarea id="description" maxlength="3000"></textarea>
+<label for="curatorIntro">策展人介紹</label><textarea id="curatorIntro" maxlength="800"></textarea>
+</div>
+<div class="cu-card"><h2>2　選擇版型</h2><div class="cu-tpls" id="tpls"></div></div>
+<div class="cu-card"><h2>3　展出作品</h2>
+<p class="cu-note">每件作品可以上傳圖片（JPG／PNG／WebP，3 MB 以內，原檔保存不壓縮、不修改），或貼上圖片網址。</p>
+<div class="cu-drive"><button type="button" class="cu-btn ghost small" disabled aria-disabled="true">連結 Google 雲端硬碟</button><span class="cu-note">即將推出：之後作品圖片會存到你自己的 Google 雲端硬碟（需要 Google OAuth 設定）。目前圖片暫存在 AE 網站空間。</span></div>
+<div id="works"></div>
+<div class="cu-row"><button type="button" class="cu-btn ghost" id="addw">＋ 加入作品</button></div>
+</div>
+<div class="cu-card"><h2>4　誰可以看見</h2><div class="cu-vis">
+<label class="cu-tpl"><input type="radio" name="vis" value="private" checked><strong>不公開連結</strong><span>只有拿到專屬連結的人看得到，不會出現在展覽列表。</span></label>
+<label class="cu-tpl"><input type="radio" name="vis" value="public" id="visPub"><strong>公開展覽</strong><span id="pubNote">刊登在 AE 線上展覽列表（/ex），所有人都看得到。</span></label>
+</div></div>
+<div class="cu-card"><div class="cu-row" style="margin:0"><button type="button" class="cu-btn ghost" id="saveDraft">儲存草稿</button><button type="button" class="cu-btn" id="publish">發布展覽</button></div>
+<p class="cu-msg" id="em" role="status"></p>
+<div id="pubOk" hidden class="cu-msg ok"></div></div>
+</form>
+</main>
+<template id="wt"><div class="cu-work"><div class="cu-work-head"><strong class="wn"></strong><button type="button" class="cu-btn danger small wdel">移除</button></div>
+<label>作品名稱</label><input type="text" class="wtitle" maxlength="80">
+<label>作品故事</label><textarea class="wstory" maxlength="1500"></textarea>
+<label>作品圖片</label><input type="file" class="wfile" accept="image/jpeg,image/png,image/webp">
+<label>或貼上圖片網址 <small>https://</small></label><input type="url" class="wurl" maxlength="600" placeholder="https://">
+<img class="cu-thumb" alt="" hidden><p class="cu-note wst"></p></div></template>
+<script>
+const E=CU.esc;let ME=null,EX=null,TPL=[],MAX=3*1024*1024;
+const show=id=>{CU.$('#home').hidden=id!=='home';CU.$('#ed').hidden=id!=='ed';scrollTo(0,0)};
+async function home(){const r=await CU.api('my-ex');show('home');
+ CU.$('#mine').innerHTML=r.items&&r.items.length?r.items.map(x=>`<div class="cu-item"><h3>${E(x.title)}</h3><p class="cu-meta"><span class="cu-tag ${x.status==='published'?(x.visibility==='public'?'pub':'pri'):'dr'}">${x.status==='published'?(x.visibility==='public'?'公開展出中':'不公開連結'):'草稿'}</span>${x.works} 件作品 · ${new Date(x.updatedAt).toLocaleString('zh-TW')}</p><div class="cu-row"><button class="cu-btn small" data-edit="${E(x.id)}">編輯</button><a class="cu-btn ghost small" href="${E(x.url)}" target="_blank" rel="noopener">${x.status==='published'?'觀看展覽':'預覽'}</a></div></div>`).join(''):'<p class="cu-note">還沒有展覽。按「建立新展覽」開始吧！</p>'}
+function addWork(w){const n=CU.$('#wt').content.firstElementChild.cloneNode(true);n._img=w&&w.image||null;n._id=w&&w.id||'';
+ n.querySelector('.wtitle').value=w?w.title:'';n.querySelector('.wstory').value=w?w.story:'';
+ if(n._img&&n._img.kind==='url')n.querySelector('.wurl').value=n._img.url;thumb(n);
+ n.querySelector('.wdel').onclick=()=>{n.remove();renum()};
+ n.querySelector('.wurl').oninput=e=>{const v=e.target.value.trim();n._img=v?{kind:'url',url:v}:null;thumb(n)};
+ n.querySelector('.wfile').onchange=async e=>{const f=e.target.files[0],st=n.querySelector('.wst');if(!f)return;
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)){st.textContent='請選擇 JPG、PNG 或 WebP 圖片';return}
+  if(f.size>MAX){st.textContent='這張圖片超過 3 MB，請換一張較小的檔案，或改貼圖片網址';e.target.value='';return}
+  st.textContent='上傳中…';const data=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.readAsDataURL(f)});
+  const r=await CU.api('upload-img',{type:f.type,data});if(!r.ok){st.textContent=r.error||'上傳失敗';return}
+  n._img=r.image;n.querySelector('.wurl').value='';st.textContent='已上傳 ✓';thumb(n)};
+ CU.$('#works').appendChild(n);renum()}
+function thumb(n){const i=n.querySelector('.cu-thumb'),im=n._img;if(!im){i.hidden=true;return}i.src=im.kind==='blob'?'/api/curate?a=img&id='+encodeURIComponent(im.id):im.url;i.hidden=false}
+function renum(){[...CU.$('#works').children].forEach((n,i)=>n.querySelector('.wn').textContent='作品 '+(i+1))}
+function edit(ex){EX=ex||null;CU.$('#edh').textContent=ex?'編輯展覽':'建立新展覽';CU.$('#pubOk').hidden=true;CU.msg(CU.$('#em'),'');
+ for(const k of['title','openingDate','description','curatorIntro'])CU.$('#'+k).value=ex?ex[k]||'':'';
+ CU.$('#tpls').innerHTML=TPL.map((t,i)=>`<label class="cu-tpl"><input type="radio" name="tpl" value="${t.id}" ${t.ready?'':'disabled'} ${(ex?ex.template===t.id:i===0)?'checked':''}><strong>${E(t.name)}</strong><span>${t.ready?E(t.note):'即將推出 · coming soon'}</span></label>`).join('');
+ CU.$('#works').innerHTML='';(ex?ex.works:[]).forEach(addWork);if(!ex)addWork();
+ const canPub=ME.can_publish_public;CU.$('#visPub').disabled=!canPub;CU.$('#pubNote').textContent=canPub?'刊登在 AE 線上展覽列表（/ex），所有人都看得到。':'需要管理者開啟「公開刊登」權限後才能選擇。';
+ document.querySelector(`input[name=vis][value=${ex&&ex.visibility==='public'&&canPub?'public':'private'}]`).checked=true;show('ed')}
+async function save(status){const em=CU.$('#em');CU.msg(em,'');
+ const works=[...CU.$('#works').children].map(n=>({id:n._id,title:n.querySelector('.wtitle').value,story:n.querySelector('.wstory').value,image:n._img})).filter(w=>w.title.trim());
+ const body={id:EX&&EX.id,title:CU.$('#title').value,openingDate:CU.$('#openingDate').value,description:CU.$('#description').value,curatorIntro:CU.$('#curatorIntro').value,template:(document.querySelector('input[name=tpl]:checked')||{}).value,visibility:document.querySelector('input[name=vis]:checked').value,status,works};
+ if(!body.title.trim())return CU.msg(em,'請幫展覽取一個名字');
+ const r=await CU.api('ex-save',body);if(!r.ok)return CU.msg(em,r.error||'儲存失敗');EX=r.ex;
+ const link=location.origin+r.ex.url,ok=CU.$('#pubOk');ok.hidden=false;
+ ok.innerHTML=(status==='published'?(r.ex.visibility==='public'?'展覽已公開發布 ✦ 也會出現在 <a href="/ex">線上展覽列表</a>。':'展覽已發布為不公開連結 ✦ 只有拿到這個連結的人看得到：'):'草稿已儲存。預覽連結（只有你看得到）：')+`<br><a href="${E(r.ex.url)}" target="_blank" rel="noopener" id="exLink">${E(link)}</a>`}
+CU.$('#new').onclick=()=>edit(null);CU.$('#addw').onclick=()=>addWork();CU.$('#back').onclick=e=>{e.preventDefault();home()};
+CU.$('#saveDraft').onclick=()=>save('draft');CU.$('#publish').onclick=()=>save('published');
+document.addEventListener('click',async e=>{const id=e.target.dataset&&e.target.dataset.edit;if(!id)return;const r=await CU.api('ex-get&id='+encodeURIComponent(id));if(r.ex)edit(r.ex)});
+CU.$('#out').onclick=async()=>{await CU.api('logout',{});location.replace('/curate/login')};
+(async()=>{const s=await CU.api('status');if(!s.me||s.me.must_change)return location.replace('/curate/login');ME=s.me;TPL=s.templates;MAX=s.limits.imageBytes;
+ CU.$('#hi').textContent=ME.can_curate?`${ME.name}，歡迎回來。今天想展出哪些作品呢？`:`${ME.name}，你的帳號目前還沒有策展權限，請聯絡管理者。`;CU.$('#new').disabled=!ME.can_curate;home()})();
+</script></body></html>

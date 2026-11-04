@@ -84,6 +84,30 @@
     {
       "source": "/works-classic",
       "destination": "/works-classic.html"
+    },
+    {
+      "source": "/curate",
+      "destination": "/curate/index.html"
+    },
+    {
+      "source": "/curate/apply",
+      "destination": "/curate/apply.html"
+    },
+    {
+      "source": "/curate/login",
+      "destination": "/curate/login.html"
+    },
+    {
+      "source": "/curate/admin",
+      "destination": "/curate/admin.html"
+    },
+    {
+      "source": "/ex",
+      "destination": "/api/ex"
+    },
+    {
+      "source": "/ex/:slug",
+      "destination": "/api/ex?slug=:slug"
     }
   ],
   "redirects": [
