@@ -18,6 +18,7 @@ function pwCandidates(raw, mustChange) {
   return [...new Set(out)];
 }
 const pwOk = (raw, u) => pwCandidates(raw, u.must_change).some(p => L.verifyPassword(p, u.hash));
+const normUser = v => String(v || '').normalize('NFKC').trim().replace(/^@+/, '').trim().toLowerCase();
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 function pubUser(u) { return u && { username: u.username, name: u.name, can_curate: !!u.can_curate, can_publish_public: !!u.can_publish_public, disabled: !!u.disabled, must_change: !!u.must_change, createdAt: u.createdAt }; }
@@ -78,7 +79,7 @@ module.exports = async (req, res) => {
     const b = await L.readBody(req);
 
     if (a === 'apply') {
-      const app = { name: clean(b.name, LIMITS.name), email: clean(b.email, LIMITS.email).toLowerCase(), intro: clean(b.intro, LIMITS.intro), username: clean(b.username, LIMITS.username).toLowerCase() };
+      const app = { name: clean(b.name, LIMITS.name), email: clean(b.email, LIMITS.email).toLowerCase(), intro: clean(b.intro, LIMITS.intro), username: normUser(clean(b.username, LIMITS.username + 4)) };
       if (!app.name || !EMAIL_RE.test(app.email) || !app.intro) return send(res, 400, { error: '請填寫名字、Email 與簡短介紹' });
       if (!USER_RE.test(app.username)) return send(res, 400, { error: '帳號名稱請用 3–24 個英文小寫、數字或底線' });
       if (await L.getJSON('users/' + app.username + '.json')) return send(res, 409, { error: '這個帳號名稱已經有人使用，換一個試試' });
@@ -96,7 +97,7 @@ module.exports = async (req, res) => {
     if (a === 'approve' || a === 'reject' || a === 'set-perms' || a === 'reset-password') {
       if (!L.isAdmin(req)) return send(res, 401, { error: '請先以管理者身分登入' });
       if (a === 'set-perms' || a === 'reset-password') {
-        const un = String(b.username || '').toLowerCase();
+        const un = normUser(b.username);
         const u = USER_RE.test(un) && await L.getJSON('users/' + un + '.json');
         if (!u) return send(res, 404, { error: '找不到帳號' });
         let temp = null;
@@ -119,7 +120,7 @@ module.exports = async (req, res) => {
     }
     if (a === 'login') {
       if (!L.secret()) return send(res, 503, { error: '登入功能尚未設定完成' });
-      const un = String(b.username || '').trim().toLowerCase();
+      const un = normUser(b.username);
       const u = USER_RE.test(un) && await L.getJSON('users/' + un + '.json');
       if (!u) {
         await wait(600);

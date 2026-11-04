@@ -4,7 +4,7 @@
 <p class="cu-kicker">AE CURATOR</p>
 <h1 id="h">策展人登入</h1>
 <form class="cu-card" id="lf" novalidate>
-<label for="u">帳號名稱</label><input type="text" id="u" autocapitalize="none" autocomplete="username" spellcheck="false" required>
+<label for="u">帳號名稱 <small>不用加 @，例如 aeuniversecreation22</small></label><input type="text" id="u" autocapitalize="none" autocomplete="username" spellcheck="false" required>
 <label for="p">密碼</label><input type="password" id="p" autocomplete="current-password" required>
 <div class="cu-row"><button class="cu-btn" type="submit">登入</button><a href="/curate/apply" class="cu-note">還沒有帳號？申請試用</a></div>
 <p class="cu-msg" id="m" role="status"></p>
@@ -24,7 +24,7 @@ const lf=CU.$('#lf'),cf=CU.$('#cf');
 const toChange=()=>{lf.hidden=true;cf.hidden=false;CU.$('#h').textContent='歡迎你 ✦'};
 (async()=>{const s=await CU.api('status');if(s.me){s.me.must_change?toChange():location.replace('/curate')}else if(s.sessionReady===false)CU.msg(CU.$('#m'),'登入功能尚未設定完成，請稍後再來。')})();
 lf.addEventListener('submit',async e=>{e.preventDefault();const b=lf.querySelector('button');b.disabled=true;
- const r=await CU.api('login',{username:CU.$('#u').value,password:CU.$('#p').value});b.disabled=false;
+ const r=await CU.api('login',{username:CU.$('#u').value.trim().replace(/^@+/,'').trim(),password:CU.$('#p').value});b.disabled=false;
  if(!r.ok)return CU.msg(CU.$('#m'),r.error||'登入失敗');CU.$('#c0').value=CU.$('#p').value;CU.$('#p').value='';r.me.must_change?toChange():location.replace('/curate')});
 cf.addEventListener('submit',async e=>{e.preventDefault();const m=CU.$('#m2');
  if(CU.$('#c1').value!==CU.$('#c2').value)return CU.msg(m,'兩次輸入的新密碼不一樣');
