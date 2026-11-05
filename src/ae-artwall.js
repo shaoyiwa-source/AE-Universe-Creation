@@ -155,7 +155,7 @@ try{const m=localStorage.getItem('ae-artwall-mode');if(m==='large'){wall.dataset
 let rz=0;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{const L=layout();if(L.key!==layoutKey){wall.style.setProperty('--cols',L.cols);layoutKey=L.key;renderPager(pages(),(walls[page]||{start:0}).start,(walls[page]||{end:0}).end)}},120)});
 async function loadAdded(){
   if(demoN){apiState={storage:'demo (not loaded)',writable:false};added=[];return}
-  try{const r=await fetch(API,{cache:'no-store'});const j=await r.json();apiState={storage:j.storage,writable:!!j.writable};added=Array.isArray(j.items)?j.items:[]}
+  try{const r=await fetch(getKey()?API+'?fresh=1&t='+Date.now():API);const j=await r.json();apiState={storage:j.storage,writable:!!j.writable};added=Array.isArray(j.items)?j.items:[]}
   catch(e){apiState={storage:'unreachable',writable:false};added=[]}
 }
 // ---- Owner editor (unchanged behaviour; disabled while a ?demo dataset is shown)

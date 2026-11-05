@@ -27,8 +27,9 @@ function isOwner(req) {
   const given = req.headers['x-ae-owner-key'] || '';
   return given ? safeEq(given, key) : false;
 }
-function send(res, status, body) {
-  res.setHeader('Cache-Control', 'no-store');
+function send(res, status, body, cache) {
+  // v2476.88: public list is CDN-cached briefly so page views stop costing one uncached Blob read each.
+  res.setHeader('Cache-Control', cache || 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.statusCode = status; res.end(JSON.stringify(body));
@@ -45,11 +46,11 @@ async function readBody(req) {
   const t = Buffer.concat(chunks).toString('utf8');
   return t ? JSON.parse(t) : {};
 }
-async function readIndex() {
+async function readIndex(fresh) {
   if (blobReady()) {
     const { get } = await import('@vercel/blob');
     try {
-      const r = await get(INDEX, { access: 'private', useCache: false });
+      const r = await get(INDEX, fresh ? { access: 'private', useCache: false } : { access: 'private' });
       if (!r || r.statusCode !== 200 || !r.stream) return [];
       const j = JSON.parse(await new Response(r.stream).text());
       return Array.isArray(j.items) ? j.items : [];
@@ -108,7 +109,7 @@ module.exports = async (req, res) => {
       if (!it) return send(res, 404, { ok: false, error: 'not found' });
       if (blobReady()) {
         const { get } = await import('@vercel/blob');
-        const r = await get(it.path, { access: 'private', useCache: false });
+        const r = await get(it.path, { access: 'private' }); // image paths are immutable (new path per upload) → Blob cache is safe
         if (!r || r.statusCode !== 200) return send(res, 404, { ok: false, error: 'not found' });
         res.statusCode = 200;
         res.setHeader('Content-Type', (r.blob && r.blob.contentType) || 'image/jpeg');
@@ -121,13 +122,15 @@ module.exports = async (req, res) => {
     if (method === 'GET') {
       const owner = isOwner(req);
       if (q.whoami) return send(res, 200, { ok: true, owner, storage: storageName(), keyConfigured: ownerKey().length >= 16, keySource: owner ? keySource() : undefined });
-      const items = storageName() === 'none' ? [] : await readIndex();
-      return send(res, 200, { ok: true, storage: storageName(), writable: storageName() !== 'none' && ownerKey().length >= 16, items: items.map(publicItem) });
+      const fresh = Boolean(q.fresh);
+      const items = storageName() === 'none' ? [] : await readIndex(fresh);
+      return send(res, 200, { ok: true, storage: storageName(), writable: storageName() !== 'none' && ownerKey().length >= 16, items: items.map(publicItem) },
+        fresh ? 'no-store' : 'public, max-age=0, s-maxage=60, stale-while-revalidate=600');
     }
     if (!['POST', 'PUT', 'DELETE'].includes(method)) return send(res, 405, { ok: false, error: 'method not allowed' });
     if (!isOwner(req)) return send(res, 401, { ok: false, error: 'owner only' });
     if (storageName() === 'none') return send(res, 503, { ok: false, error: 'storage not configured' });
-    const items = await readIndex();
+    const items = await readIndex(true);
     if (method === 'DELETE') {
       const id = String(q.id || '');
       if (/^o\d+$/.test(id)) return send(res, 403, { ok: false, error: 'original Selected Works cannot be changed here' });

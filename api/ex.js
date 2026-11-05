@@ -64,7 +64,7 @@ function renderIndex(items) {
 <footer class="exl-footer">AE UNIVERSE CREATION · 線上展覽</footer>`;
 }
 
-function html(res, status, s) { res.statusCode = status; res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.setHeader('Cache-Control', 'no-store'); res.setHeader('X-Robots-Tag', 'noindex, nofollow'); res.setHeader('Referrer-Policy', 'no-referrer'); res.end(s); }
+function html(res, status, s, cache) { res.statusCode = status; res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.setHeader('Cache-Control', cache || 'no-store'); res.setHeader('X-Robots-Tag', 'noindex, nofollow'); res.setHeader('Referrer-Policy', 'no-referrer'); res.end(s); }
 
 module.exports = async (req, res) => {
   const url = new URL(req.url, 'http://x');
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
   try {
     if (!slug) {
       const items = (await L.listJSON('ex/')).filter(e => e.status === 'published' && e.visibility === 'public').sort((a, b) => b.updatedAt - a.updatedAt);
-      return html(res, 200, shell('AE 線上展覽', renderIndex(items)));
+      return html(res, 200, shell('AE 線上展覽', renderIndex(items)), 'public, max-age=0, s-maxage=60, stale-while-revalidate=600');
     }
     const e = await L.getJSON('ex/' + slug + '.json');
     const me = e ? await L.currentUser(req).catch(() => null) : null;
