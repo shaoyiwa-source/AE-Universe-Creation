@@ -17,7 +17,7 @@
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
   let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=false,lasersOn=false,spotsOn=false,idleOn=false,tapBeams=false,ready=false,offY=0,dpr=1; /* v83: everything OFF until the premium mode is applied (no laser flash on load) */
   const DISPLAY_LEAD=.012;
-  function displayTime(){const ct=audio.currentTime||0;return ct+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));}
+  function displayTime(){const P=window.__premium;if(P&&P.clock89)return P.clock89(); /* v2476.89: ONE clock shared with premium.js = Production trackTime()+displayTime() */const ct=audio.currentTime||0;return ct+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));}
   function clear(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(dpr,0,0,dpr,0,offY*dpr);}
   // homepage resize(): painting box -> art box. Here the box is the premium layout L.p (stage coords);
   // the canvas is translated by p.y so the homepage's "art top = 0" geometry holds unchanged.

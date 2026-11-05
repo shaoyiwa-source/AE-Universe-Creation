@@ -83,7 +83,20 @@ const CK = { base: 0, at: 0, last: -1, ok: 0, err: 0 };
 // Media elements and Web Audio share the same output device, so baseLatency + outputLatency is the delay from decoder to speaker.
 const OM = (() => { const o = window.aePremiumOnsets; return o ? { sub: o.sub, st: o.subS, i: 0, n: 0, since: 9, hits: 0, last: -1 } : { sub: null }; })();
 const SYNC = { off: (() => { try { const v = +localStorage.getItem('ae-premium-sync-ms'); return Number.isFinite(v) ? Math.max(-200, Math.min(200, v)) : 0; } catch (e) { return 0; } })() };
-document.addEventListener('visibilitychange', () => { CK.ok = 0; });
+document.addEventListener('visibilitychange', () => { CK.ok = 0; PC89.lastCT = -1; });
+const PC89 = { lastCT: -1, anchorT: 0, anchorP: 0, lastCTP: 0, moved: false, present: 12, lastF: 0 };
+function prodTrackTime89(now) { // == Production trackTime()
+  const rate = audio.playbackRate > 0 && isFinite(audio.playbackRate) ? audio.playbackRate : 1, ct = audio.currentTime, P = PC89;
+  if (!isFinite(ct)) return 0;
+  if (audio.paused || audio.seeking || CK.stall) { P.lastCT = ct; P.anchorT = ct; P.anchorP = now; P.lastCTP = now; P.moved = false; return ct; }
+  if (ct !== P.lastCT) { P.moved = P.lastCT >= 0; P.anchorT = ct; P.anchorP = now; P.lastCT = ct; P.lastCTP = now; }
+  if (!P.moved || now - P.lastCTP > 500) return ct;
+  return P.anchorT + (now - P.anchorP) / 1000 * rate;
+}
+function prodDisplayTime89(now) { // == Production displayTime(): + presented-frame lead (DISPLAY_LEAD .012 .. .032), capped at currentTime + 40 ms
+  const fd = now - (PC89.lastF || now); PC89.lastF = now; if (fd > 0 && fd < 250) PC89.present = PC89.present * 0.5 + Math.min(fd, 80) * 0.5;
+  let tt = prodTrackTime89(now) + Math.min(0.032, Math.max(0.012, PC89.present / 1000)); const c = audio.currentTime; if (isFinite(c)) tt = Math.min(tt, c + 0.04); return tt;
+}
 const LAT = { ctx: null, v: 0, frame: 0.012, read: 0, src: 'none', override: null };
 function measureLatency() {
   try { if (!LAT.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { LAT.ctx = new AC({ latencyHint: 'playback' }); LAT.ctx.resume && LAT.ctx.resume(); } } } catch (e) {}
@@ -100,16 +113,16 @@ for (const ev of ['playing', 'seeked', 'canplay']) audio.addEventListener(ev, ()
 async function togglePlay() {
   const tnow = performance.now(); if (tnow - (A.tpAt || 0) < 250) return; A.tpAt = tnow; // v84: debounce double taps -> no duplicate starts
   // v83: back from the background the media element may still report playing while the WebAudio output is suspended/interrupted -> one tap = resume
-  if (!audio.paused && A.mg && A.mg.c && A.mg.c.state !== 'running') { USER.want = true; try { A.mg.c.resume(); } catch (e) {} const p = audio.play(); if (p && p.catch) p.catch(() => {}); syncPlay(); return; }
+  if (!audio.paused && A.mg && A.mg.c && A.mg.c.state !== 'running') { USER.want = true; resume89('stale-playing'); A.resync89 = 1; syncPlay(); return; } // v89: element already playing -> never call play() a 2nd time, just resume the graph + re-sync
+  if (audio.paused && A.mg && A.mg.c && A.mg.c.state !== 'running') { resume89('before-play'); A.resync89 = 1; } // v89: resume the WebAudio graph BEFORE play() (it was resumed after/concurrently)
   // v2476.69: start the media element FIRST, synchronously inside the tap (iOS Safari refuses play() issued after an await → stall)
   USER.want = audio.paused; if (audio.paused) try { routeMusic(); } catch (e) {}
   let early = null; if (audio.paused) { if (!A.started) { A.started = 1; startAtCue(); } try { early = audio.play(); if (early && early.catch) early.catch(() => {}); } catch (e) {} }
   measureLatency();
   if (TR.beats !== 'timeline' && !A.an) {
     ensureGraph(true);
-    try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); } catch (e) {}
   }
-  try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission && !A.asked) { A.asked = 1; DeviceOrientationEvent.requestPermission().catch(() => {}); } } catch (e) {}
+  // v2476.89: no DeviceOrientation/DeviceMotion requestPermission anywhere (Production homepage never asks; iOS showed 「想要取用動作和方向」). Tilt parallax just stays off on iOS.
   if (A.ctx && A.ctx.state === 'suspended') A.ctx.resume().catch(() => {});
   if (early) { try { await early; } catch (e) {} syncPlay(); return; }
   if (audio.paused) { if (!A.started) { A.started = 1; startAtCue(); } try { await audio.play(); } catch (e) {} }
@@ -122,12 +135,15 @@ function startAtCue() { const go = () => { try { audio.currentTime = TR.cue || 0
 const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 let seeking = false, progAt = 0;
 function updateProg(now) { if (now - progAt < 250) return; progAt = now; const d = audio.duration; $('#tdur').textContent = Number.isFinite(d) ? fmt(d) : '0:00'; if (!seeking) { $('#tcur').textContent = fmt(audio.currentTime); $('#seek').value = Number.isFinite(d) && d > 0 ? Math.round(audio.currentTime / d * 1000) : 0; } }
+function resume89(why) { try { const c = A.mg && A.mg.c; if (c && c.state !== 'running' && c.state !== 'closed') { PB89.log.push({ t: Math.round(performance.now()), ev: 'ctx-resume', why, from: c.state }); c.resume().catch(() => {}); } } catch (e) {} }
+// v89 single-source guard: exactly ONE playback source = the one <audio id=music> element (through one MediaElementSource). No AudioBufferSource ever plays music.
+var PB89 = { log: [], resyncs: 0, starts: 0 };
 const USER = { want: false }; const HID83 = { paused: 0 }; // v78: user's play intent; nothing may start the music unless the user asked for it
 const MUSICVOL = 0.5; const mv84 = () => MUSICVOL * ((TR && TR.gain) || 1); // v84: per-track gain (quiet ambient track lifted)
  // v79: music -6 dB (v78 -3 dB) for kick headroom (iOS: via WebAudio gain, see routeMusic)
 audio.addEventListener('play', () => { if (!USER.want) { try { audio.pause(); } catch (e) {} } });
 audio.addEventListener('pause', () => { if (!document.hidden && !audio.ended) USER.want = false; }); // a pause while visible (button, headset, OS) = user paused
-try { if (navigator.mediaSession) { navigator.mediaSession.setActionHandler('play', () => { USER.want = true; audio.play().catch(() => {}); }); navigator.mediaSession.setActionHandler('pause', () => { USER.want = false; audio.pause(); }); } } catch (e) {}
+try { if (navigator.mediaSession) { navigator.mediaSession.setActionHandler('play', () => { if (!audio.paused) { resume89('ms-play'); return; } USER.want = true; resume89('ms-play'); audio.play().catch(() => {}); }); navigator.mediaSession.setActionHandler('pause', () => { USER.want = false; audio.pause(); }); } } catch (e) {}
 function ensureGraph(needAn) { // v80: ONE MediaElementSource for the element (a second one throws): src -> gain(MUSICVOL) -> out, + analyser tap for live-beat tracks
   const c = acx(); if (!A.src) { A.src = c.createMediaElementSource(audio); const g = c.createGain(); g.gain.value = mv84(); const fg = c.createGain(); fg.gain.value = audio.paused ? 0 : 1; A.src.connect(fg); fg.connect(g); g.connect(c.destination); A.mg = { g, c, fg }; audio.volume = 1; DUCK.base = null; }
   if (needAn && !A.an) { A.ctx = c; A.an = c.createAnalyser(); A.an.fftSize = 1024; A.an.smoothingTimeConstant = 0.5; const z = c.createGain(); z.gain.value = 0; A.src.connect(A.an); A.an.connect(z); z.connect(c.destination); A.buf = new Uint8Array(A.an.frequencyBinCount); }
@@ -137,12 +153,16 @@ function routeMusic() { // iOS ignores audio.volume -> put the element through a
   try { ensureGraph(false); } catch (e) { A.mg = { el: true }; } }
 function syncPlay() { S.playing = !audio.paused && !audio.ended && !(A.mg && A.mg.c && (A.mg.c.state === 'suspended' || A.mg.c.state === 'interrupted') && document.hidden); updatePlayLabel(); }
 // v83: leaving the app pauses the music for real (element paused, intent cleared) so the button shows ▶ and ONE tap resumes
-document.addEventListener('visibilitychange', () => { if (document.hidden) { if (!audio.paused) { USER.want = false; HID83.paused = 1; fade84(0, 0.12, 'hide'); clearTimeout(HID83.tm); HID83.tm = setTimeout(() => { if (document.hidden || !USER.want) try { audio.pause(); } catch (e) {} }, 140); } } else { clearTimeout(HID83.tm); if (!USER.want && !audio.paused) try { audio.pause(); } catch (e) {} fade84(0, 0, 'show-mute'); try { if (A.mg && A.mg.c && A.mg.c.state !== 'running' && A.mg.c.state !== 'closed') A.mg.c.resume().catch(() => {}); } catch (e) {} } syncPlay(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { if (!audio.paused) { USER.want = false; HID83.paused = 1; fade84(0, 0.12, 'hide'); clearTimeout(HID83.tm); HID83.tm = setTimeout(() => { if (document.hidden || !USER.want) { try { audio.pause(); } catch (e) {} try { if (A.mg && A.mg.c && A.mg.c.state === 'running') A.mg.c.suspend().catch(() => {}); } catch (e) {} } }, 140); } A.resync89 = 1; } else { clearTimeout(HID83.tm); if (!USER.want && !audio.paused) try { audio.pause(); } catch (e) {} fade84(0, 0, 'show-mute'); try { if (A.mg && A.mg.c && A.mg.c.state !== 'running' && A.mg.c.state !== 'closed') A.mg.c.resume().catch(() => {}); } catch (e) {} } syncPlay(); });
 // v84: fade stage (src -> fg -> volume gain). Every start fades in ~250 ms; hide fades out before pausing; the context is never resumed with full gain.
 var FADE84 = { log: [] };
 function fade84(v, sec, why) { const m = A.mg; if (!m || !m.fg) return; try { const g = m.fg.gain, t = m.c.currentTime, from = g.value; g.cancelScheduledValues(t); g.setValueAtTime(from, t); if (sec > 0) g.linearRampToValueAtTime(v, t + sec); else g.setValueAtTime(v, t); FADE84.log.push({ t: Math.round(performance.now()), why, from: +from.toFixed(3), to: v, ms: Math.round(sec * 1000), ctx: m.c.state }); if (FADE84.log.length > 80) FADE84.log.shift(); } catch (e) {} }
-audio.addEventListener('play', () => { if (USER.want) { fade84(0, 0, 'play-start'); fade84(1, 0.25, 'fade-in'); } });
-addEventListener('pagehide', () => { fade84(0, 0, 'pagehide'); if (!audio.paused) { USER.want = false; HID83.paused = 1; try { audio.pause(); } catch (e) {} } });
+audio.addEventListener('play', () => { if (USER.want) { PB89.starts++; fade84(0, 0, 'play-start'); fade84(1, 0.25, 'fade-in'); } });
+// v89: after the page was hidden (iOS interrupts the AudioContext) the first 'playing' re-syncs the element once the graph runs:
+// a self-seek flushes the decoder/graph backlog that was heard as two overlapping copies of the song.
+audio.addEventListener('playing', () => { if (!A.resync89) return; const go = () => { if (!A.resync89) return; A.resync89 = 0; PB89.resyncs++; PB89.log.push({ t: Math.round(performance.now()), ev: 'resync', ct: +audio.currentTime.toFixed(3) }); try { fade84(0, 0, 'resync'); audio.currentTime = audio.currentTime; fade84(1, 0.2, 'resync-in'); } catch (e) {} CK.ok = 0; PC89.lastCT = -1; };
+  const c = A.mg && A.mg.c; if (!c || c.state === 'running') go(); else { c.resume().then(go, go); } });
+addEventListener('pagehide', () => { fade84(0, 0, 'pagehide'); A.resync89 = 1; if (!audio.paused) { USER.want = false; HID83.paused = 1; try { audio.pause(); } catch (e) {} } });
 ['play', 'playing', 'pause', 'ended', 'emptied', 'stalled', 'suspend', 'waiting'].forEach(ev => audio.addEventListener(ev, syncPlay));
 document.addEventListener('visibilitychange', syncPlay); addEventListener('pageshow', syncPlay); addEventListener('focus', syncPlay);
 let rings = [];
@@ -158,13 +178,13 @@ function analyse(now) {
     const ct = audio.currentTime, rate = audio.playbackRate || 1;
     // v2476.64: phase-locked clock (slews toward every fresh currentTime instead of tolerating 40 ms before re-locking),
     // then shifted back by the measured output latency so lights land on what is HEARD, not what the decoder has reached.
-    if (ct !== CK.last || !CK.ok) { const pred = CK.base + (now - CK.at) / 1000 * rate, d = ct - pred; if (!CK.ok || Math.abs(d) > 0.12 || ct < CK.last) { CK.base = ct; CK.at = now; } else { CK.base = pred + d * 0.2; CK.at = now; } CK.err = d; CK.last = ct; CK.ok = 1; }
-    let tt = CK.base + (now - CK.at) / 1000 * rate; if (Math.abs(tt - ct) > 0.25) { CK.base = tt = ct; CK.at = now; }
-    // v2476.65 robustness: never extrapolate while the element is seeking / buffering (the CUE seek on first play and
-    // mobile stalls kept the old clock running ahead of the frozen audio), and never more than 0.35 s past the last real update.
-    if (audio.seeking || audio.readyState < 3 || CK.stall) { CK.base = tt = ct; CK.at = now; }
-    else if (tt - ct > 0.35) { CK.base = tt = ct; CK.at = now; }
-    tt = Math.max(0, tt - latency() - SYNC.off / 1000); // + offset = lights later
+    // v2476.89: Production homepage clock (1de42af ae-home-light.js trackTime()+displayTime()), replacing the v64 20% slew + output-latency subtraction
+    // that put the premium lights ~30-60 ms behind the music: hard re-anchor on every fresh currentTime, wall-clock bridge between updates,
+    // + one presented frame of lead (12-32 ms), never more than 40 ms ahead of audio.currentTime.
+    let tt = prodDisplayTime89(now);
+    CK.base = tt; CK.at = now; CK.last = ct; CK.ok = 1;
+    if (LAT.override != null) tt -= LAT.override; // ?lat= diagnostic override only
+    tt = Math.max(0, tt - SYNC.off / 1000); // + offset = lights later (owner slider, default 0)
     CK.tt = tt;
     A.t = tt; bass = Math.min(1, EN.energyAt(TL, tt));
     const b = RH.update(bass, tt);
@@ -443,8 +463,8 @@ function drawTaps(ctx, now) {
 function artTap(x, y) { // x,y in stage (un-zoomed) coordinates
   V75.focus = { x, y, t: performance.now() }; V75.foci = (V75.foci || 0) + 1; // v76: searchlights swing to the tap point
   if (window.aeHomeReplica && document.body.dataset.original !== '1') window.aeHomeReplica.tap(x, y); // v70: homepage tap beams + gold ripple in ALL modes
-  if (S.home && window.aeHomeReplica) { if (!A.started && !S.playing) togglePlay(); RG.taps = (RG.taps || 0) + 1; tapSound(x); return; } // v2476.69: homepage tap (beams + gold ripples)
-  if (!A.started && !S.playing) { togglePlay(); tapSound(x); return; } // v2476.65: first tap on the painting starts the music
+  if (S.home && window.aeHomeReplica) { if (!S.playing && audio.paused) togglePlay(); RG.taps = (RG.taps || 0) + 1; tapSound(x); return; } // v2476.69: homepage tap (beams + gold ripples)
+  if (!S.playing && audio.paused) { togglePlay(); tapSound(x); return; } // v2476.65: first tap on the painting starts the music
   if (S.playing) beatTap(x, y);
   const now = performance.now(); RG.taps = (RG.taps || 0) + 1; // ring + gold burst now come from the global homepage tap layer
   if (S.glint || S.preset === 'gallery') for (let i = 0; i < 10; i++) { const an = Math.random() * 6.2832, d = 30 + Math.random() * 90; tapStars.push({ t: now, x, y, vx: Math.cos(an) * d, vy: Math.sin(an) * d, s: 3 + Math.random() * 5, life: 700 + Math.random() * 600 }); }
@@ -1024,7 +1044,7 @@ function bindZoom() {
     else if (Z.pts.size === 1 && Z.s > 1 && !GLOW.on) { Z.x += e.clientX - pr.x; Z.y += e.clientY - pr.y; applyZoom(); } });
   const up = e => { Z.pts.delete(e.pointerId); Z.st = null; if (!Z.pts.size) setTimeout(() => { Z.pinching = false; }, 50); };
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => st.addEventListener(ev, up));
-  st.addEventListener('pointerup', e => { const n = Date.now(), g = Z.g; if (!g || Z.pts.size) return; Z.g = null; const tap = !g.multi && n - g.t < 280 && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 12; if (!tap) { Z.lastTap = 0; return; } if (!Z.consumed) { const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) artTap(x, y); else if (!A.started && !S.playing) togglePlay(); else if (Z.s === 1) showUI(); } if (n - Z.lastTap < 320 && Z.s > 1) { resetZoom(); Z.lastTap = 0; } else Z.lastTap = n; });
+  st.addEventListener('pointerup', e => { const n = Date.now(), g = Z.g; if (!g || Z.pts.size) return; Z.g = null; const tap = !g.multi && n - g.t < 280 && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 12; if (!tap) { Z.lastTap = 0; return; } if (!Z.consumed) { const x = (e.clientX - Z.x) / Z.s, y = (e.clientY - Z.y) / Z.s, p = L.p; if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) artTap(x, y); else if (!S.playing && audio.paused) togglePlay(); else if (Z.s === 1) showUI(); } if (n - Z.lastTap < 320 && Z.s > 1) { resetZoom(); Z.lastTap = 0; } else Z.lastTap = n; });
   st.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Z.s * Math.exp(-e.deltaY * 0.002)); }, { passive: false });
   $('#zreset').onclick = e => { e.stopPropagation(); resetZoom(); };
 }
@@ -1123,7 +1143,7 @@ audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setT
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
 document.querySelectorAll('.ts').forEach(b => b.classList.toggle('on', b.dataset.s === TAPSND.mode));
 document.querySelectorAll('.lw').forEach(b => b.onclick = e => { e.stopPropagation(); setLw(b.dataset.w); }); setLw(S.lw, true);
-window.__premium = { ARTS, TRACKS, setArt: (...a) => setArt(...a), setTrack: (...a) => setTrack(...a), art: () => ART, track: () => TR, liveBeat: () => (TR.beats !== 'timeline' && S.playing ? A.lb : null), USER, MUSICVOL, KV, PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { PB89, PC89, clock89: () => { const now = performance.now(), c = audio.currentTime; let t = prodTrackTime89(now) + Math.min(0.032, Math.max(0.012, PC89.present / 1000)); if (isFinite(c)) t = Math.min(t, c + 0.04); if (LAT.override != null) t -= LAT.override; return Math.max(0, t - SYNC.off / 1000); }, ARTS, TRACKS, setArt: (...a) => setArt(...a), setTrack: (...a) => setTrack(...a), art: () => ART, track: () => TR, liveBeat: () => (TR.beats !== 'timeline' && S.playing ? A.lb : null), USER, MUSICVOL, KV, PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
@@ -1606,7 +1626,7 @@ function closeGrid83() { const g = $('#grid83'); if (g) g.classList.remove('on')
   setTimeout(() => {
     const h = document.createElement('div'); h.id = 'hint83'; h.setAttribute('role', 'dialog'); h.setAttribute('aria-label', 'tips');
     h.innerHTML = '<div class="h83t" data-zh="歡迎欣賞 ✧" data-en="Welcome ✧"></div>' +
-      '<p data-zh="點右下角 ⚙ 設定，可切換「原畫風情」「歡樂派對」等模式，欣賞畫作在不同燈光下的美。" data-en="Open ⚙ Settings (bottom right) to switch modes like “Pure art” and “Joyful party” and enjoy the painting under different lighting."></p>' +
+      '<p data-zh="點右下角 ⚙ 設定，可切換「原畫風情」「經典首頁」等模式，欣賞畫作在不同燈光下的美。" data-en="Open ⚙ Settings (bottom right) to switch modes like “Pure art” and “Classic Home” and enjoy the painting under different lighting."></p>' +
       '<p data-zh="在畫上用手指左右滑動即可換畫（電腦可按畫作兩側的 ‹ ›）；點畫作播放音樂。" data-en="Swipe left/right on the painting to change it (desktop: ‹ › beside the art); tap the art to play music."></p>' +
       '<div class="h83b"><button id="h83set" data-zh="開啟設定" data-en="Open settings"></button><button id="h83ok" data-zh="知道了" data-en="Got it"></button></div>';
     document.body.appendChild(h); stopAll83(h); lab83(h); requestAnimationFrame(() => h.classList.add('on'));
@@ -1726,3 +1746,5 @@ async function clear84() { try { await idbTx84('readwrite', os => os.clear()); }
   restore84();
 })();
 (function ex84() { if (window.__premium) Object.assign(window.__premium, { RP84, setRepeat84, end84, FADE84, fade84, GR84, gridRadius84, SH84, sheetGo84, IDB84, restore84, clear84, quota84, mv84 }); else setTimeout(ex84, 50); })();
+/* v2476.89 經典首頁: homepage effects button (sparkle) -> opens the effects/settings panel, like the homepage tray */
+(() => { const b = document.getElementById('aeFxButton'); if (!b) return; for (const ev of ['pointerdown', 'pointerup', 'click']) b.addEventListener(ev, e => e.stopPropagation()); b.addEventListener('click', () => { b.parentElement.classList.add('fx-seen'); const o = document.getElementById('open'); if (o) o.click(); }); })();
