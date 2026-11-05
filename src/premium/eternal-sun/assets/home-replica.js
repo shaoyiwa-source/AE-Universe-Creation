@@ -1,4 +1,4 @@
-/* AE-HOME-REPLICA v2476.76 (v75 hand patch on top of v2476.69 generator output) — premium /premium/eternal-sun/ default mode 「首頁重現」.
+/* AE-HOME-REPLICA v2476.87 (歡樂派對 laser/shade/bolts re-synced to Production 1de42af ae-home-light.js) — was v2476.76 (v75 hand patch on top of v2476.69 generator output) — premium /premium/eternal-sun/ default mode 「首頁重現」.
    GENERATED from /ae-home-light.js (homepage sound-light) by build_replica.py: the functions
    destination(), launchDepth(), draw(), drawFx(), artPoint(), fxGlow() are copied VERBATIM; only this
    shim maps the homepage's .hero / painting box / player clock onto the premium stage + #music element.
@@ -65,7 +65,7 @@
   window.aeClubBeam=clubBeam;
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
-    const angle=i*Math.PI/3+phase*.24+variation(group+1)*1.7+now/1000*1.9*(1+.12*i)*(i%2?1:-1)+Math.sin(now/1000*3.1+i*1.7)*.35; /* v84: quicker club sweeps with a whip; v83: lasers scan faster (searchlights keep their slow sway) */
+    const angle=i*Math.PI/3+phase*.24+variation(group+1)*1.7; /* v2476.87: Production homepage (1de42af) sweep restored; v84 club whip set aside on branch setaside/v84-club-laser-aeClubBeam */
     const ambient={x:artX0+artW*(.16+.68*(.5+.5*Math.sin(angle))),y:Math.max(30,artBottom*(.20+.60*(.5+.5*Math.cos(angle*1.3))))};
     const remaining=focus?focus.until-now:0;
     const weight=remaining>0?Math.min(1,remaining/600):0;
@@ -118,7 +118,7 @@
       }
       energy=Math.max(bass,energy*.84);hero.dataset.audioEnergy=energy.toFixed(3);
       if(ambient){ // v72: veil glow + lasers only in 歡樂派對
-      const shade=ctx.createLinearGradient(0,Math.max(0,artBottom-100),0,artBottom);shade.addColorStop(0,'rgba(2,5,4,.40)');shade.addColorStop(1,'rgba(2,5,4,0)');/* v74: 歡樂派對 is daytime — no bottom dimming on the art */
+      const shade=ctx.createLinearGradient(0,Math.max(0,artBottom-100),0,artBottom);shade.addColorStop(0,'rgba(2,5,4,.40)');shade.addColorStop(1,'rgba(2,5,4,0)');ctx.fillStyle=shade;ctx.fillRect(0,0,width,artBottom);/* v2476.87: Production bottom shade restored */
       const glow=ctx.createRadialGradient(sunX,sunY,3,sunX,sunY,Math.min(width*.42,190));
       glow.addColorStop(0,`rgba(255,223,115,${energy*.16+beat.pulse*.35})`);glow.addColorStop(.45,`rgba(243,178,48,${energy*.08+beat.pulse*.18})`);glow.addColorStop(1,'rgba(240,170,45,0)');
       ctx.fillStyle=glow;ctx.fillRect(0,0,width,artBottom);
@@ -132,7 +132,27 @@
         const originX=i%3===0?artX0-artW*.08:i%3===1?artX0+artW*1.08:artX0+artW*(.15+i*.12),originY=i%3===2?-20:artBottom*(.15+(i%4)*.20);
         const target=destination(i,sweep,now),targetX=target.x,targetY=target.y;targets.push({x:Math.round(targetX),y:Math.round(targetY)});
         const power=Math.min(1,(beat.stage==='build'?.06+beat.buildProgress*.06:.07)+energy*.035+beat.pulse*.85+beat.dropPulse*.12);
-        clubBeam(ctx,originX,originY,targetX,targetY,colors[i],(1.4+beat.pulse*2.6)*lw(),Math.min(1,power*1.5+.18),lite||bare,now,i,beat.pulse); /* v84: nightclub beam — haze, shimmer, jitter, big crisp hotspot */
+        ctx.shadowColor=colors[i];ctx.shadowBlur=lite?0:14+beat.pulse*25;
+        ctx.strokeStyle=colors[i];ctx.globalAlpha=power;ctx.lineWidth=.8+beat.pulse*2.2;
+        ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
+        // Narrow pale core and prismatic rays give the beam a refracted edge.
+        ctx.shadowBlur=lite?0:4;ctx.strokeStyle='#fff9df';ctx.lineWidth=.65;ctx.globalAlpha=power*.72;
+        ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();
+        if(!lite)for(let j=-1;j<=1;j++){
+          const angle=Math.atan2(targetY-originY,targetX-originX)+j*(pattern===0?.12:pattern===1?.34:.52)+Math.sin(sweep)*.18;
+          const reach=Math.min(width*.24,150)*(1+beat.pulse*.22);
+          const endX=targetX+Math.cos(angle)*reach,endY=targetY+Math.sin(angle)*reach;
+          const trail=ctx.createLinearGradient(targetX,targetY,endX,endY);trail.addColorStop(0,colors[(i+j+colors.length)%colors.length]);trail.addColorStop(1,'rgba(255,255,255,0)');
+          ctx.strokeStyle=trail;ctx.globalAlpha=power*.72;ctx.lineWidth=.8+beat.pulse;
+          ctx.beginPath();ctx.moveTo(targetX,targetY);ctx.lineTo(endX,endY);ctx.stroke();
+        }
+        // Soft light pools sit on the unchanged painted surface, fading outward.
+        ctx.globalAlpha=1;ctx.shadowBlur=0;
+        if(!bare){
+          const pool=ctx.createRadialGradient(targetX,targetY,1,targetX,targetY,38+beat.pulse*48);
+          pool.addColorStop(0,`rgba(255,249,218,${power*.60})`);pool.addColorStop(.18,colors[i]+Math.round(power*75).toString(16).padStart(2,'0'));pool.addColorStop(1,colors[i]+'00');
+          ctx.fillStyle=pool;ctx.fillRect(targetX-90,targetY-90,180,180);
+        }
         ctx.strokeStyle=colors[i];ctx.lineWidth=.7;ctx.globalAlpha=beat.pulse*.6;ctx.beginPath();ctx.arc(targetX,targetY,Math.max(0,8+beat.phase*28),0,Math.PI*2);ctx.stroke();
       }
       hero.dataset.laserTargets=JSON.stringify(targets);if(focus&&focus.until-now>600){hero.dataset.lastFocusTargets=JSON.stringify(targets);hero.dataset.lastFocusPaintTime=now.toFixed(1);}
@@ -148,16 +168,22 @@
         const opacity=b.musical?window.aeHomeAudioEnergy.flightPower((now-b.born)/1000):Math.sin(Math.PI*p);
         const tipX=b.x+(b.ox-b.x)*near,tipY=b.y+(b.oy-b.y)*near,startX=b.x+(b.ox-b.x)*back,startY=b.y+(b.oy-b.y)*back;
         const streak=ctx.createLinearGradient(startX,startY,tipX,tipY);streak.addColorStop(0,b.color+'00');streak.addColorStop(1,b.color);
+        if(ambient){ /* v2476.87: 歡樂派對 = Production homepage bolt (1de42af) */
+        ctx.strokeStyle=streak;ctx.lineWidth=1.4+(1-p)*7;ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:20;ctx.globalAlpha=opacity*.95;
+        ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();
+        ctx.strokeStyle='#fff9e9';ctx.lineWidth=.7+(1-p)*1.5;ctx.globalAlpha=opacity*.85;
+        }else{
         ctx.save();ctx.globalCompositeOperation='source-over';ctx.strokeStyle=b.color;ctx.globalAlpha=opacity*.25*gk();ctx.lineWidth=(4+(1-p)*10)*Math.pow(tb(),.7);ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:8;ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();ctx.restore(); /* v75 outer glow */
         ctx.strokeStyle=streak;ctx.lineWidth=(1.4+(1-p)*7)*tb();ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:12;ctx.globalAlpha=opacity*.95;
         ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();
         ctx.strokeStyle='#fff9e9';ctx.lineWidth=(.7+(1-p)*1.5)*Math.sqrt(Math.max(tb(),.6));ctx.globalAlpha=opacity*.85;
+        }
         ctx.beginPath();ctx.moveTo(startX+(tipX-startX)*.5,startY+(tipY-startY)*.5);ctx.lineTo(tipX,tipY);ctx.stroke();
         ctx.fillStyle='#fff6d2';ctx.beginPath();ctx.arc(tipX,tipY,Math.max(0,1.5+(1-p)*2),0,Math.PI*2);ctx.fill();
       }
       ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.shadowBlur=0;
     }
-    drawHalos(now);ctx.globalAlpha=1;ctx.shadowBlur=0;
+    if(!ambient)drawHalos(now);ctx.globalAlpha=1;ctx.shadowBlur=0;
     const touchLife=reduced.matches?240:1100; // Owner: the tap ring looks the same with sound & light on or off
     spots=spots.filter(s=>now-s.born<touchLife);
     for(const s of spots){
@@ -170,7 +196,7 @@
     const musicLife=musicFrame.stage==='build'?90:150;
     musicSpots=musicSpots.filter(s=>now-s.born<musicLife);
     for(const s of musicSpots){
-      const life=(now-s.born)/musicLife,opacity=(1-life)*(musicFrame.stage==='build'?.75+musicFrame.buildProgress*.25:.95),radius=musicFrame.stage==='build'?24+life*44:18+life*38;
+      const life=(now-s.born)/musicLife,opacity=(1-life)*(musicFrame.stage==='build'?.55+musicFrame.buildProgress*.25:.65),radius=musicFrame.stage==='build'?24+life*44:18+life*38;
       const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,radius);
       g.addColorStop(0,`rgba(255,247,207,${opacity})`);g.addColorStop(1,'rgba(255,210,80,0)');
       ctx.fillStyle=g;ctx.fillRect(s.x-radius,s.y-radius,radius*2,radius*2);

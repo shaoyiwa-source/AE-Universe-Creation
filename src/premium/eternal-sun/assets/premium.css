@@ -116,6 +116,9 @@ body.look-day #stage{background:radial-gradient(ellipse at 50% 45%,#2a2418 0%,#1
 body.ui #openhint{opacity:0;pointer-events:none}
 @media (prefers-reduced-motion:reduce){#openhint{animation:none}}
 body.look-day #look{filter:brightness(1.035)} /* v74: 尊榮寶石 daytime — gem overlay never darker than the original */
+/* v2476.87 歡樂派對 = Production homepage darkness (1de42af index.html desktop .hero::after over the painting box + hero bg #090b0a); overrides the v72/v74 daytime no-veil */
+body.home-mode #homeveil{display:block;background:linear-gradient(180deg,rgba(3,4,3,.34) 0,rgba(3,4,3,0) 120px,rgba(3,4,3,0) 44%,rgba(5,7,6,.55) 60%,rgba(6,9,8,.88) 80%,#070a08 100%)}
+body.home-mode #stage{background:#090b0a}
 #panel .lw.on{border-color:currentColor;opacity:1} /* v75 雷射粗細 */
 
 /* v2476.80 dock (one play/pause, bottom-centre) + painting switcher */

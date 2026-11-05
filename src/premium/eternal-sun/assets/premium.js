@@ -1073,7 +1073,7 @@ function bindUI() {
 const BASE = { tapfx: true, search: false, dip: true, party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
 const PRESETS = { // v83: 原畫風情 (calm, default) first; then the v72 four modes
   calm:   { ...BASE, mode: 'natural', frame: true, dip: false, laser: false, search: false, spots3: false, idle: false, tapfx: false, look: '', intensity: 0.6, speed: 0.5, night: false }, // 原畫風情 ✧: only the soft backlight behind the painting slowly changes colour
-  home:   { ...BASE, mode: 'natural', frame: true, laser: true, search: true, spots3: true, idle: true, look: '', intensity: 0.7, speed: 1, night: false },                        // 歡樂派對 ☀: homepage sound-light replica
+  home:   { ...BASE, mode: 'natural', frame: true, laser: true, search: false, dip: false, spots3: true, idle: true, look: '', intensity: 0.7, speed: 1, night: false },                        // 歡樂派對 ☀: homepage sound-light replica
   club:   { ...BASE, mode: 'rgb', rgbStyle: 'bar', lamp: 'auto', frame: true, laser: true, led: true, spots3: false, idle: false, intensity: 0.85, speed: 1.1, night: true }, // 沈浸夜店 ☾: dark club, clean lasers + RGB light bar on beat
   breath: { ...BASE, mode: 'rgb', rgbStyle: 'even', lamp: 'blue', frame: true, aura: true, spots3: false, idle: false, intensity: 0.55, speed: 0.45, night: true },   // 柔光呼吸 ☾: calm dark, soft breathing wash + aura, gentle frame light, no lasers
   gem:    { ...BASE, mode: 'natural', look: 'gem', frame: true, led: true, glint: true, impact: true, spots3: false, idle: false, intensity: 0.75, speed: 1, night: false } // 尊榮寶石 ☀: bright, gold frame + gem/pearl sparkle + gallery light, no lasers
