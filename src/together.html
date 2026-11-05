@@ -141,24 +141,49 @@
         <p class="g-got" id="rGot">你們得到了 · YOU RECEIVED</p>
         <h2 id="rTitle">一張你們一起畫出的雙生光紋卡<span class="en">A Twin Flame Lightprint you made together</span></h2>
         <div class="g-reward" id="reward"></div>
-        <div class="g-actions">
+        <div id="aeEndHost" class="ae-end-host"></div>
+        <div class="g-actions ae-end-legacy" hidden>
           <button class="g-btn" id="save" type="button">儲存成手機桌布 <small>Save wallpaper</small></button>
-          <div class="row">
-            <button class="g-btn ghost" id="shareCard" type="button">傳給對方 <small>Send</small></button>
-            <button class="g-btn quiet" id="again" type="button">再畫一張 <small>Again</small></button>
-          </div>
+          <button class="g-btn ghost" id="shareCard" type="button">傳給對方 <small>Send</small></button>
+          <button class="g-btn quiet" id="again" type="button">再畫一張 <small>Again</small></button>
+          <a class="g-btn quiet" id="toDream" href="/dream-giver">下一個：夢想給予 <small>Dream Giver</small></a>
+          <a class="g-btn quiet" id="toWorks" href="/works">看這道光的原作 <small>See the art</small></a>
         </div>
         <p class="g-note" id="rNote" aria-live="polite"></p>
-        <p class="support" id="support">如果這段體驗對你有意義，你可以從 US$1 開始支持；無論金額多少，你得到的體驗都一樣。<br><span class="en" style="display:inline">If this experience meant something to you, you can support it from US$1. The experience stays the same at every amount.</span> <a href="https://ko-fi.com/aeuniverse1314" target="_blank" rel="noopener">Ko-fi</a></p>
-        <nav class="g-next" aria-label="接下來 What's next">
-          <h3>接下來<span class="en">What's next</span></h3>
-          <div class="g-links">
-            <a class="g-link" href="/works"><img src="/assets/selected-works-v2/love-embrace.webp" alt="" loading="lazy"><span><b>看這道光的原作</b><span>《Love Embrace》與更多 AE 手繪原作 · See the original</span></span></a>
-            <a class="g-link" href="https://ko-fi.com/s/92c2647120" target="_blank" rel="noopener"><span class="ic">♡</span><span><b>HEART LAYERS 手機桌布</b><span>五款層層交疊的心，原作局部 · Five wallpapers on Ko-fi</span></span></a>
-            <a class="g-link" href="/dream-giver"><img src="/assets/selected-works-v2/heart-fly.webp" alt="" loading="lazy"><span><b>下一個：夢想給予</b><span>寫下一個人的夢，封成一張夢想卡送給他 · Dream Giver</span></span></a>
-          </div>
+        <nav class="g-next" aria-label="接下來 What's next" hidden>
           <p class="cap" style="text-align:left"><a href="/color-moment">光紋心卡 Lightprint Card</a> · <a href="/touch-moment">觸動指尖 Touch Moment</a> · <a href="/experience">全部體驗 All experiences</a></p>
         </nav>
+<script>
+(function(){
+  function whenReady(fn){ if(window.AEExperienceEnding) return fn(); var n=0,id=setInterval(function(){ if(window.AEExperienceEnding||++n>60){ clearInterval(id); if(window.AEExperienceEnding) fn(); }},50); }
+  function cloneMore(){
+    return ['shareCard','again','toDream','toWorks'].map(function(id){
+      var node=document.getElementById(id); if(!node) return null;
+      var c=node.cloneNode(true); c.id=id+'-more';
+      c.addEventListener('click', function(ev){ if(node.tagName==='A') return; ev.preventDefault(); node.click(); });
+      return c;
+    }).filter(Boolean);
+  }
+  function mount(){
+    var host=document.getElementById('aeEndHost'); if(!host||!window.AEExperienceEnding) return;
+    host.innerHTML=''; host.dataset.aeEndMounted='';
+    AEExperienceEnding.mount(host,{
+      experienceId:'together',
+      onSaveWallpaper:function(){ var b=document.getElementById('save'); if(b) b.click(); },
+      share:{ title:'AE Twin Flame', text:'我們在 AE 雙生共創留下了一道光。 / We left a Twin Flame light with AE.', url:location.href.split('#')[0], campaign:'together' },
+      kofiKeyOrArt:'love-embrace',
+      moreNodes:cloneMore(),
+      resultArtUrl:'/assets/selected-works-v2/love-embrace.webp'
+    });
+  }
+  whenReady(function(){
+    var result=document.getElementById('result');
+    if(!result) return;
+    new MutationObserver(function(){ if(!result.hidden) mount(); }).observe(result,{attributes:true,attributeFilter:['hidden']});
+    if(!result.hidden) mount();
+  });
+})();
+</script>
       </div>
     </div>
   </section>
@@ -168,10 +193,12 @@
     <p>不需登入 · 不收集資料 · 畫作為 AE 原作，光效只在畫面上方</p>
     <p>No login · nothing collected · original paintings, light is an overlay only</p>
     <p>© AE Universe Creation · Aurelia &amp; Elion</p>
-    <p class="g-build" translate="no">Preview build v2476.53</p>
+    <p class="g-build" translate="no">Preview build v2476.86</p>
   </footer>
 </main>
 <canvas id="cardCanvas" width="1080" height="1920" hidden></canvas>
+<link rel="stylesheet" href="/ae-experience-ending.css">
+<script src="/ae-experience-ending.js" defer></script>
 <script src="/ae-chime.js" defer></script>
 <script src="/ae-games-kit.js?v=2"></script>
 <script src="/together-app.js?v=3"></script>

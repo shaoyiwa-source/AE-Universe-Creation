@@ -173,7 +173,8 @@
         <h2 id="rTitle"></h2>
         <div class="prog" id="prog"></div>
         <div class="g-reward" id="reward" style="margin-top:12px"></div>
-        <div class="g-actions" id="acts"></div>
+        <div id="aeEndHost" class="ae-end-host"></div>
+        <div class="g-actions ae-end-legacy" id="acts" hidden></div>
         <div class="newstep g-panel" id="newStep" hidden style="margin:12px 0 0">
           <p class="sub" style="margin-top:0">下一步是什麼？<span class="en">What is the next step?</span></p>
           <div class="sugs" id="nsSug"></div>
@@ -181,15 +182,61 @@
           <div class="g-nav"><button class="g-btn" id="nsOk" type="button">定下這一步 <small>Set it</small></button></div>
         </div>
         <p class="g-note" id="rNote" aria-live="polite"></p>
-        <nav class="g-next" aria-label="接下來 What's next">
-          <h3>接下來<span class="en">What's next</span></h3>
-          <div class="g-links">
-            <a class="g-link" id="artLink" href="/works"><img id="artThumb" alt="" loading="lazy"><span><b id="artName">看這張卡的原作</b><span>AE 手繪原作 · See the original painting</span></span></a>
-            <a class="g-link" href="https://ko-fi.com/s/9b9703d58b" target="_blank" rel="noopener"><img src="/assets/selected-works-v2/flower-heart-bloom.webp" alt="" loading="lazy"><span><b>AE Heart Universe 桌布</b><span>九款花與心的手機桌布 · Nine wallpapers on Ko-fi</span></span></a>
-            <a class="g-link" href="/together"><img src="/assets/selected-works-v2/love-embrace.webp" alt="" loading="lazy"><span><b>下一個：雙生共創</b><span>兩個人輪流畫光，一起融成光紋卡 · Twin Flame</span></span></a>
-          </div>
+        <nav class="g-next" aria-label="接下來 What's next" hidden>
+          <a class="g-link" id="artLink" href="/works"><img id="artThumb" alt="" loading="lazy"><span><b id="artName">看這張卡的原作</b><span>AE 手繪原作 · See the original painting</span></span></a>
           <p class="g-foot" style="text-align:left;margin-top:10px"><a href="/color-moment">光紋心卡 Lightprint Card</a> · <a href="/touch-moment">觸動指尖 Touch Moment</a> · <a href="/experience">全部體驗 All experiences</a></p>
         </nav>
+<script>
+(function(){
+  function whenReady(fn){ if(window.AEExperienceEnding) return fn(); var n=0,id=setInterval(function(){ if(window.AEExperienceEnding||++n>60){ clearInterval(id); if(window.AEExperienceEnding) fn(); }},50); }
+  function primarySaveFromActs(){
+    var acts=document.getElementById('acts');
+    if(!acts) return null;
+    var btns=acts.querySelectorAll('button');
+    // first button is typically save wallpaper
+    return btns[0] || null;
+  }
+  function cloneMore(){
+    var acts=document.getElementById('acts');
+    var nodes=[];
+    if(acts){
+      Array.prototype.forEach.call(acts.querySelectorAll('button,a'), function(node, i){
+        if(i===0) return; // skip primary save
+        var c=node.cloneNode(true);
+        c.addEventListener('click', function(ev){ if(node.tagName==='BUTTON'){ ev.preventDefault(); node.click(); }});
+        nodes.push(c);
+      });
+    }
+    var art=document.getElementById('artLink');
+    if(art){ var c=art.cloneNode(true); c.id='artLink-more'; nodes.push(c); }
+    /* /together unfinished — entry hidden this preview */
+    return nodes;
+  }
+  function mount(){
+    var host=document.getElementById('aeEndHost'); if(!host||!window.AEExperienceEnding) return;
+    host.innerHTML=''; host.dataset.aeEndMounted='';
+    var thumb=document.getElementById('artThumb');
+    var artUrl=thumb && thumb.src ? thumb.src : '/assets/selected-works-v2/flower-heart-bloom.webp';
+    AEExperienceEnding.mount(host,{
+      experienceId:'dream-giver',
+      onSaveWallpaper:function(){ var b=primarySaveFromActs(); if(b) b.click(); },
+      share:{ title:'AE Dream Giver', text:'AE 夢想給予 · a dream card from AE Universe Creation', url:location.href.split('#')[0], campaign:'dream_giver' },
+      kofiKeyOrArt: artUrl,
+      moreNodes:cloneMore(),
+      resultArtUrl: artUrl
+    });
+  }
+  whenReady(function(){
+    var result=document.getElementById('result');
+    if(!result) return;
+    new MutationObserver(function(){ if(!result.hidden) setTimeout(mount, 30); }).observe(result,{attributes:true,attributeFilter:['hidden']});
+    // also remount when acts get populated
+    var acts=document.getElementById('acts');
+    if(acts) new MutationObserver(function(){ if(!result.hidden) setTimeout(mount, 30); }).observe(acts,{childList:true});
+    if(!result.hidden) mount();
+  });
+})();
+</script>
       </div>
     </div>
   </section>
@@ -200,10 +247,12 @@
     <p>不是算命，是一個被寫下、被祝福、被走出第一步的夢 · Not fortune-telling — a dream written, blessed and begun.</p>
     <p>不需登入 · 不收集資料 · 內容只存在連結與你的裝置裡 · 畫作為 AE 原作，保持原樣</p>
     <p>© AE Universe Creation · Aurelia &amp; Elion</p>
-    <p class="g-build" translate="no">Preview build v2476.53</p>
+    <p class="g-build" translate="no">Preview build v2476.86</p>
   </footer>
 </main>
 <canvas id="cardCanvas" width="1080" height="1920" hidden></canvas>
+<link rel="stylesheet" href="/ae-experience-ending.css">
+<script src="/ae-experience-ending.js" defer></script>
 <script src="/ae-chime.js" defer></script>
 <script src="/ae-games-kit.js?v=2"></script>
 <script src="/dream-app.js?v=2"></script>

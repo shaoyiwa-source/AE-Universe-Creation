@@ -10,7 +10,7 @@
     },
     {
       "source": "/experience",
-      "destination": "/experience.html"
+      "destination": "/experience-portal.html"
     },
     {
       "source": "/together",
@@ -45,10 +45,6 @@
       "destination": "/eternal-sun.html"
     },
     {
-      "source": "/soul-cards",
-      "destination": "/soul-cards.html"
-    },
-    {
       "source": "/index",
       "destination": "/index.html"
     },
@@ -75,12 +71,30 @@
     {
       "source": "/works-classic",
       "destination": "/works-classic.html"
+    },
+    {
+      "source": "/touch-moment",
+      "destination": "/experience.html"
+    },
+    {
+      "source": "/dream-giver",
+      "destination": "/dream-giver.html"
     }
   ],
   "redirects": [
     {
       "source": "/art-wall.html",
       "destination": "/art-wall",
+      "permanent": false
+    },
+    {
+      "source": "/soul-cards",
+      "destination": "/color-moment",
+      "permanent": false
+    },
+    {
+      "source": "/soul-cards.html",
+      "destination": "/color-moment",
       "permanent": false
     }
   ]

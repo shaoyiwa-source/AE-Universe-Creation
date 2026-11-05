@@ -50,10 +50,6 @@
       "destination": "/eternal-sun.html"
     },
     {
-      "source": "/soul-cards",
-      "destination": "/soul-cards.html"
-    },
-    {
       "source": "/index",
       "destination": "/index.html"
     },
@@ -114,6 +110,16 @@
     {
       "source": "/art-wall.html",
       "destination": "/art-wall",
+      "permanent": false
+    },
+    {
+      "source": "/soul-cards",
+      "destination": "/color-moment",
+      "permanent": false
+    },
+    {
+      "source": "/soul-cards.html",
+      "destination": "/color-moment",
       "permanent": false
     }
   ]

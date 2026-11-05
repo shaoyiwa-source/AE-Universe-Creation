@@ -684,10 +684,10 @@
   <section class="cm-stage">
     <div class="wrap">
       <div class="cm-intro" id="cmIntro">
-        <p  class="cm-opening-kicker" id="cmOpeningKicker" data-en="CREATE A LIGHTPRINT CARD" data-zh="製作一張光紋心卡">CREATE A LIGHTPRINT CARD</p>
-        <p  class="cm-opening-lead" id="cmOpeningLead" data-en="An artwork and a message for your moment." data-zh="讓作品與一句話，留住這一刻。">An artwork and a message for your moment.</p>
-        <p  class="cm-intro-soft" id="cmIntroSoft" data-en="Choose a few feelings, draw with light, then hold to seal. Your Lightprint Card combines an AE artwork, your colours and a short message." data-zh="選幾個感受、用手畫下光，再按住「收光」。完成後，你會得到一張結合 AE 作品、色彩與心靈小語的卡片。">Choose a few feelings, draw with light, then hold to seal. Your Lightprint Card combines an AE artwork, your colours and a short message.</p>
-        <p class="cm-coach" id="cmCoach" data-en="Pick one that fits" data-zh="輕輕選一個">Pick one that fits</p>
+        <p  class="cm-opening-kicker" id="cmOpeningKicker" data-en="AE SOUL CARD · LIGHTPRINT" data-zh="AE 心靈卡 · 光紋">AE SOUL CARD · LIGHTPRINT</p>
+        <p  class="cm-opening-lead" id="cmOpeningLead" data-en="A soft question, your light, and a card that keeps what you chose." data-zh="一個溫柔的問題、你的光，和一張記得你選擇的卡。">A soft question, your light, and a card that keeps what you chose.</p>
+        <p  class="cm-intro-soft" id="cmIntroSoft" data-en="One gentle question, then draw with light and hold to seal. Your Lightprint Card holds an AE artwork, your colours, and a short line that remembers what you chose." data-zh="一個溫柔的問題，再畫下光、按住收光。你的光紋心卡會帶著 AE 作品、你的色彩，以及一句記得你選擇的小語。">One gentle question, then draw with light and hold to seal. Your Lightprint Card holds an AE artwork, your colours, and a short line that remembers what you chose.</p>
+        <p class="cm-coach" id="cmCoach" data-en="There is no wrong answer" data-zh="沒有錯的答案">Pick one that fits</p>
       </div>
 
       <div class="cm-residue" id="cmResidue" hidden>
@@ -713,21 +713,21 @@
           <img class="cm-freeze" id="cmFreeze" alt="" hidden>
           <p class="cm-figure-breath" id="cmFigureBreath" data-en="Soft breathing" data-zh="柔光呼吸" hidden>Soft breathing</p>
         </div>
-        <button type="button" class="cm-seal-back" id="cmTouchBack" data-en="Back to questions" data-zh="回到問題" hidden>Back to questions</button>
+        <button type="button" class="cm-seal-back" id="cmTouchBack" data-en="Back" data-zh="返回" hidden>Back to questions</button>
 
         <div class="cm-seal-bar" id="cmSealBar" hidden>
           <p class="cm-lp-hint" id="cmLpHint" data-en="Hold until the ring fills." data-zh="按住，直到光環轉滿。">Hold until the ring fills.</p>
-          <button type="button" class="cm-seal" id="cmSeal" aria-label="收光" aria-describedby="cmSealHoldHint">
+          <button type="button" class="cm-seal" id="cmSeal" aria-label="Seal" data-en-aria="Seal" data-zh-aria="收光" aria-describedby="cmSealHoldHint">
             <span class="cm-seal-ring" id="cmSealRing" aria-hidden="true">
               <svg class="cm-seal-ring-svg" viewBox="0 0 36 36" width="100%" height="100%" aria-hidden="true">
                 <circle class="cm-seal-ring-track" pathLength="100" cx="18" cy="18" r="16" fill="none"></circle>
                 <circle class="cm-seal-ring-prog" pathLength="100" cx="18" cy="18" r="16" fill="none" stroke-dasharray="100" stroke-dashoffset="100"></circle>
               </svg>
             </span>
-            <span class="cm-seal-label" id="cmSealLabel" data-en="收光" data-zh="收光">收光</span>
+            <span class="cm-seal-label" id="cmSealLabel" data-en="Seal" data-zh="收光">Seal</span>
           </button>
           <p class="cm-seal-hold-hint" id="cmSealHoldHint" data-en="Hold — release to cancel" data-zh="按住——放開即取消">Hold — release to cancel</p>
-          <button type="button" class="cm-seal-back" id="cmSealBack" data-en="Back to questions" data-zh="回到問題">Back to questions</button>
+          <button type="button" class="cm-seal-back" id="cmSealBack" data-en="Back" data-zh="返回">Back to questions</button>
         </div>
 
         <article class="cm-card" id="cmCard" hidden aria-live="polite">
@@ -756,9 +756,10 @@
             <p class="cm-discover" id="cmDiscover"></p>
             <p class="cm-mini-tip" id="cmMiniTip" hidden></p>
             <p class="cm-capture-note" data-en="Keep the scene you liked — take this moment with you." data-zh="把你覺得不錯的畫面拍下來，帶著這一刻走。">Keep the scene you liked — take this moment with you.</p>
-            <div class="cm-card-actions" aria-label="Moment actions">
-              <button  type="button" class="cm-shutter" id="cmSnap" data-en="Save Lightprint Card" data-zh="儲存光紋心卡">Save Lightprint Card</button>
-              <button  type="button" class="cm-card-action" id="cmShare" data-en="Share Lightprint Card" data-zh="分享光紋心卡">Share Lightprint Card</button>
+            <div id="aeEndHost" class="ae-end-host" style="margin-top:12px"></div>
+            <div class="cm-card-actions ae-end-legacy" aria-label="Moment actions" hidden>
+              <button type="button" class="cm-shutter" id="cmSnap" data-en="Save Lightprint Card" data-zh="儲存光紋心卡">Save Lightprint Card</button>
+              <button type="button" class="cm-card-action" id="cmShare" data-en="Share Lightprint Card" data-zh="分享光紋心卡">Share Lightprint Card</button>
               <button type="button" class="cm-card-action" id="cmPathReplay" data-en="Watch the light again" data-zh="看光再走一次">Watch the light again</button>
               <button type="button" class="cm-card-action" id="cmReplay" data-en="Feel again" data-zh="再感覺一次">Feel again</button>
             </div>
@@ -799,7 +800,7 @@
   </div>
   <p data-en="Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission." data-zh="Aurelia 與 Elion 的原創手繪藝術。作品、圖像及文字均屬 AE Universe Creation；未經許可，不得複製、轉載或作商業使用。" class="footer-note">Original hand-painted art by Aurelia &amp; Elion. Artworks, images and text belong to AE Universe Creation. No copying, redistribution or commercial use without permission.</p>
   <p class="copyright">© AE Universe Creation · Aurelia &amp; Elion</p>
-  <p class="ae-version-mark" aria-hidden="true">AE · v2453b · color-moment</p>
+  <p class="ae-version-mark" aria-hidden="true">AE · v2476.86 · color-moment</p>
 </footer>
 
 <div class="cm-save-sheet" id="cmSaveSheet" hidden aria-hidden="true">
@@ -818,374 +819,46 @@
   </div>
 </div>
 
+<link rel="stylesheet" href="/ae-experience-ending.css">
+<script src="/ae-experience-ending.js" defer></script>
 <script src="qrcode.js"></script>
 <script>
 (() => {
   /* Larger pool — each session draws 3–4, shuffled. Scoring stays under the hood. */
+  /* P2: one personal hook (not a questionnaire). Card echo uses the chosen phrase. */
   const QUESTION_POOL = [
     {
-      zh: '此刻身體更靠近……',
-      en: 'Right now your body feels closer to…',
+      zh: '今天，你心裡還輕輕提著什麼？',
+      en: 'What are you still quietly carrying today?',
       choices: [
-        { zh: '溫熱的陽光', en: 'Warm sunlight', tags: ['warm', 'gold'] },
-        { zh: '清涼的霧氣', en: 'Cool mist', tags: ['cool', 'mist'] },
-        { zh: '靜靜的水面', en: 'Still water', tags: ['still', 'deep'] }
+        { zh: '還沒說出口的疲憊', en: 'A tiredness I have not named', tags: ['still', 'mist'] },
+        { zh: '一小團說不清的暖', en: 'A small warmth I cannot explain', tags: ['warm', 'gold'] },
+        { zh: '想被輕輕接住的感覺', en: 'A wish to be gently held', tags: ['soft', 'rose'] },
+        { zh: '對明天的一點期待', en: 'A little hope for tomorrow', tags: ['spark', 'mist'] }
       ]
     },
     {
-      zh: '若顏色先開口，它會是……',
-      en: 'If a colour spoke first, it would be…',
+      zh: '若此刻有一道光靠近你，你希望它懂什麼？',
+      en: 'If a light came near you now, what would you want it to understand?',
       choices: [
-        { zh: '柔金', en: 'Soft gold', tags: ['gold', 'warm'] },
-        { zh: '深靛', en: 'Deep indigo', tags: ['indigo', 'deep'] },
-        { zh: '花瓣粉', en: 'Petal pink', tags: ['rose', 'soft'] }
+        { zh: '我需要慢一點', en: 'I need to go slower', tags: ['still', 'cool'] },
+        { zh: '我其實還好，只是想被看見', en: 'I am alright — I just want to be seen', tags: ['soft', 'gold'] },
+        { zh: '有些事，我想放下了', en: 'There are things I am ready to set down', tags: ['mist', 'deep'] },
+        { zh: '我還想再亮一點', en: 'I want to shine a little more', tags: ['spark', 'warm'] }
       ]
     },
     {
-      zh: '你想留給什麼一點空間？',
-      en: 'What do you want to leave a little room for?',
+      zh: '你此刻最想被哪個字輕輕碰到？',
+      en: 'Which word would you most like to be touched by, softly, right now?',
       choices: [
-        { zh: '一口安靜的呼吸', en: 'A quiet breath', tags: ['still', 'mist'] },
-        { zh: '一點小小火花', en: 'A small spark', tags: ['spark', 'warm'] },
-        { zh: '慢慢展開的感覺', en: 'A slow unfolding', tags: ['soft', 'rose'] }
+        { zh: '安心', en: 'Ease', tags: ['still', 'soft'] },
+        { zh: '勇氣', en: 'Courage', tags: ['spark', 'gold'] },
+        { zh: '柔軟', en: 'Tenderness', tags: ['rose', 'soft'] },
+        { zh: '清明', en: 'Clarity', tags: ['cool', 'mist'] }
       ]
-    },
-    {
-      zh: '今夜的光更像……',
-      en: 'Tonight the light feels more like…',
-      choices: [
-        { zh: '燭火', en: 'Candlelight', tags: ['gold', 'warm'] },
-        { zh: '月光', en: 'Moonlight', tags: ['indigo', 'cool'] },
-        { zh: '黎明', en: 'Dawn', tags: ['spark', 'mist'] }
-      ]
-    },
-    {
-      zh: '如果你的心有溫度，它現在是……',
-      en: 'If your heart had a temperature, it would be…',
-      choices: [
-        { zh: '微微暖著', en: 'Softly warm', tags: ['warm', 'soft'] },
-        { zh: '清涼安靜', en: 'Cool and quiet', tags: ['cool', 'still'] },
-        { zh: '帶一點火', en: 'A touch of fire', tags: ['spark', 'gold'] }
-      ]
-    },
-    {
-      zh: '窗外的天空對你說……',
-      en: 'The sky outside seems to say…',
-      choices: [
-        { zh: '慢慢來就好', en: 'Take it slow', tags: ['mist', 'soft'] },
-        { zh: '有什麼在甦醒', en: 'Something is waking', tags: ['spark', 'rose'] },
-        { zh: '深處有光', en: 'Light in the deep', tags: ['deep', 'indigo'] }
-      ]
-    },
-    {
-      zh: '你更想被什麼包圍？',
-      en: 'What would you rather be wrapped in?',
-      choices: [
-        { zh: '柔軟的布料', en: 'Soft fabric', tags: ['soft', 'rose'] },
-        { zh: '清透的空氣', en: 'Clear air', tags: ['cool', 'mist'] },
-        { zh: '金線般的餘暉', en: 'Golden afterglow', tags: ['gold', 'warm'] }
-      ]
-    },
-    {
-      zh: '記憶裡的氣味更接近……',
-      en: 'A scent from memory feels closer to…',
-      choices: [
-        { zh: '雨後草木', en: 'Rain-washed leaves', tags: ['mist', 'still'] },
-        { zh: '烘過的茶香', en: 'Warmed tea', tags: ['warm', 'gold'] },
-        { zh: '夜間的花', en: 'Night-blooming flower', tags: ['indigo', 'rose'] }
-      ]
-    },
-    {
-      zh: '你想讓時間……',
-      en: 'You want time to…',
-      choices: [
-        { zh: '停一下', en: 'Pause a little', tags: ['still', 'deep'] },
-        { zh: '輕輕往前', en: 'Drift forward', tags: ['soft', 'cool'] },
-        { zh: '亮起來', en: 'Brighten', tags: ['spark', 'warm'] }
-      ]
-    },
-    {
-      zh: '若這一刻是一幅畫，筆觸會是……',
-      en: 'If this moment were a painting, the stroke would be…',
-      choices: [
-        { zh: '薄薄一層霧', en: 'A thin veil of mist', tags: ['mist', 'cool'] },
-        { zh: '濃一點的色塊', en: 'A denser field of colour', tags: ['deep', 'indigo'] },
-        { zh: '柔邊的暈染', en: 'Soft-edged bloom', tags: ['rose', 'soft'] }
-      ]
-    },
-    {
-      zh: '手心想像握住的是……',
-      en: 'In your palm you imagine holding…',
-      choices: [
-        { zh: '一顆溫熱的石', en: 'A warm stone', tags: ['warm', 'still'] },
-        { zh: '一滴冷涼的水', en: 'A cool drop of water', tags: ['cool', 'mist'] },
-        { zh: '一截細細的金線', en: 'A thin gold thread', tags: ['gold', 'spark'] }
-      ]
-    },
-    {
-      zh: '你想對今晚輕輕說……',
-      en: 'You want to whisper to tonight…',
-      choices: [
-        { zh: '陪我安靜一下', en: 'Stay quiet with me', tags: ['still', 'indigo'] },
-        { zh: '給我一點暖', en: 'Give me a little warmth', tags: ['warm', 'gold'] },
-        { zh: '讓我慢慢開', en: 'Let me open slowly', tags: ['rose', 'soft'] }
-      ]
-    },
-    {
-      zh: '如果一扇門為你留著，它後面是……',
-      en: 'If a door were left open for you, behind it would be…',
-      choices: [
-        { zh: '暖暖的長廊', en: 'A warm hallway', tags: ['warm', 'gold'] },
-        { zh: '沒有月亮的夜', en: 'A moonless night', tags: ['indigo', 'deep'] },
-        { zh: '霧裡的小花園', en: 'A little garden in mist', tags: ['mist', 'rose'] }
-      ]
-    },
-    {
-      zh: '此刻最想聽見的聲音是……',
-      en: 'The sound you most want to hear right now is…',
-      choices: [
-        { zh: '遠處的雨', en: 'Rain in the distance', tags: ['mist', 'still'] },
-        { zh: '木柴輕輕響', en: 'A soft crackle of wood', tags: ['warm', 'spark'] },
-        { zh: '一枚鐘聲落下', en: 'A bell settling into the air', tags: ['deep', 'gold'] }
-      ]
-    },
-    {
-      zh: '你的影子今天想往哪裡走？',
-      en: 'Where does your shadow want to wander today?',
-      choices: [
-        { zh: '向著剛亮起的天', en: 'Toward the brightening sky', tags: ['spark', 'mist'] },
-        { zh: '月色較深的地方', en: 'Somewhere deep in moonlight', tags: ['indigo', 'deep'] },
-        { zh: '水邊一小段安靜', en: 'A quiet stretch by the water', tags: ['still', 'cool'] }
-      ]
-    },
-    {
-      zh: '一束光落在你肩上，像……',
-      en: 'A beam of light falls on your shoulder like…',
-      choices: [
-        { zh: '舊信紙上的金色', en: 'Gold on an old letter', tags: ['gold', 'deep'] },
-        { zh: '清晨的淡藍', en: 'The pale blue of morning', tags: ['cool', 'mist'] },
-        { zh: '花瓣邊緣的粉紅', en: 'Pink along a petal edge', tags: ['rose', 'soft'] }
-      ]
-    },
-    {
-      zh: '若把煩惱放在水上，它會……',
-      en: 'If you set a worry on the water, it would…',
-      choices: [
-        { zh: '慢慢漂遠', en: 'Drift slowly away', tags: ['cool', 'still'] },
-        { zh: '在光裡融開', en: 'Melt into the light', tags: ['gold', 'soft'] },
-        { zh: '留下微小的火花', en: 'Leave a tiny spark behind', tags: ['spark', 'warm'] }
-      ]
-    },
-    {
-      zh: '你與夜色之間，還有……',
-      en: 'Between you and the night, there is still…',
-      choices: [
-        { zh: '一小塊安靜', en: 'A small pocket of quiet', tags: ['still', 'soft'] },
-        { zh: '未熄的火', en: 'A fire not yet gone out', tags: ['warm', 'spark'] },
-        { zh: '藍色的遠方', en: 'A blue distance', tags: ['indigo', 'cool'] }
-      ]
-    },
-    {
-      zh: '哪一種觸感正在召喚你？',
-      en: 'Which texture is calling to you?',
-      choices: [
-        { zh: '天鵝絨的柔軟', en: 'The softness of velvet', tags: ['soft', 'rose'] },
-        { zh: '被水磨亮的石頭', en: 'A stone polished by water', tags: ['cool', 'deep'] },
-        { zh: '曬過太陽的麻布', en: 'Linen warmed by the sun', tags: ['warm', 'gold'] }
-      ]
-    },
-    {
-      zh: '當世界放低聲音，你會看見……',
-      en: 'When the world lowers its voice, you will see…',
-      choices: [
-        { zh: '一條細細的金線', en: 'A fine golden thread', tags: ['gold', 'spark'] },
-        { zh: '深藍裡的一點星', en: 'A single star in deep blue', tags: ['indigo', 'deep'] },
-        { zh: '花朵慢慢張開', en: 'A flower opening slowly', tags: ['rose', 'soft'] }
-      ]
-    },
-    {
-      zh: '一個未說完的願望像……',
-      en: 'An unfinished wish feels like…',
-      choices: [
-        { zh: '掌心裡的餘溫', en: 'Lingering warmth in your palm', tags: ['warm', 'still'] },
-        { zh: '水底尚未抵達的光', en: 'Light not yet reached beneath the water', tags: ['cool', 'deep'] },
-        { zh: '將要落下的花瓣', en: 'A petal about to fall', tags: ['rose', 'mist'] }
-      ]
-    },
-    {
-      zh: '你想把哪一種光帶回家？',
-      en: 'Which kind of light would you carry home?',
-      choices: [
-        { zh: '黃昏的柔金', en: 'The soft gold of dusk', tags: ['gold', 'warm'] },
-        { zh: '第一顆星的靛藍', en: 'The indigo of the first star', tags: ['indigo', 'deep'] },
-        { zh: '霧散前的微亮', en: 'A faint glow before the mist clears', tags: ['mist', 'soft'] }
-      ]
-    },
-    {
-      zh: '今天的風把什麼帶來？',
-      en: 'What has today’s wind carried to you?',
-      choices: [
-        { zh: '一點熟悉的暖香', en: 'A familiar warm scent', tags: ['warm', 'rose'] },
-        { zh: '一個未揭開的秘密', en: 'A secret not yet revealed', tags: ['cool', 'deep'] },
-        { zh: '遠方閃過的光', en: 'A glimmer from far away', tags: ['spark', 'gold'] }
-      ]
-    },
-    {
-      zh: '如果心是一座小房間，現在的燈是……',
-      en: 'If your heart were a little room, its light would be…',
-      choices: [
-        { zh: '低低的琥珀色', en: 'A low amber glow', tags: ['gold', 'still'] },
-        { zh: '牆角的藍色陰影', en: 'A blue shadow in the corner', tags: ['indigo', 'cool'] },
-        { zh: '一盞粉紅小燈', en: 'A little pink lamp', tags: ['rose', 'soft'] }
-      ]
-    },
-    {
-      zh: '此刻你想靠近哪一種溫度？',
-      en: 'Which temperature do you want to lean toward now?',
-      choices: [
-        { zh: '掌心裡的暖', en: 'Warmth in the palm', tags: ['warm', 'gold'] },
-        { zh: '窗縫的涼風', en: 'Cool air at the window', tags: ['cool', 'mist'] },
-        { zh: '夜裡不急的靜', en: 'An unhurried quiet of night', tags: ['still', 'deep'] }
-      ]
-    },
-    {
-      zh: '如果顏色有腳步聲，它會……',
-      en: 'If colour had footsteps, it would…',
-      choices: [
-        { zh: '輕得像落葉', en: 'Be as soft as falling leaves', tags: ['soft', 'mist'] },
-        { zh: '帶一點金屬的亮', en: 'Carry a metallic gleam', tags: ['gold', 'spark'] },
-        { zh: '走在更深的走廊', en: 'Walk a deeper corridor', tags: ['indigo', 'deep'] }
-      ]
-    },
-    {
-      zh: '你想把今天收進哪一種容器？',
-      en: 'Which vessel would you keep today inside?',
-      choices: [
-        { zh: '溫熱的陶碗', en: 'A warm clay bowl', tags: ['warm', 'still'] },
-        { zh: '透亮的玻璃', en: 'Clear glass', tags: ['cool', 'mist'] },
-        { zh: '絲絨的小盒', en: 'A velvet box', tags: ['rose', 'soft'] }
-      ]
-    },
-    {
-      zh: '遠方一盞燈對你眨眼，像……',
-      en: 'A far lamp blinks at you like…',
-      choices: [
-        { zh: '還沒說完的話', en: 'Words not yet finished', tags: ['soft', 'deep'] },
-        { zh: '剛點著的微火', en: 'A newly kindled spark', tags: ['spark', 'warm'] },
-        { zh: '水上漂過的月', en: 'The moon drifting on water', tags: ['indigo', 'cool'] }
-      ]
-    },
-    {
-      zh: '哪一種邊界讓你覺得安全？',
-      en: 'Which kind of edge feels safe to you?',
-      choices: [
-        { zh: '霧把一切柔掉', en: 'Mist softening everything', tags: ['mist', 'soft'] },
-        { zh: '金線輕輕圈住', en: 'A thin gold circle', tags: ['gold', 'warm'] },
-        { zh: '深藍靜靜守著', en: 'Deep blue standing watch', tags: ['indigo', 'still'] }
-      ]
-    },
-    {
-      zh: '若把心跳畫成色塊，會是……',
-      en: 'If a heartbeat were painted as colour, it would be…',
-      choices: [
-        { zh: '一抹慢下來的粉紅', en: 'A slow wash of pink', tags: ['rose', 'soft'] },
-        { zh: '一點不斷回溫的琥珀', en: 'Amber that keeps warming', tags: ['gold', 'warm'] },
-        { zh: '一層沉下去的藍綠', en: 'A blue-green sinking deeper', tags: ['cool', 'deep'] }
-      ]
-    },
-    {
-      zh: '你更想讓目光停在……',
-      en: 'Where would you rather let your gaze rest?',
-      choices: [
-        { zh: '剛被陽光碰到的牆', en: 'A wall just touched by sun', tags: ['warm', 'spark'] },
-        { zh: '雨痕尚未乾的窗', en: 'A window still holding rain', tags: ['mist', 'cool'] },
-        { zh: '火焰將熄的餘紅', en: 'The last red of a dying flame', tags: ['deep', 'rose'] }
-      ]
-    },
-    {
-      zh: '一個秘密顏色正等待被……',
-      en: 'A secret colour is waiting to be…',
-      choices: [
-        { zh: '溫柔地揭開', en: 'Gently uncovered', tags: ['soft', 'rose'] },
-        { zh: '在暗裡慢慢亮', en: 'Slowly lit in the dark', tags: ['indigo', 'spark'] },
-        { zh: '放進水裡看它散開', en: 'Set into water to bloom', tags: ['mist', 'still'] }
-      ]
-    },
-    {
-      zh: '你與自己之間，現在更像……',
-      en: 'Between you and yourself, it feels more like…',
-      choices: [
-        { zh: '被毯子輕輕蓋住', en: 'Being lightly covered by a blanket', tags: ['warm', 'soft'] },
-        { zh: '站在湖邊聽風', en: 'Standing by a lake, hearing wind', tags: ['cool', 'still'] },
-        { zh: '走在尚未命名的夜路', en: 'Walking a night path not yet named', tags: ['deep', 'indigo'] }
-      ]
-    },
-    {
-      zh: '若此刻有氣味，它會先是……',
-      en: 'If this moment had a scent, it would first be…',
-      choices: [
-        { zh: '曬過的棉與陽光', en: 'Sun-warmed cotton', tags: ['warm', 'gold'] },
-        { zh: '雨打濕的青草', en: 'Grass wet with rain', tags: ['mist', 'cool'] },
-        { zh: '夜裡淡淡的花香', en: 'A faint floral scent at night', tags: ['rose', 'indigo'] }
-      ]
-    },
-    {
-      zh: '你想讓哪一種節奏進來？',
-      en: 'Which rhythm do you want to let in?',
-      choices: [
-        { zh: '像呼吸一樣慢的起伏', en: 'A rise and fall as slow as breath', tags: ['still', 'soft'] },
-        { zh: '像火花跳一下再停', en: 'A spark that jumps once, then rests', tags: ['spark', 'gold'] },
-        { zh: '像潮水退得很遠', en: 'A tide drawing far away', tags: ['cool', 'deep'] }
-      ]
-    },
-    {
-      zh: '明天還沒醒來，今夜你可以……',
-      en: 'Before tomorrow wakes, tonight you may…',
-      choices: [
-        { zh: '把金色收進口袋', en: 'Slip a little gold into a pocket', tags: ['gold', 'warm'] },
-        { zh: '把藍色放在枕邊', en: 'Leave blue beside the pillow', tags: ['indigo', 'still'] },
-        { zh: '讓粉紅慢慢散開', en: 'Let pink dissolve slowly', tags: ['rose', 'mist'] }
-      ]
-    },
-    {
-      zh: '皮膚更想被什麼輕輕碰觸？',
-      en: 'What does your skin want to be touched by?',
-      choices: [
-        { zh: '微微發熱的空氣', en: 'Air that is faintly warm', tags: ['warm', 'soft'] },
-        { zh: '帶霧的涼意', en: 'A coolness edged with mist', tags: ['cool', 'mist'] },
-        { zh: '像絲線的細光', en: 'A fine thread of light', tags: ['gold', 'spark'] }
-      ]
-    },
-    {
-      zh: '若靠近一個人的距離，你想停在……',
-      en: 'If closeness had a distance, you would stop at…',
-      choices: [
-        { zh: '能聽見呼吸的地方', en: 'Where breath can be heard', tags: ['soft', 'still'] },
-        { zh: '肩與肩之間的溫熱', en: 'The warmth between two shoulders', tags: ['warm', 'rose'] },
-        { zh: '還留一點霧的遠一點', en: 'A little farther, still in mist', tags: ['mist', 'indigo'] }
-      ]
-    },
-    {
-      zh: '舌頭記得的味道，更接近……',
-      en: 'A taste the tongue remembers feels closer to…',
-      choices: [
-        { zh: '剛泡開的暖茶', en: 'Freshly brewed warm tea', tags: ['warm', 'gold'] },
-        { zh: '雨後泥土的清涼', en: 'Cool earth after rain', tags: ['cool', 'deep'] },
-        { zh: '夜間花蜜的淡甜', en: 'A faint night-nectar sweetness', tags: ['rose', 'soft'] }
-      ]
-    },
-    {
-      zh: '胸口那一小塊空間，現在裝著……',
-      en: 'That small space in your chest is holding…',
-      choices: [
-        { zh: '尚未說出口的暖', en: 'Warmth not yet spoken', tags: ['warm', 'still'] },
-        { zh: '像深水一樣的安靜', en: 'A quiet like deep water', tags: ['deep', 'indigo'] },
-        { zh: '一點想靠近的火花', en: 'A spark that wants to draw near', tags: ['spark', 'rose'] }
-      ]
-    },
+    }
   ];
 
-  /* Soft affinities: related tags gently reinforce each other (fuzzy, not exact-only). */
   const TAG_AFFINITY = {
     warm:  { gold: 0.45, spark: 0.3, soft: 0.15, rose: 0.1 },
     cool:  { mist: 0.45, indigo: 0.3, still: 0.25, soft: 0.1 },
@@ -1634,8 +1307,8 @@
   };
 
 
-  const SESSION_MIN = 3;
-  const SESSION_MAX = 4;
+  const SESSION_MIN = 1;
+  const SESSION_MAX = 1;
 
   const askEl = document.getElementById('cmAsk');
   const progressEl = document.getElementById('cmProgress');
@@ -1902,10 +1575,10 @@
     if (lpHint) {
       lpHint.textContent = L === 'zh' ? '按住，直到光環轉滿。' : 'Hold until the ring fills.';
     }
-    const label = '收光';
+    const label = lang() === 'zh' ? '收光' : 'Seal';
     if (sealLabel) sealLabel.textContent = label;
     // Never sealBtn.textContent — that destroys the hold-progress ring DOM.
-    if (sealBtn) sealBtn.setAttribute('aria-label', '收光');
+    if (sealBtn) sealBtn.setAttribute('aria-label', lang() === 'zh' ? '收光' : 'Seal');
     if (sealHoldHint) {
       sealHoldHint.textContent = L === 'zh' ? '按住——放開即取消' : 'Hold — release to cancel';
     }
@@ -2988,24 +2661,13 @@
   function buildAnswerEcho() {
     if (!sessionAnswers || !sessionAnswers.length) return '';
     const L = lang();
-    // Prefer last 1 distinctive phrase; allow 2 only if both short + distinct.
-    const picked = sessionAnswers.slice(-2);
-    const phrases = picked.map(a => (L === 'zh' ? a.zh : a.en)).filter(Boolean);
-    if (!phrases.length) return '';
-    let use = [phrases[phrases.length - 1]];
-    if (phrases.length === 2) {
-      const a = phrases[0], b = phrases[1];
-      const maxLen = L === 'zh' ? 12 : 28;
-      const short = (s) => String(s).length <= maxLen;
-      const distinct = a !== b && !String(a).includes(b) && !String(b).includes(a);
-      if (short(a) && short(b) && distinct) use = phrases;
-    }
+    const a = sessionAnswers[sessionAnswers.length - 1];
+    const phrase = L === 'zh' ? a.zh : a.en;
+    if (!phrase) return '';
     if (L === 'zh') {
-      if (use.length === 1) return `你剛才靠近的是——「${use[0]}」`;
-      return `你剛才靠近的是——「${use[0]}」與「${use[1]}」`;
+      return `這張光紋記得你說的——「${phrase}」。光沒有急著回答；它只是陪你把這件事，輕輕放在畫裡。`;
     }
-    if (use.length === 1) return `You leaned toward — “${use[0]}”`;
-    return `You leaned toward — “${use[0]}” and “${use[1]}”`;
+    return `This lightprint remembers what you named — “${phrase}”. The light does not rush to answer; it simply keeps that with you, inside the painting.`;
   }
 
   // v2451: art painting soft full bg + small centered sealed-light frame + sparse text (Owner ref).
@@ -4320,5 +3982,60 @@
 })();
 </script>
 <script src="/ae-version.js" defer></script>
+
+<script id="ae-end-color-mount">
+(function(){
+  function whenReady(fn){
+    if(window.AEExperienceEnding) return fn();
+    var n=0,id=setInterval(function(){ if(window.AEExperienceEnding||++n>60){ clearInterval(id); if(window.AEExperienceEnding) fn(); } },50);
+  }
+  function cloneMore(){
+    var legacy=document.querySelector('.cm-card-actions.ae-end-legacy');
+    if(!legacy) return [];
+    return Array.prototype.map.call(legacy.querySelectorAll('button'), function(node){
+      if(node.id==='cmSnap') return null; // primary save handled by ending
+      var c=node.cloneNode(true);
+      var oid=node.id;
+      c.id = oid + '-more';
+      c.addEventListener('click', function(){ var o=document.getElementById(oid); if(o) o.click(); });
+      return c;
+    }).filter(Boolean);
+  }
+  function doMount(){
+    var host=document.getElementById('aeEndHost');
+    if(!host||!window.AEExperienceEnding) return;
+    host.innerHTML=''; host.dataset.aeEndMounted='';
+    var art='';
+    try{
+      var img=document.querySelector('.cm-card-artwork');
+      if(img && img.src) art=img.src;
+    }catch(e){}
+    AEExperienceEnding.mount(host,{
+      experienceId:'color-moment',
+      onSaveWallpaper:function(){ var b=document.getElementById('cmSnap'); if(b) b.click(); },
+      share:{
+        title:'AE Lightprint Card',
+        text:(document.documentElement.lang||'').toLowerCase().startsWith('zh')||(localStorage.getItem('ae-language')==='zh')
+          ? '我在 AE 光紋心卡留下了一道光。' : 'I made a Lightprint Card with AE.',
+        url:location.href.split('#')[0],
+        campaign:'color_moment'
+      },
+      kofiKeyOrArt: art || 'love-energy-field',
+      moreNodes: cloneMore(),
+      resultArtUrl: art
+    });
+  }
+  whenReady(function(){
+    var card=document.getElementById('cmCard');
+    if(!card) return;
+    var obs=new MutationObserver(function(){
+      if(!card.hidden) doMount();
+    });
+    obs.observe(card,{attributes:true,attributeFilter:['hidden']});
+    if(!card.hidden) doMount();
+  });
+})();
+</script>
+
 </body>
 </html>
