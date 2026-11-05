@@ -26,8 +26,8 @@ const ARTS = [
   { id: 'love-energy-field', en: 'Love Energy Field', src: '/assets/selected-works-v2/love-energy-field.webp', w: 1536, h: 1055 }
 ].map(a => ({ thumb: '/assets/artwall/t-' + a.id + '.webp', zh: a.en, ...a }));
 const TRACKS = [ // only one distinct song is hosted (the homepage /media/aurelia-techno-eternal-148bpm.m4a is the same audio, sample-identical loudness curve)
-  { id: 'eternal', zh: '盛明 Eternal Sun · Techno', en: 'Eternal Sun · Techno', src: '/player/eternal-sun/assets/ae-eternal-stream.m4a', beats: 'timeline', cue: 58.3 },
-  { id: 'calm-ambient', zh: '靜謐漫步 Calm Ambient', en: 'Calm Ambient (lyrical)', src: '/premium/eternal-sun/assets/audio/calm-ambient-3-v84.m4a', beats: 'live', cue: 0, gain: 1.35, calm: true, credit: 'cynicmusic · CC0' } // v83: slow/lyrical test track (CC0, OpenGameArt cynicmusic)
+  { id: 'eternal', zh: '盛明 Eternal Sun · Techno', en: 'Eternal Sun · Techno', src: '/player/eternal-sun/assets/ae-eternal-stream.m4a', beats: 'timeline', cue: 58.3, bpm: 148 },
+  { id: 'calm-ambient', zh: '靜謐漫步 Calm Ambient', en: 'Calm Ambient (lyrical)', src: '/premium/eternal-sun/assets/audio/calm-ambient-3-v84.m4a', beats: 'live', cue: 0, gain: 1.35, calm: true, bpm: 49.75, credit: 'cynicmusic · CC0' } // v90: pre-analysed offline (onset autocorrelation peak 99.5 BPM, weak ambient pulse) -> half-time 49.75 so lights breathe with the song // v83: slow/lyrical test track (CC0, OpenGameArt cynicmusic)
 ];
 if (Q.has('tracktest')) TRACKS.push({ id: 'live-test', zh: '測試 · 即時節拍分析', en: 'Test · live beat analysis', src: '/player/eternal-sun/assets/ae-eternal-stream.m4a', beats: 'live', cue: 0 });
 const pickIdx = (list, key, q) => { const v = Q.get(q) || (() => { try { return localStorage.getItem(key); } catch (e) { return null; } })(); const i = list.findIndex(x => x.id === v); return i < 0 ? 0 : i; };
@@ -65,12 +65,15 @@ function layout() {
   L.W = innerWidth; L.H = innerHeight; L.dpr = Math.min(devicePixelRatio || 1, 2);
   const portrait = L.H > L.W, sa = safeInsets();
   // v80: reserve the top (painting switcher) and bottom (play dock) bands so the painting's tap area never sits under a control
-  const top = sa.t + (portrait ? 96 : 118), bot = sa.b + (portrait ? 156 : 158), mx = portrait ? 0.12 : 0.1;
+  const hm = document.body.classList.contains('home-mode'), small = L.H < 720; // v90: 經典首頁 stacks logo / picker / framed painting / text / play bar without overlap
+  const txtH = hm ? (portrait ? (small ? 84 : 104) : 118) : 0, frm = hm ? Math.max(9, Math.round(L.W * (portrait ? 0.88 : 0.9) * 0.03)) + 12 : 0;
+  const top = sa.t + (hm ? 112 + frm : (portrait ? 96 : 118)), bot = sa.b + (portrait ? 156 : 158) + txtH + frm, mx = portrait ? 0.12 : 0.1;
   let w = L.W * (1 - mx), h = w / AR; const availH = Math.max(120, L.H - top - bot);
   if (h > availH) { h = availH; w = h * AR; }
   w = Math.round(w); h = Math.round(h);
   L.p = { x: Math.round((L.W - w) / 2), y: Math.round(top + (availH - h) / 2), w, h };
   L.F = Math.max(9, Math.round(w * 0.03));
+  { const r = document.documentElement.style, ty = L.p.y + L.p.h + L.F + 12; r.setProperty('--hp-top', ty + 'px'); r.setProperty('--hp-left', Math.max(18, Math.min(L.p.x - L.F, (L.W - 578) / 2)) + 'px'); r.setProperty('--hp-right', Math.max(16, L.W - (L.p.x + L.p.w + L.F)) + 'px'); r.setProperty('--hp-small', small ? '1' : '0'); document.body.classList.toggle('hp-short', small); }
   const a = $('#art').style;
   a.left = L.p.x + 'px'; a.top = L.p.y + 'px'; a.width = w + 'px'; a.height = h + 'px';
   for (const c of [$('#front'), $('#back'), $('#coin')]) { c.width = L.W * L.dpr; c.height = L.H * L.dpr; }
@@ -113,8 +116,8 @@ for (const ev of ['playing', 'seeked', 'canplay']) audio.addEventListener(ev, ()
 async function togglePlay() {
   const tnow = performance.now(); if (tnow - (A.tpAt || 0) < 250) return; A.tpAt = tnow; // v84: debounce double taps -> no duplicate starts
   // v83: back from the background the media element may still report playing while the WebAudio output is suspended/interrupted -> one tap = resume
-  if (!audio.paused && A.mg && A.mg.c && A.mg.c.state !== 'running') { USER.want = true; resume89('stale-playing'); A.resync89 = 1; syncPlay(); return; } // v89: element already playing -> never call play() a 2nd time, just resume the graph + re-sync
-  if (audio.paused && A.mg && A.mg.c && A.mg.c.state !== 'running') { resume89('before-play'); A.resync89 = 1; } // v89: resume the WebAudio graph BEFORE play() (it was resumed after/concurrently)
+  if (!audio.paused && A.mg && A.mg.c && A.mg.c.state !== 'running') { USER.want = true; resume89('stale-playing'); if (A.mg.c.state === 'interrupted') A.resync89 = 1; syncPlay(); return; } // v89: element already playing -> never call play() a 2nd time, just resume the graph + re-sync
+  if (audio.paused && A.mg && A.mg.c && A.mg.c.state !== 'running') { if (A.mg.c.state === 'interrupted') A.resync89 = 1; resume89('before-play'); } // v90: forced re-sync only for the iOS 'interrupted' (leftover audio) case // v89: resume the WebAudio graph BEFORE play() (it was resumed after/concurrently)
   // v2476.69: start the media element FIRST, synchronously inside the tap (iOS Safari refuses play() issued after an await → stall)
   USER.want = audio.paused; if (audio.paused) try { routeMusic(); } catch (e) {}
   let early = null; if (audio.paused) { if (!A.started) { A.started = 1; startAtCue(); } try { early = audio.play(); if (early && early.catch) early.catch(() => {}); } catch (e) {} }
@@ -153,7 +156,7 @@ function routeMusic() { // iOS ignores audio.volume -> put the element through a
   try { ensureGraph(false); } catch (e) { A.mg = { el: true }; } }
 function syncPlay() { S.playing = !audio.paused && !audio.ended && !(A.mg && A.mg.c && (A.mg.c.state === 'suspended' || A.mg.c.state === 'interrupted') && document.hidden); updatePlayLabel(); }
 // v83: leaving the app pauses the music for real (element paused, intent cleared) so the button shows ▶ and ONE tap resumes
-document.addEventListener('visibilitychange', () => { if (document.hidden) { if (!audio.paused) { USER.want = false; HID83.paused = 1; fade84(0, 0.12, 'hide'); clearTimeout(HID83.tm); HID83.tm = setTimeout(() => { if (document.hidden || !USER.want) { try { audio.pause(); } catch (e) {} try { if (A.mg && A.mg.c && A.mg.c.state === 'running') A.mg.c.suspend().catch(() => {}); } catch (e) {} } }, 140); } A.resync89 = 1; } else { clearTimeout(HID83.tm); if (!USER.want && !audio.paused) try { audio.pause(); } catch (e) {} fade84(0, 0, 'show-mute'); try { if (A.mg && A.mg.c && A.mg.c.state !== 'running' && A.mg.c.state !== 'closed') A.mg.c.resume().catch(() => {}); } catch (e) {} } syncPlay(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { if (!audio.paused) { USER.want = false; HID83.paused = 1; fade84(0, 0.15, 'hide'); clearTimeout(HID83.tm); HID83.tm = setTimeout(() => { if (document.hidden || !USER.want) { try { audio.pause(); } catch (e) {} } }, 150); } } else { clearTimeout(HID83.tm); if (!USER.want && !audio.paused) try { audio.pause(); } catch (e) {} fade84(0, 0, 'show-mute'); try { if (A.mg && A.mg.c && A.mg.c.state !== 'running' && A.mg.c.state !== 'closed') A.mg.c.resume().catch(() => {}); } catch (e) {} } syncPlay(); });
 // v84: fade stage (src -> fg -> volume gain). Every start fades in ~250 ms; hide fades out before pausing; the context is never resumed with full gain.
 var FADE84 = { log: [] };
 function fade84(v, sec, why) { const m = A.mg; if (!m || !m.fg) return; try { const g = m.fg.gain, t = m.c.currentTime, from = g.value; g.cancelScheduledValues(t); g.setValueAtTime(from, t); if (sec > 0) g.linearRampToValueAtTime(v, t + sec); else g.setValueAtTime(v, t); FADE84.log.push({ t: Math.round(performance.now()), why, from: +from.toFixed(3), to: v, ms: Math.round(sec * 1000), ctx: m.c.state }); if (FADE84.log.length > 80) FADE84.log.shift(); } catch (e) {} }
@@ -162,7 +165,7 @@ audio.addEventListener('play', () => { if (USER.want) { PB89.starts++; fade84(0,
 // a self-seek flushes the decoder/graph backlog that was heard as two overlapping copies of the song.
 audio.addEventListener('playing', () => { if (!A.resync89) return; const go = () => { if (!A.resync89) return; A.resync89 = 0; PB89.resyncs++; PB89.log.push({ t: Math.round(performance.now()), ev: 'resync', ct: +audio.currentTime.toFixed(3) }); try { fade84(0, 0, 'resync'); audio.currentTime = audio.currentTime; fade84(1, 0.2, 'resync-in'); } catch (e) {} CK.ok = 0; PC89.lastCT = -1; };
   const c = A.mg && A.mg.c; if (!c || c.state === 'running') go(); else { c.resume().then(go, go); } });
-addEventListener('pagehide', () => { fade84(0, 0, 'pagehide'); A.resync89 = 1; if (!audio.paused) { USER.want = false; HID83.paused = 1; try { audio.pause(); } catch (e) {} } });
+addEventListener('pagehide', () => { fade84(0, 0, 'pagehide'); if (!audio.paused) { USER.want = false; HID83.paused = 1; try { audio.pause(); } catch (e) {} } });
 ['play', 'playing', 'pause', 'ended', 'emptied', 'stalled', 'suspend', 'waiting'].forEach(ev => audio.addEventListener(ev, syncPlay));
 document.addEventListener('visibilitychange', syncPlay); addEventListener('pageshow', syncPlay); addEventListener('focus', syncPlay);
 let rings = [];
@@ -214,7 +217,7 @@ function analyse(now) {
    Now: broadband + bass spectral flux with an adaptive (mean + k·sd) threshold, an inter-onset tempo estimator (reset per song),
    and a phase-locked beat "flywheel" on audio.currentTime so visuals keep the song's tempo between soft onsets, plus a
    clock fallback when the analyser returns silence (some iOS routes). */
-function newLB83() { return { beat: false, count: 0, pulse: 0, phase: 0, interval: 0.6, stage: 'groove', dropPulse: 0, buildProgress: 0, accentCount: 0, sweep: 0, last: -9, grid: -9, pk: 0.3,
+function newLB83() { const kb = TR && TR.bpm > 0 ? 60 / TR.bpm : 0; return { known: kb, beat: false, count: 0, pulse: 0, phase: 0, interval: kb || 0.6, stage: 'groove', dropPulse: 0, buildProgress: 0, accentCount: 0, sweep: 0, last: -9, grid: -9, pk: 0.3,
   fm: 0, fv: 0.0004, on: [], onsets: 0, bpm: 0, conf: 0, zero: 0, silent: 0, lvl: 0, lvlAvg: 0, prev: null, t0: -1, lastOn: -9, ct: -1, mode: 'onset' }; }
 function tempo83(LB) { const o = LB.on; if (o.length < 5) return; const H = new Float32Array(68); // 0.33..1.0 s in 10 ms bins (60..180 BPM)
   for (let i = 0; i < o.length; i++) for (let j = i + 1; j < Math.min(o.length, i + 5); j++) { let v = o[j] - o[i]; if (v < 0.12 || v > 2.4) continue; while (v < 0.33) v *= 2; while (v > 1.0) v /= 2; const k = Math.round((v - 0.33) * 100); for (let d = -2; d <= 2; d++) if (k + d >= 0 && k + d < 68) H[k + d] += Math.exp(-d * d / 2) / (j - i); }
@@ -238,7 +241,7 @@ function liveBeat83(now) {
   const d0 = flux - LB.fm; LB.fm += d0 * 0.03; LB.fv += (d0 * d0 - LB.fv) * 0.03; const sd = Math.sqrt(Math.max(1e-6, LB.fv));
   LB.lvl = lvl; LB.lvlAvg += (lvl - LB.lvlAvg) * 0.01;
   const onset = !LB.silent && dtA > 0 && flux > LB.fm + 1.2 * sd && flux > 0.003 && tt - LB.lastOn > Math.max(0.16, LB.interval * 0.45);
-  if (onset) { LB.lastOn = tt; LB.onsets++; LB.on.push(tt); if (LB.on.length > 32) LB.on.shift(); if (LB.onsets >= 5) tempo83(LB); }
+  if (onset) { LB.lastOn = tt; LB.onsets++; LB.on.push(tt); if (LB.on.length > 32) LB.on.shift(); if (LB.onsets >= 5 && !LB.known) tempo83(LB); } if (LB.known) { LB.interval = LB.known; LB.bpm = Math.round(60 / LB.known); } // v90: per-track tempo (pre-analysed) wins
   // beat flywheel: ticks every interval on the song clock; onsets near a tick pull its phase
   if (LB.grid < 0 && onset) LB.grid = tt - LB.interval;
   if (LB.grid < -1) LB.grid = tt - LB.interval;
@@ -395,7 +398,7 @@ function drawLaserShow(ctx, now, G, lite) {
   }
 }
 function drawLasers(ctx, now) {
-  if (S.home && document.body.dataset.original !== '1') return; // v71: with 歡樂派對 on, 雷射 = the homepage lasers only (no stacked premium set)
+  if ((S.home || S.preset === 'club') && document.body.dataset.original !== '1') return; // v90: 沈浸夜店 uses the Production homepage lasers too; v71: with 歡樂派對 on, 雷射 = the homepage lasers only (no stacked premium set)
   const G = hpGeom(), lite = S.engine === 'lite' || PERF.low; // v77: drop shadowBlur once the device is struggling
   ctx.save(); ctx.beginPath(); ctx.rect(G.X0, G.T, G.W, G.H); ctx.clip();
   if (S.laser) {
@@ -1100,7 +1103,7 @@ const PRESETS = { // v83: 原畫風情 (calm, default) first; then the v72 four 
 };
 function applyPreset(k) { if (!PRESETS[k]) k = 'calm'; saved = null; Object.assign(S, PRESETS[k]); S.preset = k; S.home = k === 'home'; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
   $('#int').value = S.intensity; syncButtons(); }
-function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; document.body.classList.toggle('home-mode', on); /* v72: 三光點/待機漣漪 work in every mode */ const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); if (R.setLasers && R.lasers !== !!S.laser) R.setLasers(!!S.laser); if (R.setSpots && R.spots3 !== !!S.spots3) R.setSpots(!!S.spots3); if (R.setIdle && R.idle !== !!S.idle) R.setIdle(!!S.idle); if (R.setTapBeams && R.tapBeams !== (S.tapfx !== false)) R.setTapBeams(S.tapfx !== false); if (!R.ready83) R.ready83 = R.setReady && R.setReady(true); document.body.classList.toggle('look-night', !orig && !!S.night); document.body.classList.toggle('look-day', !orig && !S.night); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
+function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; if (document.body.classList.contains('home-mode') !== on) { document.body.classList.toggle('home-mode', on); setTimeout(() => { layout(); dispatchEvent(new Event('resize')); }, 0); } /* v72: 三光點/待機漣漪 work in every mode */ const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); if (R.setLasers && R.lasers !== !!S.laser) R.setLasers(!!S.laser); if (R.setClubLasers) R.setClubLasers(!orig && S.preset === 'club' && !!S.laser); if (R.setSpots && R.spots3 !== !!S.spots3) R.setSpots(!!S.spots3); if (R.setIdle && R.idle !== !!S.idle) R.setIdle(!!S.idle); if (R.setTapBeams && R.tapBeams !== (S.tapfx !== false)) R.setTapBeams(S.tapfx !== false); if (!R.ready83) R.ready83 = R.setReady && R.setReady(true); document.body.classList.toggle('look-night', !orig && !!S.night); document.body.classList.toggle('look-day', !orig && !S.night); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
 
 /* ---------- loop ---------- */
 let slow = 0, frames = 0, lastT = 0;
@@ -1143,7 +1146,7 @@ audio.addEventListener('play', syncGlyph); addEventListener('resize', () => setT
 $('#adv').addEventListener('click', e => { e.stopPropagation(); const on = document.body.classList.toggle('adv-open'); $('#adv').setAttribute('aria-expanded', String(on)); });
 document.querySelectorAll('.ts').forEach(b => b.classList.toggle('on', b.dataset.s === TAPSND.mode));
 document.querySelectorAll('.lw').forEach(b => b.onclick = e => { e.stopPropagation(); setLw(b.dataset.w); }); setLw(S.lw, true);
-window.__premium = { PB89, PC89, clock89: () => { const now = performance.now(), c = audio.currentTime; let t = prodTrackTime89(now) + Math.min(0.032, Math.max(0.012, PC89.present / 1000)); if (isFinite(c)) t = Math.min(t, c + 0.04); if (LAT.override != null) t -= LAT.override; return Math.max(0, t - SYNC.off / 1000); }, ARTS, TRACKS, setArt: (...a) => setArt(...a), setTrack: (...a) => setTrack(...a), art: () => ART, track: () => TR, liveBeat: () => (TR.beats !== 'timeline' && S.playing ? A.lb : null), USER, MUSICVOL, KV, PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
+window.__premium = { BPM90, bpm90, PB89, PC89, clock89: () => { const now = performance.now(), c = audio.currentTime; let t = prodTrackTime89(now) + Math.min(0.032, Math.max(0.012, PC89.present / 1000)); if (isFinite(c)) t = Math.min(t, c + 0.04); if (LAT.override != null) t -= LAT.override; return Math.max(0, t - SYNC.off / 1000); }, ARTS, TRACKS, setArt: (...a) => setArt(...a), setTrack: (...a) => setTrack(...a), art: () => ART, track: () => TR, liveBeat: () => (TR.beats !== 'timeline' && S.playing ? A.lb : null), USER, MUSICVOL, KV, PERF, DUCK, KICKS, V75, setLw, TAPSND, kick, setTapSound, hideUI, L, S, PT, partyBurst, laserShow, LSW, FX, GLOW, setGlow, saveGlowCard, drawCoin, ting, TONE, OM, GAME, SYNC, beatErr, beatTap, sheen, SH, LAT, latency, artTap, spotsN: () => spots.length, tapStarsN: () => tapStars.length, boltsN: () => bolts.length, Z, zoomAt, resetZoom, A, IMP, LK, LZ, audio, CUE, RG, beatTimeline: !!RH, S, setOriginal, syncButtons, engine: () => S.engine, applyPreset, PRESETS, CK, stats: () => ({ sparks: sparks.length, bolts: bolts.length, blooms: blooms.length, rings: rings.length, lamp: RG.cur, rgbReady: !!RG.masks.red, playing: S.playing, t: audio.currentTime, looksOk: LK.ready, lookDraws: LK.draws, impacts: IMP.n }) };
   document.body.dataset.ready = '1';
   requestAnimationFrame(loop);
 }
@@ -1231,12 +1234,30 @@ async function setArt(i, instant) {
   requestAnimationFrame(() => veil && veil.classList.remove('on'));
   preload(ARTS[(i + 1) % n]); preload(ARTS[(i - 1 + n) % n]);
 }
+/* v90 per-track tempo: imported songs get their BPM from an offline onset-autocorrelation of the decoded file (same method used for the
+   built-in tracks), so beat effects follow the song even when the live analyser is silent on iOS. Result cached on the track object. */
+const BPM90 = { log: [] };
+async function bpm90(t) {
+  if (!t || t.bpm || t.bpmBusy || t.beats === 'timeline') return; if (t.size && t.size > 25e6) return; t.bpmBusy = 1;
+  try {
+    const ab = await (await fetch(t.src)).arrayBuffer(); const AC = window.AudioContext || window.webkitAudioContext; const c = acx() || new AC();
+    const buf = await new Promise((ok, no) => { const r = c.decodeAudioData(ab, ok, no); if (r && r.then) r.then(ok, no); });
+    const sr = buf.sampleRate, a = (t.trim && t.trim.a) || t.cue || 0, i0 = Math.floor(a * sr), len = Math.min(buf.length - i0, Math.floor(75 * sr)); if (len < sr * 8) return;
+    const ch = [...Array(buf.numberOfChannels)].map((_, k) => buf.getChannelData(k)), hop = Math.round(sr / 100), n = Math.floor(len / hop), e = new Float32Array(n);
+    for (let f = 0; f < n; f++) { let q = 0; const b0 = i0 + f * hop; for (let j = 0; j < hop; j += 2) { let v = 0; for (const d of ch) v += d[b0 + j]; q += v * v; } e[f] = Math.log1p(100 * Math.sqrt(q / (hop / 2)) / ch.length); }
+    const o = new Float32Array(n); let m = 0; for (let f = 1; f < n; f++) { o[f] = Math.max(0, e[f] - e[f - 1]); m += o[f]; } m /= n; for (let f = 0; f < n; f++) o[f] -= m;
+    const ac = l => { let s2 = 0; for (let f = 0; f + l < n; f++) s2 += o[f] * o[f + l]; return s2; }; let best = 0, bv = -1e9;
+    for (let b = 60; b <= 180; b += 0.5) { const l = 6000 / b, i = Math.floor(l), fr = l - i, v = (ac(i) * (1 - fr) + ac(i + 1) * fr) * (b >= 70 && b <= 160 ? 1 : 0.85); if (v > bv) { bv = v; best = b; } }
+    if (best) { t.bpm = best; BPM90.log.push({ id: t.id, bpm: best }); if (t === TR && A.lb) { A.lb.known = 60 / best; A.lb.interval = A.lb.known; } }
+  } catch (e) { BPM90.log.push({ id: t.id, err: String(e) }); } finally { t.bpmBusy = 0; }
+}
 function setTrack(i) {
   const n = TRACKS.length; i = ((i % n) + n) % n; const t = TRACKS[i]; if (t === TR) return;
   const wasPlaying = (RP84.force || !audio.paused) && USER.want; TR = t; if (!t.user) try { localStorage.setItem('ae-premium-track', t.id); } catch (e) {}
   CK.ok = 0; CK.last = -1; A.count = 0; A.b = null; A.lb = null; if (OM.sub) { OM.i = 0; OM.last = -1; }
   audio.src = t.src; audio.load(); trackLabel();
   if (t.beats !== 'timeline' && A.started) try { ensureGraph(true); } catch (e) {}
+  if (window.aeHomeReplica && window.aeHomeReplica.resetBeat) window.aeHomeReplica.resetBeat(); PC89.lastCT = -1; if (!t.bpm) bpm90(t); // v90: beat clock restarts on every track change
   if (wasPlaying) { USER.want = true; A.started = 1; if (t.cue) startAtCue(); else { try { audio.currentTime = 0; } catch (e) {} } const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
   else { if (A.started) startAtCue(); syncPlay(); } // paused stays paused (cue position prepared, no play())
 }
@@ -1746,5 +1767,28 @@ async function clear84() { try { await idbTx84('readwrite', os => os.clear()); }
   restore84();
 })();
 (function ex84() { if (window.__premium) Object.assign(window.__premium, { RP84, setRepeat84, end84, FADE84, fade84, GR84, gridRadius84, SH84, sheetGo84, IDB84, restore84, clear84, quota84, mv84 }); else setTimeout(ex84, 50); })();
-/* v2476.89 經典首頁: homepage effects button (sparkle) -> opens the effects/settings panel, like the homepage tray */
-(() => { const b = document.getElementById('aeFxButton'); if (!b) return; for (const ev of ['pointerdown', 'pointerup', 'click']) b.addEventListener(ev, e => e.stopPropagation()); b.addEventListener('click', () => { b.parentElement.classList.add('fx-seen'); const o = document.getElementById('open'); if (o) o.click(); }); })();
+/* v2476.90 經典首頁 ✦ effects tray = Production homepage (1de42af ae-home-light.js EFFECTS / fxButtonFor / setTray / click), same three
+   one-shot effects (發亮光 Glow · 金幣 Gold coins · 雷射光 Laser), same markup + behaviour; the effects draw on the homepage-replica canvas. */
+(() => {
+  const fxBtn = document.getElementById('aeFxButton'), fxTray = document.getElementById('aeFxTray'); if (!fxBtn || !fxTray) return;
+  const zh = () => S.lang !== 'en';
+  const EFFECTS = [{ id: 'glow', zh: '發亮光', en: 'Glow', icon: 'ae-fx-i-glow' }, { id: 'coins', zh: '金幣', en: 'Gold coins', icon: 'ae-fx-i-coin' }, { id: 'laser', zh: '雷射光', en: 'Laser', icon: 'ae-fx-i-laser' }];
+  function fxLabels() { fxBtn.setAttribute('aria-label', zh() ? '特效' : 'Effects'); fxBtn.title = zh() ? '特效' : 'Effects'; fxTray.setAttribute('aria-label', zh() ? '畫面特效' : 'Light effects on the painting');
+    for (const b of fxTray.querySelectorAll('[data-fx]')) { const d = EFFECTS.find(e => e.id === b.dataset.fx); if (!d) continue; const t = zh() ? d.zh : d.en; b.querySelector('.ae-fx-label').textContent = t; b.setAttribute('aria-label', t); b.removeAttribute('title'); b.removeAttribute('aria-pressed'); } }
+  for (const d of EFFECTS) { const b = document.createElement('button'); b.type = 'button'; b.className = 'ae-fx'; b.dataset.fx = d.id; b.innerHTML = '<span class="ae-fx-orb" aria-hidden="true"><i class="ae-fx-i ' + d.icon + '"></i></span><span class="ae-fx-label" role="tooltip"></span>'; fxTray.appendChild(b); }
+  const fxDock = fxBtn.closest('.ae-fx-dock'); let fxSeen = false; try { fxSeen = localStorage.getItem('ae-home-fx-seen') === '1'; } catch (e) {} if (fxSeen && fxDock) fxDock.classList.add('fx-seen');
+  function setTray(open) { fxTray.hidden = !open; fxBtn.setAttribute('aria-expanded', String(open)); document.body.dataset.fxTray = open ? 'open' : 'closed';
+    if (open && !fxSeen) { fxSeen = true; if (fxDock) fxDock.classList.add('fx-seen'); try { localStorage.setItem('ae-home-fx-seen', '1'); } catch (e) {} } }
+  let fxTouch = false;
+  for (const ev of ['pointerdown', 'pointerup', 'click', 'touchstart']) fxDock.addEventListener(ev, e => e.stopPropagation(), { passive: true }); // never reaches the stage (no tap-to-play / swipe)
+  fxBtn.addEventListener('click', () => setTray(fxTray.hidden));
+  fxTray.addEventListener('click', e => { const b = e.target.closest('[data-fx]'); if (!b) return; const R = window.aeHomeReplica; if (!R || !R.fx) return; R.fx(b.dataset.fx, { quiet: false });
+    b.classList.remove('is-firing'); void b.offsetWidth; b.classList.add('is-firing'); clearTimeout(b._fireT); b._fireT = setTimeout(() => b.classList.remove('is-firing'), 700);
+    if (fxTouch) { for (const o of fxTray.querySelectorAll('.is-named')) if (o !== b) o.classList.remove('is-named'); b.classList.add('is-named'); clearTimeout(b._nameT); b._nameT = setTimeout(() => b.classList.remove('is-named'), 1100); } });
+  fxTray.addEventListener('touchstart', () => { fxTouch = true; }, { passive: true });
+  fxTray.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') fxTouch = false; else if (e.pointerType) fxTouch = true; }, { passive: true });
+  document.addEventListener('pointerdown', e => { if (!fxTray.hidden && !e.target.closest('#aeFxTray,#aeFxButton')) setTray(false); }, { capture: true, passive: true });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !fxTray.hidden) { setTray(false); fxBtn.focus(); } });
+  const lb = document.getElementById('lang'); if (lb) lb.addEventListener('click', () => setTimeout(fxLabels, 0));
+  setTray(false); fxLabels(); if (window.__premium) window.__premium.fxTray = setTray;
+})();

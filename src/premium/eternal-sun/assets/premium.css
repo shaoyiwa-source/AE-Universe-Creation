@@ -278,3 +278,67 @@ body.home-mode #brand{display:none}
 /* v89: in 經典首頁 the logo sits where the homepage has it (top centre), so the painting switcher moves just below it */
 body.home-mode #artsw{top:calc(max(10px,env(safe-area-inset-top)) + 58px)}
 body.home-mode #hint{translate:0 58px}
+
+/* ===== v2476.90: Production homepage (1de42af) ✦ effects tray CSS, verbatim with the selector root .hero -> #hp89 ===== */
+#hp89{--fs-ui:Inter,"Noto Serif TC",-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif}
+#hp89 .ae-fx-dock{position:absolute;z-index:7;top:auto;bottom:calc(100% - 52%);right:20px;left:auto;display:block;width:44px;height:44px}
+#hp89 .ae-fx-dock .fx-toggle{width:44px;height:44px;min-width:44px;padding:0;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(255,250,238,.533);background:rgba(13,21,14,.44);color:#f7ddac;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#hp89 .ae-fx-dock .fx-toggle[aria-expanded="true"]{border-color:#f2d68b;background:rgba(40,32,18,.62);box-shadow:0 0 0 2px rgba(242,214,139,.12),0 0 14px rgba(242,214,139,.26)}
+#hp89 .ae-fx-dock .fx-toggle:focus-visible{outline:2px solid #f2d68b;outline-offset:3px}
+#hp89 .ae-fx-dock .ae-fx-spark{width:22px;height:22px;fill:currentColor;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+#hp89 .ae-fx-dock .ae-fx-spark .s{opacity:.75}
+#hp89 .ae-fx-dock .ae-fx-tray{position:absolute;right:calc(100% + 8px);top:-3px;display:flex;flex-direction:row-reverse;flex-wrap:nowrap;align-items:center;gap:8px;padding:4px 6px;border-radius:26px;white-space:nowrap;border:1px solid rgba(240,215,161,.38);background:rgba(8,12,10,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(0,0,0,.35);animation:aeFxTrayIn .2s ease-out;transform-origin:right center}
+#hp89 .ae-fx-dock .ae-fx-tray[hidden]{display:none}
+#hp89 .ae-fx-dock .ae-fx{min-width:0;width:42px;height:42px;padding:0;gap:0;display:grid;place-items:center}
+#hp89 .ae-fx-dock .ae-fx-orb{width:40px;height:40px}
+#hp89 .ae-fx-dock .ae-fx .ae-fx-orb{border-color:#f2d68b;box-shadow:inset 0 1px 0 rgba(255,244,214,.2),0 0 0 2px rgba(242,214,139,.14),0 0 14px rgba(242,214,139,.3)}
+@keyframes aeFxTrayIn{from{opacity:0;transform:translateX(14px) scaleX(.6)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#hp89 .ae-fx-dock .ae-fx-tray{animation:none}}
+#hp89 .ae-fx-row{display:flex;justify-content:center;align-items:flex-start;gap:clamp(22px,7vw,40px);margin:22px auto 0;width:100%}
+#hp89 .ae-fx{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:64px;padding:0;border:0;background:none;color:#eadcb5;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+#hp89 .ae-fx:hover{opacity:1}
+#hp89 .ae-fx-orb{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;border:1px solid rgba(240,215,161,.62);background:radial-gradient(circle at 50% 35%,rgba(60,52,32,.55),rgba(10,14,12,.86) 70%);box-shadow:inset 0 1px 0 rgba(255,244,214,.14),0 6px 18px -8px rgba(0,0,0,.7);transition:border-color .25s ease,box-shadow .25s ease,transform .2s ease}
+#hp89 .ae-fx-orb::after{content:"";position:absolute;inset:3px;border-radius:50%;border:1px solid rgba(240,215,161,.16);pointer-events:none}
+@media(hover:hover){#hp89 .ae-fx:hover .ae-fx-orb{border-color:#f2d68b;box-shadow:inset 0 1px 0 rgba(255,244,214,.2),0 0 18px rgba(242,214,139,.22)}}
+#hp89 .ae-fx:active .ae-fx-orb{transform:scale(.94)}
+#hp89 .ae-fx.is-firing .ae-fx-orb{border-color:#f2d68b;box-shadow:0 0 0 3px rgba(242,214,139,.12),0 0 22px rgba(242,214,139,.38)}
+#hp89 .ae-fx:focus-visible{outline:none}
+#hp89 .ae-fx:focus-visible .ae-fx-orb{outline:2px solid #f2d68b;outline-offset:3px}
+#hp89 .ae-fx-label{font-family:var(--fs-ui);font-size:11.5px;font-weight:500;letter-spacing:.1em;line-height:1.2;white-space:nowrap;color:#e6d7ae}
+html[lang="zh-Hant"] #hp89 .ae-fx-label{font-family:"Noto Serif TC",var(--fs-ui);font-size:12px;letter-spacing:.18em;margin-right:-.18em}
+.ae-fx-i{display:block;pointer-events:none}
+.ae-fx-i-glow{width:20px;height:20px;background:radial-gradient(circle,#fff7d6 0 18%,rgba(255,214,110,.9) 30%,rgba(242,190,80,0) 70%);position:relative}
+.ae-fx-i-glow::before,.ae-fx-i-glow::after{content:"";position:absolute;left:50%;top:50%;width:20px;height:1.2px;margin:-.6px 0 0 -10px;background:linear-gradient(90deg,transparent,#f7dfa0,transparent)}
+.ae-fx-i-glow::after{transform:rotate(90deg)}
+.ae-fx-i-coin{width:17px;height:17px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#fff6cf,#efc457 45%,#9c6b1a);box-shadow:0 0 0 1px rgba(120,78,16,.8),inset 0 0 0 3px rgba(255,236,170,.0),0 0 8px rgba(255,200,80,.35);position:relative}
+.ae-fx-i-coin::after{content:"";position:absolute;inset:3.5px;border-radius:50%;border:1px solid rgba(255,240,190,.75)}
+.ae-fx-i-laser{width:22px;height:22px;background:linear-gradient(118deg,transparent 46%,#ff6b8b 47% 52%,transparent 53%),linear-gradient(62deg,transparent 46%,#6fe3ff 47% 52%,transparent 53%),linear-gradient(90deg,transparent 47%,#ffe28d 48% 52%,transparent 53%);filter:drop-shadow(0 0 2px rgba(255,240,200,.6))}
+@media(prefers-reduced-motion:reduce){#hp89 .ae-fx-orb{transition:none}#hp89 .ae-fx:active .ae-fx-orb{transform:none}}
+#hp89 .ae-fx-dock .fx-toggle{position:relative;overflow:hidden;isolation:isolate;border-color:rgba(242,214,139,.78);background:radial-gradient(circle at 50% 40%,rgba(74,58,24,.62),rgba(13,21,14,.5) 72%);box-shadow:0 0 0 1px rgba(242,214,139,.18),0 0 12px rgba(242,214,139,.32);animation:aeFxHalo 2.8s ease-in-out infinite}
+#hp89 .ae-fx-dock .fx-toggle::after{content:"";position:absolute;inset:-2px;border-radius:50%;z-index:-1;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,244,205,.0) 38%,rgba(255,240,190,.55) 50%,rgba(255,244,205,0) 62%,transparent 70%);background-size:260% 100%;background-position:130% 0;animation:aeFxSweep 3.6s ease-in-out infinite}
+#hp89 .ae-fx-dock .ae-fx-spark{color:#ffe3a0;animation:aeFxTwinkle 2.8s ease-in-out infinite}
+#hp89 .ae-fx-dock .ae-fx-spark .s{transform-box:fill-box;transform-origin:center;animation:aeFxStar 1.9s ease-in-out infinite}
+#hp89 .ae-fx-dock.fx-seen .fx-toggle{animation:aeFxHaloSoft 5.5s ease-in-out infinite;border-color:rgba(242,214,139,.6)}
+#hp89 .ae-fx-dock.fx-seen .fx-toggle::after{animation:none;opacity:0}
+#hp89 .ae-fx-dock.fx-seen .ae-fx-spark,#hp89 .ae-fx-dock.fx-seen .ae-fx-spark .s{animation:none}
+#hp89 .ae-fx-dock .ae-fx{position:relative;overflow:visible}
+#hp89 .ae-fx-dock .ae-fx .ae-fx-label{position:absolute;left:50%;bottom:calc(100% + 9px);transform:translate(-50%,3px);display:block;padding:5px 9px 5px;border-radius:9px;border:1px solid rgba(240,215,161,.42);background:rgba(8,12,10,.86);color:#f6e7bf;font-size:11.5px;line-height:1;letter-spacing:.08em;white-space:nowrap;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:2}
+html[lang="zh-Hant"] #hp89 .ae-fx-dock .ae-fx .ae-fx-label{letter-spacing:.14em;margin-right:0;padding-right:calc(9px - .14em)}
+#hp89 .ae-fx-dock .ae-fx .ae-fx-label::after{content:"";position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:rgba(8,12,10,.86)}
+@media(hover:hover){#hp89 .ae-fx-dock .ae-fx:hover .ae-fx-label{opacity:1;visibility:visible;transform:translate(-50%,0);transition-delay:0s}#hp89 .ae-fx-dock .ae-fx:hover .ae-fx-orb{border-color:#ffe3a0;box-shadow:0 0 0 2px rgba(242,214,139,.18),0 0 16px rgba(242,214,139,.42)}}
+#hp89 .ae-fx-dock .ae-fx:focus-visible .ae-fx-label,#hp89 .ae-fx-dock .ae-fx.is-named .ae-fx-label{opacity:1;visibility:visible;transform:translate(-50%,0);transition-delay:0s}
+#hp89 .ae-fx-dock .ae-fx.is-firing .ae-fx-orb{animation:aeFxFire .6s ease-out}
+@keyframes aeFxFire{0%{transform:scale(.9);box-shadow:0 0 0 0 rgba(255,222,140,.6)}100%{transform:scale(1);box-shadow:0 0 0 10px rgba(255,222,140,0)}}
+@media(prefers-reduced-motion:reduce){#hp89 .ae-fx-dock .fx-toggle,#hp89 .ae-fx-dock .fx-toggle::after,#hp89 .ae-fx-dock .ae-fx-spark,#hp89 .ae-fx-dock .ae-fx-spark .s,#hp89 .ae-fx-dock .ae-fx.is-firing .ae-fx-orb{animation:none}#hp89 .ae-fx-dock .fx-toggle{box-shadow:0 0 0 2px rgba(242,214,139,.16),0 0 14px rgba(255,214,120,.42)}#hp89 .ae-fx-dock .fx-toggle::after{opacity:0}#hp89 .ae-fx-dock .ae-fx .ae-fx-label{transition:none}}
+/* v90 layout: 經典首頁 stacks logo / picker / framed painting / text / play bar (layout() reserves the bands and sets --hp-*) */
+#hp89 .hp89-copy{top:var(--hp-top,auto);bottom:auto;left:var(--hp-left,18px);width:min(578px,calc(100vw - 36px))}
+#hp89 .ae-fx-dock{position:fixed;z-index:23;left:auto;right:var(--hp-right,20px);top:calc(var(--hp-top,60%) - 6px);bottom:auto;width:44px;height:44px;display:block}
+@media(max-width:520px){#hp89 .hp89-copy{bottom:auto}#hp89 .ae-fx-dock{top:calc(var(--hp-top,60%) - 8px);bottom:auto}}
+body.hp-short #hp89 .kicker{font-size:14px;margin-bottom:4px}body.hp-short #hp89 h1{font-size:28px}
+#hp89 .hp89-copy,#hp89 .ae-fx-dock,#hp89 .hp89-logo{transition:opacity .25s ease}
+body.ui #hp89 .hp89-copy,body.ui #hp89 .ae-fx-dock{opacity:0;pointer-events:none} /* v90: settings panel open -> text + ✦ fade out */
+/* v90: tap hint moves out of the painting into the gap between the text and the play bar; tray open -> kicker dims so the tray never sits on text */
+body.home-mode #hint{top:auto!important;bottom:calc(108px + env(safe-area-inset-bottom))!important;translate:none}
+#hp89 .kicker{transition:opacity .2s}
+body[data-fx-tray="open"] #hp89 .kicker{opacity:0}
+#hp89 h1{transition:transform .2s}body[data-fx-tray="open"] #hp89 h1{transform:translateY(14px)}

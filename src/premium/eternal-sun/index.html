@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./assets/premium.css?v=2476.89">
+<link rel="stylesheet" href="./assets/premium.css?v=2476.90">
 </head>
 <body>
 <div id="stage" aria-label="盛明 Eternal Sun 精裝版動態桌布">
@@ -23,10 +23,10 @@
   <canvas id="front" aria-hidden="true"></canvas><canvas id="homefx" aria-hidden="true"></canvas><canvas id="coin" aria-hidden="true"></canvas>
 </div>
 <!-- v2476.89 經典首頁 / Classic Home: Production homepage (1de42af) logo + hero text + effects button; shown only in this mode -->
-<div id="hp89" aria-hidden="true">
+<div id="hp89">
   <a class="hp89-logo" href="/" aria-label="AE Universe Creation — home"><img class="brand-mark" src="/assets/ae-three-rings-transparent.webp" alt="AE Universe Creation three-ring logo"></a>
   <div class="hp89-copy"><p class="kicker">AE Universe Creation</p><h1>Hand-painted art<br>Digital sensation</h1></div>
-  <div class="ae-fx-dock"><button type="button" id="aeFxButton" class="fx-toggle" aria-label="特效 Effects" title="特效 / Effects"><svg class="ae-fx-spark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.2l1.9 6.9 6.9 1.9-6.9 1.9L12 20.8l-1.9-6.9L3.2 12l6.9-1.9z"/><path class="s" d="M18.6 3.8l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z"/></svg></button></div>
+  <div class="ae-fx-dock"><button type="button" id="aeFxButton" class="fx-toggle" aria-label="特效" aria-expanded="false" aria-controls="aeFxTray"><svg class="ae-fx-spark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.2l1.9 6.9 6.9 1.9-6.9 1.9L12 20.8l-1.9-6.9L3.2 12l6.9-1.9z"/><path class="s" d="M18.6 3.8l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z"/></svg></button><div id="aeFxTray" class="ae-fx-tray" role="group" aria-label="畫面特效" hidden></div></div>
 </div>
 <div id="hint" data-zh="點畫作播放 · 跟著節拍點擊 · 雙指縮放" data-en="Tap the art to play · tap on the beat · pinch to zoom"></div>
 <button id="open" aria-label="settings" title="設定 / Settings">⚙</button>
@@ -110,7 +110,7 @@
 <script src="./assets/looks.js"></script>
 <script src="./assets/onsets.js"></script>
 <script src="/ae-chime.js"></script>
-<script type="module" src="./assets/premium.js?v=2476.89"></script>
-<script src="./assets/home-replica.js?v=2476.89"></script>
+<script type="module" src="./assets/premium.js?v=2476.90"></script>
+<script src="./assets/home-replica.js?v=2476.90"></script>
 </body>
 </html>

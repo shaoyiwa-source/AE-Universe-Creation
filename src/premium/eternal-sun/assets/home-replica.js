@@ -15,7 +15,7 @@
   let lite=forceLite,liteLatch=forceLite,frameEma=16.7,presentMs=12,lights=true,playing=false,frame=0,lastPaint=0,energy=0,viewable=true;
   let width=0,height=0,artBottom=0,artX0=0,artW=0,sunX=0,sunY=0,spots=[],musicSpots=[],bolts=[],focus=null,needsStatic=true;
   let musicFrame={stage:'groove',dropPulse:0,buildProgress:0};
-  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=false,lasersOn=false,spotsOn=false,idleOn=false,tapBeams=false,ready=false,offY=0,dpr=1; /* v83: everything OFF until the premium mode is applied (no laser flash on load) */
+  let glows=[],coins=[],sweeps=[],lastFxFrame=0,active=true,ambient=false,lasersOn=false,clubL=false,spotsOn=false,idleOn=false,tapBeams=false,ready=false,offY=0,dpr=1; /* v83: everything OFF until the premium mode is applied (no laser flash on load) */
   const DISPLAY_LEAD=.012;
   function displayTime(){const P=window.__premium;if(P&&P.clock89)return P.clock89(); /* v2476.89: ONE clock shared with premium.js = Production trackTime()+displayTime() */const ct=audio.currentTime||0;return ct+Math.min(.032,Math.max(DISPLAY_LEAD,presentMs/1000));}
   function clear(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(dpr,0,0,dpr,0,offY*dpr);}
@@ -98,7 +98,7 @@
     const bare=lite&&frameEma>45;
     hero.dataset.lightLite=lite?'1':'0';hero.dataset.lightBare=bare?'1':'0';
     needsStatic=false;ctx.clearRect(0,0,width,height);ctx.save();ctx.beginPath();ctx.rect(artX0,0,artW,artBottom);ctx.clip();
-    if(!reduced.matches&&(ambient||spotsOn)){ // v72: beat clock runs for 歡樂派對 or the 三光點 toggle; v70: ambient homepage show only in 歡樂派對; tap beams/ripples below are global
+    if(!reduced.matches&&(ambient||clubL||spotsOn)){ // v72: beat clock runs for 歡樂派對 or the 三光點 toggle; v70: ambient homepage show only in 歡樂派對; tap beams/ripples below are global
       let bass=0,beat={beat:false,count:Number(hero.dataset.beatCount)||0,pulse:0,phase:0,interval:60/148,stage:'groove',dropPulse:0,buildProgress:0,accentCount:0};
       if(playing){
       // One frame of lead so the kick is the one on screen when the frame presents.
@@ -111,17 +111,18 @@
       hero.dataset.musicTime=tt.toFixed(3);hero.dataset.musicStage=beat.stage;
       hero.dataset.accentCount=String(beat.accentCount);hero.dataset.dropPulse=beat.dropPulse.toFixed(3);
       if(!bare&&((beat.beat&&beat.stage!=='build')||(beat.accentBeat&&beat.stage==='build'))){
-        if(beat.stage!=='build'&&lasersOn&&ambient)launchDepth(null,null,now,beat.count); // v71: 雷射 toggle
+        if(beat.stage!=='build'&&lasersOn&&(ambient||clubL))launchDepth(null,null,now,beat.count); // v71: 雷射 toggle
         if(spotsOn)for(let i=0;i<3;i++){const hit=destination(i*2,beat.sweep,now);musicSpots.push({...hit,born:now});} // v72: 三光點 toggle
         if(musicSpots.length>9)musicSpots.splice(0,musicSpots.length-9);
       }
       }
       energy=Math.max(bass,energy*.84);hero.dataset.audioEnergy=energy.toFixed(3);
-      if(ambient){ // v72: veil glow + lasers only in 歡樂派對
+      if(ambient||clubL){ // v90: 沈浸夜店 shares the Production homepage lasers (veil glow + bottom shade stay 經典首頁-only)
+      if(ambient){
       const shade=ctx.createLinearGradient(0,Math.max(0,artBottom-100),0,artBottom);shade.addColorStop(0,'rgba(2,5,4,.40)');shade.addColorStop(1,'rgba(2,5,4,0)');ctx.fillStyle=shade;ctx.fillRect(0,0,width,artBottom);/* v2476.87: Production bottom shade restored */
       const glow=ctx.createRadialGradient(sunX,sunY,3,sunX,sunY,Math.min(width*.42,190));
       glow.addColorStop(0,`rgba(255,223,115,${energy*.16+beat.pulse*.35})`);glow.addColorStop(.45,`rgba(243,178,48,${energy*.08+beat.pulse*.18})`);glow.addColorStop(1,'rgba(240,170,45,0)');
-      ctx.fillStyle=glow;ctx.fillRect(0,0,width,artBottom);
+      ctx.fillStyle=glow;ctx.fillRect(0,0,width,artBottom);}
       const colors=laserColors;
       const sweep=playing?(beat.sweep||0):beat.count+beat.phase;
       ctx.globalCompositeOperation='screen';
@@ -168,7 +169,7 @@
         const opacity=b.musical?window.aeHomeAudioEnergy.flightPower((now-b.born)/1000):Math.sin(Math.PI*p);
         const tipX=b.x+(b.ox-b.x)*near,tipY=b.y+(b.oy-b.y)*near,startX=b.x+(b.ox-b.x)*back,startY=b.y+(b.oy-b.y)*back;
         const streak=ctx.createLinearGradient(startX,startY,tipX,tipY);streak.addColorStop(0,b.color+'00');streak.addColorStop(1,b.color);
-        if(ambient){ /* v2476.87: 歡樂派對 = Production homepage bolt (1de42af) */
+        if(ambient||clubL){ /* v2476.87/v90: 經典首頁 + 沈浸夜店 = Production homepage bolt (1de42af) */
         ctx.strokeStyle=streak;ctx.lineWidth=1.4+(1-p)*7;ctx.shadowColor=b.color;ctx.shadowBlur=lite?0:20;ctx.globalAlpha=opacity*.95;
         ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(tipX,tipY);ctx.stroke();
         ctx.strokeStyle='#fff9e9';ctx.lineWidth=.7+(1-p)*1.5;ctx.globalAlpha=opacity*.85;
@@ -299,8 +300,30 @@
   function setSpots(on){spotsOn=!!on;if(!spotsOn)musicSpots=[];schedule();}
   function setIdle(on){idleOn=!!on;if(!idleOn)glows=glows.filter(g=>!g.soft);schedule();}
   function setTapBeams(on){tapBeams=!!on;if(!tapBeams){bolts=bolts.filter(b=>b.musical);halos=[];}schedule();}
+  function setClubLasers(on){on=!!on;if(on===clubL)return;clubL=on;if(!on&&!ambient)bolts=bolts.filter(b=>!b.musical);schedule();}
+  function resetBeat(){rhythm.reset();energy=0;musicSpots=[];bolts=bolts.filter(b=>!b.musical);hero.dataset.beatCount='0';musicFrame={stage:'groove',dropPulse:0,buildProgress:0};schedule();}
+  /* v2476.90: fxCoins + fxLaser copied VERBATIM from Production 1de42af ae-home-light.js for the ✦ tray (glow = fxGlow above) */
+  function fxCoins(o){
+    o=o||{};const now=performance.now(),n=reduced.matches?8:o.soft?12:24;
+    for(let i=0;i<n;i++){const r=7+variation(i*5.7+now)*6;
+      coins.push({i,x:artX0+artW*(.06+.88*variation(i*1.3+now%13)),y:reduced.matches?Math.max(20,artBottom*(.2+.6*variation(i*2.9))):-14-variation(i*7.1)*90,
+        vx:(variation(i*3.3)-.5)*90,vy:30+variation(i*4.4)*120,r,spin:variation(i)*6,spinV:5+variation(i*9.1)*9,tilt:(variation(i*6.6)-.5)*.5,
+        born:now,delay:reduced.matches?0:i*45,life:reduced.matches?1200:2300,bounces:0,ring:i%3===0,quiet:!!o.quiet});}
+    if(coins.length>72)coins.splice(0,coins.length-72);
+    // Clinks while they pour (more on the floor bounce, see drawFx).
+    if(window.aeChime&&!o.quiet)for(let i=0;i<6;i++)setTimeout(()=>window.aeChime.coin(i*2+1),40+i*95);
+    hero.dataset.fxCoinCount=String((Number(hero.dataset.fxCoinCount)||0)+1);lastFxFrame=0;schedule();
+  }
+  function fxLaser(o){
+    o=o||{};const now=performance.now();sweeps.push({born:now,life:reduced.matches?900:1650,seed:variation(now%1000)*6});if(sweeps.length>2)sweeps.shift();
+    // A zap on each pulse of the sweep (the beams flare at 148 BPM, like the music show).
+    if(window.aeChime&&!o.quiet)for(let v=0;v<(reduced.matches?1:4);v++)setTimeout(()=>window.aeChime.laser(v),v*405);
+    hero.dataset.fxLaserCount=String((Number(hero.dataset.fxLaserCount)||0)+1);lastFxFrame=0;schedule();
+  }
+  const FX90={glow:fxGlow,coins:fxCoins,laser:fxLaser};
+  function fx(id,o){const f=FX90[id];if(!f||!active)return false;needsStatic=true;resize();f(o||{});schedule();return true;}
   function setReady(on){ready=!!on;schedule();return ready;}
   function setAmbient(on){on=!!on;if(on===ambient)return;ambient=on;musicSpots=[];glows=[];focus=null;if(!on)clear();schedule();}
-  window.aeHomeReplica={tap,setTapBeams,setReady,get tapBeams(){return tapBeams},setActive,setAmbient,setLasers,setSpots,setIdle,get spots3(){return spotsOn},get idle(){return idleOn},get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length,halos:halos.length})};
+  window.aeHomeReplica={fx,setClubLasers,resetBeat,get clubLasers(){return clubL},tap,setTapBeams,setReady,get tapBeams(){return tapBeams},setActive,setAmbient,setLasers,setSpots,setIdle,get spots3(){return spotsOn},get idle(){return idleOn},get lasers(){return lasersOn},get ambient(){return ambient},resize,get active(){return active},state:()=>({...hero.dataset,playing,bolts:bolts.length,spots:spots.length,musicSpots:musicSpots.length,glows:glows.length,halos:halos.length})};
   const boot=()=>{if(window.__premium){resize();sync();}else setTimeout(boot,50);};boot();
 })();
