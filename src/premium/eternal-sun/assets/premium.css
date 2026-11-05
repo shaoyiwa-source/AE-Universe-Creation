@@ -276,8 +276,6 @@ body.home-mode #brand{display:none}
 @keyframes aeFxStar{0%,100%{opacity:.35;transform:scale(.6)}50%{opacity:1;transform:scale(1.15)}}
 
 /* v89: in 經典首頁 the logo sits where the homepage has it (top centre), so the painting switcher moves just below it */
-body.home-mode #artsw{top:calc(max(10px,env(safe-area-inset-top)) + 58px)}
-body.home-mode #hint{translate:0 58px}
 
 /* ===== v2476.90: Production homepage (1de42af) ✦ effects tray CSS, verbatim with the selector root .hero -> #hp89 ===== */
 #hp89{--fs-ui:Inter,"Noto Serif TC",-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif}
@@ -330,15 +328,27 @@ html[lang="zh-Hant"] #hp89 .ae-fx-dock .ae-fx .ae-fx-label{letter-spacing:.14em;
 #hp89 .ae-fx-dock .ae-fx.is-firing .ae-fx-orb{animation:aeFxFire .6s ease-out}
 @keyframes aeFxFire{0%{transform:scale(.9);box-shadow:0 0 0 0 rgba(255,222,140,.6)}100%{transform:scale(1);box-shadow:0 0 0 10px rgba(255,222,140,0)}}
 @media(prefers-reduced-motion:reduce){#hp89 .ae-fx-dock .fx-toggle,#hp89 .ae-fx-dock .fx-toggle::after,#hp89 .ae-fx-dock .ae-fx-spark,#hp89 .ae-fx-dock .ae-fx-spark .s,#hp89 .ae-fx-dock .ae-fx.is-firing .ae-fx-orb{animation:none}#hp89 .ae-fx-dock .fx-toggle{box-shadow:0 0 0 2px rgba(242,214,139,.16),0 0 14px rgba(255,214,120,.42)}#hp89 .ae-fx-dock .fx-toggle::after{opacity:0}#hp89 .ae-fx-dock .ae-fx .ae-fx-label{transition:none}}
-/* v90 layout: 經典首頁 stacks logo / picker / framed painting / text / play bar (layout() reserves the bands and sets --hp-*) */
-#hp89 .hp89-copy{top:var(--hp-top,auto);bottom:auto;left:var(--hp-left,18px);width:min(578px,calc(100vw - 36px))}
-#hp89 .ae-fx-dock{position:fixed;z-index:23;left:auto;right:var(--hp-right,20px);top:calc(var(--hp-top,60%) - 6px);bottom:auto;width:44px;height:44px;display:block}
-@media(max-width:520px){#hp89 .hp89-copy{bottom:auto}#hp89 .ae-fx-dock{top:calc(var(--hp-top,60%) - 8px);bottom:auto}}
-body.hp-short #hp89 .kicker{font-size:14px;margin-bottom:4px}body.hp-short #hp89 h1{font-size:28px}
-#hp89 .hp89-copy,#hp89 .ae-fx-dock,#hp89 .hp89-logo{transition:opacity .25s ease}
-body.ui #hp89 .hp89-copy,body.ui #hp89 .ae-fx-dock{opacity:0;pointer-events:none} /* v90: settings panel open -> text + ✦ fade out */
-/* v90: tap hint moves out of the painting into the gap between the text and the play bar; tray open -> kicker dims so the tray never sits on text */
-body.home-mode #hint{top:auto!important;bottom:calc(108px + env(safe-area-inset-bottom))!important;translate:none}
-#hp89 .kicker{transition:opacity .2s}
-body[data-fx-tray="open"] #hp89 .kicker{opacity:0}
-#hp89 h1{transition:transform .2s}body[data-fx-tray="open"] #hp89 h1{transform:translateY(14px)}
+
+/* ===== v2476.91 經典首頁 = Production hero inside the frame: same painting size as other modes; logo top-centre inside the painting,
+   kicker + 2-line title in the painting's darkened bottom, ✦ bottom-right inside the painting (tray opens to its left like the homepage) ===== */
+#hp89 .hp89-logo{position:fixed;top:calc(var(--hp-y) + var(--hp-h) * .035);left:calc(var(--hp-x) + var(--hp-w) / 2);transform:translateX(-50%)}
+#hp89 .brand-mark{width:clamp(52px,calc(var(--hp-w) * .2),84px);height:auto;aspect-ratio:76/44}
+#hp89 .hp89-copy{position:fixed;top:auto;left:calc(var(--hp-x) + var(--hp-w) * .06);bottom:calc(100vh - var(--hp-y) - var(--hp-h) + var(--hp-h) * .05);width:calc(var(--hp-w) * .7)}
+#hp89 .kicker{font-size:clamp(11px,calc(var(--hp-w) * .042),22px);letter-spacing:.2em;margin:0 0 .45em}
+#hp89 h1{font-size:clamp(22px,calc(var(--hp-w) * .1),60px);line-height:1.02}
+#hp89 .ae-fx-dock{position:fixed;z-index:23;left:auto;top:auto;right:calc(100vw - var(--hp-x) - var(--hp-w) + var(--hp-w) * .045);bottom:calc(100vh - var(--hp-y) - var(--hp-h) + var(--hp-h) * .05);width:44px;height:44px;display:block}
+#hp89 .ae-fx-dock .ae-fx-tray{top:-3px;bottom:auto}
+#hp89 .hp89-copy,#hp89 .ae-fx-dock,#hp89 .hp89-logo,#hp89 .kicker{transition:opacity .25s ease}
+body.ui #hp89 .hp89-copy,body.ui #hp89 .ae-fx-dock{opacity:0;pointer-events:none}
+body[data-fx-tray="open"] #hp89 .hp89-copy{opacity:0}  /* tray opens leftwards over the title row -> the text steps aside while it is open */
+/* v91 #5: the 「點畫作播放…」 hint no longer sits under the picker (the painting cut it off) -> between painting and play bar, every mode */
+#hint{top:auto!important;bottom:calc(112px + env(safe-area-inset-bottom))!important;translate:none!important;line-height:1.3;padding:0 12px}
+/* v91 #4: 上一首 / 下一首 = the same gold-outline round style as play / loop / settings, thin gold SVG glyphs, soft glow, press animation (all modes) */
+#dock .btns button#dprev,#dock .btns button#dnext{background:radial-gradient(circle at 50% 38%,rgba(58,46,22,.62),rgba(10,8,6,.66) 72%)!important;border:1px solid rgba(233,207,134,.62)!important;box-shadow:inset 0 1px 0 rgba(255,240,200,.14),0 0 0 1px rgba(242,214,139,.08),0 0 12px rgba(242,214,139,.16);color:#f2d68b;transition:transform .16s ease,box-shadow .25s ease,border-color .25s ease}
+#dock .btns button#dprev .sk91,#dock .btns button#dnext .sk91{width:19px;height:19px;fill:rgba(242,214,139,.16);stroke:#f2d68b;stroke-width:1.35;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 3px rgba(242,214,139,.45))}
+@media(hover:hover){#dock .btns button#dprev:hover:not(:disabled),#dock .btns button#dnext:hover:not(:disabled){border-color:#f2d68b!important;box-shadow:inset 0 1px 0 rgba(255,240,200,.2),0 0 0 2px rgba(242,214,139,.14),0 0 18px rgba(242,214,139,.3)}}
+#dock .btns button#dprev:active:not(:disabled),#dock .btns button#dnext:active:not(:disabled){transform:scale(.9);box-shadow:inset 0 1px 0 rgba(255,240,200,.2),0 0 0 3px rgba(242,214,139,.16),0 0 22px rgba(242,214,139,.42)}
+@media(prefers-reduced-motion:reduce){#dock .btns button#dprev,#dock .btns button#dnext{transition:none}}
+/* v91: the slow-song suggestion moved off the frame edge too -> it takes the hint's slot above the play bar while shown */
+#sug83{top:auto!important;bottom:calc(100px + env(safe-area-inset-bottom));width:max-content;max-width:min(560px,calc(100vw - 24px));box-sizing:border-box}
+body:has(#sug83.on) #hint{opacity:0}

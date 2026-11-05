@@ -132,7 +132,8 @@
       for(let i=0;i<(lasersOn?beamCount:0);i++){ // v71: 雷射 toggle hides the homepage ambient lasers (gold points stay)
         const originX=i%3===0?artX0-artW*.08:i%3===1?artX0+artW*1.08:artX0+artW*(.15+i*.12),originY=i%3===2?-20:artBottom*(.15+(i%4)*.20);
         const target=destination(i,sweep,now),targetX=target.x,targetY=target.y;targets.push({x:Math.round(targetX),y:Math.round(targetY)});
-        const power=Math.min(1,(beat.stage==='build'?.06+beat.buildProgress*.06:.07)+energy*.035+beat.pulse*.85+beat.dropPulse*.12);
+        const sus91=playing?.34*Math.min(1,Math.max(0,((beat.interval||.405)-.42)/.5)):0; /* v91: slow songs keep the sweeping beams lit (the 0.12 s kick envelope alone left only blinks at ~50 BPM); tempo sets sweep + flash rate only */
+        const power=Math.min(1,Math.max(sus91,(beat.stage==='build'?.06+beat.buildProgress*.06:.07)+energy*.035)+beat.pulse*.85*(1-sus91)+beat.dropPulse*.12);
         ctx.shadowColor=colors[i];ctx.shadowBlur=lite?0:14+beat.pulse*25;
         ctx.strokeStyle=colors[i];ctx.globalAlpha=power;ctx.lineWidth=.8+beat.pulse*2.2;
         ctx.beginPath();ctx.moveTo(originX,originY);ctx.lineTo(targetX,targetY);ctx.stroke();

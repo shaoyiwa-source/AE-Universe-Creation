@@ -65,15 +65,13 @@ function layout() {
   L.W = innerWidth; L.H = innerHeight; L.dpr = Math.min(devicePixelRatio || 1, 2);
   const portrait = L.H > L.W, sa = safeInsets();
   // v80: reserve the top (painting switcher) and bottom (play dock) bands so the painting's tap area never sits under a control
-  const hm = document.body.classList.contains('home-mode'), small = L.H < 720; // v90: 經典首頁 stacks logo / picker / framed painting / text / play bar without overlap
-  const txtH = hm ? (portrait ? (small ? 84 : 104) : 118) : 0, frm = hm ? Math.max(9, Math.round(L.W * (portrait ? 0.88 : 0.9) * 0.03)) + 12 : 0;
-  const top = sa.t + (hm ? 112 + frm : (portrait ? 96 : 118)), bot = sa.b + (portrait ? 156 : 158) + txtH + frm, mx = portrait ? 0.12 : 0.1;
+  const top = sa.t + (portrait ? 96 : 118), bot = sa.b + (portrait ? 156 : 158), mx = portrait ? 0.12 : 0.1; // v91: 經典首頁 uses the same painting size as every other mode
   let w = L.W * (1 - mx), h = w / AR; const availH = Math.max(120, L.H - top - bot);
   if (h > availH) { h = availH; w = h * AR; }
   w = Math.round(w); h = Math.round(h);
   L.p = { x: Math.round((L.W - w) / 2), y: Math.round(top + (availH - h) / 2), w, h };
   L.F = Math.max(9, Math.round(w * 0.03));
-  { const r = document.documentElement.style, ty = L.p.y + L.p.h + L.F + 12; r.setProperty('--hp-top', ty + 'px'); r.setProperty('--hp-left', Math.max(18, Math.min(L.p.x - L.F, (L.W - 578) / 2)) + 'px'); r.setProperty('--hp-right', Math.max(16, L.W - (L.p.x + L.p.w + L.F)) + 'px'); r.setProperty('--hp-small', small ? '1' : '0'); document.body.classList.toggle('hp-short', small); }
+  { const r = document.documentElement.style; r.setProperty('--hp-x', L.p.x + 'px'); r.setProperty('--hp-y', L.p.y + 'px'); r.setProperty('--hp-w', w + 'px'); r.setProperty('--hp-h', h + 'px'); document.body.classList.toggle('hp-short', w < 300); } // v91: the 經典首頁 logo / text / ✦ sit INSIDE the painting like the Production hero
   const a = $('#art').style;
   a.left = L.p.x + 'px'; a.top = L.p.y + 'px'; a.width = w + 'px'; a.height = h + 'px';
   for (const c of [$('#front'), $('#back'), $('#coin')]) { c.width = L.W * L.dpr; c.height = L.H * L.dpr; }
@@ -1079,7 +1077,7 @@ function bindUI() {
   $('#int').oninput = e => { S.intensity = +e.target.value; S.preset = ''; syncButtons(); };
   const sk = $('#seek'); sk.addEventListener('pointerdown', () => { seeking = true; }); sk.addEventListener('input', () => { seeking = true; const d = audio.duration; if (Number.isFinite(d)) { $('#tcur').textContent = fmt(sk.value / 1000 * d); } });
   sk.addEventListener('change', () => { const d = audio.duration; if (Number.isFinite(d)) { A.started = 1; audio.currentTime = sk.value / 1000 * d; } seeking = false; progAt = 0; });
-  document.querySelectorAll('.pr[data-p]').forEach(b => b.onclick = () => applyPreset(b.dataset.p));
+  document.querySelectorAll('.pr[data-p]').forEach(b => b.onclick = () => { applyPreset(b.dataset.p); clearTimeout(A.pc91); A.pc91 = setTimeout(() => hideUI(true), 380); }); // v91: picking a mode closes the settings panel
   document.querySelectorAll('.ts').forEach(b => b.onclick = e => { e.stopPropagation(); setTapSound(b.dataset.s); }); setTapSound.init = 1;
   $('#close').onclick = e => { e.stopPropagation(); hideUI(true); };
   ['pointerdown', 'pointermove', 'input', 'keydown', 'wheel'].forEach(ev => $('#panel').addEventListener(ev, bumpUI, { passive: true }));
@@ -1265,7 +1263,7 @@ function setTrack(i) {
   const veil = document.createElement('div'); veil.id = 'swap80'; veil.setAttribute('aria-hidden', 'true'); $('#stage').appendChild(veil);
   const top = document.createElement('div'); top.id = 'artsw'; top.innerHTML = '<button id="aprev" aria-label="上一幅畫 previous painting">‹</button><span class="lab80" data-zh="換畫" data-en="Painting"></span><span id="artname"></span><button id="anext" aria-label="下一幅畫 next painting">›</button>';
   document.body.appendChild(top);
-  const d = document.createElement('div'); d.id = 'dock'; d.innerHTML = '<div id="trackname"></div><div class="btns"><button id="dprev" aria-label="上一首 previous song">⏮</button><button id="dplay" aria-label="播放"><svg viewBox="0 0 100 100" aria-hidden="true"><path class="pl" d="M38 28 L74 50 L38 72 Z"/><path class="pa" d="M33 28h11v44H33zM56 28h11v44H56z"/></svg></button><button id="dnext" aria-label="下一首 next song">⏭</button></div>';
+  const d = document.createElement('div'); d.id = 'dock'; d.innerHTML = '<div id="trackname"></div><div class="btns"><button id="dprev" aria-label="上一首 previous song"><svg class="sk91" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5.5v13"/><path d="M18 6.2 9.6 12 18 17.8z"/></svg></button><button id="dplay" aria-label="播放"><svg viewBox="0 0 100 100" aria-hidden="true"><path class="pl" d="M38 28 L74 50 L38 72 Z"/><path class="pa" d="M33 28h11v44H33zM56 28h11v44H56z"/></svg></button><button id="dnext" aria-label="下一首 next song"><svg class="sk91" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 5.5v13"/><path d="M6 6.2 14.4 12 6 17.8z"/></svg></button></div>';
   document.body.appendChild(d);
   const strip = document.createElement('div'); strip.className = 'row artrow'; strip.innerHTML = '<span class="lab" data-zh="換畫" data-en="Painting"></span><div id="artstrip"></div>';
   ARTS.forEach(a => { const b = document.createElement('button'); b.dataset.id = a.id; b.title = a.en; b.innerHTML = `<img src="${a.thumb}" alt="${a.en}" loading="lazy" decoding="async">`; b.onclick = e => { e.stopPropagation(); setArt(ARTS.indexOf(a)); }; strip.lastChild.appendChild(b); });
