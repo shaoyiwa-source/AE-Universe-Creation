@@ -1,0 +1,70 @@
+/* 音樂共創 Jam — isolated test page styles (does not touch the Light Player page) */
+*,*::before,*::after{box-sizing:border-box}
+html{background:#0b100d;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100svh;overflow-x:hidden;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% 18%,#283126 0,#101810 48%,#0b100d 80%);color:#f5ecd6;font:15px/1.5 system-ui,-apple-system,"Noto Sans TC",sans-serif}
+button,a{font:inherit;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid #ffd77a;outline-offset:3px}
+.jam-top{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:1120px;margin:0 auto 6px;font:10px/1.4 system-ui,sans-serif;letter-spacing:.2em;color:#c7c6b6}
+.jam-brand{flex:1;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jam-back{display:inline-flex;align-items:center;min-height:44px;color:#e9d099;text-decoration:none;font-size:12px;letter-spacing:.02em;white-space:nowrap}
+.jam-back:hover,.jam-back:focus-visible{text-decoration:underline}
+.jam-lang{min-width:52px;min-height:44px;border:1px solid rgba(233,208,153,.45);border-radius:999px;background:transparent;color:#f1dca6;font-size:12px;letter-spacing:.06em;cursor:pointer}
+.jam{max-width:1120px;margin:0 auto}
+.jam-head{text-align:center;margin:0 auto 12px;max-width:640px}
+.jam-badge{display:inline-block;margin:0 0 6px;padding:3px 10px;border:1px dashed rgba(255,215,122,.6);border-radius:999px;color:#ffd77a;font-size:11px;letter-spacing:.06em}
+.jam h1{margin:2px 0 4px;font:500 26px/1.2 "Cormorant Garamond",Georgia,"Noto Serif TC",serif;letter-spacing:.06em;color:#fff3d3}
+.jam h1 small{display:block;font-size:14px;letter-spacing:.18em;color:#d9c79b}
+.jam-howto{margin:4px 0 0;font-size:15px;color:#f3e7c8}
+.jam-layout{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.jam-stage{position:relative;width:100%;max-width:520px;margin:0 auto;aspect-ratio:3/4;border-radius:14px;overflow:hidden;background:#060806;contain:layout paint}
+.jam-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.jam-overlay{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:0 16px 9%}
+.jam-overlay[hidden]{display:none}
+.jam-start{display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-height:64px;min-width:min(260px,100%);padding:12px 26px;border:0;border-radius:999px;background:linear-gradient(135deg,#ffe39a,#e8b04b 55%,#c98a2b);color:#241805;font-size:20px;font-weight:700;letter-spacing:.06em;box-shadow:0 0 0 6px rgba(255,215,122,.18),0 10px 40px rgba(255,190,80,.45);cursor:pointer}
+.jam-start-main{display:block}.jam-btn[hidden]{display:none}
+.jam-start small{font-size:12px;font-weight:600;letter-spacing:.12em;opacity:.8}
+.jam-start:active{transform:scale(.98)}
+.jam-start[disabled]{opacity:.6;cursor:progress}
+.jam-hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.jam-hud[hidden]{display:none}
+.jam-timer{min-width:54px;padding:4px 12px;border-radius:999px;background:rgba(6,8,6,.62);color:#fff3d3;font:700 22px/1.2 system-ui,sans-serif;text-align:center;font-variant-numeric:tabular-nums}
+.jam-rec{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(6,8,6,.62);font-size:12px;color:#ffd0d0}
+.jam-rec i{width:9px;height:9px;border-radius:50%;background:#ff4466;animation:jamblink 1s steps(2) infinite}
+@keyframes jamblink{50%{opacity:.25}}
+@media (max-width:899px){.jam-stage{aspect-ratio:auto;height:clamp(300px,42svh,440px)}.jam-head{margin-bottom:8px}.jam h1{font-size:23px}.jam h1 small{display:inline;font-size:12px;margin-left:4px}.jam-layout{gap:10px}.jam-start{min-height:58px;padding:9px 24px;font-size:19px}.jam-cell{aspect-ratio:auto;height:48px}.jam-grid{gap:5px}.jam-board-title{margin-bottom:6px}}
+.jam-board{max-width:520px;width:100%;margin:0 auto}
+.jam-board-title{margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:.1em;color:#d9c79b;text-align:center}
+.jam-grid{display:grid;grid-template-columns:minmax(58px,74px) repeat(5,minmax(0,1fr));gap:6px}
+.jam-rowlabel{display:flex;flex-direction:column;justify-content:center;min-width:0;padding:0 2px;font-size:12px;line-height:1.2;color:var(--c);font-weight:600}
+.jam-rowlabel small{font-size:10px;font-weight:400;color:#bfb79f;letter-spacing:.02em}
+.jam-cell{position:relative;min-width:0;min-height:48px;aspect-ratio:1;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.045);color:#f5ecd6;font-size:12px;font-weight:600;cursor:pointer;touch-action:manipulation;transition:background .15s,border-color .15s,box-shadow .15s;overflow:hidden}
+.jam-cell:disabled{cursor:not-allowed;opacity:.45}
+.jam-cell .n{position:relative;z-index:1}
+.jam-cell::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle,rgba(var(--rgb),.95),rgba(var(--rgb),0) 70%);opacity:0;transition:opacity .22s ease-out}
+.jam-cell.flash::after{opacity:1;transition:none}
+.jam-cell[aria-pressed="true"]{border-color:rgb(var(--rgb));background:rgba(var(--rgb),.32);box-shadow:0 0 14px rgba(var(--rgb),.55),inset 0 0 10px rgba(var(--rgb),.4)}
+.jam-cell.pending{border-style:dashed;border-color:rgb(var(--rgb));animation:jampend .4s ease-in-out infinite alternate}
+@keyframes jampend{to{box-shadow:0 0 10px rgba(var(--rgb),.6)}}
+.jam-tip{margin:10px 0 0;font-size:13px;color:#cfc6ab;text-align:center}
+.jam-status{margin:4px 0 0;min-height:1.4em;font-size:12px;color:#ffd77a;text-align:center}
+.jam-result{max-width:640px;margin:20px auto 0;padding:18px 14px;border:1px solid rgba(255,215,122,.35);border-radius:16px;background:rgba(10,14,10,.7);text-align:center}
+.jam-result[hidden]{display:none}
+.jam-result h2{margin:0 0 6px;font:500 24px/1.2 "Cormorant Garamond",Georgia,"Noto Serif TC",serif;color:#fff3d3;letter-spacing:.06em}
+.jam-media video,.jam-media audio{display:block;width:100%;max-width:420px;margin:10px auto;border-radius:10px;background:#000}
+.jam-media video{max-height:62svh}
+.jam-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px}
+.jam-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 18px;border:1px solid rgba(233,208,153,.55);border-radius:999px;background:transparent;color:#f5ecd6;text-decoration:none;font-size:15px;cursor:pointer}
+.jam-btn-gold{border:0;background:linear-gradient(135deg,#ffe39a,#e8b04b 55%,#c98a2b);color:#241805;font-weight:700}
+.jam-note{margin:10px 0 0;font-size:12px;color:#bfb79f}
+.jam-foot{max-width:1120px;margin:22px auto 0;text-align:center;font:10px/1.6 system-ui,sans-serif;letter-spacing:.12em;color:#858c7e}
+.jam-foot p{margin:0}
+.jam-foot-note{letter-spacing:.04em}
+@media (min-width:900px){
+  body{padding:20px 28px}
+  .jam h1{font-size:34px}
+  .jam-layout{grid-template-columns:minmax(0,480px) minmax(0,520px);justify-content:center;align-items:center;gap:36px}
+  .jam-grid{grid-template-columns:86px repeat(5,minmax(0,1fr));gap:8px}
+  .jam-rowlabel{font-size:14px}
+  .jam-rowlabel small{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){.jam-cell.pending,.jam-rec i{animation:none}}
