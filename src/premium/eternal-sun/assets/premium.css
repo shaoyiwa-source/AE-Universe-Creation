@@ -351,4 +351,4 @@ body[data-fx-tray="open"] #hp89 .hp89-copy{opacity:0}  /* tray opens leftwards o
 @media(prefers-reduced-motion:reduce){#dock .btns button#dprev,#dock .btns button#dnext{transition:none}}
 /* v91: the slow-song suggestion moved off the frame edge too -> it takes the hint's slot above the play bar while shown */
 #sug83{top:auto!important;bottom:calc(100px + env(safe-area-inset-bottom));width:max-content;max-width:min(560px,calc(100vw - 24px));box-sizing:border-box}
-body:has(#sug83.on) #hint{opacity:0}
+body:has(#sug83.on) #hint{opacity:0;transition-duration:.12s} /* v91.1: do not leave the play hint under the slow-song suggestion during the 1s fade */

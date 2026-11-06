@@ -20,6 +20,7 @@ button{font:inherit;color:inherit}
 .g-steps li{padding:7px 10px;border:1px solid rgba(255,255,255,.12);border-radius:999px;white-space:nowrap}
 .g-steps li.on{border-color:var(--gold);color:var(--night);background:var(--gold)}
 .g-steps li.done{border-color:var(--line);color:var(--gold)}
+a[data-ae-status="unfinished-hidden"]{display:none!important}
 .g-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 22px;border-radius:999px;border:1px solid var(--gold);background:var(--gold);color:#1a140c;font-weight:600;font-size:16px;letter-spacing:.06em;cursor:pointer;text-decoration:none;transition:transform .15s ease,box-shadow .2s ease}
 .g-btn:hover{box-shadow:0 0 0 4px rgba(231,189,103,.18)}
 .g-btn:active{transform:scale(.97)}
