@@ -57,11 +57,13 @@ const ASSET_MANIFEST = {
   },
 };
 
+const { stageTestAllowed } = require('../../_payment-gate');
+
 function requireStageMode() {
-  const mode = String(process.env.ECPAY_MODE || 'stage').toLowerCase();
-  if (mode !== 'stage') {
-    const err = new Error('Only ECPay Stage is enabled in this Preview adapter.');
-    err.code = 'STAGE_ONLY';
+  // No default to stage. Production never passes, even when ECPAY_MODE=stage.
+  if (!stageTestAllowed()) {
+    const err = new Error('ECPay checkout is not enabled.');
+    err.code = 'PAYMENT_NOT_ENABLED';
     throw err;
   }
 }

@@ -1,9 +1,11 @@
+const { paymentClosedResponse } = require('../_payment-gate');
 const {
   PROVIDER, GET_TOKEN_URL, getCredentials, getSkuRecord, makeOrderEnvelope,
   formatTaipeiDate, getBaseUrl, parseJsonBody, postEncrypted,
 } = require('../payment/ecpay-v2/_lib');
 
 module.exports = async function handler(req, res) {
+  if (paymentClosedResponse(res)) return;
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });

@@ -1,3 +1,4 @@
+const { paymentClosedResponse } = require('../_payment-gate');
 const {
   createCheckMacValue,
   parseRequestBody,
@@ -10,13 +11,17 @@ const {
 const STAGE_ENDPOINT = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5';
 
 module.exports = async function handler(req, res) {
+  if (paymentClosedResponse(res)) return;
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).send('Method Not Allowed');
   }
 
-  const mode = process.env.ECPAY_MODE || 'stage';
-  if (mode !== 'stage') return res.status(503).send('Production checkout is not enabled.');
+  const mode = String(process.env.ECPAY_MODE || '').trim().toLowerCase();
+  if (mode !== 'stage') {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(403).json({ ok: false, error: 'PAYMENT_NOT_ENABLED' });
+  }
 
   const body = parseRequestBody(req);
   const productId = String(body.productId || 'pack-a-color-universe-9');

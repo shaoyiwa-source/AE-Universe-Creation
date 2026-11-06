@@ -1,3 +1,4 @@
+const { paymentClosedResponse } = require('../../_payment-gate');
 const { parseJsonBody } = require('./_lib');
 
 function escapeHtml(value) {
@@ -5,6 +6,7 @@ function escapeHtml(value) {
 }
 
 module.exports = async function handler(req, res) {
+  if (paymentClosedResponse(res)) return;
   const body = parseJsonBody(req);
   const message = body.ResultData || body.TransMsg || 'Payment result received. Server verification may still be pending.';
   res.setHeader('Cache-Control', 'no-store');

@@ -1,3 +1,4 @@
+const { paymentClosedResponse } = require('./_payment-gate');
 const { verifyDownloadToken, getAssetRecord, getPrivateAsset } = require('./payment/ecpay-v2/_lib');
 
 function asciiFilename(value) {
@@ -5,6 +6,7 @@ function asciiFilename(value) {
 }
 
 module.exports = async function handler(req, res) {
+  if (paymentClosedResponse(res)) return;
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return res.status(405).send('Method Not Allowed');

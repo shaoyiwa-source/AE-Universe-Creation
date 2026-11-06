@@ -1,3 +1,4 @@
+const { paymentClosedResponse } = require('../_payment-gate');
 const {
   createCheckMacValue,
   timingSafeEqualHex,
@@ -5,6 +6,7 @@ const {
 } = require('./_lib');
 
 module.exports = async function handler(req, res) {
+  if (paymentClosedResponse(res)) return;
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).send('Method Not Allowed');
@@ -23,7 +25,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).send('0|Invalid CheckMacValue');
   }
 
-  const stage = (process.env.ECPAY_MODE || 'stage') === 'stage';
+  const stage = String(process.env.ECPAY_MODE || '').trim().toLowerCase() === 'stage';
   const summary = {
     stage,
     merchantTradeNo: body.MerchantTradeNo,
