@@ -1,5 +1,11 @@
 'use strict';
 const assert = require('assert');
+
+// Gate probes must not touch Blob or issue network calls.
+delete process.env.BLOB_READ_WRITE_TOKEN;
+delete process.env.VERCEL_OIDC_TOKEN;
+delete process.env.BLOB_STORE_ID;
+delete process.env.AE_ORDER_STORE;
 const fs = require('fs');
 
 const saved = {
@@ -151,7 +157,7 @@ async function invoke(name, method, extra) {
     const openProbes = [];
     {
       const before = fetchCalls.length;
-      const res = await invoke('createOrder', 'POST', { body: {} });
+      const res = await invoke('createOrder', 'POST', { body: { sku: 'WP-VERDANT-GARDEN' } });
       const text = textOf(res);
       openProbes.push({
         route: 'createOrder',
@@ -161,6 +167,9 @@ async function invoke(name, method, extra) {
       });
       assert.strictEqual(openProbes[0].stageForm, true);
       assert.strictEqual(openProbes[0].fetchDelta, 0);
+      assert.ok(/name="TotalAmount" value="133"/.test(textOf(res)) || /name="TotalAmount" value="133"/.test(text), 'server price 133');
+      assert.ok(!/name="TotalAmount" value="1"/.test(textOf(res)));
+      assert.ok(/3002607/.test(textOf(res)) || /3002607/.test(text));
     }
     {
       const before = fetchCalls.length;
@@ -229,10 +238,61 @@ async function invoke(name, method, extra) {
       openProbes.push({ route: 'getCredentials', previewStage: true, productionStageThrows: true, previewMissingThrows: true });
     }
 
+
+    // Live mode: fail closed without keys; open only when all three keys are set.
+    const savedKeys = {
+      ECPAY_MERCHANT_ID: process.env.ECPAY_MERCHANT_ID,
+      ECPAY_HASH_KEY: process.env.ECPAY_HASH_KEY,
+      ECPAY_HASH_IV: process.env.ECPAY_HASH_IV,
+    };
+    function restoreKeys() {
+      for (const [k, v] of Object.entries(savedKeys)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+    }
+    try {
+      delete process.env.ECPAY_MERCHANT_ID;
+      delete process.env.ECPAY_HASH_KEY;
+      delete process.env.ECPAY_HASH_IV;
+      setEnv('production', 'live');
+      delete require.cache[require.resolve('../api/_payment-gate')];
+      let gate = require('../api/_payment-gate');
+      assert.strictEqual(gate.liveCheckoutAllowed(), false);
+      assert.strictEqual(gate.paymentAllowed(), false);
+      const closedLive = await invoke('createOrder', 'POST', { body: { sku: 'WP-VERDANT-GARDEN' } });
+      assert.ok(isClosed(closedLive), 'production live without keys stays closed');
+
+      setEnv('preview', 'live');
+      delete require.cache[require.resolve('../api/_payment-gate')];
+      gate = require('../api/_payment-gate');
+      assert.strictEqual(gate.paymentAllowed(), false);
+
+      process.env.ECPAY_MERCHANT_ID = '0000000';
+      process.env.ECPAY_HASH_KEY = 'live-test-hash-key-not-real';
+      process.env.ECPAY_HASH_IV = 'live-test-hash-iv';
+      setEnv('production', 'live');
+      delete require.cache[require.resolve('../api/_payment-gate')];
+      gate = require('../api/_payment-gate');
+      assert.strictEqual(gate.liveCheckoutAllowed(), true);
+      assert.strictEqual(gate.stageTestAllowed(), false);
+      assert.strictEqual(gate.paymentAllowed(), true);
+      // Production + live + keys is allowed by the gate, but this test does not
+      // perform checkout or touch Production env. Handlers would form a live URL.
+    } finally {
+      restoreKeys();
+    }
+
     const shop = fs.readFileSync(require('path').join(__dirname, '../src/shop.html'), 'utf8');
     const ending = fs.readFileSync(require('path').join(__dirname, '../src/ae-experience-ending.js'), 'utf8');
-    assert.ok(shop.includes('ko-fi.com'));
-    assert.ok(!/\/api\/ecpay|\/api\/payment|\/api\/download/.test(shop));
+    assert.ok(shop.includes('ko-fi.com/aeuniverse1314'));
+    assert.ok(shop.includes('/api/ecpay/create-order'));
+    assert.ok(shop.includes('NT$133'));
+    assert.ok(shop.includes('NT$199'));
+    assert.ok(shop.includes('NT$233'));
+    assert.ok(shop.includes('NT$266'));
+    assert.ok(!shop.includes('US$8'));
+    assert.ok(!shop.includes('https://ko-fi.com/s/'));
     assert.ok(ending.includes('Save wallpaper (free)'));
     assert.ok(ending.includes('https://ko-fi.com/s/'));
 
@@ -247,7 +307,7 @@ async function invoke(name, method, extra) {
     assert.strictEqual(summary.closedChecks, summary.expectedClosed);
     assert.strictEqual(failed, 0);
     assert.strictEqual(fetchCalls.length, 0);
-    const out = '/opt/cursor/artifacts/ae-release-20261106/qa/payment-gate-evidence.json';
+    const out = '/workspace/artifacts/ecpay-wallpaper-halfprice-20261110/qa/payment-gate-evidence.json';
     fs.mkdirSync(require('path').dirname(out), { recursive: true });
     fs.writeFileSync(out, JSON.stringify({ summary, evidence }, null, 2));
     console.log('PASS payment gate');

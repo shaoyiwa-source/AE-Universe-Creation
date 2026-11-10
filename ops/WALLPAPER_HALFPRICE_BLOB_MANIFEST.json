@@ -1,0 +1,146 @@
+{
+  "manifest_id": "WP-HALFPRICE-20261110",
+  "prices_twd": {
+    "five_pack": 133,
+    "color_universe_9": 199,
+    "eternal_sun_4": 233,
+    "heart_universe_9": 266
+  },
+  "note": "Prices are Owner-fixed (11/10 10:42 Taipei), not the FX-rounded 132/198/231/263.",
+  "assets": [
+    {
+      "sku": "WP-VERDANT-GARDEN",
+      "path": "ae-private/wallpapers/verdant-garden.zip",
+      "bytes": 16112265,
+      "sha256": "5f5ea5469992d37069ee0efa016c7df4df644b2ca406d64fd797ca4faaa6eff3",
+      "readback_sha256": "5f5ea5469992d37069ee0efa016c7df4df644b2ca406d64fd797ca4faaa6eff3",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-NIGHT-SWIRLS",
+      "path": "ae-private/wallpapers/night-swirls.zip",
+      "bytes": 19491114,
+      "sha256": "607bc0f8f09c1e0eebcb5475e2c7f5dcc123092789fb3e900dfa6d34085f57da",
+      "readback_sha256": "607bc0f8f09c1e0eebcb5475e2c7f5dcc123092789fb3e900dfa6d34085f57da",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-GOLDEN-MEADOW",
+      "path": "ae-private/wallpapers/golden-meadow.zip",
+      "bytes": 17451977,
+      "sha256": "14c911a158aaa5ee86a00025242587ee121c06faf7e90c7a3af8c1d09c23626d",
+      "readback_sha256": "14c911a158aaa5ee86a00025242587ee121c06faf7e90c7a3af8c1d09c23626d",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-RED-FLAME-WEAVE",
+      "path": "ae-private/wallpapers/red-flame-weave.zip",
+      "bytes": 21999646,
+      "sha256": "c7588cbd1be547ab56d6d4358015fc2b33b03466a98ab1b035875e62f08d4f1c",
+      "readback_sha256": "c7588cbd1be547ab56d6d4358015fc2b33b03466a98ab1b035875e62f08d4f1c",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-HEART-LAYERS",
+      "path": "ae-private/wallpapers/heart-layers.zip",
+      "bytes": 20916568,
+      "sha256": "ffeff19777b9a8dbe2aac21e65493d836d8643840f521eee4cd485c1366bba34",
+      "readback_sha256": "ffeff19777b9a8dbe2aac21e65493d836d8643840f521eee4cd485c1366bba34",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-WARM-CURRENTS",
+      "path": "ae-private/wallpapers/warm-currents.zip",
+      "bytes": 14272330,
+      "sha256": "4cceedf537eaa54bb390b5915356f1def3e903ef07c3b085900ee0c19d048fe0",
+      "readback_sha256": "4cceedf537eaa54bb390b5915356f1def3e903ef07c3b085900ee0c19d048fe0",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-INFINITY-LOOPS",
+      "path": "ae-private/wallpapers/infinity-loops.zip",
+      "bytes": 16767502,
+      "sha256": "41280e0f76b2139e2c4b79d49b710f17ec0c0d247019b17620715c770a6c71dd",
+      "readback_sha256": "41280e0f76b2139e2c4b79d49b710f17ec0c0d247019b17620715c770a6c71dd",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-FEATHER-BRIGHTS",
+      "path": "ae-private/wallpapers/feather-brights.zip",
+      "bytes": 14613681,
+      "sha256": "199d881a628cb6203457fc1aef2bbfa181ff02fbd86c4c6f5fe69a115223c5ef",
+      "readback_sha256": "199d881a628cb6203457fc1aef2bbfa181ff02fbd86c4c6f5fe69a115223c5ef",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-SKETCHBOOK-SPARKS",
+      "path": "ae-private/wallpapers/sketchbook-sparks.zip",
+      "bytes": 20217154,
+      "sha256": "6be4d8bde148c35ee03b5af1c7adcf1d81b575a64b50d05662e17c87a984e098",
+      "readback_sha256": "6be4d8bde148c35ee03b5af1c7adcf1d81b575a64b50d05662e17c87a984e098",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-EARTH-TEXTURES",
+      "path": "ae-private/wallpapers/earth-textures.zip",
+      "bytes": 13532398,
+      "sha256": "a2ee5f7694e17291e63242513b1c54e43f957fbc851e340ffb9c1152c94b7b44",
+      "readback_sha256": "a2ee5f7694e17291e63242513b1c54e43f957fbc851e340ffb9c1152c94b7b44",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-COLOR-ORBITS",
+      "path": "ae-private/wallpapers/color-orbits.zip",
+      "bytes": 17081285,
+      "sha256": "7bfbe2e8f9d5ccb67da1dd4b12fd19c7696010a80f11f5b3e386752e04bd9e8c",
+      "readback_sha256": "7bfbe2e8f9d5ccb67da1dd4b12fd19c7696010a80f11f5b3e386752e04bd9e8c",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-AE-COLOR-UNIVERSE-9",
+      "path": "ae-private/wallpapers/ae-color-universe-9.zip",
+      "bytes": 39729891,
+      "sha256": "8518cd4eb5db17d51766a274ffdd0c812c284d289cb325261073eaf434d67d94",
+      "readback_sha256": "8518cd4eb5db17d51766a274ffdd0c812c284d289cb325261073eaf434d67d94",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-ETERNAL-SUN-4",
+      "path": "ae-private/wallpapers/eternal-sun-4.zip",
+      "bytes": 10451278,
+      "sha256": "5f7ac6112d925b765fe8449a999be0860a95238bfde71076b9754c76ec92d3d4",
+      "readback_sha256": "5f7ac6112d925b765fe8449a999be0860a95238bfde71076b9754c76ec92d3d4",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
+    },
+    {
+      "sku": "WP-AE-HEART-UNIVERSE-9",
+      "status": "MISSING_LOCAL"
+    }
+  ]
+}

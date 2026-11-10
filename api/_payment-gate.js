@@ -1,19 +1,41 @@
 'use strict';
 
 // Fail closed for ECPay order creation, callbacks, tokens, and paid download.
-// Unset ECPAY_MODE is not stage. Vercel Production (including --prod --skip-domain)
-// stays closed even if ECPAY_MODE=stage. Stage code below the gate is kept for a
-// later explicit non-production test: ECPAY_MODE=stage and VERCEL_ENV is not production.
+// Unset ECPAY_MODE is not an open mode.
+// Production stays closed unless ECPAY_MODE=live AND MerchantID/HashKey/HashIV are all set.
+// Live mode without complete keys is always closed (preview or production).
+// Stage is allowed only when ECPAY_MODE=stage and VERCEL_ENV is not production.
+
+function paymentMode() {
+  return String(process.env.ECPAY_MODE || '').trim().toLowerCase();
+}
+
+function vercelEnv() {
+  return String(process.env.VERCEL_ENV || '').trim().toLowerCase();
+}
+
+function hasCompleteKeys() {
+  const id = String(process.env.ECPAY_MERCHANT_ID || '').trim();
+  const key = String(process.env.ECPAY_HASH_KEY || '').trim();
+  const iv = String(process.env.ECPAY_HASH_IV || '').trim();
+  return Boolean(id && key && iv);
+}
 
 function stageTestAllowed() {
-  const mode = String(process.env.ECPAY_MODE || '').trim().toLowerCase();
-  const vercelEnv = String(process.env.VERCEL_ENV || '').trim().toLowerCase();
-  if (vercelEnv === 'production') return false;
-  return mode === 'stage';
+  if (vercelEnv() === 'production') return false;
+  return paymentMode() === 'stage';
+}
+
+function liveCheckoutAllowed() {
+  return paymentMode() === 'live' && hasCompleteKeys();
+}
+
+function paymentAllowed() {
+  return liveCheckoutAllowed() || stageTestAllowed();
 }
 
 function paymentClosedResponse(res) {
-  if (stageTestAllowed()) return false;
+  if (paymentAllowed()) return false;
   const payload = { ok: false, error: 'PAYMENT_NOT_ENABLED' };
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -30,4 +52,11 @@ function paymentClosedResponse(res) {
   return true;
 }
 
-module.exports = { stageTestAllowed, paymentClosedResponse };
+module.exports = {
+  paymentMode,
+  hasCompleteKeys,
+  stageTestAllowed,
+  liveCheckoutAllowed,
+  paymentAllowed,
+  paymentClosedResponse,
+};

@@ -24,18 +24,27 @@ module.exports = async function handler(req, res) {
     const payload = await getPrivateAsset(entitlement.sku);
     if (!payload) return res.status(503).send('Private asset unavailable');
 
-    res.setHeader('Content-Type', 'image/heic');
+    res.setHeader('Content-Type', record.contentType || 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${asciiFilename(record.filename)}"; filename*=UTF-8''${encodeURIComponent(record.filename)}`);
     res.setHeader('Cache-Control', 'private, no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-AE-Asset-Manifest', record.asset_manifest_id);
     res.setHeader('X-AE-Asset-SHA256', record.sha256);
 
-    const reader = payload.result.stream.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      res.write(Buffer.from(value));
+    const stream = payload.result.stream;
+    if (stream && typeof stream.getReader === 'function') {
+      const reader = stream.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(Buffer.from(value));
+      }
+    } else if (stream && typeof stream[Symbol.asyncIterator] === 'function') {
+      for await (const chunk of stream) {
+        res.write(Buffer.from(chunk));
+      }
+    } else {
+      return res.status(503).send('Private asset unavailable');
     }
     return res.end();
   } catch (error) {

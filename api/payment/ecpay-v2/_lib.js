@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { getWallpaperSku, getWallpaperAsset, makeWallpaperTradeNo, skuFromWallpaperTradeNo } = require('../../_wallpaper-catalog');
 
 const PROVIDER = 'ecpay_stage_embedded_v2';
 const STAGE_MERCHANT_ID = '3002607';
@@ -89,22 +90,26 @@ function stageAmountForSku(sku) {
 }
 
 function getSkuRecord(sku) {
-  const clean = String(sku || '').toUpperCase();
-  if (!SKU_CODE[clean]) return null;
-  const asset = ASSET_MANIFEST[clean];
-  return {
-    sku: clean,
-    public_name: SKU_NAMES[clean],
-    currency: 'TWD',
-    amount: stageAmountForSku(clean),
-    asset_manifest_id: ASSET_MANIFEST_ID,
-    asset,
-    active: true,
-    fulfillment_enabled: Boolean(asset),
-  };
+  const wall = getWallpaperSku(sku);
+  if (wall) {
+    return {
+      sku: wall.sku,
+      public_name: wall.public_name,
+      currency: wall.currency,
+      amount: wall.amount,
+      asset_manifest_id: wall.asset ? wall.asset.asset_manifest_id : null,
+      asset: wall.asset,
+      active: wall.active,
+      fulfillment_enabled: wall.fulfillment_enabled,
+    };
+  }
+  // Eternal Sun individual editions and other SKUs stay closed.
+  return null;
 }
 
 function getAssetRecord(sku) {
+  const wall = getWallpaperAsset(sku);
+  if (wall) return wall;
   const clean = String(sku || '').toUpperCase();
   const asset = ASSET_MANIFEST[clean];
   return asset ? { sku: clean, asset_manifest_id: ASSET_MANIFEST_ID, ...asset } : null;
@@ -169,6 +174,7 @@ async function postEncrypted(url, data, fetchImpl = global.fetch) {
 }
 
 function makeMerchantTradeNo(sku) {
+  if (getWallpaperSku(sku)) return makeWallpaperTradeNo(sku, crypto);
   const code = SKU_CODE[sku];
   if (!code) throw new Error('Unknown SKU');
   const stamp = Date.now().toString(36).toUpperCase().slice(-9);
@@ -177,6 +183,8 @@ function makeMerchantTradeNo(sku) {
 }
 
 function skuFromMerchantTradeNo(value) {
+  const wall = skuFromWallpaperTradeNo(value);
+  if (wall) return wall;
   const tradeNo = String(value || '');
   if (!/^AE[1-4][A-Z0-9]+$/.test(tradeNo) || tradeNo.length > 20) return null;
   return CODE_SKU[tradeNo[2]] || null;
@@ -205,8 +213,14 @@ function parseJsonBody(req) {
 }
 
 function hmacSecret() {
-  // Stage-only order envelope integrity. Production must use a separate private secret.
-  return process.env.AE_STAGE_ORDER_SECRET || getCredentials().hashKey;
+  if (process.env.AE_ORDER_SECRET) return process.env.AE_ORDER_SECRET;
+  if (process.env.AE_STAGE_ORDER_SECRET) return process.env.AE_STAGE_ORDER_SECRET;
+  try {
+    const { getAioCredentials } = require('../../ecpay/_lib');
+    return getAioCredentials().hashKey;
+  } catch (_) {
+    return getCredentials().hashKey;
+  }
 }
 
 function signOrder(order) {
@@ -282,8 +296,21 @@ function validateQueryData(queryData, expected) {
 
 
 function privateBlobReady() {
+  if (String(process.env.AE_ORDER_STORE || '') === 'memory') return true;
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN || (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID));
 }
+
+const memoryOrders = new Map();
+const memoryAssets = new Map();
+
+function useMemoryOrderStore() {
+  return String(process.env.AE_ORDER_STORE || '') === 'memory';
+}
+
+function memoryPutAsset(sku, buffer) {
+  memoryAssets.set(String(sku), Buffer.from(buffer));
+}
+
 
 async function blobSdk() {
   return import('@vercel/blob');
@@ -295,6 +322,10 @@ function orderStatePath(merchantTradeNo) {
 }
 
 async function writeOrderState(state) {
+  if (useMemoryOrderStore()) {
+    memoryOrders.set(state.merchantTradeNo, JSON.parse(JSON.stringify(state)));
+    return orderStatePath(state.merchantTradeNo);
+  }
   if (!privateBlobReady()) {
     const err = new Error('Private Blob store is not configured.');
     err.code = 'PRIVATE_STORAGE_NOT_READY';
@@ -325,11 +356,22 @@ async function readPrivateBlobText(pathname) {
 }
 
 async function readOrderState(merchantTradeNo) {
+  if (useMemoryOrderStore()) {
+    const row = memoryOrders.get(merchantTradeNo);
+    return row ? JSON.parse(JSON.stringify(row)) : null;
+  }
   const text = await readPrivateBlobText(orderStatePath(merchantTradeNo));
   return text ? JSON.parse(text) : null;
 }
 
 async function headPrivateAsset(sku) {
+  if (useMemoryOrderStore()) {
+    const asset = getAssetRecord(sku);
+    if (!asset) return null;
+    const buf = memoryAssets.get(asset.sku);
+    if (!buf) return null;
+    return { asset, meta: { size: buf.length, pathname: asset.blob_path } };
+  }
   if (!privateBlobReady()) {
     const err = new Error('Private Blob store is not configured.');
     err.code = 'PRIVATE_STORAGE_NOT_READY';
@@ -343,6 +385,14 @@ async function headPrivateAsset(sku) {
 }
 
 async function getPrivateAsset(sku) {
+  if (useMemoryOrderStore()) {
+    const asset = getAssetRecord(sku);
+    if (!asset) return null;
+    const buf = memoryAssets.get(asset.sku);
+    if (!buf) return null;
+    const { Readable } = require('stream');
+    return { asset, result: { statusCode: 200, stream: Readable.from(buf) } };
+  }
   if (!privateBlobReady()) {
     const err = new Error('Private Blob store is not configured.');
     err.code = 'PRIVATE_STORAGE_NOT_READY';
@@ -362,7 +412,7 @@ function signDownloadToken(payload) {
     v: 1,
     order_id: String(payload.order_id || ''),
     sku: String(payload.sku || ''),
-    asset_manifest_id: ASSET_MANIFEST_ID,
+    asset_manifest_id: String((getAssetRecord(payload.sku) || {}).asset_manifest_id || ''),
     filename: String(payload.filename || ''),
     sha256: String(payload.sha256 || ''),
     nonce: crypto.randomBytes(12).toString('base64url'),
@@ -384,7 +434,7 @@ function verifyDownloadToken(token) {
   if (!value.expires || Date.now() > value.expires) throw new Error('Download token expired.');
   const asset = getAssetRecord(value.sku);
   if (!asset ||
-      value.asset_manifest_id !== ASSET_MANIFEST_ID ||
+      value.asset_manifest_id !== asset.asset_manifest_id ||
       value.filename !== asset.filename ||
       value.sha256 !== asset.sha256) {
     throw new Error('Download token asset mismatch.');
@@ -427,4 +477,6 @@ module.exports = {
   getPrivateAsset,
   signDownloadToken,
   verifyDownloadToken,
+  memoryPutAsset,
+  useMemoryOrderStore,
 };

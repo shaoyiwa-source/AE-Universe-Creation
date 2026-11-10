@@ -89,7 +89,62 @@ function autoSubmitForm(action, fields) {
   const inputs = Object.entries(fields)
     .map(([k, v]) => `<input type="hidden" name="${htmlEscape(k)}" value="${htmlEscape(v)}">`)
     .join('\n');
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Redirecting to ECPay…</title></head><body><p>Redirecting to ECPay Stage… / 正在前往綠界測試付款頁…</p><form id="ecpay" method="post" action="${htmlEscape(action)}">${inputs}<noscript><button type="submit">Continue / 繼續</button></noscript></form><script>document.getElementById('ecpay').submit();</script></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Redirecting to ECPay…</title></head><body><p>Redirecting to ECPay… / 正在前往綠界付款頁…</p><form id="ecpay" method="post" action="${htmlEscape(action)}">${inputs}<noscript><button type="submit">Continue / 繼續</button></noscript></form><script>document.getElementById('ecpay').submit();</script></body></html>`;
+}
+
+
+const { paymentAllowed, paymentMode, hasCompleteKeys } = require('../_payment-gate');
+
+const STAGE_AIO = {
+  merchantID: '3002607',
+  hashKey: 'pwFHCfeFwwyFB0PLwGVxX7dFwCYIEXQY',
+  hashIV: 'EkRm7iFT261dpevs',
+  checkoutUrl: 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5',
+};
+
+const LIVE_AIO_CHECKOUT = 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5';
+
+function requirePayment() {
+  if (!paymentAllowed()) {
+    const err = new Error('ECPay checkout is not enabled.');
+    err.code = 'PAYMENT_NOT_ENABLED';
+    throw err;
+  }
+}
+
+function getAioCredentials() {
+  requirePayment();
+  const mode = paymentMode();
+  if (mode === 'live') {
+    if (!hasCompleteKeys()) {
+      const err = new Error('Live ECPay keys are missing.');
+      err.code = 'PAYMENT_NOT_ENABLED';
+      throw err;
+    }
+    return {
+      mode: 'live',
+      merchantID: String(process.env.ECPAY_MERCHANT_ID).trim(),
+      hashKey: String(process.env.ECPAY_HASH_KEY).trim(),
+      hashIV: String(process.env.ECPAY_HASH_IV).trim(),
+      checkoutUrl: LIVE_AIO_CHECKOUT,
+    };
+  }
+  const envId = String(process.env.ECPAY_MERCHANT_ID || '').trim();
+  const envKey = String(process.env.ECPAY_HASH_KEY || '').trim();
+  const envIv = String(process.env.ECPAY_HASH_IV || '').trim();
+  const any = Boolean(envId || envKey || envIv);
+  if (any && !(envId && envKey && envIv)) {
+    const err = new Error('Incomplete ECPay stage keys.');
+    err.code = 'PAYMENT_NOT_ENABLED';
+    throw err;
+  }
+  return {
+    mode: 'stage',
+    merchantID: envId || STAGE_AIO.merchantID,
+    hashKey: envKey || STAGE_AIO.hashKey,
+    hashIV: envIv || STAGE_AIO.hashIV,
+    checkoutUrl: STAGE_AIO.checkoutUrl,
+  };
 }
 
 module.exports = {
@@ -100,4 +155,7 @@ module.exports = {
   makeMerchantTradeNo,
   getBaseUrl,
   autoSubmitForm,
+  getAioCredentials,
+  STAGE_AIO,
+  LIVE_AIO_CHECKOUT,
 };
