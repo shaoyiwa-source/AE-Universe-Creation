@@ -15,7 +15,7 @@
       name_en: 'Wallpapers',
       how_zh: '手機桌布組合與數位版本，官網以新台幣半價、綠界結帳。',
       how_en: 'Phone wallpaper packs and digital editions at half-price in TWD. Official-site checkout is via ECPay (綠界).',
-      image: 'assets/kofi/verdant-garden-cover.jpg',
+      image: '/assets/kofi/verdant-garden-cover.jpg',
       image_pos: '50% 42%',
       alt: 'Wallpapers, preview from VERDANT GARDEN',
       go_zh: '選購 →',
@@ -97,7 +97,7 @@
           '</span>' +
           '<span class="xp-body">' +
             '<span class="xp-num">' + padNum(index + 1) + '</span>' +
-            '<span class="xp-name" role="heading" aria-level="2">' + esc(cat.name_zh) + '<small>' + esc(cat.name_en) + '</small></span>' +
+            '<span class="xp-name" role="heading" aria-level="2" data-en="' + esc(cat.name_en) + '" data-zh="' + esc(cat.name_zh) + '">' + esc(cat.name_en) + '</span>' +
             '<span class="xp-how" data-en="' + esc(cat.how_en) + '" data-zh="' + esc(cat.how_zh) + '">' + esc(cat.how_en) + '</span>' +
             '<span class="xp-go" data-en="' + esc(cat.go_en || 'Browse →') + '" data-zh="' + esc(cat.go_zh || '選購 →') + '">' + esc(cat.go_en || 'Browse →') + '</span>' +
           '</span>' +
