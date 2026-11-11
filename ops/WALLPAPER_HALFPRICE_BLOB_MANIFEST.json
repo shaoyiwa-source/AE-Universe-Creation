@@ -140,7 +140,13 @@
     },
     {
       "sku": "WP-AE-HEART-UNIVERSE-9",
-      "status": "MISSING_LOCAL"
+      "path": "ae-private/wallpapers/ae-heart-universe-9.zip",
+      "bytes": 20746368,
+      "sha256": "240cbc1b29c4292f0b9ec81428b82e8791543a20fec41fe7a11372b2992552cd",
+      "readback_sha256": "240cbc1b29c4292f0b9ec81428b82e8791543a20fec41fe7a11372b2992552cd",
+      "match": true,
+      "anon_http": 403,
+      "status": "OK"
     }
   ]
 }

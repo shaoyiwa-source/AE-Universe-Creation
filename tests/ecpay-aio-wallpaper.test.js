@@ -10,7 +10,7 @@ delete process.env.ECPAY_HASH_IV;
 
 const assert = require('assert');
 const { createCheckMacValue, getAioCredentials } = require('../api/ecpay/_lib');
-const { getWallpaperSku, listSkus } = require('../api/_wallpaper-catalog');
+const { getWallpaperSku, getWallpaperAsset, listSkus } = require('../api/_wallpaper-catalog');
 const lib = require('../api/payment/ecpay-v2/_lib');
 const createOrder = require('../api/ecpay/create-order');
 const returnHandler = require('../api/ecpay/return');
@@ -83,7 +83,9 @@ function signedNotification(overrides) {
   assert.strictEqual(getWallpaperSku('WP-AE-COLOR-UNIVERSE-9').amount, 199);
   assert.strictEqual(getWallpaperSku('WP-ETERNAL-SUN-4').amount, 233);
   assert.strictEqual(getWallpaperSku('WP-AE-HEART-UNIVERSE-9').amount, 266);
-  assert.strictEqual(getWallpaperSku('WP-AE-HEART-UNIVERSE-9').fulfillment_enabled, false);
+  assert.strictEqual(getWallpaperSku('WP-AE-HEART-UNIVERSE-9').fulfillment_enabled, true);
+  assert.strictEqual(getWallpaperAsset('WP-AE-HEART-UNIVERSE-9').sha256, '240cbc1b29c4292f0b9ec81428b82e8791543a20fec41fe7a11372b2992552cd');
+  assert.strictEqual(getWallpaperAsset('WP-AE-HEART-UNIVERSE-9').size, 20746368);
   assert.strictEqual(getWallpaperSku('ES-PHONE'), null);
   assert.strictEqual(lib.getSkuRecord('ES-PHONE'), null);
 
@@ -96,9 +98,16 @@ function signedNotification(overrides) {
   assert.strictEqual(res.statusCode, 400);
   assert.strictEqual(res.body.error, 'UNKNOWN_SKU');
 
-  res = await invoke(createOrder, 'POST', { body: { sku: 'WP-AE-HEART-UNIVERSE-9' } });
-  assert.strictEqual(res.statusCode, 409);
-  assert.strictEqual(res.body.error, 'FULFILLMENT_NOT_READY');
+  // Heart Universe is now fulfillable at the Owner-fixed NT$266; client price is ignored.
+  res = await invoke(createOrder, 'POST', {
+    headers: { accept: 'application/json' },
+    body: { sku: 'WP-AE-HEART-UNIVERSE-9', amount: 1 },
+  });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(res.body.amount, 266);
+  assert.strictEqual(res.body.fields.TotalAmount, '266');
+  assert.strictEqual(res.body.sku, 'WP-AE-HEART-UNIVERSE-9');
+  assert.ok(/^AEW13/.test(res.body.merchant_trade_no));
 
   // Client price is ignored; server uses NT$133.
   res = await invoke(createOrder, 'POST', {

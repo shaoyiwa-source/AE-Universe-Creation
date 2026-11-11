@@ -267,8 +267,15 @@ const CATALOG = {
     item_name: 'AE Heart Universe / AE心宇宙 (9-piece set)',
     kind: 'nine',
     active: true,
-    fulfillment_enabled: false,
-    asset: null,
+    fulfillment_enabled: true,
+    asset: {
+      filename: 'ae-heart-universe-9.zip',
+      sha256: '240cbc1b29c4292f0b9ec81428b82e8791543a20fec41fe7a11372b2992552cd',
+      size: 20746368,
+      contentType: 'application/zip',
+      blob_path: 'ae-private/wallpapers/ae-heart-universe-9.zip',
+      asset_manifest_id: 'WP-AE-HEART-UNIVERSE-9-V1',
+    },
   },
   'WP-ETERNAL-SUN-4': {
     sku: 'WP-ETERNAL-SUN-4',
