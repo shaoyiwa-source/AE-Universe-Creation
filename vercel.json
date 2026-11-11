@@ -6,6 +6,10 @@
       "destination": "/shop.html"
     },
     {
+      "source": "/shop/:category",
+      "destination": "/shop.html"
+    },
+    {
       "source": "/today",
       "destination": "/today.html"
     },

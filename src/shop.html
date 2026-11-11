@@ -11,177 +11,254 @@
 <link rel="stylesheet" href="site.css?v=2453"/>
 <link rel="icon" href="favicon.ico" sizes="any"/>
 <link rel="icon" type="image/png" href="favicon.png"/>
+<script>
+(function () {
+  var path = (location.pathname || '').replace(/\/+$/, '') || '/shop';
+  var hash = (location.hash || '').replace(/^#/, '');
+  var cat = '';
+  try { cat = new URLSearchParams(location.search).get('category') || ''; } catch (e) {}
+  var m = /\/shop\/([^/]+)$/.exec(path);
+  var id = (m && m[1]) || hash || cat || '';
+  if (id === 'shop.html' || id === 'shop') id = '';
+  document.documentElement.dataset.shopView = id || 'overview';
+  document.documentElement.dataset.shopCategory = id || '';
+})();
+</script>
+<script src="shop-data.js"></script>
+<script>
+(function () {
+  if (window.AEShop) { AEShop.resolveView(); return; }
+  var path = (location.pathname || '').replace(/\/+$/, '') || '/shop';
+  var hash = (location.hash || '').replace(/^#/, '');
+  var cat = '';
+  try { cat = new URLSearchParams(location.search).get('category') || ''; } catch (e) {}
+  var m = /\/shop\/([^/]+)$/.exec(path);
+  var id = (m && m[1]) || hash || cat || '';
+  if (id === 'shop.html' || id === 'shop') id = '';
+  document.documentElement.dataset.shopView = (id === 'wallpapers') ? 'wallpapers' : 'overview';
+  document.documentElement.dataset.shopCategory = (id === 'wallpapers') ? 'wallpapers' : '';
+})();
+</script>
 <script src="site.js?v=2453" defer></script>
 <style>
-.shop-main{padding:48px 0 24px}
-.shop-main h1{font-size:clamp(42px,6vw,72px);margin:8px 0 12px}
-.shop-lead{max-width:36em;color:var(--muted)}
-.sku-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;padding:28px 0 12px}
-.sku{background:var(--paper, #fffdf8);border:1px solid var(--line, #e4d9c8);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
-.sku img{width:100%;aspect-ratio:4/5;object-fit:cover;background:#1a140f}
-.sku img.fit{object-fit:contain;background:#f3ece0}
+.shop-main{padding:0 0 24px}
+.shop-subhead{padding:28px 0 0}
+.shop-back{display:inline-block;margin:0;font-size:14px;border-bottom:1px solid currentColor;padding:6px 0}
+html[data-shop-view="overview"] #shop-wallpapers{display:none}
+html[data-shop-view="wallpapers"] #shop-overview{display:none}
+html:not([data-shop-view="wallpapers"]) #shop-wallpapers{display:none}
+.sku-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;padding:8px 0 12px;align-items:stretch}
+.sku{background:var(--paper, #fffdf8);border:1px solid var(--line, #e4d9c8);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;min-height:100%}
+.sku-media{aspect-ratio:4/5;overflow:hidden;background:#1a140f;flex:none}
+.sku-media img{width:100%;height:100%;max-width:none;object-fit:cover;object-position:center center;display:block}
 .sku-body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:8px;flex:1}
-.sku .tag{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold, #a16e21)}
-.sku h2{font-size:clamp(26px,3vw,34px);margin:0}
-.sku .price{font-family:"Cormorant Garamond",Georgia,serif;font-size:26px;margin:0}
-.sku p{color:var(--muted);font-size:15px;line-height:1.6;margin:0;flex:1}
-.sku .btn{display:inline-block;margin-top:8px;border-radius:999px;padding:12px 16px;background:#17120e;color:#fffdf8;text-align:center;border:0;font:inherit;cursor:pointer;width:100%}
-.shop-note{color:var(--muted);font-size:14px;line-height:1.7;padding-bottom:48px}
+.sku h2{font-size:clamp(26px,3vw,34px);margin:0;line-height:1.2;min-height:calc(1.2em * 2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.sku .sku-kind{margin:0;font-size:20px;line-height:1.35;font-weight:500;color:var(--ink, inherit);min-height:calc(1.35em * 1)}
+.sku .sku-fmt{margin:0;font-size:13px;line-height:1.4;letter-spacing:.02em;color:var(--muted);min-height:1.4em}
+.sku .price{font-family:"Cormorant Garamond",Georgia,serif;font-size:26px;margin:0;line-height:1.2;min-height:1.2em}
+.sku .desc{color:var(--muted);font-size:13px;line-height:1.55;margin:0;min-height:calc(1.55em * 3);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;flex:none}
+.sku form{margin-top:auto}
+.sku .btn{display:inline-flex;align-items:center;justify-content:center;margin-top:8px;border-radius:999px;padding:12px 16px;background:#17120e;color:#fffdf8;text-align:center;border:0;font:inherit;font-size:15px;line-height:1.3;cursor:pointer;width:100%;min-height:3.2em}
+.shop-note{color:var(--muted);font-size:14px;line-height:1.7;padding:12px 0 48px}
+/* Match /experience portal card language */
+.xp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;grid-auto-rows:1fr;padding:6px 0 84px}
+.xp-card{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--paper);color:inherit;text-decoration:none;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.xp-card:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.xp-card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.xp-media{position:relative;display:block;aspect-ratio:4/3;background:#0b0b0a;border-bottom:1px solid var(--line);overflow:hidden;flex:none}
+.xp-shot{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:var(--pos,50% 50%);display:block}
+.xp-body{display:flex;flex-direction:column;gap:6px;padding:16px 14px 18px;flex:1}
+.xp-num{font-size:12px;letter-spacing:.16em;color:var(--muted)}
+.xp-name{margin:0;font-size:18px;white-space:nowrap;letter-spacing:0;line-height:1.2;font-weight:500}
+.xp-name small{display:block;margin-top:3px;font-family:"Cormorant Garamond",Georgia,serif;font-size:17px;white-space:normal;font-weight:500;color:var(--muted);letter-spacing:.01em}
+.xp-how{margin:4px 0 0;color:var(--muted);font-size:15px;line-height:1.55}
+.xp-go{margin-top:auto;padding-top:12px;font-size:14px;letter-spacing:.04em;color:var(--accent)}
+@media(max-width:1100px){.xp-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.xp-name{font-size:24px;white-space:normal}.xp-body{padding:18px 20px 20px}}
+@media(max-width:640px){.xp-grid{grid-template-columns:1fr;gap:18px;padding-bottom:60px}.xp-name{font-size:22px}.xp-body{padding:16px 16px 18px}}
+@media(max-width:960px){.xp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.xp-grid{grid-template-columns:1fr}}
 </style>
 <style id="ae-line-footer">.ae-line-link{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.ae-line-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#06C755;box-shadow:0 0 0 3px rgba(6,199,85,.14)}.ae-line-id{font-size:.78em;letter-spacing:.06em;color:var(--muted);opacity:.85;transition:color .2s ease}.ae-line-link:hover .ae-line-id,.ae-line-link:focus-visible .ae-line-id{color:inherit}html[data-theme=dark] .ae-line-dot{box-shadow:0 0 0 3px rgba(6,199,85,.22)}.ae-line-tiny{margin-top:10px}.ae-line-tiny .ae-line-dot{margin-left:3px}.ae-line-tiny .ae-line-link{text-decoration:none}.ae-line-tiny .ae-line-id{font-size:1em}</style><link rel="stylesheet" href="/ae-visual-system.css">
 <link rel="stylesheet" href="/ae-surface-polish.css"></head>
 <body class="ae-polish">
 <a class="skip-link" href="#main" data-en="Skip to content" data-zh="跳至內容">Skip to content</a>
 <header class="site-header"><div class="header-inner"><div class="header-left"><button class="menu-trigger" data-menu-toggle aria-expanded="false" aria-controls="site-menu" aria-label="Open or close menu" type="button"><span class="hamburger" aria-hidden="true"><i></i><i></i></span><span data-en="Menu" data-zh="選單" class="menu-label">Menu</span></button></div><a class="wordmark" href="index.html" aria-label="AE Universe Creation — Home"><img class="brand-mark" src="assets/ae-three-rings-transparent.webp" alt="" width="74" height="45"><span class="brand-name">AE Universe<span>CREATION</span></span></a><div class="header-actions"><a data-en="Collections" data-zh="收藏系列" href="collections.html" class="header-shop">Collections</a><a data-en="Shop" data-zh="選購" href="shop.html" class="header-shop">Shop</a><button data-language type="button" aria-label="切換至中文">中文</button><button class="theme-button" data-theme-toggle aria-label="Switch to dark mode" type="button">◐</button></div></div><div class="menu-panel" id="site-menu" hidden><nav aria-label="Main navigation"><a href="eternal-sun.html" data-en="Eternal Sun" data-zh="盛明">Eternal Sun</a><a data-en="Home" data-zh="首頁" href="index.html">Home</a><a data-en="Experience" data-zh="互動體驗" href="/experience">Experience</a><a data-en="The artworks" data-zh="作品" href="works.html">The artworks</a><a data-en="Collections" data-zh="收藏系列" href="collections.html">Collections</a><a data-en="Shop" data-zh="選購" href="shop.html">Shop</a><a data-en="Our story" data-zh="我們的故事" href="about.html">Our story</a></nav><p class="menu-note">Aurelia &amp; Elion · AE Universe Creation</p><button class="mobile-theme" data-theme-toggle type="button">Dark appearance</button></div></header>
-<main id="main" class="shop-main"><div class="wrap">
-  <p class="eyebrow" data-en="Shop" data-zh="選購">Shop</p>
-  <h1 data-en="Bring the work home." data-zh="把作品帶回家。">Bring the work home.</h1>
-  <p class="shop-lead" data-en="Digital editions for personal use. Official-site checkout is via ECPay (綠界). Half-price in TWD." data-zh="數位版本，供個人使用。官網結帳走綠界，以新台幣半價販售。">Digital editions for personal use. Official-site checkout is via ECPay (綠界). Half-price in TWD.</p>
-  <div class="sku-grid">
+<main id="main" class="shop-main">
+  <section id="shop-overview">
+    <div class="wrap page-heading page-heading-wash">
+      <p class="eyebrow" data-en="Shop" data-zh="選購">Shop</p>
+      <h1 data-en="Bring the work home." data-zh="把作品帶回家。">Bring the work home.</h1>
+      <p data-en="Digital editions for personal use. Official-site checkout is via ECPay (綠界). Half-price in TWD. Pick a category to browse." data-zh="數位版本，供個人使用。官網結帳走綠界，以新台幣半價販售。請先選擇分類。">Digital editions for personal use. Official-site checkout is via ECPay (綠界). Half-price in TWD. Pick a category to browse.</p>
+    </div>
+    <div class="section xp-section"><div class="wrap">
+      <div class="xp-grid" id="shop-category-grid">
+        <noscript>
+          <a class="xp-card" href="/shop/wallpapers">
+            <span class="xp-media"><img class="xp-shot" src="assets/kofi/verdant-garden-cover.jpg" alt=""></span>
+            <span class="xp-body"><span class="xp-name">桌布<small>Wallpapers</small></span><span class="xp-go">Browse →</span></span>
+          </a>
+        </noscript>
+      </div>
+    </div></div>
+  </section>
+  <section id="shop-wallpapers">
+    <div class="wrap shop-subhead">
+      <a class="shop-back" href="/shop" data-en="← Shop" data-zh="← 選購">← Shop</a>
+    </div>
+    <div class="wrap page-heading page-heading-wash">
+      <p class="eyebrow" data-en="Shop" data-zh="選購">Shop</p>
+      <h1 data-en="Wallpapers" data-zh="桌布">Wallpapers</h1>
+      <p data-en="Phone wallpaper packs and digital editions. Official-site checkout is via ECPay (綠界). Half-price in TWD." data-zh="手機桌布組合與數位版本。官網結帳走綠界，以新台幣半價販售。">Phone wallpaper packs and digital editions. Official-site checkout is via ECPay (綠界). Half-price in TWD.</p>
+    </div>
+    <div class="wrap">
+      <div class="sku-grid">
     <article class="sku">
-      <img src="assets/eternal-sun-edition-original.webp" alt="Eternal Sun, the original painting edition" width="655" height="900" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/eternal-sun-edition-original.webp" alt="Eternal Sun, the original painting edition" width="655" height="900" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Four editions" data-zh="四張組">Four editions</div>
         <h2 data-en="Eternal Sun" data-zh="盛明">Eternal Sun</h2>
+        <p class="sku-kind" data-en="Digital edition · 4" data-zh="數位收藏 · 4 張">Digital edition · 4</p>
+        <p class="sku-fmt" data-en="HEIC" data-zh="HEIC">HEIC</p>
         <p class="price">NT$233</p>
-        <p data-en="Original, gallery, phone, and square — one set." data-zh="完整、畫廊、手機與正方形，一次收齊。">Original, gallery, phone, and square — one set.</p>
+        <p class="desc" data-en="Original, gallery, phone, and square — one set." data-zh="完整、畫廊、手機與正方形，一次收齊。">Original, gallery, phone, and square — one set.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-ETERNAL-SUN-4"><button class="btn" type="submit" data-en="Buy Eternal Sun" data-zh="購買盛明">Buy Eternal Sun · NT$233</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img src="assets/selected-works-v2/flower-heart-bloom.webp" alt="Flower Heart Bloom, from AE Heart Universe" width="720" height="900" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/selected-works-v2/flower-heart-bloom.webp" alt="Flower Heart Bloom, from AE Heart Universe" width="720" height="900" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Nine wallpapers" data-zh="九件組">Nine wallpapers</div>
         <h2 data-en="AE Heart Universe" data-zh="AE心宇宙">AE Heart Universe</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 9" data-zh="手機桌布 · 9 張">Phone wallpapers · 9</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$266</p>
-        <p data-en="Nine pieces of flower and heart, for the screen." data-zh="花與心的九宮格，適合放在螢幕上。">Nine pieces of flower and heart, for the screen.</p>
+        <p class="desc" data-en="Nine pieces of flower and heart, for the screen." data-zh="花與心的九宮格，適合放在螢幕上。">Nine pieces of flower and heart, for the screen.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-AE-HEART-UNIVERSE-9"><button class="btn" type="submit" data-en="Buy AE Heart Universe" data-zh="購買AE心宇宙">Buy AE Heart Universe · NT$266</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/ae-color-universe-preview-1.jpg" alt="AE Color Universe, preview of three of the nine phone wallpapers" width="480" height="480" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/ae-color-universe-preview-1.jpg" alt="AE Color Universe, preview of three of the nine phone wallpapers" width="480" height="480" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Nine wallpapers" data-zh="9 款手機桌布">Nine wallpapers</div>
         <h2 data-en="AE Color Universe" data-zh="AE色彩宇宙">AE Color Universe</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 9" data-zh="手機桌布 · 9 張">Phone wallpapers · 9</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$199</p>
-        <p data-en="Nine hand-painted details from larger originals, as phone wallpapers." data-zh="九張手繪局部，取自更大的原作，做成手機桌布。">Nine hand-painted details from larger originals, as phone wallpapers.</p>
+        <p class="desc" data-en="Nine hand-painted details from larger originals, as phone wallpapers." data-zh="九張手繪局部，取自更大的原作，做成手機桌布。">Nine hand-painted details from larger originals, as phone wallpapers.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-AE-COLOR-UNIVERSE-9"><button class="btn" type="submit" data-en="Buy AE Color Universe" data-zh="購買AE色彩宇宙">Buy AE Color Universe · NT$199</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/color-orbits-cover.jpg" alt="COLOR ORBITS, five phone wallpapers" width="480" height="480" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/color-orbits-cover.jpg" alt="COLOR ORBITS, five phone wallpapers" width="480" height="480" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="COLOR ORBITS" data-zh="色彩環流">COLOR ORBITS</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Green swirls, layered circles and flowing strokes — five original details for your phone." data-zh="綠色漩渦、層層圓線與流動筆觸，精選 5 款原作細節，放進手機。">Green swirls, layered circles and flowing strokes — five original details for your phone.</p>
+        <p class="desc" data-en="Green swirls, layered circles and flowing strokes — five original details for your phone." data-zh="綠色漩渦、層層圓線與流動筆觸，精選 5 款原作細節，放進手機。">Green swirls, layered circles and flowing strokes — five original details for your phone.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-COLOR-ORBITS"><button class="btn" type="submit" data-en="Buy COLOR ORBITS" data-zh="購買色彩環流">Buy COLOR ORBITS · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/verdant-garden-cover.jpg" alt="VERDANT GARDEN, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/verdant-garden-cover.jpg" alt="VERDANT GARDEN, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="VERDANT GARDEN" data-zh="翠綠花園">VERDANT GARDEN</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Vivid green foliage, colourful flower dots and blue-green strokes weave across dark and bright grounds like a dense little garden." data-zh="鮮綠枝葉、繽紛花點與藍綠筆觸，在深色與亮色之間交錯，像一座濃密的小花園。">Vivid green foliage, colourful flower dots and blue-green strokes weave across dark and bright grounds like a dense little garden.</p>
+        <p class="desc" data-en="Vivid green foliage, colourful flower dots and blue-green strokes weave across dark and bright grounds like a dense little garden." data-zh="鮮綠枝葉、繽紛花點與藍綠筆觸，在深色與亮色之間交錯，像一座濃密的小花園。">Vivid green foliage, colourful flower dots and blue-green strokes weave across dark and bright grounds like a dense little garden.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-VERDANT-GARDEN"><button class="btn" type="submit" data-en="Buy VERDANT GARDEN" data-zh="購買翠綠花園">Buy VERDANT GARDEN · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/night-swirls-cover.jpg" alt="NIGHT SWIRLS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/night-swirls-cover.jpg" alt="NIGHT SWIRLS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="NIGHT SWIRLS" data-zh="夜色漩紋">NIGHT SWIRLS</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Gold swirls, infinity loops, a pink flower and glowing circular lines on deep black grounds — calm, dark and luminous." data-zh="黑色底上的金色漩渦、無限符號、粉紅小花與發光的圓形線條，沉穩而有光。">Gold swirls, infinity loops, a pink flower and glowing circular lines on deep black grounds — calm, dark and luminous.</p>
+        <p class="desc" data-en="Gold swirls, infinity loops, a pink flower and glowing circular lines on deep black grounds — calm, dark and luminous." data-zh="黑色底上的金色漩渦、無限符號、粉紅小花與發光的圓形線條，沉穩而有光。">Gold swirls, infinity loops, a pink flower and glowing circular lines on deep black grounds — calm, dark and luminous.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-NIGHT-SWIRLS"><button class="btn" type="submit" data-en="Buy NIGHT SWIRLS" data-zh="購買夜色漩紋">Buy NIGHT SWIRLS · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/golden-meadow-cover.jpg" alt="GOLDEN MEADOW, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/golden-meadow-cover.jpg" alt="GOLDEN MEADOW, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="GOLDEN MEADOW" data-zh="金色原野">GOLDEN MEADOW</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Layered strokes of gold, ochre and grass green build a warm, earthy meadow feeling." data-zh="金黃、赭色與草綠的厚重筆觸層層堆疊，帶出溫暖的大地與原野氣息。">Layered strokes of gold, ochre and grass green build a warm, earthy meadow feeling.</p>
+        <p class="desc" data-en="Layered strokes of gold, ochre and grass green build a warm, earthy meadow feeling." data-zh="金黃、赭色與草綠的厚重筆觸層層堆疊，帶出溫暖的大地與原野氣息。">Layered strokes of gold, ochre and grass green build a warm, earthy meadow feeling.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-GOLDEN-MEADOW"><button class="btn" type="submit" data-en="Buy GOLDEN MEADOW" data-zh="購買金色原野">Buy GOLDEN MEADOW · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/red-flame-weave-cover.jpg" alt="RED FLAME WEAVE, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/red-flame-weave-cover.jpg" alt="RED FLAME WEAVE, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="RED FLAME WEAVE" data-zh="紅焰織紋">RED FLAME WEAVE</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Blue strands and yellow-green bursts on a red-orange ground, moving into grey-pink and soft pastel rainbow strokes." data-zh="橘紅底色上交織藍色線條與黃綠花火，再延伸到灰粉與柔和彩虹筆觸。">Blue strands and yellow-green bursts on a red-orange ground, moving into grey-pink and soft pastel rainbow strokes.</p>
+        <p class="desc" data-en="Blue strands and yellow-green bursts on a red-orange ground, moving into grey-pink and soft pastel rainbow strokes." data-zh="橘紅底色上交織藍色線條與黃綠花火，再延伸到灰粉與柔和彩虹筆觸。">Blue strands and yellow-green bursts on a red-orange ground, moving into grey-pink and soft pastel rainbow strokes.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-RED-FLAME-WEAVE"><button class="btn" type="submit" data-en="Buy RED FLAME WEAVE" data-zh="購買紅焰織紋">Buy RED FLAME WEAVE · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/heart-layers-cover.jpg" alt="HEART LAYERS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/heart-layers-cover.jpg" alt="HEART LAYERS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="HEART LAYERS" data-zh="層層心形">HEART LAYERS</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Pink, green and multicoloured lines circle into layered hearts — five different hearts, from vivid to soft." data-zh="粉紅、綠色與彩色線條一圈圈圍出心形，從飽和到柔和，五種心的樣子。">Pink, green and multicoloured lines circle into layered hearts — five different hearts, from vivid to soft.</p>
+        <p class="desc" data-en="Pink, green and multicoloured lines circle into layered hearts — five different hearts, from vivid to soft." data-zh="粉紅、綠色與彩色線條一圈圈圍出心形，從飽和到柔和，五種心的樣子。">Pink, green and multicoloured lines circle into layered hearts — five different hearts, from vivid to soft.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-HEART-LAYERS"><button class="btn" type="submit" data-en="Buy HEART LAYERS" data-zh="購買層層心形">Buy HEART LAYERS · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/warm-currents-cover.jpg" alt="WARM CURRENTS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/warm-currents-cover.jpg" alt="WARM CURRENTS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="WARM CURRENTS" data-zh="暖色流光">WARM CURRENTS</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="An orange swirl, flowing pink-and-yellow lines and a round red brushstroke — a set carried by warm, moving colour." data-zh="橘色漩渦、粉黃交錯的流動線條與紅色圓形筆觸，整組以暖色調流動。">An orange swirl, flowing pink-and-yellow lines and a round red brushstroke — a set carried by warm, moving colour.</p>
+        <p class="desc" data-en="An orange swirl, flowing pink-and-yellow lines and a round red brushstroke — a set carried by warm, moving colour." data-zh="橘色漩渦、粉黃交錯的流動線條與紅色圓形筆觸，整組以暖色調流動。">An orange swirl, flowing pink-and-yellow lines and a round red brushstroke — a set carried by warm, moving colour.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-WARM-CURRENTS"><button class="btn" type="submit" data-en="Buy WARM CURRENTS" data-zh="購買暖色流光">Buy WARM CURRENTS · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/infinity-loops-cover.jpg" alt="INFINITY LOOPS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/infinity-loops-cover.jpg" alt="INFINITY LOOPS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="INFINITY LOOPS" data-zh="無限迴圈">INFINITY LOOPS</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Gold, green and multicoloured infinity symbols turn through swirling brushwork — a different loop in every image. One image is about 9:19.5." data-zh="金色、綠色與彩色的無限符號在漩渦筆觸中流轉，每張都有不同的迴圈。（其中 1 張約 9:19.5）">Gold, green and multicoloured infinity symbols turn through swirling brushwork — a different loop in every image. One image is about 9:19.5.</p>
+        <p class="desc" data-en="Gold, green and multicoloured infinity symbols turn through swirling brushwork — a different loop in every image. One image is about 9:19.5." data-zh="金色、綠色與彩色的無限符號在漩渦筆觸中流轉，每張都有不同的迴圈。（其中 1 張約 9:19.5）">Gold, green and multicoloured infinity symbols turn through swirling brushwork — a different loop in every image. One image is about 9:19.5.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-INFINITY-LOOPS"><button class="btn" type="submit" data-en="Buy INFINITY LOOPS" data-zh="購買無限迴圈">Buy INFINITY LOOPS · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/feather-brights-cover.jpg" alt="FEATHER BRIGHTS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/feather-brights-cover.jpg" alt="FEATHER BRIGHTS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="FEATHER BRIGHTS" data-zh="羽彩繽紛">FEATHER BRIGHTS</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Pink lettered strokes, red-orange feathers, vivid blue and green, and a small pink heart — bright and light." data-zh="粉紅字樣筆觸、紅橘羽毛、藍綠亮彩與粉色小心形，明亮而輕盈。">Pink lettered strokes, red-orange feathers, vivid blue and green, and a small pink heart — bright and light.</p>
+        <p class="desc" data-en="Pink lettered strokes, red-orange feathers, vivid blue and green, and a small pink heart — bright and light." data-zh="粉紅字樣筆觸、紅橘羽毛、藍綠亮彩與粉色小心形，明亮而輕盈。">Pink lettered strokes, red-orange feathers, vivid blue and green, and a small pink heart — bright and light.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-FEATHER-BRIGHTS"><button class="btn" type="submit" data-en="Buy FEATHER BRIGHTS" data-zh="購買羽彩繽紛">Buy FEATHER BRIGHTS · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/sketchbook-sparks-cover.jpg" alt="SKETCHBOOK SPARKS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/sketchbook-sparks-cover.jpg" alt="SKETCHBOOK SPARKS, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="SKETCHBOOK SPARKS" data-zh="色彩火花">SKETCHBOOK SPARKS</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Pale blue-green strokes, an orange flame on white, yellow-orange stars on cobalt blue, pink floral dots and green strokes on cream, and pink-green flowing lines." data-zh="淡藍綠筆觸、白底上的橘色火焰、鈷藍底上的黃橘星形、米白底上的粉紅花點與綠色筆觸，以及粉綠流線。">Pale blue-green strokes, an orange flame on white, yellow-orange stars on cobalt blue, pink floral dots and green strokes on cream, and pink-green flowing lines.</p>
+        <p class="desc" data-en="Pale blue-green strokes, an orange flame on white, yellow-orange stars on cobalt blue, pink floral dots and green strokes on cream, and pink-green flowing lines." data-zh="淡藍綠筆觸、白底上的橘色火焰、鈷藍底上的黃橘星形、米白底上的粉紅花點與綠色筆觸，以及粉綠流線。">Pale blue-green strokes, an orange flame on white, yellow-orange stars on cobalt blue, pink floral dots and green strokes on cream, and pink-green flowing lines.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-SKETCHBOOK-SPARKS"><button class="btn" type="submit" data-en="Buy SKETCHBOOK SPARKS" data-zh="購買色彩火花">Buy SKETCHBOOK SPARKS · NT$133</button></form>
-      </div>
-    </article>
+      </div></article>
     <article class="sku">
-      <img class="fit" src="assets/kofi/earth-textures-cover.jpg" alt="EARTH TEXTURES, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/>
+      <div class="sku-media"><img src="assets/kofi/earth-textures-cover.jpg" alt="EARTH TEXTURES, five phone wallpapers" width="640" height="800" loading="lazy" decoding="async"/></div>
       <div class="sku-body">
-        <div class="tag" data-en="Five wallpapers" data-zh="5 款手機桌布">Five wallpapers</div>
         <h2 data-en="EARTH TEXTURES" data-zh="大地肌理">EARTH TEXTURES</h2>
+        <p class="sku-kind" data-en="Phone wallpapers · 5" data-zh="手機桌布 · 5 張">Phone wallpapers · 5</p>
+        <p class="sku-fmt" data-en="JPEG · about 9:16" data-zh="JPEG · 約 9:16">JPEG · about 9:16</p>
         <p class="price">NT$133</p>
-        <p data-en="Thick textured layers of purple, orange, rust red and grey-olive-gold — muted tones with rich surface texture." data-zh="紫、橘、鏽紅與灰綠金色的厚塗肌理，色調沉穩、質感豐富。">Thick textured layers of purple, orange, rust red and grey-olive-gold — muted tones with rich surface texture.</p>
+        <p class="desc" data-en="Thick textured layers of purple, orange, rust red and grey-olive-gold — muted tones with rich surface texture." data-zh="紫、橘、鏽紅與灰綠金色的厚塗肌理，色調沉穩、質感豐富。">Thick textured layers of purple, orange, rust red and grey-olive-gold — muted tones with rich surface texture.</p>
         <form method="post" action="/api/ecpay/create-order"><input type="hidden" name="sku" value="WP-EARTH-TEXTURES"><button class="btn" type="submit" data-en="Buy EARTH TEXTURES" data-zh="購買大地肌理">Buy EARTH TEXTURES · NT$133</button></form>
+      </div></article>
       </div>
-    </article>
-  </div>
-  <p class="shop-note"><span data-en="Wallpaper packs are digital files, not the physical painting. Each NT$133 five-wallpaper pack: 5 high-resolution JPEG phone wallpapers (portrait, about 9:16) in one ZIP file, for personal, non-commercial use only. One-time digital download; not animated, no physical item. Taller phone screens may crop slightly — zoom and move to fit." data-zh="桌布組是數位檔，不是實體原作。每組 NT$133 的五款桌布：5 張高解析 JPEG 手機桌布（直式約 9:16），以 1 個 ZIP 壓縮檔提供，僅供個人、非商業使用。一次購買的數位下載，不含動畫，也不含實體商品；較長的手機螢幕可能會有少許裁切，請自行縮放、移動。">Wallpaper packs are digital files, not the physical painting. Each NT$133 five-wallpaper pack: 5 high-resolution JPEG phone wallpapers (portrait, about 9:16) in one ZIP file, for personal, non-commercial use only. One-time digital download; not animated, no physical item. Taller phone screens may crop slightly — zoom and move to fit.</span><br/><a href="https://ko-fi.com/aeuniverse1314/shop" target="_blank" rel="noopener" data-en="All items on Ko-fi" data-zh="Ko-fi 全部商品">All items on Ko-fi</a> · <a href="https://ko-fi.com/aeuniverse1314/tiers" target="_blank" rel="noopener" data-en="Membership on Ko-fi" data-zh="Ko-fi 月費">Membership on Ko-fi</a> · <a href="mailto:ae.universe88@gmail.com">ae.universe88@gmail.com</a></p>
-</div></main>
+      <p class="shop-note"><span data-en="Wallpaper packs are digital files, not the physical painting. Each NT$133 five-wallpaper pack: 5 high-resolution JPEG phone wallpapers (portrait, about 9:16) in one ZIP file, for personal, non-commercial use only. One-time digital download; not animated, no physical item. Taller phone screens may crop slightly — zoom and move to fit." data-zh="桌布組是數位檔，不是實體原作。每組 NT$133 的五款桌布：5 張高解析 JPEG 手機桌布（直式約 9:16），以 1 個 ZIP 壓縮檔提供，僅供個人、非商業使用。一次購買的數位下載，不含動畫，也不含實體商品；較長的手機螢幕可能會有少許裁切，請自行縮放、移動。">Wallpaper packs are digital files, not the physical painting. Each NT$133 five-wallpaper pack: 5 high-resolution JPEG phone wallpapers (portrait, about 9:16) in one ZIP file, for personal, non-commercial use only. One-time digital download; not animated, no physical item. Taller phone screens may crop slightly — zoom and move to fit.</span><br/><a href="https://ko-fi.com/aeuniverse1314/shop" target="_blank" rel="noopener" data-en="All items on Ko-fi" data-zh="Ko-fi 全部商品">All items on Ko-fi</a> · <a href="https://ko-fi.com/aeuniverse1314/tiers" target="_blank" rel="noopener" data-en="Membership on Ko-fi" data-zh="Ko-fi 月費">Membership on Ko-fi</a> · <a href="mailto:ae.universe88@gmail.com">ae.universe88@gmail.com</a></p>
+    </div>
+  </section>
+</main>
 <footer class="site-footer"><div class="footer-top"><div class="footer-brand"><img src="assets/ae-three-rings-transparent.webp" alt="" width="110" height="67">AE Universe Creation</div><nav class="footer-links" aria-label="Footer"><a data-en="Artworks" data-zh="作品" href="works.html">Artworks</a><a data-en="Collections" data-zh="收藏系列" href="collections.html">Collections</a><a data-en="Experience" data-zh="互動體驗" href="/experience">Experience</a><a data-en="Shop" data-zh="選購" href="shop.html">Shop</a><a data-en="Our story" data-zh="我們的故事" href="about.html">Our story</a><a class="ae-line-link" href="https://line.me/R/ti/p/@804pbgev" target="_blank" rel="noopener" aria-label="LINE @804pbgev"><span class="ae-line-dot" aria-hidden="true"></span><span data-en="Add us on LINE" data-zh="加入 LINE 好友">Add us on LINE</span><span class="ae-line-id" aria-hidden="true">@804pbgev</span></a></nav></div><p class="footer-note">© AE Universe Creation · Aurelia &amp; Elion</p></footer>
 <script src="/ae-version.js" defer></script>
 </body>
+
 </html>
