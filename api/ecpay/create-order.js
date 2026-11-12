@@ -23,12 +23,15 @@ module.exports = async function handler(req, res) {
   if (productId !== 'pack-a-color-universe-9') return res.status(400).send('Unknown product.');
 
   // Stage fixture only. Final production price must be explicitly configured later.
-  const amount = Number.parseInt(process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '1', 10);
+  // ECPay Stage minimum is NT$2; TotalAmount 1 returns provider_code 5100070.
+  const amount = Number.parseInt(process.env.ECPAY_STAGE_TEST_AMOUNT_TWD || '2', 10);
   if (!Number.isInteger(amount) || amount < 1) return res.status(500).send('Invalid stage test amount.');
 
-  const merchantID = process.env.ECPAY_MERCHANT_ID || '2000132';
-  const hashKey = process.env.ECPAY_HASH_KEY || 'ejCk326UnaZWKisg';
-  const hashIV = process.env.ECPAY_HASH_IV || 'q9jcZX8Ib9LM8wYk';
+  // 2000132 public AIO stage keys currently fail CheckMac (10200073) at payment-stage.
+  // Official Embedded Stage merchant 3002607 works for AioCheckOut Stage as backup path.
+  const merchantID = process.env.ECPAY_MERCHANT_ID || '3002607';
+  const hashKey = process.env.ECPAY_HASH_KEY || 'pwFHCqoQZGmho4w6';
+  const hashIV = process.env.ECPAY_HASH_IV || 'EkRm7iFT261dpevs';
 
   const baseUrl = getBaseUrl(req);
   const returnURL = process.env.ECPAY_RETURN_URL || `${baseUrl}/api/ecpay/return`;

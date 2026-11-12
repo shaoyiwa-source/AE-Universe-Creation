@@ -14,8 +14,8 @@ module.exports = async function handler(req, res) {
   const received = String(body.CheckMacValue || '').toUpperCase();
   if (!received) return res.status(400).send('0|Missing CheckMacValue');
 
-  const hashKey = process.env.ECPAY_HASH_KEY || 'ejCk326UnaZWKisg';
-  const hashIV = process.env.ECPAY_HASH_IV || 'q9jcZX8Ib9LM8wYk';
+  const hashKey = process.env.ECPAY_HASH_KEY || 'pwFHCqoQZGmho4w6';
+  const hashIV = process.env.ECPAY_HASH_IV || 'EkRm7iFT261dpevs';
   const expected = createCheckMacValue(body, hashKey, hashIV);
 
   if (!timingSafeEqualHex(received, expected)) {

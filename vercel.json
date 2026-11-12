@@ -13,8 +13,20 @@
       "destination": "/experience.html"
     },
     {
+      "source": "/together",
+      "destination": "/together.html"
+    },
+    {
+      "source": "/color-moment",
+      "destination": "/color-moment.html"
+    },
+    {
       "source": "/checkout-stage",
       "destination": "/checkout-stage.html"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/checkout.html"
     },
     {
       "source": "/collections",
@@ -35,6 +47,20 @@
     {
       "source": "/index",
       "destination": "/index.html"
+    },
+    {
+      "source": "/lightprint-figure-proto",
+      "destination": "/lightprint-figure-proto.html"
+    },
+    {
+      "source": "/lightprint-figure",
+      "destination": "/lightprint-figure.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/together.js": {
+      "maxDuration": 10,
+      "regions": ["hkg1"]
+    }
+  }
 }

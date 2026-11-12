@@ -1,4 +1,4 @@
-const { parseJsonBody, verifyOrderToken, readOrderState, privateBlobReady } = require('../payment/ecpay-v2/_lib');
+const { parseJsonBody, verifyOrderToken, readOrderState, privateBlobReady, FORMAL_LIST_PRICE_TWD } = require('../payment/ecpay-v2/_lib');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,12 +8,15 @@ module.exports = async function handler(req, res) {
   try {
     const body = parseJsonBody(req);
     const order = verifyOrderToken(body.order_token);
+    const buyer = order.buyer || null;
     if (!privateBlobReady()) {
       return res.status(503).json({
         order_id: order.order_id,
         sku: order.sku,
         status: 'PRIVATE_STORAGE_NOT_READY',
         paid_verified: false,
+        list_price: order.list_price || FORMAL_LIST_PRICE_TWD,
+        buyer,
       });
     }
     const state = await readOrderState(order.merchant_trade_no);
@@ -23,6 +26,8 @@ module.exports = async function handler(req, res) {
         sku: order.sku,
         status: 'PAYMENT_PENDING',
         paid_verified: false,
+        list_price: order.list_price || FORMAL_LIST_PRICE_TWD,
+        buyer,
       });
     }
     if (state.sku !== order.sku || state.amount !== order.amount || state.currency !== order.currency) {
@@ -34,6 +39,8 @@ module.exports = async function handler(req, res) {
       status: state.paid_verified ? 'PAID_VERIFIED' : 'PAYMENT_PENDING',
       paid_verified: Boolean(state.paid_verified),
       asset_manifest_id: state.asset_manifest_id || null,
+      list_price: order.list_price || FORMAL_LIST_PRICE_TWD,
+      buyer,
     });
   } catch (error) {
     console.error('Order status error', error && error.message);

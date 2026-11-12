@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="ae-version" content="lp-figure-proto-v1.2-opening">
+<title>光紋人物原型 · Lightprint Figure · AE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f7f1e8; --ink:#2a2420; --muted:#7a6f64; --line:rgba(42,36,32,.12);
+  --gold:#c9a46a; --glow:#f0e2c4;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:
+  radial-gradient(ellipse 80% 60% at 50% 20%, rgba(232,213,176,.35), transparent 60%),
+  radial-gradient(ellipse 70% 50% at 70% 80%, rgba(183,208,226,.2), transparent 55%),
+  var(--paper);
+color:var(--ink);font-family:"Noto Serif TC",Georgia,serif}
+body{padding:24px 16px 64px}
+.wrap{max-width:720px;margin:0 auto}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+h1{font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;font-weight:500;
+  font-size:clamp(28px,6vw,40px);line-height:1.25;margin:0 0 8px}
+.sub{color:var(--muted);font-size:14px;line-height:1.65;margin:0 0 22px;max-width:48ch}
+.panel{background:rgba(255,252,248,.72);border:1px solid var(--line);border-radius:18px;
+  padding:18px 16px 16px;margin-bottom:16px;backdrop-filter:blur(8px)}
+.panel h2{font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;font-weight:500;
+  font-size:20px;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.chip{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.55);
+  border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer;
+  color:var(--ink);transition:background .2s,border-color .2s,transform .15s}
+.chip:hover{background:rgba(255,255,255,.9);border-color:rgba(201,164,106,.45)}
+.chip.is-on{background:rgba(201,164,106,.22);border-color:rgba(201,164,106,.55);
+  box-shadow:0 0 0 1px rgba(201,164,106,.2)}
+.hint{font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.5}
+.stage{
+  position:relative;width:100%;aspect-ratio:4/5;max-height:min(68vh,560px);
+  border-radius:20px;overflow:hidden;border:1px solid var(--line);
+  background:radial-gradient(ellipse at 50% 42%, #1a1620 0%, #0e0c12 70%);
+  touch-action:none;user-select:none;-webkit-user-select:none;
+}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage .fog{
+  position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 55%, rgba(240,226,196,.08), transparent 55%),
+    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(20,16,28,.55), transparent 50%),
+    linear-gradient(180deg, rgba(14,12,18,.15), transparent 30%, rgba(14,12,18,.35));
+  opacity:.85;transition:opacity 1.2s ease;
+}
+.stage.is-birthing .fog{opacity:1}
+.stage-hint{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:3;color:rgba(240,226,196,.55);font-size:14px;letter-spacing:.08em;
+  text-align:center;pointer-events:none;transition:opacity .5s;
+}
+.stage.is-touched .stage-hint,.stage.is-sealed .stage-hint{opacity:0}
+.dock{display:flex;flex-direction:column;align-items:center;gap:8px;margin:16px 0 8px}
+.seal{
+  position:relative;appearance:none;border:0;cursor:pointer;
+  min-height:52px;min-width:min(240px,78vw);border-radius:999px;
+  padding:0 28px;font:inherit;font-size:16px;letter-spacing:.1em;
+  color:#2a2420;background:linear-gradient(180deg,#f0e2c4,#c9a46a);
+  box-shadow:0 8px 28px rgba(201,164,106,.35), inset 0 1px 0 rgba(255,255,255,.45);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  transition:transform .15s, box-shadow .2s, filter .2s;
+}
+.seal:hover{filter:brightness(1.03)}
+.seal:active,.seal.is-holding{transform:scale(.98)}
+.seal:disabled{opacity:.45;cursor:default;filter:grayscale(.2)}
+.seal-ring{
+  position:absolute;inset:-3px;border-radius:inherit;pointer-events:none;opacity:0;
+  background:conic-gradient(from -90deg, rgba(42,36,32,.55) calc(var(--hold,0)*1%), transparent 0);
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+}
+.seal.is-holding .seal-ring{opacity:1}
+.seal-label{position:relative;z-index:1}
+.dock-hint{font-size:12px;color:var(--muted);margin:0}
+.birth{
+  margin-top:8px;opacity:0;transform:translateY(16px);
+  transition:opacity 1.4s cubic-bezier(.22,.61,.36,1), transform 1.4s cubic-bezier(.22,.61,.36,1);
+  pointer-events:none;
+}
+.birth.is-on{opacity:1;transform:translateY(0);pointer-events:auto}
+.card{
+  position:relative;border-radius:18px;overflow:hidden;
+  border:1px solid var(--line);background:rgba(255,252,248,.88);
+  padding:22px 18px 20px;text-align:center;
+}
+.card-veil{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(247,241,232,.55),rgba(247,241,232,.82));
+}
+.card-body{position:relative;z-index:1}
+.mem-label{font-size:11px;letter-spacing:.16em;color:var(--muted);margin:0 0 10px}
+.epithet{
+  font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+  font-size:clamp(26px,5.5vw,34px);line-height:1.3;margin:0 0 4px;font-weight:500;
+}
+.epithet-en{font-size:13px;color:var(--muted);letter-spacing:.06em;margin:0 0 14px;font-style:italic}
+.lore{margin:0 auto 14px;max-width:36ch;text-align:left}
+.lore p{margin:0 0 6px;font-size:14px;line-height:1.7;color:rgba(42,36,32,.88)}
+.quiet-code{font-size:10px;letter-spacing:.14em;color:var(--muted);opacity:.65;margin:12px 0 0;
+  font-family:"Cormorant Garamond",Georgia,serif}
+.mood-bar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 0}
+.mood-dot{width:10px;height:10px;border-radius:50%;opacity:.85}
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.btn-ghost{
+  appearance:none;border:1px solid var(--line);background:transparent;
+  border-radius:999px;padding:9px 16px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink);
+}
+.btn-ghost:hover{background:rgba(255,255,255,.6)}
+.meta{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.6}
+.meta code{font-size:11px;background:rgba(0,0,0,.04);padding:1px 5px;border-radius:4px}
+.lang{float:right;font-size:12px}
+.lang button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font:inherit;padding:2px 6px}
+.lang button.is-on{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+@media (max-width:480px){
+  body{padding:16px 12px 48px}
+  .stage{max-height:58vh}
+}
+
+
+/* Locked opening — soft story lead-in */
+.opening{
+  margin:0 0 26px;padding:18px 16px 16px;border-radius:18px;
+  border:1px solid var(--line);background:rgba(255,252,248,.68);
+  backdrop-filter:blur(8px);
+}
+.opening .mem-kicker{
+  font-size:11px;letter-spacing:.16em;color:var(--muted);margin:0 0 8px;
+}
+.opening .lead{
+  font-family:"Cormorant Garamond",Georgia,"Noto Serif TC",serif;
+  font-weight:500;font-size:clamp(22px,5vw,30px);line-height:1.35;margin:0 0 10px;
+}
+.opening .story{
+  color:var(--ink);font-size:14.5px;line-height:1.85;margin:0 0 10px;max-width:42ch;
+  opacity:.92;
+}
+.opening .invite{
+  margin:0;font-size:13px;letter-spacing:.06em;color:var(--muted);
+}
+
+/* Soft breathing — slow fog drift, seal gather-light, reduced-motion safe */
+.stage .fog{
+  background:
+    radial-gradient(ellipse 90% 70% at 48% 52%, rgba(240,226,196,.10), transparent 55%),
+    radial-gradient(ellipse 70% 55% at 62% 38%, rgba(183,208,226,.07), transparent 50%),
+    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(20,16,28,.55), transparent 50%),
+    linear-gradient(180deg, rgba(14,12,18,.15), transparent 30%, rgba(14,12,18,.35));
+  background-size: 120% 120%, 130% 130%, 100% 100%, 100% 100%;
+  background-position: 40% 45%, 55% 40%, 50% 100%, 0 0;
+  animation: fogDrift 22s ease-in-out infinite alternate;
+  will-change: background-position, opacity;
+}
+.stage .fog::after{
+  content:"";position:absolute;inset:-8%;pointer-events:none;
+  background:radial-gradient(ellipse 55% 45% at 50% 48%, rgba(240,226,196,.06), transparent 70%);
+  opacity:.7;animation:fogBreath 9s ease-in-out infinite;
+}
+@keyframes fogDrift{
+  0%{background-position:38% 48%, 58% 42%, 50% 100%, 0 0; opacity:.78}
+  50%{background-position:52% 42%, 45% 50%, 50% 100%, 0 0; opacity:.9}
+  100%{background-position:46% 55%, 62% 36%, 50% 100%, 0 0; opacity:.82}
+}
+@keyframes fogBreath{
+  0%,100%{transform:translate(0,0) scale(1); opacity:.55}
+  50%{transform:translate(1.2%, -1.5%) scale(1.04); opacity:.85}
+}
+.seal:not(:disabled){
+  animation:sealGather 4.8s ease-in-out infinite;
+}
+.seal:not(:disabled):hover{animation:none}
+.seal.is-holding{
+  animation:none;
+  box-shadow:
+    0 0 0 calc(2px + var(--hold,0) * 0.04px) rgba(240,226,196,.35),
+    0 0 calc(18px + var(--hold,0) * 0.35px) rgba(201,164,106,.45),
+    0 8px 28px rgba(201,164,106,.4),
+    inset 0 1px 0 rgba(255,255,255,.5);
+  filter:brightness(calc(1 + var(--hold,0) * 0.0015));
+}
+@keyframes sealGather{
+  0%,100%{
+    box-shadow:0 8px 28px rgba(201,164,106,.32), inset 0 1px 0 rgba(255,255,255,.45),
+      0 0 0 0 rgba(240,226,196,0);
+  }
+  50%{
+    box-shadow:0 10px 34px rgba(201,164,106,.48), inset 0 1px 0 rgba(255,255,255,.55),
+      0 0 22px 2px rgba(240,226,196,.28);
+  }
+}
+.seal:disabled{animation:none}
+
+.stage.is-gathering .fog{
+  opacity: calc(0.85 + var(--gather, 0) * 0.15);
+  filter: brightness(calc(1 + var(--gather, 0) * 0.18));
+}
+.stage.is-gathering::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:4;
+  background:radial-gradient(ellipse 50% 45% at 50% 48%,
+    rgba(240,226,196, calc(0.04 + var(--gather, 0) * 0.14)), transparent 70%);
+  transition:opacity .2s;
+}
+@media (prefers-reduced-motion: reduce){
+  .stage .fog, .stage .fog::after, .seal:not(:disabled){animation:none !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang" id="langToggle" aria-label="Language">
+    <button type="button" data-lang="zh" class="is-on">中文</button>
+    <button type="button" data-lang="en">EN</button>
+  </div>
+  <section class="opening" aria-label="光紋記憶 opening">
+    <p class="mem-kicker" data-zh="光紋記憶" data-en="Lightprint Memory">光紋記憶</p>
+    <h1 class="lead" data-zh="留下你的光紋" data-en="Leave your Lightprint">留下你的光紋</h1>
+    <p class="story" data-zh="霧裡有人輕輕走過，沒有腳步聲——只有一點暖。你伸手時，光會記得你的形狀：不急著變成誰，只是把這一瞬收好。選一個色調，在柔霧裡留下光痕，按住「收光」——剪影會緩緩呼吸，稱號與三行故事只屬於此刻。" data-en="Someone passed through the fog without footsteps — only a little warmth. When you reach out, the light remembers your shape: it does not rush to become anyone; it simply keeps this moment. Choose a hue, leave a soft trail, hold 收光 — the silhouette breathes, and the epithet with three lore lines belong only to now.">霧裡有人輕輕走過，沒有腳步聲——只有一點暖。你伸手時，光會記得你的形狀：不急著變成誰，只是把這一瞬收好。選一個色調，在柔霧裡留下光痕，按住「收光」——剪影會緩緩呼吸，稱號與三行故事只屬於此刻。</p>
+    <p class="invite" data-zh="AE · 色彩瞬間 · 光紋人物原型" data-en="AE · Color Moment · Lightprint Figure prototype">AE · 色彩瞬間 · 光紋人物原型</p>
+  </section>
+  <p class="eyebrow" data-zh="接下來 · 收光之後" data-en="Next · After Seal">接下來 · 收光之後</p>
+  <p class="sub" data-zh="選情緒色調 → 觸碰留下光痕 → 按住「收光」。霧與剪影會緩緩呼吸。" data-en="Pick a mood → leave soft light → hold 收光. Fog and silhouette breathe softly.">選情緒色調 → 觸碰留下光痕 → 按住「收光」。霧與剪影會緩緩呼吸。</p>
+
+  <div class="panel">
+    <h2 data-zh="1 · 這一刻的色調" data-en="1 · This moment’s hue">1 · 這一刻的色調</h2>
+    <p class="hint" data-zh="對應 Color Moment 答題後的 mood seed（原型用預設）。" data-en="Maps to Color Moment mood seed after answers (presets for this prototype).">對應 Color Moment 答題後的 mood seed（原型用預設）。</p>
+    <div class="row" id="moodRow" role="group" aria-label="Mood"></div>
+  </div>
+
+  <div class="panel">
+    <h2 data-zh="2 · 觸碰 · 留下光痕" data-en="2 · Touch · leave light">2 · 觸碰 · 留下光痕</h2>
+    <p class="hint" data-zh="單指畫過；光更亮一點。這段 path 會寫進光紋種子。" data-en="Draw with one finger — glow a little brighter. Path writes into the Lightprint seed.">單指畫過；光更亮一點。這段 path 會寫進光紋種子。</p>
+    <div class="stage" id="stage" role="img" aria-label="Soft light canvas">
+      <canvas id="trail"></canvas>
+      <canvas id="figure"></canvas>
+      <div class="fog" aria-hidden="true"></div>
+      <p class="stage-hint" id="stageHint" data-zh="輕輕觸碰" data-en="Touch softly">輕輕觸碰</p>
+    </div>
+    <div class="dock">
+      <p class="dock-hint" id="dockHint" data-zh="按住「收光」" data-en="Hold 收光">按住「收光」</p>
+      <button type="button" class="seal" id="sealBtn" disabled aria-label="收光">
+        <span class="seal-ring" aria-hidden="true"></span>
+        <span class="seal-label" id="sealLabel" data-zh="收光" data-en="收光 · Seal">收光</span>
+      </button>
+      <button type="button" class="btn-ghost" id="btnDemo" data-zh="演示收光（隨機光痕）" data-en="Demo seal (sample trail)">演示收光（隨機光痕）</button>
+    </div>
+  </div>
+
+  <div class="birth" id="birth" aria-live="polite">
+    <div class="card">
+      <div class="card-veil" aria-hidden="true"></div>
+      <div class="card-body">
+        <p class="mem-label" data-zh="光紋記憶" data-en="Lightprint Memory">光紋記憶</p>
+        <h2 class="epithet" id="epithetZh">—</h2>
+        <p class="epithet-en" id="epithetEn">—</p>
+        <div class="lore" id="lore"></div>
+        <div class="mood-bar" id="moodBar" aria-hidden="true"></div>
+        <p class="quiet-code" id="quietCode" title="quiet Lightprint code"></p>
+        <div class="actions">
+          <button type="button" class="btn-ghost" id="btnAgain" data-zh="再感覺一次（新光紋）" data-en="Feel again (new Lightprint)">再感覺一次（新光紋）</button>
+          <button type="button" class="btn-ghost" id="btnSame" data-zh="同一光紋再看一次" data-en="Same Lightprint again">同一光紋再看一次</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="meta" id="metaNote">
+    Prototype v1.2-opening · ae-lightprint-preview only · Main Production untouched.<br>
+    Seed: mood + answer tags + touch path → deterministic LP → silhouette / epithet / 3 lore lines.<br>
+    Open: <code>file:///workspace/lightprint-figure-proto/index.html</code> or local server below.
+  </p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const MOODS = {
+    gold:   { id:'gold',   zh:'柔金之息', en:'Soft Gold Breath', palette:['#c9a46a','#e8d5b0','#8b5a2b','#f4efe6'] },
+    indigo: { id:'indigo', zh:'深靛之夜', en:'Deep Indigo Night', palette:['#7a6bb0','#cbb8ef','#3d2f66','#f0ebf8'] },
+    rose:   { id:'rose',   zh:'花瓣之柔', en:'Petal Softness',   palette:['#c46b7a','#efc1c9','#6b2f3a','#f8ecee'] },
+    mist:   { id:'mist',   zh:'霧青之息', en:'Mist-Green Breath', palette:['#6b8f71','#b7d2bc','#2f4a38','#e8f0ea'] },
+    cool:   { id:'cool',   zh:'月藍之靜', en:'Moon-Blue Quiet',  palette:['#5b7f9a','#b7d0e2','#24384a','#eaf2f7'] },
+    spark:  { id:'spark',  zh:'微火之亮', en:'Spark Glow',       palette:['#d4a05a','#f0d09a','#7a4a1e','#fff4e0'] },
+    still:  { id:'still',  zh:'深水之定', en:'Still Deep Water', palette:['#4a6a78','#a8c0cc','#1e3038','#e6eef2'] },
+    warm:   { id:'warm',   zh:'掌心之暖', en:'Palm Warmth',      palette:['#c98a5a','#efc9a8','#6b3f22','#f8efe6'] },
+    soft:   { id:'soft',   zh:'絹光之柔', en:'Silk Soft Light',  palette:['#b89a9e','#e8d6d8','#5a4044','#f6efef'] },
+    deep:   { id:'deep',   zh:'夜廊之深', en:'Deep Night Corridor', palette:['#5a4a78','#b8a8d0','#2a2038','#ece6f4'] }
+  };
+
+  /* Epithet banks — soft poetic, not character names with faces */
+  const EPITHET = {
+    gold:   [{zh:'柔金守夜人',en:'Keeper of Soft Gold'},{zh:'燭心旅人',en:'Candle-Heart Wanderer'},{zh:'蜜光之影',en:'Honey-Light Shade'}],
+    indigo: [{zh:'深靛聽夜者',en:'Night Listener in Indigo'},{zh:'霧紫過客',en:'Mist-Violet Passerby'},{zh:'暗邊的光',en:'Light at the Dark Edge'}],
+    rose:   [{zh:'花瓣收光者',en:'Petal Light-Gatherer'},{zh:'粉霧行者',en:'Walker in Pink Mist'},{zh:'慢開的影',en:'Slow-Opening Silhouette'}],
+    mist:   [{zh:'霧青呼吸',en:'Mist-Green Breath'},{zh:'露邊的人影',en:'Figure at the Dew Edge'},{zh:'緩行霧客',en:'Slow Guest of Mist'}],
+    cool:   [{zh:'月藍靜影',en:'Moon-Blue Quiet Form'},{zh:'湖心停息',en:'Stillness at Lake Heart'},{zh:'涼光旅者',en:'Cool-Light Traveler'}],
+    spark:  [{zh:'微火點亮者',en:'Tiny Fire Kindler'},{zh:'一瞬星屑',en:'A Moment of Star-Dust'},{zh:'跳息之光',en:'Light That Skips Once'}],
+    still:  [{zh:'深水定影',en:'Settled Shadow of Deep Water'},{zh:'無波守望',en:'Watcher Without Ripple'},{zh:'靜岸之形',en:'Form on the Quiet Shore'}],
+    warm:   [{zh:'掌心餘溫',en:'Warmth Left in the Palm'},{zh:'暖廊過影',en:'Warm-Hall Silhouette'},{zh:'低火守者',en:'Keeper of Low Fire'}],
+    soft:   [{zh:'絹光落影',en:'Silk-Light Falling Shade'},{zh:'輕覆之人',en:'One Softly Covered'},{zh:'柔邊行者',en:'Walker of Soft Edges'}],
+    deep:   [{zh:'夜廊深處',en:'Deep in the Night Hall'},{zh:'未名走廊的影',en:'Shade of an Unnamed Corridor'},{zh:'更深一寸',en:'One Inch Deeper'}]
+  };
+
+  const LORE_A = {
+    gold:   [{zh:'這一點金，先停在你心口。',en:'A little gold rests near the heart.'},{zh:'溫熱不必很大聲，也能被看見。',en:'Warmth need not be loud to be seen.'}],
+    indigo: [{zh:'暗裡也有溫柔的亮。',en:'Even in the dark, a gentle brightness.'},{zh:'深一點，反而更靠近自己。',en:'Going deeper can bring you closer.'}],
+    rose:   [{zh:'一點點綻開，就夠了。',en:'A soft bloom is enough.'},{zh:'柔軟，也是一種力量。',en:'Softness is a kind of strength.'}],
+    mist:   [{zh:'霧不是阻擋——是緩衝。',en:'Mist is not a wall — it is a cushion.'},{zh:'光走得很慢，剛好讓你看見。',en:'Light moves slowly — just enough to be seen.'}],
+    cool:   [{zh:'月色把聲音都放輕了。',en:'Moonlight softens every sound.'},{zh:'安靜可以比答案先到。',en:'Quiet can arrive before an answer.'}],
+    spark:  [{zh:'一下就亮，也夠照見此刻。',en:'One flash is enough to see this moment.'},{zh:'火花停住的地方，有你的指紋。',en:'Where the spark pauses, your fingerprint remains.'}],
+    still:  [{zh:'水不說話，卻記住了紋路。',en:'Water does not speak, yet keeps the pattern.'},{zh:'定影不是停滯——是讓光坐下。',en:'Stillness is not stuck — it is light sitting down.'}],
+    warm:   [{zh:'掌心還留著剛才的溫度。',en:'The palm still holds the last warmth.'},{zh:'暖意自己來了，你只要接住。',en:'Warmth arrives on its own — you only receive.'}],
+    soft:   [{zh:'邊界很柔，剛好讓你進來。',en:'The edge is soft enough to let you in.'},{zh:'這一刻可以很輕。',en:'This moment is allowed to be light.'}],
+    deep:   [{zh:'走廊還沒有名字，影已經先走。',en:'The hall has no name yet; the shade walks first.'},{zh:'更深一點，也不必害怕。',en:'A little deeper need not frighten you.'}]
+  };
+  const LORE_B = {
+    spread:  [{zh:'你的觸碰走得很開，像霧自己散開。',en:'Your touch spread wide — like mist opening itself.'},{zh:'光痕鋪得很遠，剪影便跟著鬆開。',en:'The trail went far; the silhouette loosened with it.'}],
+    dense:   [{zh:'你把光收得很近，像掌心護著火。',en:'You kept the light close — a flame cupped in the palm.'},{zh:'觸點重疊處，剪影的心更亮。',en:'Where touches overlap, the silhouette’s heart brightens.'}],
+    curve:   [{zh:'路徑彎了一下，影也輕輕側身。',en:'The path bent once; the shade turned with it.'},{zh:'你沒有走直線——光影學會了繞路。',en:'You did not walk straight — light learned to curve.'}],
+    sparse:  [{zh:'只有幾點光，已經夠認出你。',en:'Only a few points of light — enough to know you.'},{zh:'留白很大，剪影反而更清楚。',en:'Much empty space — the silhouette reads clearer.'}],
+    long:    [{zh:'你走了一條長長的光路。',en:'You walked a long path of light.'},{zh:'時間在指尖拉長，影慢慢站起。',en:'Time stretched at the fingertip; the shade rose slowly.'}]
+  };
+  const LORE_C = [
+    {zh:'同一道光紋，會長成同一道影；再感覺一次，就是新的光紋。',en:'The same Lightprint grows the same shade; feel again, and a new Lightprint begins.'},
+    {zh:'之後若問外形，那是下一兩問的事——此刻先讓影站好。',en:'Form questions come later (1–2 soft asks) — for now, let the shade stand.'},
+    {zh:'沒有對錯；只要靠近你現在的感覺。',en:'No right or wrong — only nearer to how you feel now.'},
+    {zh:'這張紀念卡上，寫的是光紋記憶，不是編號演說。',en:'This memorial holds Lightprint Memory — not a spoken serial.'}
+  ];
+
+  /* Simulated answer tags per mood (Color Moment seed stand-in) */
+  const ANSWER_SEED = {
+    gold:   ['warm','gold','soft'],
+    indigo: ['deep','indigo','cool'],
+    rose:   ['rose','soft','warm'],
+    mist:   ['mist','cool','still'],
+    cool:   ['cool','still','mist'],
+    spark:  ['spark','warm','gold'],
+    still:  ['still','deep','cool'],
+    warm:   ['warm','gold','still'],
+    soft:   ['soft','rose','mist'],
+    deep:   ['deep','indigo','still']
+  };
+
+  const LP_ALPH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const SEAL_HOLD_MS = 1300;
+
+  let lang = 'zh';
+  let mood = MOODS.gold;
+  let touches = [];
+  let sealed = false;
+  let lastFigure = null;
+  let holding = false;
+  let holdStart = 0;
+  let holdRaf = 0;
+  let paintToken = 0;
+
+  const stage = document.getElementById('stage');
+  const trailC = document.getElementById('trail');
+  const figC = document.getElementById('figure');
+  const trailCtx = trailC.getContext('2d');
+  const figCtx = figC.getContext('2d');
+  const sealBtn = document.getElementById('sealBtn');
+  const birth = document.getElementById('birth');
+  const moodRow = document.getElementById('moodRow');
+
+  function T(el) {
+    if (!el) return;
+    const v = el.getAttribute(lang === 'zh' ? 'data-zh' : 'data-en');
+    if (v != null) el.textContent = v;
+  }
+  function applyLang() {
+    document.querySelectorAll('[data-zh]').forEach(T);
+    document.querySelectorAll('#langToggle button').forEach(b => {
+      b.classList.toggle('is-on', b.dataset.lang === lang);
+    });
+  }
+
+  function hashStr(s) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function hashToLightprint(payload) {
+    let h = hashStr(payload);
+    let x = h;
+    let out = '';
+    for (let i = 0; i < 8; i++) {
+      x ^= x >>> 16;
+      x = Math.imul(x, 0x7feb352d) >>> 0;
+      x ^= x >>> 15;
+      x = Math.imul(x, 0x846ca68b) >>> 0;
+      x ^= x >>> 16;
+      out += LP_ALPH[x % LP_ALPH.length];
+      x = (x + h + Math.imul(i + 1, 2654435761)) >>> 0;
+    }
+    return 'LP-' + out;
+  }
+  function encodeLP(path, moodId, tags) {
+    const payload = JSON.stringify({
+      m: moodId || '',
+      n: path.length,
+      t: (tags || []).slice(0, 6),
+      p: path.map(t => [round3(t.nx), round3(t.ny), Math.round(t.t || 0), t.kind || 'm'])
+    });
+    return hashToLightprint(payload);
+  }
+  function round3(n) { return Math.round(n * 1000) / 1000; }
+
+  function seeded(seed) {
+    let s = seed >>> 0;
+    return function () {
+      s ^= s << 13; s >>>= 0;
+      s ^= s >>> 17; s >>>= 0;
+      s ^= s << 5; s >>>= 0;
+      return (s >>> 0) / 4294967296;
+    };
+  }
+  function pick(rng, arr) { return arr[Math.floor(rng() * arr.length) % arr.length]; }
+
+  function touchFeel(path) {
+    if (!path.length) return { kind: 'sparse', spread: 0, density: 0, curve: 0, len: 0 };
+    let minX = 1, maxX = 0, minY = 1, maxY = 0, dist = 0, turns = 0;
+    for (let i = 0; i < path.length; i++) {
+      const p = path[i];
+      minX = Math.min(minX, p.nx); maxX = Math.max(maxX, p.nx);
+      minY = Math.min(minY, p.ny); maxY = Math.max(maxY, p.ny);
+      if (i) {
+        const a = path[i - 1];
+        dist += Math.hypot(p.nx - a.nx, p.ny - a.ny);
+        if (i > 1) {
+          const b = path[i - 2];
+          const v1x = a.nx - b.nx, v1y = a.ny - b.ny;
+          const v2x = p.nx - a.nx, v2y = p.ny - a.ny;
+          const d1 = Math.hypot(v1x, v1y) || 1e-6, d2 = Math.hypot(v2x, v2y) || 1e-6;
+          const cos = (v1x * v2x + v1y * v2y) / (d1 * d2);
+          if (cos < 0.5) turns++;
+        }
+      }
+    }
+    const spread = (maxX - minX) * (maxY - minY);
+    const density = path.length / Math.max(0.08, spread + 0.05);
+    const curve = turns / Math.max(1, path.length);
+    let kind = 'sparse';
+    if (dist > 1.2) kind = 'long';
+    else if (curve > 0.18) kind = 'curve';
+    else if (density > 80) kind = 'dense';
+    else if (spread > 0.22) kind = 'spread';
+    return { kind, spread, density, curve, len: dist, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+  }
+
+  function buildFigure(code, moodObj, path, tags) {
+    const seed = hashStr(code + '|' + moodObj.id);
+    const rng = seeded(seed);
+    const feel = touchFeel(path);
+    const bank = EPITHET[moodObj.id] || EPITHET.gold;
+    const epithet = bank[Math.floor(rng() * bank.length) % bank.length];
+    const aBank = LORE_A[moodObj.id] || LORE_A.gold;
+    const line1 = pick(rng, aBank);
+    const bBank = LORE_B[feel.kind] || LORE_B.sparse;
+    const line2 = pick(rng, bBank);
+    const line3 = LORE_C[Math.floor(rng() * LORE_C.length) % LORE_C.length];
+
+    /* Silhouette params — soft light form, no face */
+    const lean = (rng() - 0.5) * 0.12 + (feel.cx - 0.5) * 0.08;
+    const headTilt = (rng() - 0.5) * 0.25;
+    const shoulderW = 0.22 + rng() * 0.06 + Math.min(0.04, feel.spread * 0.08);
+    const torsoH = 0.34 + rng() * 0.06;
+    const headR = 0.055 + rng() * 0.012;
+    const glow = 0.55 + rng() * 0.35 + (feel.kind === 'dense' ? 0.1 : 0);
+    const halo = 0.7 + rng() * 0.5;
+    const particleN = 8 + Math.floor(rng() * 10) + (feel.kind === 'spark' || moodObj.id === 'spark' ? 6 : 0);
+    const posture = feel.kind === 'long' ? 'tall' : feel.kind === 'dense' ? 'gathered' : feel.kind === 'curve' ? 'turn' : 'open';
+
+    return {
+      code,
+      moodId: moodObj.id,
+      palette: moodObj.palette.slice(),
+      tags: (tags || []).slice(),
+      feel,
+      epithet,
+      lore: [line1, line2, line3],
+      form: { lean, headTilt, shoulderW, torsoH, headR, glow, halo, particleN, posture, cy: 0.48 + (feel.cy - 0.5) * 0.06 }
+    };
+  }
+
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    [trailC, figC].forEach(c => {
+      c.width = Math.max(1, Math.floor(r.width * dpr));
+      c.height = Math.max(1, Math.floor(r.height * dpr));
+      c.style.width = r.width + 'px';
+      c.style.height = r.height + 'px';
+      const ctx = c.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    });
+    redrawTrail();
+    if (lastFigure && sealed) drawFigure(lastFigure, 1);
+  }
+
+  function hexAlpha(hex, a) {
+    const h = hex.replace('#','');
+    const n = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function redrawTrail() {
+    const r = stage.getBoundingClientRect();
+    trailCtx.clearRect(0, 0, r.width, r.height);
+    if (!touches.length) return;
+    const pal = mood.palette;
+    for (let i = 0; i < touches.length; i++) {
+      const p = touches[i];
+      const x = p.nx * r.width, y = p.ny * r.height;
+      const rad = 18 + (i % 5) * 2;
+      const g = trailCtx.createRadialGradient(x, y, 0, x, y, rad);
+      g.addColorStop(0, hexAlpha(pal[1] || pal[0], 0.55));
+      g.addColorStop(0.35, hexAlpha(pal[0], 0.28));
+      g.addColorStop(1, hexAlpha(pal[0], 0));
+      trailCtx.fillStyle = g;
+      trailCtx.beginPath();
+      trailCtx.arc(x, y, rad, 0, Math.PI * 2);
+      trailCtx.fill();
+      // brighter core DNA
+      trailCtx.fillStyle = hexAlpha('#fff8e8', 0.35);
+      trailCtx.beginPath();
+      trailCtx.arc(x, y, 3.2, 0, Math.PI * 2);
+      trailCtx.fill();
+    }
+  }
+
+  function drawSoftBlob(ctx, x, y, rx, ry, color, alpha) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, Math.max(rx, ry));
+    g.addColorStop(0, hexAlpha(color, alpha));
+    g.addColorStop(0.45, hexAlpha(color, alpha * 0.45));
+    g.addColorStop(1, hexAlpha(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawFigure(fig, t, breath) {
+    const r = stage.getBoundingClientRect();
+    const w = r.width, h = r.height;
+    figCtx.clearRect(0, 0, w, h);
+    if (!fig || t <= 0) return;
+    const f = fig.form;
+    const pal = fig.palette;
+    const cx = w * (0.5 + f.lean * 0.35);
+    const cy = h * f.cy;
+    const appear = Math.min(1, Math.max(0, t));
+    const b = (breath == null ? 0 : breath); // -1..1 soft pulse
+    const edgePulse = 1 + b * 0.1;
+    const glowPulse = 1 + b * 0.08;
+
+    // ambient fog tint
+    drawSoftBlob(figCtx, cx, cy + h * 0.05, w * 0.42 * edgePulse, h * 0.38 * edgePulse, pal[0], 0.1 * appear * glowPulse);
+    drawSoftBlob(figCtx, cx, cy - h * 0.08, w * 0.28 * f.halo * edgePulse, h * 0.32 * f.halo * edgePulse, pal[1], 0.14 * appear * f.glow * glowPulse);
+
+    // soft body stack — head, neck, shoulders, torso (NO face features)
+    const headY = cy - h * (0.18);
+    const headR = w * f.headR;
+    const shoulderY = headY + headR * 1.55;
+    const shoulderW = w * f.shoulderW;
+    const torsoBottom = shoulderY + h * f.torsoH;
+
+    // torso glow
+    drawSoftBlob(figCtx, cx + f.lean * w * 0.02, (shoulderY + torsoBottom) / 2,
+      shoulderW * 0.95, (torsoBottom - shoulderY) * 0.55, pal[0], 0.42 * appear * f.glow);
+    drawSoftBlob(figCtx, cx, (shoulderY + torsoBottom) / 2,
+      shoulderW * 0.55, (torsoBottom - shoulderY) * 0.42, pal[1], 0.35 * appear);
+
+    // shoulders
+    drawSoftBlob(figCtx, cx - shoulderW * 0.55, shoulderY, shoulderW * 0.55, headR * 0.85, pal[0], 0.4 * appear);
+    drawSoftBlob(figCtx, cx + shoulderW * 0.55, shoulderY, shoulderW * 0.55, headR * 0.85, pal[0], 0.4 * appear);
+    drawSoftBlob(figCtx, cx, shoulderY, shoulderW * 0.7, headR * 0.7, pal[1], 0.38 * appear);
+
+    // head — soft oval light only
+    const hx = cx + Math.sin(f.headTilt) * headR * 0.35;
+    const hy = headY;
+    drawSoftBlob(figCtx, hx, hy, headR * 1.35 * edgePulse, headR * 1.55 * edgePulse, pal[0], 0.5 * appear * f.glow * glowPulse);
+    drawSoftBlob(figCtx, hx, hy, headR * 0.85, headR * 1.05, pal[1], 0.55 * appear);
+    drawSoftBlob(figCtx, hx, hy - headR * 0.15, headR * 0.45, headR * 0.5, '#fff8e8', 0.28 * appear * (0.92 + 0.08 * (1 + b) / 2));
+
+    // heart-glow accent
+    drawSoftBlob(figCtx, cx, shoulderY + headR * 0.9, headR * 0.7 * edgePulse, headR * 0.9 * edgePulse, pal[1], 0.45 * appear * f.glow * glowPulse);
+    drawSoftBlob(figCtx, cx, shoulderY + headR * 0.9, headR * 0.28, headR * 0.35, '#fff8e8', 0.4 * appear * glowPulse);
+
+    // particles / DNA sparkle from touch feel
+    const rng = seeded(hashStr(fig.code + ':p'));
+    for (let i = 0; i < f.particleN; i++) {
+      const ang = rng() * Math.PI * 2;
+      const rad = (0.12 + rng() * 0.35) * Math.min(w, h) * (0.4 + appear * 0.6);
+      const px = cx + Math.cos(ang) * rad * (0.6 + f.halo * 0.2);
+      const py = cy + Math.sin(ang) * rad * 0.75 - h * 0.05;
+      const pr = 1.5 + rng() * 3.5;
+      figCtx.fillStyle = hexAlpha(i % 2 ? pal[1] : '#fff8e8', (0.25 + rng() * 0.4) * appear);
+      figCtx.beginPath();
+      figCtx.arc(px, py, pr, 0, Math.PI * 2);
+      figCtx.fill();
+    }
+
+    // optional path echo rings (touch DNA)
+    if (touches.length > 2) {
+      const step = Math.max(1, Math.floor(touches.length / 12));
+      for (let i = 0; i < touches.length; i += step) {
+        const p = touches[i];
+        drawSoftBlob(figCtx, p.nx * w, p.ny * h, 10, 10, pal[0], 0.08 * appear);
+      }
+    }
+  }
+
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let breathRaf = 0;
+
+  function stopBreath() {
+    if (breathRaf) { cancelAnimationFrame(breathRaf); breathRaf = 0; }
+  }
+
+  function startBreath(fig) {
+    stopBreath();
+    if (reduceMotion || !fig) return;
+    const token = paintToken;
+    const t0 = performance.now();
+    function frame(now) {
+      if (token !== paintToken || !lastFigure) return;
+      // ~5.5s soft sine — edge glow only, no position shake
+      const breath = Math.sin((now - t0) / 5500 * Math.PI * 2);
+      drawFigure(fig, 1, breath);
+      breathRaf = requestAnimationFrame(frame);
+    }
+    breathRaf = requestAnimationFrame(frame);
+  }
+
+  function animateBirth(fig) {
+    paintToken++;
+    stopBreath();
+    const token = paintToken;
+    const t0 = performance.now();
+    const dur = 1600;
+    stage.classList.add('is-birthing', 'is-sealed');
+    function frame(now) {
+      if (token !== paintToken) return;
+      const t = Math.min(1, (now - t0) / dur);
+      const ease = 1 - Math.pow(1 - t, 3);
+      // gentle inhale during birth
+      const breath = reduceMotion ? 0 : Math.sin(ease * Math.PI) * 0.35;
+      drawFigure(fig, ease, breath);
+      // soft coalesce: fade trail as figure rises
+      trailC.style.opacity = String(1 - ease * 0.75);
+      if (t < 1) requestAnimationFrame(frame);
+      else {
+        trailC.style.opacity = '0.25';
+        startBreath(fig);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function showCard(fig) {
+    document.getElementById('epithetZh').textContent = fig.epithet.zh;
+    document.getElementById('epithetEn').textContent = fig.epithet.en;
+    const loreEl = document.getElementById('lore');
+    loreEl.innerHTML = '';
+    fig.lore.forEach(line => {
+      const p = document.createElement('p');
+      p.textContent = lang === 'zh' ? line.zh : line.en;
+      loreEl.appendChild(p);
+    });
+    const bar = document.getElementById('moodBar');
+    bar.innerHTML = '';
+    fig.palette.slice(0, 4).forEach(hex => {
+      const d = document.createElement('span');
+      d.className = 'mood-dot';
+      d.style.background = hex;
+      bar.appendChild(d);
+    });
+    // 「光紋記憶」 primary; quiet code OK
+    document.getElementById('quietCode').textContent = fig.code ? ('AE · ' + fig.code) : '';
+    birth.classList.add('is-on');
+    birth.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function doSeal() {
+    if (sealed || touches.length < 2) return;
+    sealed = true;
+    sealBtn.disabled = true;
+    cancelHold(true);
+    const tags = ANSWER_SEED[mood.id] || ['soft'];
+    const code = encodeLP(touches, mood.id, tags);
+    const fig = buildFigure(code, mood, touches, tags);
+    fig._path = touches.map(x => ({ nx:x.nx, ny:x.ny, t:x.t, kind:x.kind }));
+    lastFigure = fig;
+    animateBirth(fig);
+    window.setTimeout(() => showCard(fig), 700);
+  }
+
+  function setHoldProgress(p) {
+    sealBtn.style.setProperty('--hold', String(Math.round(Math.max(0, Math.min(1, p)) * 100)));
+  }
+  function cancelHold() {
+    holding = false;
+    holdStart = 0;
+    if (holdRaf) { cancelAnimationFrame(holdRaf); holdRaf = 0; }
+    sealBtn.classList.remove('is-holding');
+    stage.classList.remove('is-gathering');
+    stage.style.removeProperty('--gather');
+    setHoldProgress(0);
+  }
+  function tickHold(now) {
+    if (!holding || sealed) return;
+    const p = (now - holdStart) / SEAL_HOLD_MS;
+    setHoldProgress(p);
+    // soft gather-light: stage fog brightens toward seal
+    const g = Math.min(1, Math.max(0, p));
+    stage.style.setProperty('--gather', String(g));
+    stage.classList.toggle('is-gathering', g > 0.02);
+    if (p >= 1) {
+      holding = false;
+      holdRaf = 0;
+      sealBtn.classList.remove('is-holding');
+      stage.classList.remove('is-gathering');
+      stage.style.removeProperty('--gather');
+      doSeal();
+      return;
+    }
+    holdRaf = requestAnimationFrame(tickHold);
+  }
+  function startHold(ev) {
+    if (sealed || sealBtn.disabled) return;
+    if (ev) try { ev.preventDefault(); } catch (e) {}
+    if (touches.length < 2) return;
+    holding = true;
+    holdStart = performance.now();
+    sealBtn.classList.add('is-holding');
+    setHoldProgress(0);
+    if (holdRaf) cancelAnimationFrame(holdRaf);
+    holdRaf = requestAnimationFrame(tickHold);
+  }
+  function endHold(ev) {
+    if (!holding) return;
+    if (ev) try { ev.preventDefault(); } catch (e) {}
+    cancelHold();
+  }
+
+  function addTouch(nx, ny, kind) {
+    if (sealed) return;
+    const t0 = touches.length ? touches[0].t0 : performance.now();
+    touches.push({ nx, ny, t: performance.now() - t0, t0, kind: kind || 'm' });
+    if (touches.length > 400) touches = touches.slice(-400);
+    stage.classList.add('is-touched');
+    sealBtn.disabled = touches.length < 2;
+    redrawTrail();
+  }
+
+  function pointerPos(ev) {
+    const r = stage.getBoundingClientRect();
+    const src = ev.touches && ev.touches[0] ? ev.touches[0] : ev;
+    return {
+      nx: Math.max(0, Math.min(1, (src.clientX - r.left) / r.width)),
+      ny: Math.max(0, Math.min(1, (src.clientY - r.top) / r.height))
+    };
+  }
+
+  let drawing = false;
+  stage.addEventListener('pointerdown', (ev) => {
+    if (sealed) return;
+    drawing = true;
+    try { stage.setPointerCapture(ev.pointerId); } catch (e) {}
+    const p = pointerPos(ev);
+    addTouch(p.nx, p.ny, 'down');
+  });
+  stage.addEventListener('pointermove', (ev) => {
+    if (!drawing || sealed) return;
+    const p = pointerPos(ev);
+    const last = touches[touches.length - 1];
+    if (last && Math.hypot(p.nx - last.nx, p.ny - last.ny) < 0.012) return;
+    addTouch(p.nx, p.ny, 'move');
+  });
+  function endDraw(ev) {
+    if (!drawing) return;
+    drawing = false;
+    try { stage.releasePointerCapture(ev.pointerId); } catch (e) {}
+  }
+  stage.addEventListener('pointerup', endDraw);
+  stage.addEventListener('pointercancel', endDraw);
+  stage.addEventListener('touchmove', (e) => { if (drawing) e.preventDefault(); }, { passive: false });
+
+  sealBtn.addEventListener('pointerdown', startHold);
+  sealBtn.addEventListener('pointerup', endHold);
+  sealBtn.addEventListener('pointerleave', endHold);
+  sealBtn.addEventListener('pointercancel', endHold);
+  sealBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+  sealBtn.addEventListener('selectstart', (e) => e.preventDefault());
+
+  function buildMoodChips() {
+    moodRow.innerHTML = '';
+    Object.keys(MOODS).forEach(id => {
+      const m = MOODS[id];
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (mood.id === id ? ' is-on' : '');
+      b.textContent = lang === 'zh' ? m.zh : m.en;
+      b.style.borderColor = m.palette[0] + '88';
+      b.addEventListener('click', () => {
+        if (sealed) resetPlay(false);
+        mood = m;
+        buildMoodChips();
+        redrawTrail();
+      });
+      moodRow.appendChild(b);
+    });
+  }
+
+  function resetPlay(keepMood) {
+    sealed = false;
+    touches = [];
+    lastFigure = null;
+    paintToken++;
+    stopBreath();
+    trailC.style.opacity = '1';
+    figCtx.clearRect(0, 0, figC.width, figC.height);
+    trailCtx.clearRect(0, 0, trailC.width, trailC.height);
+    stage.classList.remove('is-touched', 'is-sealed', 'is-birthing');
+    sealBtn.disabled = true;
+    cancelHold();
+    birth.classList.remove('is-on');
+    if (!keepMood) { /* keep current mood */ }
+    redrawTrail();
+  }
+
+  document.getElementById('btnAgain').addEventListener('click', () => resetPlay(true));
+  document.getElementById('btnSame').addEventListener('click', () => {
+    if (!lastFigure) return;
+    const m = MOODS[lastFigure.moodId] || mood;
+    const path = lastFigure._path && lastFigure._path.length ? lastFigure._path : [{nx:0.5,ny:0.48,t:0,kind:'seal'}];
+    const again = buildFigure(lastFigure.code, m, path, lastFigure.tags);
+    // Determinism check: same code+seed → same epithet
+    again.code = lastFigure.code;
+    const verify = buildFigure(lastFigure.code, m, path, lastFigure.tags);
+    if (verify.epithet.zh !== lastFigure.epithet.zh) {
+      console.warn('[lp-figure] determinism miss', verify.epithet, lastFigure.epithet);
+    }
+    lastFigure = Object.assign({}, lastFigure, { epithet: verify.epithet, lore: verify.lore, form: verify.form, _path: path });
+    trailC.style.opacity = '0.25';
+    animateBirth(lastFigure);
+    showCard(lastFigure);
+  });
+
+  document.querySelectorAll('#langToggle button').forEach(b => {
+    b.addEventListener('click', () => {
+      lang = b.dataset.lang;
+      applyLang();
+      buildMoodChips();
+      if (lastFigure && birth.classList.contains('is-on')) showCard(lastFigure);
+    });
+  });
+
+  window.addEventListener('resize', resize);
+  applyLang();
+  buildMoodChips();
+  resize();
+
+  // Demo shortcut: long-press space? Skip — Owner asked for 收光 or demo button.
+  // Add a quiet demo-seal when touches exist via double-tap seal label — not needed.
+
+  document.getElementById('btnDemo').addEventListener('click', () => {
+    if (sealed) resetPlay(true);
+    // Synthesize a soft trail unique-ish per mood + time bucket so demos differ by mood
+    const rng = seeded(hashStr(mood.id + ':' + Math.floor(Date.now() / 1000)));
+    touches = [];
+    const n = 28 + Math.floor(rng() * 40);
+    let x = 0.35 + rng() * 0.3, y = 0.62;
+    for (let i = 0; i < n; i++) {
+      x += (rng() - 0.48) * 0.045;
+      y -= 0.012 + rng() * 0.01;
+      x = Math.max(0.12, Math.min(0.88, x));
+      y = Math.max(0.18, Math.min(0.82, y));
+      touches.push({ nx: x, ny: y, t: i * 40, kind: i ? 'move' : 'down' });
+    }
+    stage.classList.add('is-touched');
+    sealBtn.disabled = false;
+    redrawTrail();
+    doSeal();
+  });
+
+  console.info('[lp-figure-proto] v1.2-opening ready — locked opening + soft fog drift + silhouette pulse + seal 收光');
+})();
+</script>
+</body>
+</html>
