@@ -1,9 +1,9 @@
 // AE動態桌布 — 離線快取（網路優先，失敗時用快取）
-const CACHE = 'ae-wallpaper-v2';
+const CACHE = 'ae-wallpaper-v3';
 const SHELL = [
-  '/wallpaper/', '/wallpaper/style.css?v=2', '/wallpaper/js/app.js?v=2', '/wallpaper/js/scene.js',
+  '/wallpaper/', '/wallpaper/style.css?v=3', '/wallpaper/js/app.js?v=3', '/wallpaper/js/scene.js',
   '/wallpaper/js/effects.js', '/wallpaper/js/sound.js', '/wallpaper/js/store.js',
-  '/wallpaper/manifest.webmanifest', '/wallpaper/icons/icon.svg',
+  '/wallpaper/manifest.webmanifest', '/wallpaper/icons/ae-rings.webp',
 ];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

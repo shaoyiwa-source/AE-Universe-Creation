@@ -41,12 +41,12 @@ const SYMBOLS = [
   ['✨', '閃亮'], ['💖', '心心'], ['🌷', '鬱金香'], ['🐻', '熊熊'], ['🍰', '蛋糕'], ['🪐', '星球'],
 ];
 const THEME_SWATCH = {
-  none: 'linear-gradient(135deg,#f7f1f5,#ece3ea)',
+  none: 'linear-gradient(135deg,var(--paper),var(--line))',
   laser: 'conic-gradient(from 200deg at 50% 100%,#1a0033,#ff2fd0,#1a0033,#2fd5ff,#1a0033,#b6ff2f,#1a0033)',
   breeze: 'linear-gradient(160deg,#fff6d8,#ffd6e7 45%,#c9f0d8)',
   sparkle: 'radial-gradient(circle at 30% 30%,#fff 0 3%,transparent 4%),radial-gradient(circle at 70% 60%,#fff 0 2%,transparent 3%),linear-gradient(160deg,#ffe7a8,#ffc2e2 50%,#c8b6ff)',
 };
-const THEME_ICON = { none: '⭕', laser: '🪩', breeze: '🍃', sparkle: '🌟' };
+const THEME_ICON = { none: '', laser: '', breeze: '', sparkle: '' };
 
 // ======================================================================
 // 小工具
@@ -89,6 +89,15 @@ function undo() {
   if (ui.tab === 'edit') renderPanel();
 }
 $('#btnUndo').onclick = undo;
+
+// 深色／淺色（與 AE 官網共用 ae-theme 設定）
+$('#btnTheme').onclick = () => {
+  const root = document.documentElement;
+  const cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  root.dataset.theme = next;
+  try { localStorage.setItem('ae-theme', next); } catch (e) { /* ignore */ }
+};
 
 function now() { return performance.now() / 1000; }
 
@@ -235,7 +244,7 @@ $('#fileBase').addEventListener('change', async (e) => {
     setBase(scene, coverCanvas(img), true);
     filterThumbs = null;
     autosave();
-    toast('已匯入桌布照片 ✨');
+    toast('已匯入桌布照片 ');
     renderPanel();
   } catch (err) { toast('無法讀取這張圖片'); } finally { URL.revokeObjectURL(url); }
 });
@@ -263,7 +272,7 @@ $('#fileMusic').addEventListener('change', async (e) => {
   if (!f) return;
   await music.load(f);
   music.setVolume(S.musicVolume);
-  toast(`🎵 ${music.name}`);
+  toast(`♪ ${music.name}`);
   renderPanel();
 });
 
@@ -315,8 +324,8 @@ const PANELS = {
       return `
       <h3>桌布照片 <small>${scene.hasPhoto ? '已匯入照片' : '目前使用預設底圖'}</small></h3>
       <div class="row">
-        <button class="btn solid" id="pickBase">📷 匯入照片</button>
-        <button class="btn blue" id="useDefault">🌸 預設底圖</button>
+        <button class="btn solid" id="pickBase">匯入照片</button>
+        <button class="btn blue" id="useDefault">預設底圖</button>
       </div>
       <p class="hint">建議使用直式照片，會自動裁成 iPhone 全螢幕比例（1080×2340）。</p>
       <h3>我的桌布收藏 <small>${ui.gallery.length} 張・輪播用</small></h3>
@@ -327,7 +336,7 @@ const PANELS = {
             ${rot && rot.index === i ? '<span class="badge">目前</span>' : ''}
           </div>`).join('')}
       </div>
-      <button class="btn block" id="saveGallery">💾 把目前作品存進收藏</button>
+      <button class="btn block" id="saveGallery">把目前作品存進收藏</button>
       <p class="hint">點收藏縮圖可載入編輯。在「設定」開啟自動更換後，互動模式會依頻率輪流顯示收藏的桌布。</p>`;
     },
     bind(p) {
@@ -358,9 +367,9 @@ const PANELS = {
       return `
       <h3>編輯工具 <small>${ui.tool === 'select' ? '點選物件可移動・雙指縮放旋轉' : '在畫面上直接畫'}</small></h3>
       <div class="row">
-        <button class="chip ${ui.tool === 'select' ? 'on' : ''}" data-tool="select">👆 選取移動</button>
-        <button class="chip ${ui.tool === 'pen' ? 'on' : ''}" data-tool="pen">✍️ 手寫字</button>
-        <button class="chip ${ui.tool === 'glow' ? 'on' : ''}" data-tool="glow">🌈 手畫光紋</button>
+        <button class="chip ${ui.tool === 'select' ? 'on' : ''}" data-tool="select">選取移動</button>
+        <button class="chip ${ui.tool === 'pen' ? 'on' : ''}" data-tool="pen">手寫字</button>
+        <button class="chip ${ui.tool === 'glow' ? 'on' : ''}" data-tool="glow">手畫光紋</button>
       </div>
       ${ui.tool !== 'select' ? `
         <div class="row">${colorRow(ui.color, 'color')}</div>
@@ -372,8 +381,8 @@ const PANELS = {
       <h3>可愛小符號</h3>
       <div class="sym-grid">${SYMBOLS.map(([c, n]) => `<button data-sym="${c}" aria-label="${n}"><div>${c}<span>${n}</span></div></button>`).join('')}</div>
       <div class="row">
-        <button class="btn blue" id="pickSticker">🖼 匯入可愛圖片</button>
-        <button class="btn" id="clearAll">🧹 清除全部編輯</button>
+        <button class="btn blue" id="pickSticker">匯入可愛圖片</button>
+        <button class="btn" id="clearAll">清除全部編輯</button>
       </div>`;
     },
     bind(p) {
@@ -421,8 +430,8 @@ const PANELS = {
       <h3>元件聲音 <small>點元件時播放</small></h3>
       ${COMPONENTS.map((c) => `
         <div class="row nowrap"><span class="label">${c.name}</span>
-          ${SOUNDS.map((s) => `<button class="chip ${S.compSounds[c.id] === s.id ? 'on' : ''}" data-snd="${c.id}:${s.id}">${s.emoji} ${s.name}</button>`).join('')}
-          <button class="chip ${S.compSounds[c.id] === 'none' ? 'on' : ''}" data-snd="${c.id}:none">🔇 無聲</button>
+          ${SOUNDS.map((s) => `<button class="chip ${S.compSounds[c.id] === s.id ? 'on' : ''}" data-snd="${c.id}:${s.id}">${s.name}</button>`).join('')}
+          <button class="chip ${S.compSounds[c.id] === 'none' ? 'on' : ''}" data-snd="${c.id}:none">無聲</button>
         </div>`).join('')}
       <p class="hint">在畫面上點一下元件就能看它動、聽它叫；拖曳可移動，雙指可縮放旋轉。</p>`;
     },
@@ -481,12 +490,12 @@ const PANELS = {
       ${music.el ? `<div class="music-card">
           <div class="eq ${music.playing ? 'on' : ''}"><i></i><i></i><i></i><i></i></div>
           <div class="name">${esc(music.name)}</div>
-          <button class="btn solid" id="mToggle">${music.playing ? '⏸ 暫停' : '▶ 播放'}</button>
+          <button class="btn solid" id="mToggle">${music.playing ? '暫停' : '播放'}</button>
         </div>` : '<p class="hint">還沒有音樂。匯入一首歌，動態主題會跟著節奏閃動！</p>'}
-      <div class="row"><button class="btn ${music.el ? 'blue' : 'solid'}" id="pickMusic">🎵 ${music.el ? '換一首' : '匯入音樂'}</button></div>
+      <div class="row"><button class="btn ${music.el ? 'blue' : 'solid'}" id="pickMusic">${music.el ? '換一首' : '匯入音樂'}</button></div>
       <div class="row"><span class="label">音樂音量</span><input type="range" id="mVol" min="0" max="1" step="0.05" value="${S.musicVolume}"></div>
       <h3>可愛音效</h3>
-      <div class="row">${SOUNDS.map((s) => `<button class="chip" data-try="${s.id}">${s.emoji} ${s.name}</button>`).join('')}</div>
+      <div class="row">${SOUNDS.map((s) => `<button class="chip" data-try="${s.id}">${s.name}</button>`).join('')}</div>
       <div class="row"><span class="label">音效音量</span><input type="range" id="sVol" min="0" max="1" step="0.05" value="${S.sfxVolume}"></div>
       <p class="hint">支援 mp3、m4a、wav 等格式。錄製動態影片時，音樂與音效會一起錄進去。</p>`;
     },
@@ -511,7 +520,7 @@ const PANELS = {
       ${sw('touchFx', '觸碰特效', '點畫面任何地方會噴出星星')}
       ${sw('showFab', '顯示互動按鈕', '互動模式右下角的 AE 按鈕（隱藏後長按畫面可叫回）')}
       ${sw('showClock', '預覽鎖定畫面時鐘', '互動模式中顯示時間，方便對照版面')}
-      <div class="row" style="margin-top:8px"><button class="btn solid block" id="lockGuide">🔒 設定「鎖定畫面按鈕」叫出 App</button></div>
+      <div class="row" style="margin-top:8px"><button class="btn solid block" id="lockGuide">設定「鎖定畫面按鈕」叫出 App</button></div>
       <h3 style="margin-top:14px">桌布更新頻率</h3>
       ${sw('rotateOn', '自動更換桌布', '從「我的桌布收藏」依序輪播')}
       <div class="row">
@@ -525,9 +534,9 @@ const PANELS = {
       </div>
       <p class="hint">${!S.rotateOn ? '開啟後才會輪播。' : !ui.gallery.length ? '收藏裡還沒有桌布，先到「桌布」分頁存幾張吧。' : `目前顯示第 ${rot.index + 1} / ${ui.gallery.length} 張・下次更新：${new Date(rot.next).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`}</p>
       <h3 style="margin-top:14px">一鍵設為桌布</h3>
-      <div class="row"><button class="btn solid block" id="setGuide">📱 建立「${SHORTCUT_NAME}」捷徑</button></div>
-      <div class="row"><button class="btn blue block" id="rotGuide">📱 讓 iPhone 系統桌布也自動更換</button></div>
-      <div class="row"><button class="btn block" id="installGuide">⬇️ 把 AE動態桌布 加到主畫面</button></div>`;
+      <div class="row"><button class="btn solid block" id="setGuide">建立「${SHORTCUT_NAME}」捷徑</button></div>
+      <div class="row"><button class="btn blue block" id="rotGuide">讓 iPhone 系統桌布也自動更換</button></div>
+      <div class="row"><button class="btn block" id="installGuide">把 AE動態桌布 加到主畫面</button></div>`;
     },
     bind(p) {
       p.querySelectorAll('[data-set]').forEach((inp) => inp.onchange = () => {
@@ -565,7 +574,7 @@ async function saveToGallery() {
   const item = { id: uid(), created: Date.now(), thumb: await makeThumb(scene), data: await serializeScene(scene) };
   try {
     await galleryPut(item);
-    toast('已存進我的桌布收藏 💾');
+    toast('已存進我的桌布收藏 ');
   } catch (e) { toast('儲存失敗，可能是空間不足'); }
   await refreshGallery();
 }
@@ -585,7 +594,7 @@ function bindCopy(root) {
 
 function showLockGuide() {
   openModal(`
-    <h2>🔒 鎖定畫面按鈕</h2>
+    <h2>鎖定畫面按鈕</h2>
     <p class="hint">iPhone（iOS 18 以上）可以把「捷徑」放到鎖定畫面下方的控制項按鈕。按下後解鎖，就會直接打開 AE動態桌布 的互動模式。</p>
     <h4>步驟 1：建立捷徑</h4>
     <ol>
@@ -609,7 +618,7 @@ function showLockGuide() {
 
 function showRotateGuide() {
   openModal(`
-    <h2>📱 系統桌布自動更換</h2>
+    <h2>系統桌布自動更換</h2>
     <p class="hint">基於 iOS 的安全限制，任何 App 都不能在背景直接替你換掉系統桌布。下面兩種做法可以讓 iPhone 依頻率自動更新：</p>
     <h4>方法 A：iPhone 內建「相片隨機顯示」（最推薦）</h4>
     <ol>
@@ -654,8 +663,8 @@ async function setAsWallpaper() {
 
 function showSetWallpaperGuide() {
   openModal(`
-    <h2>📱 建立「${SHORTCUT_NAME}」捷徑</h2>
-    <p class="hint">只需要做一次。之後在 App 按「📱 設為桌布」，就會自動把畫面設成 iPhone 桌布。</p>
+    <h2>建立「${SHORTCUT_NAME}」捷徑</h2>
+    <p class="hint">只需要做一次。之後在 App 按「設為桌布」，就會自動把畫面設成 iPhone 桌布。</p>
     <ol>
       <li>打開「捷徑」App → 右上角「＋」</li>
       <li>點「加入動作」，搜尋「<b>取得剪貼板</b>」並加入</li>
@@ -672,7 +681,7 @@ function showSetWallpaperGuide() {
 
 function showInstallGuide() {
   openModal(`
-    <h2>⬇️ 加到主畫面</h2>
+    <h2>加到主畫面</h2>
     <ol>
       <li>用 iPhone 的 Safari 打開這個網頁</li>
       <li>點下方的「分享」按鈕 <b>⎋</b></li>
@@ -708,22 +717,22 @@ function showExport() {
   const canRec = pickMime() !== null && !!canvas.captureStream;
   openModal(`
     <h2>匯出桌布</h2>
-    <h4>📱 一鍵設為 iPhone 桌布</h4>
+    <h4>一鍵設為 iPhone 桌布</h4>
     <p class="hint">透過 iPhone「捷徑」直接把目前畫面設成鎖定畫面＋主畫面桌布。第一次使用要先建立捷徑。</p>
     <div class="row">
-      <button class="btn solid" id="exSet">📱 設為桌布</button>
+      <button class="btn solid" id="exSet">設為桌布</button>
       <button class="btn blue" id="exSetGuide">第一次使用？建立捷徑</button>
     </div>
-    <h4>🖼 靜態桌布（PNG）</h4>
+    <h4>靜態桌布（PNG）</h4>
     <p class="hint">1080×2340 高畫質，可直接設為 iPhone 桌布。</p>
     <div class="row"><button class="btn solid" id="exPng">產生靜態桌布</button><span id="pngOut"></span></div>
-    <h4>🎬 動態桌布影片（含音樂與音效）</h4>
+    <h4>動態桌布影片（含音樂與音效）</h4>
     ${canRec ? `
       <div class="row">${[5, 10, 15].map((s) => `<button class="chip ${exportDur === s ? 'on' : ''}" data-dur="${s}">${s} 秒</button>`).join('')}</div>
       <div class="row"><button class="btn solid" id="exVid">● 開始錄製</button><span id="vidOut"></span></div>
       <p class="hint">錄製時可以點畫面上的元件，互動也會被錄進去。</p>`
     : '<p class="hint">這個瀏覽器不支援錄影，請使用 iPhone Safari（iOS 14.5 以上）或 Chrome。</p>'}
-    <h4>💾 存進我的桌布收藏</h4>
+    <h4>存進我的桌布收藏</h4>
     <div class="row"><button class="btn blue" id="exGallery">存進收藏</button></div>
     <div class="note">
       <b>不用捷徑也可以：</b>把靜態桌布存到照片 → 打開該照片 → 分享 → 「設為背景圖片」。<br>
@@ -734,7 +743,7 @@ function showExport() {
     $('#exPng', root).onclick = async () => {
       $('#pngOut', root).textContent = '產生中…';
       const blob = await renderStillBlob();
-      $('#pngOut', root).innerHTML = '<button class="btn" id="savePng">⬇ 儲存／分享</button>';
+      $('#pngOut', root).innerHTML = '<button class="btn" id="savePng">儲存／分享</button>';
       $('#savePng', root).onclick = () => shareOrDownload(blob, `AE動態桌布-${Date.now()}.png`);
     };
     root.querySelectorAll('[data-dur]').forEach((b) => b.onclick = () => {
@@ -766,9 +775,9 @@ function startRecording(root) {
     const blob = new Blob(chunks, { type });
     const ext = type.includes('mp4') ? 'mp4' : 'webm';
     btn.disabled = false; btn.textContent = '● 重新錄製';
-    out.innerHTML = '<button class="btn" id="saveVid">⬇ 儲存／分享影片</button>';
+    out.innerHTML = '<button class="btn" id="saveVid">儲存／分享影片</button>';
     $('#saveVid', root).onclick = () => shareOrDownload(blob, `AE動態桌布-${Date.now()}.${ext}`);
-    toast('錄製完成 🎬');
+    toast('錄製完成 ');
   };
   ui.recording = true;
   select(null);
@@ -811,7 +820,7 @@ async function enterPlayer() {
   $('#player').hidden = false;
   applyPlayerUi();
   updateClock();
-  if (S.componentTap || S.touchFx) toast('點點看畫面上的元件 ✨', $('#playerToast'));
+  if (S.componentTap || S.touchFx) toast('點點看畫面上的元件 ', $('#playerToast'));
 }
 function exitPlayer() {
   player.open = false;
@@ -838,7 +847,7 @@ setInterval(async () => {
   const rot = rotationInfo();
   if (rot && rot.index !== player.rotIndex) {
     player.scene = await sceneForPlayer();
-    toast('桌布已依頻率更新 ✨', $('#playerToast'));
+    toast('桌布已依頻率更新 ', $('#playerToast'));
   }
 }, 15000);
 
@@ -874,7 +883,7 @@ $('#fabMenu').addEventListener('click', (e) => {
     if (sc === scene) autosave();
   } else if (act === 'music') {
     if (!music.el) toast('先到「音樂」分頁匯入音樂喔', $('#playerToast'));
-    else toast(music.toggle() ? `🎵 ${music.name}` : '音樂暫停', $('#playerToast'));
+    else toast(music.toggle() ? `♪ ${music.name}` : '音樂暫停', $('#playerToast'));
   } else if (act === 'clock') {
     S.showClock = !S.showClock; persistSettings(); applyPlayerUi();
   } else if (act === 'hide') {
