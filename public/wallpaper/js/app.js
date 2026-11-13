@@ -524,6 +524,8 @@ const PANELS = {
         <span style="font-size:13px">更新一次</span>
       </div>
       <p class="hint">${!S.rotateOn ? '開啟後才會輪播。' : !ui.gallery.length ? '收藏裡還沒有桌布，先到「桌布」分頁存幾張吧。' : `目前顯示第 ${rot.index + 1} / ${ui.gallery.length} 張・下次更新：${new Date(rot.next).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`}</p>
+      <h3 style="margin-top:14px">一鍵設為桌布</h3>
+      <div class="row"><button class="btn solid block" id="setGuide">📱 建立「${SHORTCUT_NAME}」捷徑</button></div>
       <div class="row"><button class="btn blue block" id="rotGuide">📱 讓 iPhone 系統桌布也自動更換</button></div>
       <div class="row"><button class="btn block" id="installGuide">⬇️ 把 AE動態桌布 加到主畫面</button></div>`;
     },
@@ -537,6 +539,7 @@ const PANELS = {
       $('#rotUnit', p).onchange = (e) => { S.rotateUnit = e.target.value; S.rotateAnchor = Date.now(); persistSettings(); renderPanel(); };
       $('#lockGuide', p).onclick = showLockGuide;
       $('#rotGuide', p).onclick = showRotateGuide;
+      $('#setGuide', p).onclick = showSetWallpaperGuide;
       $('#installGuide', p).onclick = showInstallGuide;
     },
   },
@@ -624,6 +627,49 @@ function showRotateGuide() {
     <div class="note">小提醒：動態效果（雷射、星光、元件動畫、音效）需在 App 的互動模式中才會播放；設成系統桌布時是靜態圖或 Live Photo。</div>`, bindCopy);
 }
 
+// ---------------- 一鍵設為桌布（剪貼簿＋捷徑） ----------------
+const SHORTCUT_NAME = 'AE設桌布';
+
+function renderStillBlob() {
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  renderScene(cv.getContext('2d'), scene, now(), { dt: 0 });
+  return canvasToBlob(cv, 'image/png');
+}
+
+async function setAsWallpaper() {
+  select(null);
+  // ClipboardItem 必須在點擊當下建立，圖片用 Promise 傳入（iOS Safari 的要求）
+  const blobP = renderStillBlob();
+  try {
+    if (!navigator.clipboard || !window.ClipboardItem) throw new Error('no clipboard');
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]);
+  } catch (e) {
+    toast('無法複製圖片，改用「儲存／分享」');
+    shareOrDownload(await blobP, `AE動態桌布-${Date.now()}.png`);
+    return;
+  }
+  toast('桌布已複製，正在打開捷徑…');
+  location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT_NAME)}`;
+}
+
+function showSetWallpaperGuide() {
+  openModal(`
+    <h2>📱 建立「${SHORTCUT_NAME}」捷徑</h2>
+    <p class="hint">只需要做一次。之後在 App 按「📱 設為桌布」，就會自動把畫面設成 iPhone 桌布。</p>
+    <ol>
+      <li>打開「捷徑」App → 右上角「＋」</li>
+      <li>點「加入動作」，搜尋「<b>取得剪貼板</b>」並加入</li>
+      <li>再搜尋「<b>設定背景圖片</b>」並加入（在「設定背景圖片」動作裡選擇要套用的背景圖片）</li>
+      <li>點「設定背景圖片」動作旁的箭頭，關閉「<b>顯示預覽</b>」，會更快完成</li>
+      <li>把捷徑名稱改成下面這個名字（要一模一樣）</li>
+    </ol>
+    ${copyBtn(SHORTCUT_NAME)}
+    <div class="note">
+      第一次執行時，iPhone 會詢問是否允許「${SHORTCUT_NAME}」讀取剪貼板、更改背景圖片，請選「一律允許」。<br>
+      「設為桌布」設定的是靜態圖片；iPhone 不讓捷徑或 App 直接設定原況照片（Live Photo）。
+    </div>`, bindCopy);
+}
+
 function showInstallGuide() {
   openModal(`
     <h2>⬇️ 加到主畫面</h2>
@@ -662,6 +708,12 @@ function showExport() {
   const canRec = pickMime() !== null && !!canvas.captureStream;
   openModal(`
     <h2>匯出桌布</h2>
+    <h4>📱 一鍵設為 iPhone 桌布</h4>
+    <p class="hint">透過 iPhone「捷徑」直接把目前畫面設成鎖定畫面＋主畫面桌布。第一次使用要先建立捷徑。</p>
+    <div class="row">
+      <button class="btn solid" id="exSet">📱 設為桌布</button>
+      <button class="btn blue" id="exSetGuide">第一次使用？建立捷徑</button>
+    </div>
     <h4>🖼 靜態桌布（PNG）</h4>
     <p class="hint">1080×2340 高畫質，可直接設為 iPhone 桌布。</p>
     <div class="row"><button class="btn solid" id="exPng">產生靜態桌布</button><span id="pngOut"></span></div>
@@ -674,14 +726,14 @@ function showExport() {
     <h4>💾 存進我的桌布收藏</h4>
     <div class="row"><button class="btn blue" id="exGallery">存進收藏</button></div>
     <div class="note">
-      <b>設成 iPhone 桌布：</b>照片 App → 打開桌布 → 分享 → 「設為背景圖片」。<br>
+      <b>不用捷徑也可以：</b>把靜態桌布存到照片 → 打開該照片 → 分享 → 「設為背景圖片」。<br>
       <b>想讓鎖定畫面會動：</b>把影片用「intoLive」等 App 轉成 Live Photo，再於 設定 → 背景圖片 選擇該 Live Photo（長按鎖定畫面即可播放）。
     </div>`, (root) => {
+    $('#exSet', root).onclick = () => setAsWallpaper();
+    $('#exSetGuide', root).onclick = showSetWallpaperGuide;
     $('#exPng', root).onclick = async () => {
       $('#pngOut', root).textContent = '產生中…';
-      const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-      renderScene(cv.getContext('2d'), scene, now(), { dt: 0 });
-      const blob = await canvasToBlob(cv, 'image/png');
+      const blob = await renderStillBlob();
       $('#pngOut', root).innerHTML = '<button class="btn" id="savePng">⬇ 儲存／分享</button>';
       $('#savePng', root).onclick = () => shareOrDownload(blob, `AE動態桌布-${Date.now()}.png`);
     };
