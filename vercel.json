@@ -35,6 +35,10 @@
     {
       "source": "/index",
       "destination": "/index.html"
+    },
+    {
+      "source": "/wallpaper",
+      "destination": "/wallpaper/index.html"
     }
   ]
 }

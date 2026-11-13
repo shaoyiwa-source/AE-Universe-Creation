@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>AE動態桌布</title>
+<meta name="description" content="匯入照片，加上會動的可愛元件、濾鏡與動態主題，做出你的 iPhone 動態桌布。">
+<meta name="theme-color" content="#FFE3F0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AE動態桌布">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/wallpaper/manifest.webmanifest">
+<link rel="icon" href="/wallpaper/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/wallpaper/style.css?v=1">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">AE</span><span class="brand-name">動態桌布</span></div>
+    <div class="top-actions">
+      <button class="pill ghost" id="btnUndo" aria-label="復原">↶</button>
+      <button class="pill" id="btnPlay">▶ 互動預覽</button>
+      <button class="pill primary" id="btnExport">匯出</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="canvas" width="1080" height="2340"></canvas>
+      <div class="sel-bar" id="selBar" hidden>
+        <button data-sel="smaller" aria-label="縮小">－</button>
+        <button data-sel="bigger" aria-label="放大">＋</button>
+        <button data-sel="rotl" aria-label="左轉">⟲</button>
+        <button data-sel="rotr" aria-label="右轉">⟳</button>
+        <button data-sel="front" aria-label="移到最上層">⇡</button>
+        <button data-sel="edit" aria-label="編輯" id="selEdit">✎</button>
+        <button data-sel="delete" class="danger" aria-label="刪除">🗑</button>
+      </div>
+    </div>
+  </main>
+
+  <section class="panel" id="panel"></section>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-tab="photo" class="on"><i>🖼</i><span>桌布</span></button>
+    <button data-tab="edit"><i>✏️</i><span>編輯</span></button>
+    <button data-tab="comp"><i>🧸</i><span>元件</span></button>
+    <button data-tab="filter"><i>🎨</i><span>濾鏡</span></button>
+    <button data-tab="theme"><i>✨</i><span>主題</span></button>
+    <button data-tab="music"><i>🎵</i><span>音樂</span></button>
+    <button data-tab="settings"><i>⚙️</i><span>設定</span></button>
+  </nav>
+</div>
+
+<!-- 互動模式（全螢幕播放） -->
+<div class="player" id="player" hidden>
+  <canvas id="playerCanvas" width="1080" height="2340"></canvas>
+  <div class="lock-clock" id="lockClock"><div class="lc-date" id="lcDate"></div><div class="lc-time" id="lcTime"></div></div>
+  <button class="fab" id="fab" aria-label="AE互動按鈕">AE</button>
+  <div class="fab-menu" id="fabMenu" hidden>
+    <button data-fab="theme">✨ 換主題</button>
+    <button data-fab="music">🎵 音樂播放/暫停</button>
+    <button data-fab="clock">🕒 鎖定畫面時鐘</button>
+    <button data-fab="hide">🙈 隱藏互動按鈕</button>
+    <button data-fab="exit">✕ 離開互動模式</button>
+  </div>
+  <div class="toast" id="playerToast"></div>
+</div>
+
+<!-- 通用對話框 -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <button class="modal-x" id="modalX" aria-label="關閉">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<input type="file" id="fileBase" accept="image/*" hidden>
+<input type="file" id="fileSticker" accept="image/*" hidden>
+<input type="file" id="fileMusic" accept="audio/*" hidden>
+
+<script type="module" src="/wallpaper/js/app.js?v=1"></script>
+</body>
+</html>
