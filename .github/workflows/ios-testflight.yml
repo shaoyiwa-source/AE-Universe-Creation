@@ -1,0 +1,69 @@
+name: iOS TestFlight
+# 每次推送 iOS 程式到這個分支或 main，就在雲端 Mac 上打包並上傳到 TestFlight。
+# 需要的 GitHub Secrets：ASC_KEY_ID、ASC_ISSUER_ID、ASC_KEY_P8、APPLE_TEAM_ID（設定方式見 ios/README.md）
+on:
+  push:
+    branches: [main, claude/ae-dynamic-wallpaper-app-sgzrap]
+    paths: ['ios/**', '.github/workflows/ios-testflight.yml']
+  workflow_dispatch:
+concurrency:
+  group: ios-testflight-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  testflight:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: Check secrets
+        id: check
+        run: |
+          if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_KEY_P8" ] || [ -z "$APPLE_TEAM_ID" ]; then
+            echo "::notice::TestFlight secrets are not set yet; skipping upload."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
+      - name: Prepare
+        if: steps.check.outputs.ready == 'true'
+        working-directory: ios
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+          sed "s/TEAM_ID_PLACEHOLDER/$APPLE_TEAM_ID/" ExportOptions.plist > "$RUNNER_TEMP/ExportOptions.plist"
+      - name: Archive
+        if: steps.check.outputs.ready == 'true'
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild archive -project AEWallpaper.xcodeproj -scheme AEWallpaper -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/AEWallpaper.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" > archive.log 2>&1 || status=$?
+          grep -E "error:|warning: .*(sign|provision)" archive.log | sort -u | head -80 || true
+          tail -n 30 archive.log
+          exit ${status:-0}
+      - name: Upload to TestFlight
+        if: steps.check.outputs.ready == 'true'
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/AEWallpaper.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" 2>&1 | tail -n 60
+      - name: Clean up key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys"

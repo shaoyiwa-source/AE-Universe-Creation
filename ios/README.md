@@ -44,3 +44,17 @@ cd ios && xcodegen generate && open AEWallpaper.xcodeproj
 Bundle ID 預設 `com.aeuniverse.wallpaper`（按鈕為 `com.aeuniverse.wallpaper.controls`），被占用時兩個都要改。
 
 字型 Cormorant Garamond 以 SIL Open Font License 1.1 授權內建。
+
+## 自動上傳 TestFlight（不需要 Mac）
+`.github/workflows/ios-testflight.yml` 會在雲端 Mac 上打包，並用 Xcode 雲端自動簽章上傳 TestFlight。
+在 GitHub 專案 → Settings → Secrets and variables → Actions 加入：
+
+| Secret | 內容 |
+| --- | --- |
+| `APPLE_TEAM_ID` | 開發者團隊 ID（developer.apple.com → Account → Membership details） |
+| `ASC_KEY_ID` | App Store Connect API 金鑰 ID |
+| `ASC_ISSUER_ID` | API 金鑰頁面上方的 Issuer ID |
+| `ASC_KEY_P8` | 下載的 `AuthKey_XXXX.p8` 檔案全文 |
+
+API 金鑰在 App Store Connect → 使用者與存取權限 → 整合 → App Store Connect API 建立，存取權限選「管理」（Admin），才能自動建立憑證與描述檔。
+另外要先在 App Store Connect 建立 App（套裝 ID `com.aeuniverse.wallpaper`）。
