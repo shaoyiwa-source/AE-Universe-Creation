@@ -19,9 +19,9 @@ enum Shapes {
         for i in 0..<4 {
             let a = Double(i) * .pi / 2
             let na = a + .pi / 2
-            if i == 0 { p.move(to: CGPoint(x: cos(a) * r, y: sin(a) * r)) }
-            p.addQuadCurve(to: CGPoint(x: cos(na) * r, y: sin(na) * r),
-                           control: CGPoint(x: cos(a + .pi / 4) * r * thin, y: sin(a + .pi / 4) * r * thin))
+            if i == 0 { p.move(to: CGPoint(x: ccos(a) * r, y: csin(a) * r)) }
+            p.addQuadCurve(to: CGPoint(x: ccos(na) * r, y: csin(na) * r),
+                           control: CGPoint(x: ccos(a + .pi / 4) * r * thin, y: csin(a + .pi / 4) * r * thin))
         }
         p.closeSubpath()
         return p
@@ -33,7 +33,7 @@ enum Shapes {
         for i in 0..<10 {
             let a = -Double.pi / 2 + Double(i) * .pi / 5
             let r = i % 2 == 1 ? inner : outer
-            let pt = CGPoint(x: cos(a) * r, y: sin(a) * r)
+            let pt = CGPoint(x: ccos(a) * r, y: csin(a) * r)
             if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
         }
         p.closeSubpath()
@@ -45,7 +45,7 @@ enum Shapes {
         let steps = 16
         for i in 0...steps {
             let a = a0 + (a1 - a0) * Double(i) / Double(steps)
-            let pt = CGPoint(x: center.x + cos(a) * radius, y: center.y + sin(a) * radius)
+            let pt = CGPoint(x: center.x + ccos(a) * radius, y: center.y + csin(a) * radius)
             if i == 0 && moveFirst { path.move(to: pt) } else { path.addLine(to: pt) }
         }
     }
@@ -99,6 +99,10 @@ extension GraphicsContext {
                                    center: c, startRadius: 0, endRadius: r))
     }
 }
+
+/// 角度 → CGFloat 的三角函數（避免 Double／CGFloat 版本混淆）
+@inline(__always) func ccos(_ a: Double) -> CGFloat { CGFloat(Foundation.cos(a)) }
+@inline(__always) func csin(_ a: Double) -> CGFloat { CGFloat(Foundation.sin(a)) }
 
 /// 簡單的可重現亂數
 func rnd(_ a: Double, _ b: Double) -> Double { Double.random(in: a..<b) }

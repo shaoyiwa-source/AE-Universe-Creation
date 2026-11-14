@@ -75,7 +75,7 @@ final class ThemeState {
                 let a = min(1, (0.45 + 0.35 * sin(t * 5 + Double(i) * 1.3 + Double(ei))) * k * boost)
                 var beam = Path()
                 beam.move(to: CGPoint(x: ex, y: ey))
-                beam.addLine(to: CGPoint(x: ex + cos(ang) * H * 1.4, y: ey + sin(ang) * H * 1.4))
+                beam.addLine(to: CGPoint(x: ex + ccos(ang) * H * 1.4, y: ey + csin(ang) * H * 1.4))
                 c.stroke(beam, with: .color(hsla(hue, 1, 0.55, a * 0.18)), style: StrokeStyle(lineWidth: 26, lineCap: .round))
                 c.stroke(beam, with: .color(hsla(hue, 1, 0.62, a * 0.75)), style: StrokeStyle(lineWidth: 5, lineCap: .round))
                 c.stroke(beam, with: .color(.white.opacity(a * 0.55)), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
