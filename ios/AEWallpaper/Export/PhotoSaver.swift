@@ -6,7 +6,7 @@ enum PhotoSaver {
     static func requestAddAccess() async throws {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
         guard status == .authorized || status == .limited else {
-            throw BridgeError.message("請到 設定 → 隱私權 → 照片，允許 AE動態桌布「加入照片」")
+            throw AEError.message("請到 設定 → 隱私權 → 照片，允許 AE動態桌布「加入照片」")
         }
     }
 

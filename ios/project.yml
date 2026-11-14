@@ -19,10 +19,6 @@ targets:
     sources:
       - path: AEWallpaper
       - path: Shared
-      # 網頁版編輯器整包放進 App（離線可用）
-      - path: ../public/wallpaper
-        type: folder
-        buildPhase: resources
     info:
       path: AEWallpaper/Info.plist
       properties:
@@ -36,8 +32,8 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         NSPhotoLibraryAddUsageDescription: 將你做好的桌布、影片與原況照片存到「照片」。
         NSPhotoLibraryUsageDescription: 選擇照片作為桌布底圖或可愛貼圖。
-        NSCameraUsageDescription: 拍一張照片作為桌布底圖。
         LSApplicationQueriesSchemes: [shortcuts]
+        UIAppFonts: [CormorantGaramond-Medium.ttf, CormorantGaramond-SemiBold.ttf]
         CFBundleURLTypes:
           - CFBundleURLName: com.aeuniverse.wallpaper
             CFBundleURLSchemes: [aewallpaper]

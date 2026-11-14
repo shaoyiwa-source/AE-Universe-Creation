@@ -3,7 +3,6 @@ on:
   pull_request:
     paths:
       - 'ios/**'
-      - 'public/wallpaper/**'
       - '.github/workflows/ios-build.yml'
   workflow_dispatch:
 jobs:
@@ -23,4 +22,7 @@ jobs:
           set -o pipefail
           xcodebuild -project AEWallpaper.xcodeproj -scheme AEWallpaper \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO build | tail -n 120
+            CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || status=$?
+          echo "::group::Errors"; grep -E "error:" build.log | sort -u | head -150 || true; echo "::endgroup::"
+          tail -n 40 build.log
+          exit ${status:-0}

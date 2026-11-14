@@ -29,14 +29,14 @@ enum LivePhotoMaker {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let image = CGImageSourceCreateImageAtIndex(source, 0, nil),
               let dest = CGImageDestinationCreateWithURL(url as CFURL, UTType.jpeg.identifier as CFString, 1, nil)
-        else { throw BridgeError.message("無法讀取原況照片的靜態圖") }
+        else { throw AEError.message("無法讀取原況照片的靜態圖") }
 
         let properties: [CFString: Any] = [
             kCGImagePropertyMakerAppleDictionary: ["17": identifier],
             kCGImageDestinationLossyCompressionQuality: 0.95,
         ]
         CGImageDestinationAddImage(dest, image, properties as CFDictionary)
-        guard CGImageDestinationFinalize(dest) else { throw BridgeError.message("無法寫入原況照片的靜態圖") }
+        guard CGImageDestinationFinalize(dest) else { throw AEError.message("無法寫入原況照片的靜態圖") }
     }
 
     // MARK: - 影片
@@ -44,7 +44,7 @@ enum LivePhotoMaker {
     static func writeVideo(from input: URL, identifier: String, to output: URL) async throws {
         let asset = AVURLAsset(url: input)
         guard let track = try await asset.loadTracks(withMediaType: .video).first else {
-            throw BridgeError.message("影片中沒有畫面")
+            throw AEError.message("影片中沒有畫面")
         }
         let size = try await track.load(.naturalSize)
         let transform = try await track.load(.preferredTransform)
@@ -72,11 +72,11 @@ enum LivePhotoMaker {
         let adaptor = AVAssetWriterInputMetadataAdaptor(assetWriterInput: metadataInput)
         writer.add(metadataInput)
 
-        guard writer.startWriting() else { throw writer.error ?? BridgeError.message("無法建立原況照片影片") }
-        guard reader.startReading() else { throw reader.error ?? BridgeError.message("無法讀取影片") }
+        guard writer.startWriting() else { throw writer.error ?? AEError.message("無法建立原況照片影片") }
+        guard reader.startReading() else { throw reader.error ?? AEError.message("無法讀取影片") }
 
         // 以第一格的時間作為起點（網頁錄影的時間不一定從 0 開始）
-        guard let first = readerOutput.copyNextSampleBuffer() else { throw BridgeError.message("影片是空的") }
+        guard let first = readerOutput.copyNextSampleBuffer() else { throw AEError.message("影片是空的") }
         let start = CMSampleBufferGetPresentationTimeStamp(first)
         writer.startSession(atSourceTime: start)
 
@@ -102,7 +102,7 @@ enum LivePhotoMaker {
                             reader.cancelReading()
                             videoInput.markAsFinished()
                             writer.cancelWriting()
-                            continuation.resume(throwing: writer.error ?? BridgeError.message("寫入影片失敗"))
+                            continuation.resume(throwing: writer.error ?? AEError.message("寫入影片失敗"))
                             return
                         }
                     } else {
@@ -111,7 +111,7 @@ enum LivePhotoMaker {
                             if writer.status == .completed {
                                 continuation.resume()
                             } else {
-                                continuation.resume(throwing: writer.error ?? BridgeError.message("完成影片失敗"))
+                                continuation.resume(throwing: writer.error ?? AEError.message("完成影片失敗"))
                             }
                         }
                         return
@@ -143,7 +143,7 @@ enum LivePhotoMaker {
             metadataType: kCMMetadataFormatType_Boxed,
             metadataSpecifications: [spec] as CFArray,
             formatDescriptionOut: &description)
-        guard status == noErr, let description else { throw BridgeError.message("無法建立原況照片中繼資料") }
+        guard status == noErr, let description else { throw AEError.message("無法建立原況照片中繼資料") }
         return AVAssetWriterInput(mediaType: .metadata, outputSettings: nil, sourceFormatHint: description)
     }
 }
