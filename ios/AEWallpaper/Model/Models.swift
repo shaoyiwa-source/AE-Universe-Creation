@@ -126,10 +126,10 @@ struct RGBA: Codable, Hashable {
     }
     var color: Color { Color(.sRGB, red: r, green: g, blue: b, opacity: a) }
 
-    static let palette: [RGBA] = [
+    static let palette: [RGBA] = ([
         0xFF7EB6, 0xFF4D6D, 0xFFB347, 0xFFD93D, 0x7ED957,
         0x4DD4C6, 0x5AA9FF, 0x9B7BFF, 0xFFFFFF, 0x4A3550,
-    ].map { RGBA(hex: $0) }
+    ] as [UInt32]).map { RGBA(hex: $0) }
 }
 
 // MARK: - 場景
