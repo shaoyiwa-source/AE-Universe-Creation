@@ -14,6 +14,19 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+// 在原生 iPhone App（WKWebView）中執行時，可呼叫原生功能
+const NATIVE = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.ae);
+function native(action, data = {}) { return window.webkit.messageHandlers.ae.postMessage({ action, ...data }); }
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1]);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+if (NATIVE) document.documentElement.classList.add('native');
+
 const S = loadSettings();
 S.compSounds = { cloud: 'pop', star: 'bell', heart: 'chirp', ...(S.compSounds || {}) };
 setSfxVolume(S.sfxVolume);
@@ -536,7 +549,7 @@ const PANELS = {
       <h3 style="margin-top:14px">一鍵設為桌布</h3>
       <div class="row"><button class="btn solid block" id="setGuide">建立「${SHORTCUT_NAME}」捷徑</button></div>
       <div class="row"><button class="btn blue block" id="rotGuide">讓 iPhone 系統桌布也自動更換</button></div>
-      <div class="row"><button class="btn block" id="installGuide">把 AE動態桌布 加到主畫面</button></div>`;
+      <div class="row" ${NATIVE ? 'hidden' : ''}><button class="btn block" id="installGuide">把 AE動態桌布 加到主畫面</button></div>`;
     },
     bind(p) {
       p.querySelectorAll('[data-set]').forEach((inp) => inp.onchange = () => {
@@ -582,7 +595,7 @@ async function saveToGallery() {
 // ======================================================================
 // 說明對話框
 // ======================================================================
-function playUrl() { return `${location.origin}/wallpaper/?mode=play`; }
+function playUrl() { return NATIVE ? 'aewallpaper://play' : `${location.origin}/wallpaper/?mode=play`; }
 function copyBtn(text) {
   return `<div class="code"><span>${esc(text)}</span><button class="btn" data-copy="${esc(text)}">複製</button></div>`;
 }
@@ -593,6 +606,25 @@ function bindCopy(root) {
 }
 
 function showLockGuide() {
+  if (NATIVE) {
+    openModal(`
+    <h2>鎖定畫面按鈕</h2>
+    <p class="hint">AE動態桌布 App 內建鎖定畫面按鈕（iOS 18 以上）。按下並解鎖後，會直接進入互動模式。</p>
+    <h4>加入按鈕</h4>
+    <ol>
+      <li>在鎖定畫面長按 →「自訂」→ 選「鎖定畫面」</li>
+      <li>點左下或右下按鈕上的「－」移除原本的（手電筒／相機）</li>
+      <li>點「＋」→ 搜尋「AE」→ 選擇「AE互動」→ 完成</li>
+    </ol>
+    <h4>也可以放在控制中心</h4>
+    <ol><li>從右上角往下滑 → 長按空白處 →「加入控制項」→ 搜尋「AE互動」</li></ol>
+    <h4>隱藏這個按鈕</h4>
+    <ul>
+      <li>鎖定畫面：同樣進入「自訂」，按「－」移除 AE互動 按鈕。</li>
+      <li>App 內：在「設定」關閉「顯示互動按鈕」，互動模式就不會出現浮動按鈕（長按畫面 1 秒可暫時叫回）。</li>
+    </ul>`);
+    return;
+  }
   openModal(`
     <h2>鎖定畫面按鈕</h2>
     <p class="hint">iPhone（iOS 18 以上）可以把「捷徑」放到鎖定畫面下方的控制項按鈕。按下後解鎖，就會直接打開 AE動態桌布 的互動模式。</p>
@@ -647,6 +679,14 @@ function renderStillBlob() {
 
 async function setAsWallpaper() {
   select(null);
+  if (NATIVE) {
+    try {
+      const data = await blobToBase64(await renderStillBlob());
+      toast('正在打開捷徑…');
+      await native('setWallpaper', { data, shortcut: SHORTCUT_NAME });
+    } catch (e) { toast(`${e.message || e}`); }
+    return;
+  }
   // ClipboardItem 必須在點擊當下建立，圖片用 Promise 傳入（iOS Safari 的要求）
   const blobP = renderStillBlob();
   try {
@@ -695,6 +735,13 @@ function showInstallGuide() {
 // 匯出：靜態圖、動態影片
 // ======================================================================
 async function shareOrDownload(blob, name) {
+  if (NATIVE) {
+    try {
+      await native(blob.type.startsWith('video') ? 'saveVideo' : 'saveImage', { data: await blobToBase64(blob), mime: blob.type });
+      toast('已存到「照片」');
+    } catch (e) { toast(`儲存失敗：${e.message || e}`); }
+    return;
+  }
   const file = new File([blob], name, { type: blob.type });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try { await navigator.share({ files: [file], title: 'AE動態桌布' }); return; } catch (e) { if (e.name === 'AbortError') return; }
@@ -723,6 +770,10 @@ function showExport() {
       <button class="btn solid" id="exSet">設為桌布</button>
       <button class="btn blue" id="exSetGuide">第一次使用？建立捷徑</button>
     </div>
+    ${NATIVE ? `
+    <h4>原況照片（Live Photo）</h4>
+    <p class="hint">錄製 3 秒並直接存成原況照片。到 設定 → 背景圖片 選用後，鎖定畫面就會動。錄製時可以點元件互動。</p>
+    <div class="row"><button class="btn solid" id="exLive">製作原況照片</button><span id="liveOut"></span></div>` : ''}
     <h4>靜態桌布（PNG）</h4>
     <p class="hint">1080×2340 高畫質，可直接設為 iPhone 桌布。</p>
     <div class="row"><button class="btn solid" id="exPng">產生靜態桌布</button><span id="pngOut"></span></div>
@@ -736,7 +787,8 @@ function showExport() {
     <div class="row"><button class="btn blue" id="exGallery">存進收藏</button></div>
     <div class="note">
       <b>不用捷徑也可以：</b>把靜態桌布存到照片 → 打開該照片 → 分享 → 「設為背景圖片」。<br>
-      <b>想讓鎖定畫面會動：</b>把影片用「intoLive」等 App 轉成 Live Photo，再於 設定 → 背景圖片 選擇該 Live Photo（長按鎖定畫面即可播放）。
+      ${NATIVE ? '<b>設定原況照片桌布：</b>設定 → 背景圖片 →「＋ 新增背景圖片」→ 照片 → 選剛存好的原況照片。'
+    : '<b>想讓鎖定畫面會動：</b>把影片用「intoLive」等 App 轉成 Live Photo，再於 設定 → 背景圖片 選擇該 Live Photo（長按鎖定畫面即可播放）；或使用 AE動態桌布 iPhone App 直接製作原況照片。'}
     </div>`, (root) => {
     $('#exSet', root).onclick = () => setAsWallpaper();
     $('#exSetGuide', root).onclick = showSetWallpaperGuide;
@@ -751,13 +803,21 @@ function showExport() {
       root.querySelectorAll('[data-dur]').forEach((x) => x.classList.toggle('on', x === b));
     });
     $('#exVid', root) && ($('#exVid', root).onclick = () => startRecording(root));
+    $('#exLive', root) && ($('#exLive', root).onclick = () => startRecording(root, {
+      seconds: 3, out: '#liveOut', btn: '#exLive', withStill: true,
+      onDone: async (video, still) => {
+        await native('saveLivePhoto', { video: await blobToBase64(video), image: await blobToBase64(still) });
+      },
+    }));
     $('#exGallery', root).onclick = async () => { await saveToGallery(); };
   });
 }
 $('#btnExport').onclick = showExport;
 
-function startRecording(root) {
+function startRecording(root, opts = {}) {
   if (ui.recording) return;
+  const seconds = opts.seconds || exportDur;
+  const stillP = opts.withStill ? renderStillBlob() : null;
   const mime = pickMime();
   const stream = canvas.captureStream(30);
   try { recordingDestination().stream.getAudioTracks().forEach((tr) => stream.addTrack(tr)); } catch (e) { /* 無音訊 */ }
@@ -765,8 +825,8 @@ function startRecording(root) {
   try { rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined); } catch (e) { rec = new MediaRecorder(stream); }
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-  const out = $('#vidOut', root);
-  const btn = $('#exVid', root);
+  const out = $(opts.out || '#vidOut', root);
+  const btn = $(opts.btn || '#exVid', root);
   btn.disabled = true;
   rec.onstop = () => {
     ui.recording = false;
@@ -774,15 +834,23 @@ function startRecording(root) {
     const type = (rec.mimeType || mime || 'video/webm').split(';')[0];
     const blob = new Blob(chunks, { type });
     const ext = type.includes('mp4') ? 'mp4' : 'webm';
-    btn.disabled = false; btn.textContent = '● 重新錄製';
+    btn.disabled = false;
+    if (opts.onDone) {
+      out.textContent = '處理中…';
+      stillP.then((still) => opts.onDone(blob, still))
+        .then(() => { out.textContent = '已存到「照片」'; toast('原況照片已存到「照片」'); })
+        .catch((e) => { out.textContent = `失敗：${e.message || e}`; });
+      return;
+    }
+    btn.textContent = '● 重新錄製';
     out.innerHTML = '<button class="btn" id="saveVid">儲存／分享影片</button>';
     $('#saveVid', root).onclick = () => shareOrDownload(blob, `AE動態桌布-${Date.now()}.${ext}`);
-    toast('錄製完成 ');
+    toast('錄製完成');
   };
   ui.recording = true;
   select(null);
   rec.start(250);
-  let left = exportDur;
+  let left = seconds;
   out.innerHTML = `<span class="rec">錄製中 ${left}s</span>`;
   const iv = setInterval(() => {
     left -= 1;
@@ -791,8 +859,8 @@ function startRecording(root) {
   }, 1000);
   // 讓使用者看得到畫面：收起對話框
   $('#modal').hidden = true;
-  toast(`錄製 ${exportDur} 秒中… 可以點元件互動`);
-  setTimeout(() => { if ($('#modalBody').contains(out)) $('#modal').hidden = false; }, exportDur * 1000 + 600);
+  toast(`錄製 ${seconds} 秒中… 可以點元件互動`);
+  setTimeout(() => { if ($('#modalBody').contains(out)) $('#modal').hidden = false; }, seconds * 1000 + 600);
 }
 
 // ======================================================================
@@ -935,7 +1003,9 @@ async function boot() {
   if (new URLSearchParams(location.search).get('mode') === 'play') enterPlayer();
 }
 
-boot();
+const booted = boot();
+// 原生 App 的鎖定畫面按鈕會呼叫這個
+window.AE = { enterPlayer: () => booted.then(() => { if (!player.open) enterPlayer(); }) };
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('/wallpaper/sw.js', { scope: '/wallpaper/' }).catch(() => {});
