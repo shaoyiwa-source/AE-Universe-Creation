@@ -51,10 +51,12 @@ final class SceneEngine {
     func hitTest(_ point: CGPoint) -> SceneItem? {
         for item in scene.items.reversed() where !item.content.isStroke {
             let half = halfSize(of: item)
-            let dx = point.x - item.position.x, dy = point.y - item.position.y
-            let c = cos(-item.rotation), s = sin(-item.rotation)
-            let lx = (dx * c - dy * s) / item.scale, ly = (dx * s + dy * c) / item.scale
-            let pad = 24 / item.scale
+            let dx: CGFloat = point.x - item.position.x
+            let dy: CGFloat = point.y - item.position.y
+            let c = CGFloat(cos(-item.rotation)), s = CGFloat(sin(-item.rotation))
+            let lx: CGFloat = (dx * c - dy * s) / item.scale
+            let ly: CGFloat = (dx * s + dy * c) / item.scale
+            let pad: CGFloat = 24 / item.scale
             if abs(lx) <= half.width + pad && abs(ly) <= half.height + pad { return item }
         }
         return nil
@@ -117,11 +119,13 @@ final class SceneEngine {
         switch item.content {
         case .component(let kind):
             let ps = particles
-            let pos = item.position, rot = item.rotation, scale = item.scale
+            let pos: CGPoint = item.position
+            let scale: CGFloat = item.scale
+            let cr = CGFloat(cos(item.rotation)), sr = CGFloat(sin(item.rotation))
             Components.draw(kind, in: c, t: t, seed: item.seed, tap: tap, tapAge: tapAge) { local, pkind, opts in
-                let x = pos.x + (local.x * cos(rot) - local.y * sin(rot)) * scale
-                let y = pos.y + (local.x * sin(rot) + local.y * cos(rot)) * scale
-                ps.emit(at: CGPoint(x: x, y: y), kind: pkind, options: opts)
+                let rx: CGFloat = local.x * cr - local.y * sr
+                let ry: CGFloat = local.x * sr + local.y * cr
+                ps.emit(at: CGPoint(x: pos.x + rx * scale, y: pos.y + ry * scale), kind: pkind, options: opts)
             }
         case .emoji(let char):
             let k = 1 + exp(-tapAge * 5) * 0.2
