@@ -12,6 +12,9 @@ export const FILTERS = [
   { id: 'peach', name: '蜜桃奶霜', desc: '暖粉柔光・呼吸光暈' },
   { id: 'lavender', name: '夢幻紫霧', desc: '薰衣草色調・流動霧氣' },
   { id: 'film', name: '復古底片', desc: '膠片顆粒・漏光閃爍' },
+  { id: 'mint', name: '薄荷汽水', desc: '清涼藍綠・氣泡上升' },
+  { id: 'sunset', name: '夕陽橘霞', desc: '金橘晚霞・光影流轉' },
+  { id: 'mono', name: '黑白電影', desc: '經典黑白・放映閃爍' },
 ];
 
 const clamp = (v) => (v < 0 ? 0 : v > 255 ? 255 : v);
@@ -40,6 +43,16 @@ export function applyFilterPixels(src, id) {
       r = l + (r - l) * 0.78; g = l + (g - l) * 0.78; b = l + (b - l) * 0.78;
       r = 128 + (r - 128) * 1.12; g = 128 + (g - 128) * 1.1; b = 128 + (b - 128) * 1.05;
       r = 22 + r * 0.9 + 8; g = 20 + g * 0.9 + 4; b = 26 + b * 0.84 - 4; // 褪色黑位＋暖綠
+    } else if (id === 'mint') {
+      r = l + (r - l) * 0.9; g = l + (g - l) * 0.9; b = l + (b - l) * 0.9;
+      r = 128 + (r - 128) * 0.92 - 4; g = 128 + (g - 128) * 0.92 + 14; b = 128 + (b - 128) * 0.94 + 20;
+    } else if (id === 'sunset') {
+      r = 128 + (r - 128) * 1.05 + 26; g = 128 + (g - 128) * 1.0 + 4; b = 128 + (b - 128) * 0.9 - 10;
+      if (l > 150) g += 8;
+      if (l < 90) { b += 14; r += 6; } // 暗部帶一點紫
+    } else if (id === 'mono') {
+      const v = 128 + (l - 128) * 1.25;
+      r = v + 4; g = v + 2; b = v;
     }
     d[i] = clamp(r); d[i + 1] = clamp(g); d[i + 2] = clamp(b);
   }
@@ -64,7 +77,75 @@ function makeGrain() {
   }
 }
 
+function drawGrain(ctx, t, alpha) {
+  if (!grainTiles) makeGrain();
+  const tile = grainTiles[Math.floor(t * 24) % 3];
+  ctx.save();
+  ctx.globalAlpha = alpha; ctx.globalCompositeOperation = 'overlay';
+  ctx.translate(-Math.random() * 256, -Math.random() * 256);
+  ctx.fillStyle = ctx.createPattern(tile, 'repeat'); ctx.fillRect(0, 0, W + 256, H + 256);
+  ctx.restore();
+}
+
+function drawVignette(ctx, alpha, inner = 0.3) {
+  const vg = ctx.createRadialGradient(W / 2, H / 2, H * inner, W / 2, H / 2, H * 0.72);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(0,0,0,${alpha})`);
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+}
+
 export function drawFilterOverlay(ctx, id, t) {
+  if (id === 'mint') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    const k = 0.5 + 0.5 * Math.sin(t * 0.7);
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+    g.addColorStop(0, `rgba(170,255,235,${0.2 + 0.1 * k})`); g.addColorStop(1, 'rgba(170,255,235,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 26; i++) {
+      const sp = 0.05 + ((i * 37) % 10) / 160;
+      const u = (t * sp + i * 0.137) % 1;
+      const x = ((i * 0.618 * W) % W) + Math.sin(t * 2 + i) * 14;
+      const y = H * 1.05 - u * H * 1.15;
+      const r = 6 + (i * 7) % 12;
+      ctx.strokeStyle = `rgba(255,255,255,${0.45 * Math.sin(u * Math.PI)})`;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+  if (id === 'sunset') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    const a = t * 0.08;
+    const g = ctx.createLinearGradient(W / 2 + Math.cos(a) * W, 0, W / 2 - Math.cos(a) * W, H);
+    g.addColorStop(0, 'rgba(255,150,60,0.26)'); g.addColorStop(0.5, 'rgba(255,90,140,0.08)'); g.addColorStop(1, 'rgba(140,80,255,0.18)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const sx = W * (0.2 + 0.1 * Math.sin(t * 0.2)), sy = H * (0.78 + 0.03 * Math.sin(t * 0.33));
+    const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, W * 0.9);
+    sg.addColorStop(0, `rgba(255,200,110,${0.34 + 0.08 * Math.sin(t * 1.1)})`); sg.addColorStop(1, 'rgba(255,200,110,0)');
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    return;
+  }
+  if (id === 'mono') {
+    drawGrain(ctx, t, 0.14);
+    ctx.save();
+    drawVignette(ctx, 0.6, 0.25);
+    const f = Math.random();
+    ctx.fillStyle = `rgba(255,255,255,${0.02 + (f > 0.85 ? 0.05 : 0)})`; ctx.fillRect(0, 0, W, H);
+    if (f < 0.12) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+      const sx = Math.random() * W; ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx + rand(-10, 10), H); ctx.stroke();
+    }
+    if (f > 0.9) {
+      ctx.fillStyle = 'rgba(20,20,20,0.6)';
+      ctx.beginPath(); ctx.arc(Math.random() * W, Math.random() * H, rand(2, 6), 0, TAU); ctx.fill();
+    }
+    ctx.restore();
+    return;
+  }
   if (id === 'peach') {
     const k = 0.5 + 0.5 * Math.sin(t * 0.9);
     let g = ctx.createRadialGradient(W * (0.3 + 0.15 * Math.sin(t * 0.3)), H * 0.12, 0, W * 0.3, H * 0.12, H * 0.6);
@@ -127,6 +208,9 @@ export const THEMES = [
   { id: 'laser', name: '夜店雷射', desc: '彩色雷射光束・跟著音樂閃' },
   { id: 'breeze', name: '微風流動', desc: '花瓣樹葉隨風飄・風紋流動' },
   { id: 'sparkle', name: '閃閃發光', desc: '星光閃爍・亮片飄落' },
+  { id: 'snow', name: '冬日飄雪', desc: '雪花紛飛・柔光閃爍' },
+  { id: 'bubbles', name: '夢幻泡泡', desc: '彩虹泡泡・緩緩飄升' },
+  { id: 'aurora', name: '星空極光', desc: '流動極光・流星劃過' },
 ];
 
 const themeState = {};
@@ -166,11 +250,14 @@ function initLaser() {
 
 export function drawTheme(ctx, id, t, dt, k, energy) {
   if (id === 'none' || !id || k <= 0) return;
-  if (!themeState[id]) themeState[id] = id === 'laser' ? initLaser() : id === 'breeze' ? initBreeze() : initSparkle();
+  if (!themeState[id]) themeState[id] = THEME_INIT[id]();
   const st = themeState[id];
   if (id === 'laser') drawLaser(ctx, st, t, k, energy);
   else if (id === 'breeze') drawBreeze(ctx, st, t, dt, k, energy);
   else if (id === 'sparkle') drawSparkle(ctx, st, t, dt, k, energy);
+  else if (id === 'snow') drawSnow(ctx, st, t, dt, k, energy);
+  else if (id === 'bubbles') drawBubbles(ctx, st, t, dt, k, energy);
+  else if (id === 'aurora') drawAurora(ctx, st, t, dt, k, energy);
 }
 
 function drawLaser(ctx, st, t, k, e) {
@@ -323,6 +410,134 @@ function drawSparkle(ctx, st, t, dt, k, e) {
   ctx.restore();
 }
 
+
+// ---------- 冬日飄雪 ----------
+function newFlake(top) {
+  const r = rand(2, 10);
+  return { x: rand(0, W), y: top ? rand(-H * 0.1, 0) : rand(0, H), r, vy: 30 + r * 12, ph: rand(0, TAU), sw: rand(10, 40) };
+}
+function initSnow() {
+  const flakes = [];
+  for (let i = 0; i < 130; i++) flakes.push(newFlake(false));
+  return { flakes };
+}
+function drawSnow(ctx, st, t, dt, k, e) {
+  const wind = e.playing ? e.level * 80 : 0;
+  ctx.save();
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, `rgba(205,225,255,${0.22 * k})`); g.addColorStop(1, `rgba(255,255,255,${0.12 * k})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  st.flakes.forEach((f, i) => {
+    f.y += f.vy * dt;
+    f.x += (Math.sin(t * 0.8 + f.ph) * f.sw * 0.04 + wind * 0.02) * f.r * dt * 6;
+    if (f.y > H + 20) st.flakes[i] = newFlake(true);
+    const tw = 0.75 + 0.25 * Math.sin(t * 3 + f.ph);
+    if (f.r > 6) {
+      const gl = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 3);
+      gl.addColorStop(0, `rgba(255,255,255,${0.35 * k * tw})`); gl.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gl; ctx.fillRect(f.x - f.r * 3, f.y - f.r * 3, f.r * 6, f.r * 6);
+    }
+    ctx.fillStyle = `rgba(255,255,255,${0.9 * Math.min(1, k * 1.2) * tw})`;
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.fill();
+  });
+  ctx.restore();
+}
+
+// ---------- 夢幻泡泡 ----------
+function newBubble(bottom) {
+  return { x: rand(0, W), y: bottom ? H + rand(40, 300) : rand(0, H), r: rand(22, 75), vy: rand(35, 85), ph: rand(0, TAU), hue: rand(0, 360) };
+}
+function initBubbles() {
+  const list = [];
+  for (let i = 0; i < 24; i++) list.push(newBubble(false));
+  return { list };
+}
+function drawBubbles(ctx, st, t, dt, k, e) {
+  const boost = e.playing ? 1 + e.level * 1.5 : 1;
+  ctx.save();
+  st.list.forEach((b, i) => {
+    b.y -= b.vy * dt * boost;
+    b.x += Math.sin(t * 0.9 + b.ph) * 0.6;
+    if (b.y < -b.r - 20) {
+      if (b.y > -b.r - 40) burst(b.x, -10, 'spark', 4, 0.4);
+      st.list[i] = newBubble(true);
+      return;
+    }
+    const hue = (b.hue + t * 40) % 360;
+    const g = ctx.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.1, b.x, b.y, b.r);
+    g.addColorStop(0, 'rgba(255,255,255,0.02)');
+    g.addColorStop(0.75, `hsla(${hue},90%,80%,${0.12 * k})`);
+    g.addColorStop(1, `hsla(${(hue + 120) % 360},90%,75%,${0.45 * k})`);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = `hsla(${(hue + 200) % 360},90%,85%,${0.6 * k})`; ctx.stroke();
+    ctx.strokeStyle = `rgba(255,255,255,${0.85 * k})`; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.72, Math.PI * 1.1, Math.PI * 1.45); ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// ---------- 星空極光 ----------
+function initAurora() {
+  const stars = [];
+  for (let i = 0; i < 90; i++) stars.push({ x: rand(0, W), y: rand(0, H * 0.65), r: rand(1, 3.2), ph: rand(0, TAU), sp: rand(1, 3) });
+  return { stars, shoot: null, nextShoot: 2 };
+}
+const AURORA_COLORS = [[92, 255, 176], [63, 213, 255], [176, 124, 255]];
+function drawAurora(ctx, st, t, dt, k, e) {
+  const boost = e.playing ? 0.7 + e.level * 1.6 : 1;
+  ctx.save();
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, `rgba(4,10,32,${0.78 * k})`); sky.addColorStop(0.5, `rgba(8,18,48,${0.6 * k})`); sky.addColorStop(1, `rgba(20,20,60,${0.38 * k})`);
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  st.stars.forEach((s) => {
+    const a = (0.4 + 0.6 * Math.abs(Math.sin(t * s.sp + s.ph))) * k;
+    ctx.fillStyle = `rgba(255,255,255,${a})`;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
+  });
+  ctx.globalCompositeOperation = 'lighter';
+  AURORA_COLORS.forEach(([r, g, b], i) => {
+    const base = H * (0.16 + i * 0.07);
+    const depth = H * (0.22 + 0.05 * Math.sin(t * 0.4 + i));
+    const pts = [];
+    for (let x = -40; x <= W + 40; x += 30) {
+      pts.push([x, base + Math.sin(x * 0.004 + t * 0.35 + i * 1.7) * 70 + Math.sin(x * 0.012 - t * 0.6 + i) * 24]);
+    }
+    const grad = ctx.createLinearGradient(0, base - 80, 0, base + depth);
+    const a = Math.min(1, 0.36 * k * boost);
+    grad.addColorStop(0, `rgba(${r},${g},${b},0)`);
+    grad.addColorStop(0.25, `rgba(${r},${g},${b},${a})`);
+    grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    pts.forEach(([x, y], j) => (j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    for (let j = pts.length - 1; j >= 0; j--) ctx.lineTo(pts[j][0], pts[j][1] + depth);
+    ctx.closePath(); ctx.fill();
+  });
+  // 流星
+  st.nextShoot -= dt;
+  if (!st.shoot && st.nextShoot <= 0) {
+    st.shoot = { x: rand(W * 0.2, W * 1.1), y: rand(0, H * 0.25), life: 0 };
+    st.nextShoot = rand(4, 9);
+  }
+  if (st.shoot) {
+    const s = st.shoot;
+    s.life += dt;
+    const u = s.life / 0.9;
+    if (u >= 1) st.shoot = null;
+    else {
+      const hx = s.x - u * W * 0.6, hy = s.y + u * W * 0.35;
+      const tg = ctx.createLinearGradient(hx, hy, hx + 220, hy - 130);
+      tg.addColorStop(0, `rgba(255,255,255,${(1 - u) * k})`); tg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = tg; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 220, hy - 130); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+const THEME_INIT = { laser: initLaser, breeze: initBreeze, sparkle: initSparkle, snow: initSnow, bubbles: initBubbles, aurora: initAurora };
+
 // =====================================================================
 // 粒子（元件互動與觸碰特效）
 // =====================================================================
@@ -359,6 +574,8 @@ export function drawParticles(ctx, dt) {
     if (p.life >= p.max) { particles.splice(i, 1); continue; }
     const u = p.life / p.max;
     if (p.kind === 'bubble') { p.vx *= 0.97; p.vy = p.vy * 0.98 - 6 * dt * 60 * 0.1; p.x += Math.sin(p.life * 6 + (p.wob || 0)) * 0.8; }
+    else if (p.kind === 'zzz') { p.x += Math.sin(p.life * 3) * 0.6; }
+    else if (p.kind === 'petal') { p.vx *= 0.99; p.vy = Math.min(p.vy + 50 * dt, 90); p.x += Math.sin(p.life * 4 + (p.wob || 0)) * 1.2; }
     else { p.vx *= 0.96; p.vy = p.vy * 0.96 + 260 * dt; }
     p.x += p.vx * dt; p.y += p.vy * dt;
     const a = 1 - u * u;
@@ -372,6 +589,16 @@ export function drawParticles(ctx, dt) {
       ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
       ctx.beginPath(); ctx.arc(-p.s * 0.35, -p.s * 0.35, p.s * 0.22, 0, TAU); ctx.fillStyle = '#fff'; ctx.fill();
+    } else if (p.kind === 'zzz') {
+      ctx.rotate(-0.25);
+      ctx.font = `900 ${p.s * (0.8 + u * 0.6)}px "Zen Maru Gothic", sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(80,70,140,.55)'; ctx.strokeText('z', 0, 0);
+      ctx.fillStyle = '#FFF6C2'; ctx.fillText('z', 0, 0);
+    } else if (p.kind === 'petal') {
+      ctx.rotate(p.rot + p.life * 2); ctx.scale(1, 0.55 + 0.45 * Math.abs(Math.sin(p.life * 4)));
+      ctx.fillStyle = p.hue > 180 ? '#FFC1DA' : '#FF9EC4';
+      ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * 0.6, 0, 0, TAU); ctx.fill();
     } else {
       ctx.rotate(p.rot + p.life * 3);
       starPath(ctx, p.s * (1 - u * 0.5)); ctx.fillStyle = `hsl(${p.hue},100%,85%)`; ctx.fill();
@@ -381,12 +608,15 @@ export function drawParticles(ctx, dt) {
 }
 
 // =====================================================================
-// 動態可愛元件（三款）
+// 動態可愛元件
 // =====================================================================
 export const COMPONENTS = [
   { id: 'cloud', name: '雲朵寶寶', desc: '飄呀飄・會眨眼', sound: 'pop', burst: 'heart' },
   { id: 'star', name: '跳跳星', desc: '彈跳＋灑星光', sound: 'bell', burst: 'spark' },
   { id: 'heart', name: '果凍愛心', desc: '噗通心跳・冒泡泡', sound: 'chirp', burst: 'bubble' },
+  { id: 'bunny', name: '跳跳兔', desc: '耳朵搖搖・鼻子動動', sound: 'boing', burst: 'heart' },
+  { id: 'moon', name: '睡睡月亮', desc: '打瞌睡・飄出 Zzz', sound: 'harp', burst: 'spark' },
+  { id: 'flower', name: '搖擺小花', desc: '隨風搖擺・灑花瓣', sound: 'chirp', burst: 'petal' },
 ];
 export const COMP_RADIUS = 110;
 
@@ -416,8 +646,12 @@ export function drawComponent(ctx, o, t, live = true) {
   const tap = o.tapT != null ? Math.exp(-(t - o.tapT) * 4.5) : 0;
   ctx.save();
   ctx.translate(o.x, o.y); ctx.rotate(o.rot || 0); ctx.scale(o.scale, o.scale);
+  const tapAge = o.tapT != null ? t - o.tapT : 99;
   if (o.kind === 'cloud') drawCloud(ctx, o, t, tap, live);
   else if (o.kind === 'star') drawStar(ctx, o, t, tap, live);
+  else if (o.kind === 'bunny') drawBunny(ctx, o, t, tap, tapAge, live);
+  else if (o.kind === 'moon') drawMoon(ctx, o, t, tap, live);
+  else if (o.kind === 'flower') drawFlower(ctx, o, t, tap, live);
   else drawJelly(ctx, o, t, tap, live);
   ctx.restore();
 }
@@ -495,6 +729,92 @@ function drawJelly(ctx, o, t, tap, live) {
   ctx.beginPath(); ctx.arc(-26, -72, 5, 0, TAU); ctx.fill();
   face(ctx, t, o.seed, -10, 0.9, '#5A1830');
   if (live && Math.random() < 0.03) emitWorld(o, rand(-50, 50), -90, 'bubble', { s: rand(8, 18), vy: rand(-140, -80), max: rand(1.4, 2.2) });
+}
+
+
+// ---------- 跳跳兔 ----------
+function drawBunny(ctx, o, t, tap, tapAge, live) {
+  const hop = Math.abs(Math.sin(t * 2.4 + o.seed));
+  ctx.translate(0, 26);
+  ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#6a4a5a';
+  ctx.beginPath(); ctx.ellipse(0, 88, 72 - hop * 14, 11, 0, 0, TAU); ctx.fill(); ctx.restore();
+  ctx.translate(0, -hop * 22 - tap * 20);
+  const wig = Math.sin(t * 3 + o.seed) * 0.12 + tap * Math.sin(tapAge * 18) * 0.5;
+  [[-34, -1], [34, 1]].forEach(([ex, dir]) => {
+    ctx.save();
+    ctx.translate(ex, -40); ctx.rotate(dir * (0.18 + wig * dir));
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#E6D3DC'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.ellipse(0, -62, 23, 62, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#FFC4D8';
+    ctx.beginPath(); ctx.ellipse(0, -58, 11, 44, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+  });
+  const g = ctx.createLinearGradient(0, -60, 0, 80);
+  g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#F6EEF3');
+  ctx.fillStyle = g; ctx.strokeStyle = '#E6D3DC'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.ellipse(0, 12, 80, 68, 0, 0, TAU); ctx.fill(); ctx.stroke();
+  face(ctx, t, o.seed, 16, 0.95, '#4A3040');
+  const tw = 1 + Math.max(0, Math.sin(t * 10 + o.seed)) * 0.25;
+  ctx.fillStyle = '#FF8FB1';
+  ctx.beginPath(); ctx.ellipse(0, 22, 7 * tw, 5, 0, 0, TAU); ctx.fill();
+  if (live && Math.random() < 0.008) emitWorld(o, rand(-40, 40), -110, 'heart', { s: rand(10, 16), vy: rand(-120, -70) });
+}
+
+// ---------- 睡睡月亮 ----------
+function drawMoon(ctx, o, t, tap, live) {
+  const awake = tap > 0.15;
+  ctx.translate(0, Math.sin(t * 0.9 + o.seed) * 10);
+  ctx.rotate(Math.sin(t * 0.8 + o.seed) * 0.12 + tap * Math.sin(t * 25) * 0.15);
+  const glow = ctx.createRadialGradient(0, 0, 40, 0, 0, 150);
+  glow.addColorStop(0, 'rgba(255,240,170,0.28)'); glow.addColorStop(1, 'rgba(255,240,170,0)');
+  ctx.fillStyle = glow; ctx.fillRect(-150, -150, 300, 300);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(-200, -200, 400, 400); ctx.arc(46, -36, 80, 0, TAU); ctx.clip('evenodd');
+  const g = ctx.createLinearGradient(-60, -90, 40, 90);
+  g.addColorStop(0, '#FFF6C2'); g.addColorStop(1, '#FFD45E');
+  ctx.fillStyle = g; ctx.strokeStyle = '#F2B53A'; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.arc(0, 0, 92, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.save(); ctx.translate(-34, 30); ctx.rotate(-0.35);
+  if (awake) {
+    face(ctx, t, o.seed, 0, 0.8, '#6A4A10');
+  } else {
+    ctx.fillStyle = 'rgba(255,130,150,.5)';
+    ctx.beginPath(); ctx.ellipse(-30, 12, 11, 7, 0, 0, TAU); ctx.ellipse(28, 12, 11, 7, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#6A4A10'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    [-16, 16].forEach((ex) => { ctx.beginPath(); ctx.arc(ex, -2, 8, 0.15, Math.PI - 0.15); ctx.stroke(); });
+    ctx.beginPath(); ctx.arc(0, 12, 5, 0.2, Math.PI - 0.2); ctx.stroke();
+  }
+  ctx.restore();
+  if (live && !awake && Math.random() < 0.014) emitWorld(o, 70, -70, 'zzz', { vx: rand(20, 50), vy: rand(-80, -50), s: rand(22, 34), max: 2.2 });
+}
+
+// ---------- 搖擺小花 ----------
+function drawFlower(ctx, o, t, tap, live) {
+  const sway = Math.sin(t * 1.5 + o.seed) * 22;
+  ctx.save(); ctx.globalAlpha = 0.15; ctx.fillStyle = '#3d6b3a';
+  ctx.beginPath(); ctx.ellipse(0, 112, 56, 9, 0, 0, TAU); ctx.fill(); ctx.restore();
+  ctx.strokeStyle = '#6CC46A'; ctx.lineWidth = 11; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(0, 110); ctx.quadraticCurveTo(sway * 0.3, 60, sway * 0.8, -10); ctx.stroke();
+  ctx.fillStyle = '#8FDB7E';
+  [[-1, 70], [1, 48]].forEach(([d, y]) => {
+    ctx.save(); ctx.translate(sway * 0.15 + d * 6, y); ctx.rotate(d * 0.7);
+    ctx.beginPath(); ctx.ellipse(d * 26, 0, 28, 12, 0, 0, TAU); ctx.fill(); ctx.restore();
+  });
+  ctx.translate(sway * 0.8, -30);
+  ctx.rotate(sway * 0.006);
+  const spin = t * 0.3 + tap * 6;
+  for (let i = 0; i < 6; i++) {
+    const a = spin + (i * TAU) / 6;
+    ctx.save(); ctx.rotate(a); ctx.translate(0, -52);
+    ctx.fillStyle = i % 2 ? '#FFC1DA' : '#FF9EC4'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.ellipse(0, 0, 27, 38, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.fillStyle = '#FFD76B'; ctx.strokeStyle = '#F5B83D'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(0, 0, 42, 0, TAU); ctx.fill(); ctx.stroke();
+  face(ctx, t, o.seed, 2, 0.62, '#5A3A12');
+  if (live && Math.random() < 0.01) emitWorld(o, rand(-50, 50), -60, 'petal', { vx: rand(20, 70), vy: rand(-40, 10), s: rand(10, 16), max: 2.6 });
 }
 
 // 從元件的本地座標噴出粒子到世界座標

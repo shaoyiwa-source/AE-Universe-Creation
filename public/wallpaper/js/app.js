@@ -28,7 +28,7 @@ function blobToBase64(blob) {
 if (NATIVE) document.documentElement.classList.add('native');
 
 const S = loadSettings();
-S.compSounds = { cloud: 'pop', star: 'bell', heart: 'chirp', ...(S.compSounds || {}) };
+S.compSounds = { ...Object.fromEntries(COMPONENTS.map((c) => [c.id, c.sound])), ...(S.compSounds || {}) };
 setSfxVolume(S.sfxVolume);
 
 const DEFAULT_BG = defaultBackground();
@@ -58,8 +58,11 @@ const THEME_SWATCH = {
   laser: 'conic-gradient(from 200deg at 50% 100%,#1a0033,#ff2fd0,#1a0033,#2fd5ff,#1a0033,#b6ff2f,#1a0033)',
   breeze: 'linear-gradient(160deg,#fff6d8,#ffd6e7 45%,#c9f0d8)',
   sparkle: 'radial-gradient(circle at 30% 30%,#fff 0 3%,transparent 4%),radial-gradient(circle at 70% 60%,#fff 0 2%,transparent 3%),linear-gradient(160deg,#ffe7a8,#ffc2e2 50%,#c8b6ff)',
+  snow: 'linear-gradient(160deg,#ffffff,#dcebff 55%,#b9d4f5)',
+  bubbles: 'radial-gradient(circle at 35% 35%,#fff 0 6%,transparent 7%),radial-gradient(circle at 65% 62%,rgba(255,255,255,.8) 0 4%,transparent 5%),linear-gradient(140deg,#ffd6f0,#d6f0ff 50%,#e9d6ff)',
+  aurora: 'linear-gradient(180deg,#071433,#0b3a4a 45%,#36d39a 72%,#7b5cff)',
 };
-const THEME_ICON = { none: '', laser: '', breeze: '', sparkle: '' };
+const THEME_ICON = {};
 
 // ======================================================================
 // 小工具
@@ -485,7 +488,7 @@ const PANELS = {
       <h3>動態桌面主題</h3>
       <div class="grid" style="grid-template-columns:repeat(4,1fr)">${THEMES.map((t) => `
         <button class="tile ${scene.theme === t.id ? 'on' : ''}" data-theme="${t.id}">
-          <div class="swatch" style="background:${THEME_SWATCH[t.id]};display:grid;place-items:center;font-size:28px">${THEME_ICON[t.id]}</div>${t.name}<small>${t.desc}</small>
+          <div class="swatch" style="background:${THEME_SWATCH[t.id]};display:grid;place-items:center;font-size:28px">${THEME_ICON[t.id] || ''}</div>${t.name}<small>${t.desc}</small>
         </button>`).join('')}</div>
       <div class="row"><span class="label">效果強度</span><input type="range" id="intensity" min="0.1" max="1" step="0.05" value="${scene.intensity}"></div>
       <p class="hint">匯入音樂並播放時，雷射、風、星光會跟著音樂的節奏變化。</p>`;

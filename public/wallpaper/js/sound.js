@@ -4,6 +4,9 @@ export const SOUNDS = [
   { id: 'pop', name: '啵啵泡泡', emoji: '🫧', desc: '圓滾滾的泡泡破掉聲' },
   { id: 'bell', name: '叮叮鈴鐺', emoji: '🔔', desc: '清脆的小鈴鐺琶音' },
   { id: 'chirp', name: '啾啾小鳥', emoji: '🐤', desc: '小鳥啾啾兩聲' },
+  { id: 'boing', name: '彈簧蹦蹦', emoji: '🐰', desc: '軟Q的彈簧聲' },
+  { id: 'harp', name: '豎琴滑音', emoji: '🌙', desc: '夢幻的豎琴上行' },
+  { id: 'meow', name: '小貓喵喵', emoji: '🐱', desc: '撒嬌的一聲喵' },
 ];
 
 let ac = null;
@@ -91,6 +94,51 @@ export function playSound(id) {
       o.start(t + d); lfo.start(t + d);
       o.stop(t + d + 0.12); lfo.stop(t + d + 0.12);
     });
+  } else if (id === 'boing') {
+    const o = a.createOscillator();
+    const g = a.createGain();
+    const lfo = a.createOscillator();
+    const lfoGain = a.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(170, t);
+    o.frequency.exponentialRampToValueAtTime(520, t + 0.05);
+    o.frequency.exponentialRampToValueAtTime(150, t + 0.42);
+    lfo.frequency.value = 17; lfoGain.gain.value = 45;
+    lfo.connect(lfoGain).connect(o.frequency);
+    env(g, t, 0.75, 0.01, 0.42);
+    o.connect(g).connect(out);
+    o.start(t); lfo.start(t); o.stop(t + 0.5); lfo.stop(t + 0.5);
+  } else if (id === 'harp') {
+    [1046.5, 1174.7, 1318.5, 1568, 1760, 2093].forEach((f, i) => {
+      const d = i * 0.045;
+      const o = a.createOscillator();
+      const g = a.createGain();
+      o.type = 'triangle';
+      o.frequency.value = f;
+      env(g, t + d, 0.38, 0.004, 0.55);
+      o.connect(g).connect(out);
+      o.start(t + d); o.stop(t + d + 0.65);
+    });
+  } else if (id === 'meow') {
+    const o = a.createOscillator();
+    const g = a.createGain();
+    const bp = a.createBiquadFilter();
+    const lp = a.createBiquadFilter();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(480, t);
+    o.frequency.exponentialRampToValueAtTime(780, t + 0.13);
+    o.frequency.exponentialRampToValueAtTime(460, t + 0.45);
+    bp.type = 'bandpass'; bp.Q.value = 5;
+    bp.frequency.setValueAtTime(900, t);
+    bp.frequency.exponentialRampToValueAtTime(1900, t + 0.12);
+    bp.frequency.exponentialRampToValueAtTime(1000, t + 0.45);
+    lp.type = 'lowpass'; lp.frequency.value = 3200;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.5, t + 0.05);
+    g.gain.setValueAtTime(0.5, t + 0.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o.connect(bp).connect(lp).connect(g).connect(out);
+    o.start(t); o.stop(t + 0.55);
   }
 }
 
