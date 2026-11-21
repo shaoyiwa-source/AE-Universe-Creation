@@ -1,5 +1,5 @@
-// AE Lumina Wall — application controller (r1)
-import { db, loadSettings, saveSettings, lsGet, lsSet } from './store.js';
+// AE Lumina Wall — application controller (r3: cloud library + full exhibition features)
+import { loadSettings, saveSettings, lsGet, lsSet } from './store.js';
 import { Sound } from './audio.js';
 import { FX } from './fx.js';
 import { runTransition, resetSlide, TRANSITIONS } from './transitions.js';
@@ -7,9 +7,11 @@ import { STR, OPTIONS } from './i18n.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const API = '/api/lumina';
+const MAX_UPLOAD = Math.floor(4.3 * 1024 * 1024);
 
-// ---------- Built-in collection (AE curated 27, v2393) ----------
-const BUILTIN = [
+// House collection — used when the cloud library is unreachable (offline preview)
+const FALLBACK = [
   ['Eternal Sun', 'assets/4e0991885a9649ea.webp'], ['Infinity Core', 'assets/b46ca2328e93f1f4.webp'],
   ['Universe Heart Bloom', 'assets/bb5c9cf38f67af5b.webp'], ['Infinite Love', 'assets/2ee9aa3b017652d9.webp'],
   ['Life Energy Field', 'assets/52116e7d3550cdf1.webp'], ['Life Bloom', 'assets/6c165bd1deb30988.webp'],
@@ -18,20 +20,24 @@ const BUILTIN = [
   ['Love Embrace', 'assets/selected-works-v2/love-embrace.webp'], ['Love Energy Field', 'assets/selected-works-v2/love-energy-field.webp'],
   ['Colorful Flow', 'assets/selected-works-v2/colorful-flow.webp'], ['Nature’s Strength', 'assets/selected-works-v2/natures-strength.webp'],
   ['Fun Universe', 'assets/selected-works-v2/fun-universe.webp'], ['Marvellous Energy World', 'assets/selected-works-v2/marvellous-energy-world.webp'],
-  [null, 'assets/selected-works-v2/selected-17.webp'], ['Expansion', 'assets/selected-works-v2/expansion.webp'],
+  ['', 'assets/selected-works-v2/selected-17.webp'], ['Expansion', 'assets/selected-works-v2/expansion.webp'],
   ['Heart Rebuild', 'assets/selected-works-v2/heart-rebuild.webp'], ['Flower Heart Bloom', 'assets/selected-works-v2/flower-heart-bloom.webp'],
   ['Heart Energy', 'assets/selected-works-v2/heart-energy.webp'], ['Infinite Love Strength', 'assets/selected-works-v2/infinite-love-strength.webp'],
-  [null, 'assets/selected-works-v2/selected-23.webp'], [null, 'assets/selected-works-v2/selected-24.webp'],
-  [null, 'assets/selected-works-v2/selected-25.webp'], [null, 'assets/selected-works-v2/selected-26.webp'],
-  [null, 'assets/selected-works-v2/selected-27.webp'],
-].map(([title, src], i) => ({ id: 'ae' + String(i + 1).padStart(2, '0'), no: i + 1, title, src, builtin: true }));
+  ['', 'assets/selected-works-v2/selected-23.webp'], ['', 'assets/selected-works-v2/selected-24.webp'],
+  ['', 'assets/selected-works-v2/selected-25.webp'], ['', 'assets/selected-works-v2/selected-26.webp'],
+  ['', 'assets/selected-works-v2/selected-27.webp'],
+].map(([en, src], i) => ({ id: 'ae' + String(i + 1).padStart(2, '0'), no: i + 1, builtin: true, type: 'image', src, thumb: src, title: { en, zh: i === 0 ? '盛明' : '' } }));
+
+// Interval steps: 4 s … 1 h (frame mode)
+const STEPS = [4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 40, 50, 60, 90, 120, 180, 300, 600, 900, 1800, 3600];
+const fmtSec = (s) => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)} min` : '1 h';
 
 const DEFAULTS = {
   mode: 'online', adjusted: false, transition: 'random', interval: 10,
   effects: { echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
   interact: { ripple: true, chime: true, lumi: true, seeds: true },
-  display: { captions: true, mat: true, drift: true, shuffle: false, loop: true },
-  music: 'celestial', volume: 0.6, selected: [], musicName: '',
+  display: { captions: true, label: true, camera: false, mat: true, drift: true, shuffle: false, loop: true },
+  music: 'celestial', volume: 0.6, selected: [],
 };
 
 const S = loadSettings(DEFAULTS);
@@ -39,97 +45,198 @@ let lang = lsGet('ae-language', 'zh') === 'en' ? 'en' : 'zh';
 const T = (k, ...a) => { const v = STR[lang][k]; return typeof v === 'function' ? v(...a) : v; };
 const L = (o) => o[lang];
 const modeOf = (id) => OPTIONS.modes.find(m => m.id === id) || OPTIONS.modes.find(m => m.id === 'online');
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// ---------- AE Studio (hidden curator entrance) ----------
-// Customers cannot add works. AE unlocks the studio by long-pressing the Three Rings mark (3 s) + password.
-// NOTE (R2): checked in the browser against a salted PBKDF2 hash — a placeholder gate. R3 moves this to the server.
-const STUDIO_SALT = '577221ecad4d1dab8fb0f88a5c68b057';
-const STUDIO_HASH = '6330e9e9a9c4770fea436c54379e43146b922758972a622c0674c9109b49d56d';
-let studio = false;
-try { studio = sessionStorage.getItem('ae-studio') === '1'; } catch { studio = false; }
-async function verifyStudio(pw) {
-  try {
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
-    const salt = new Uint8Array(STUDIO_SALT.match(/../g).map(h => parseInt(h, 16)));
-    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 250000 }, key, 256);
-    const hex = [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
-    return hex === STUDIO_HASH;
-  } catch { return false; }
-}
-function setStudio(on) {
-  studio = on;
-  try { if (on) sessionStorage.setItem('ae-studio', '1'); else sessionStorage.removeItem('ae-studio'); } catch { /* ignore */ }
-  document.documentElement.classList.toggle('studio', on);
-  document.querySelectorAll('[data-studio]').forEach(el => { el.hidden = !on; });
-  if (!on && S.music === 'custom') S.music = modeOf(S.mode).set.music;
-  renderWall(); renderSettings();
-}
-
-let works = [...BUILTIN];
-let persistOK = true;
+// ---------- state ----------
+let works = [], exhibitions = [], tracks = [], cloud = 'none';
+let view = 'all';
+let token = null;
+try { const t = JSON.parse(sessionStorage.getItem('ae-studio-token') || 'null'); if (t && t.exp > Date.now()) token = t.token; } catch { token = null; }
+let studio = !!token;
 const sound = new Sound();
 sound.setVolume(S.volume);
 
-// ---------- Toast ----------
+// ---------- toast ----------
 let toastTimer;
-function toast(msg, ms = 3200) {
+function toast(msg, ms = 3400) {
   const el = $('#toast');
   el.textContent = msg; el.hidden = false;
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, ms);
 }
 
+// ---------- API ----------
+async function api(action, { method = 'GET', body, query = {}, raw, type } = {}) {
+  const qs = new URLSearchParams({ a: action, ...query });
+  const headers = {};
+  if (token) headers.authorization = 'Bearer ' + token;
+  let payload;
+  if (raw) { headers['content-type'] = 'application/octet-stream'; qs.set('type', type); payload = raw; }
+  else if (body !== undefined) { headers['content-type'] = 'application/json'; payload = JSON.stringify(body); }
+  const r = await fetch(`${API}?${qs}`, { method, headers, body: payload });
+  let data = null;
+  try { data = await r.json(); } catch { data = null; }
+  if (r.status === 401 && action !== 'login' && studio) { setStudio(false); toast(T('sessionExpired')); }
+  if (!r.ok || !data) { const e = new Error((data && data.error) || String(r.status)); e.code = data && data.error; e.status = r.status; throw e; }
+  return data;
+}
+const normWork = (w, i) => ({
+  ...w, no: w.no || i + 1, type: w.type || 'image', thumb: w.thumb || (w.type === 'video' ? '' : w.src),
+  title: typeof w.title === 'object' && w.title ? w.title : { en: w.title || '', zh: '' },
+  statement: w.statement || { en: '', zh: '' },
+});
+async function loadCatalog() {
+  try {
+    const d = await api('catalog');
+    works = d.works.map(normWork); exhibitions = d.exhibitions || []; tracks = d.tracks || []; cloud = d.storage || 'none';
+  } catch {
+    works = FALLBACK.map(normWork); exhibitions = []; tracks = []; cloud = 'offline';
+  }
+  const ids = new Set(works.map(w => w.id));
+  S.selected = S.selected.filter(id => ids.has(id));
+  if (view !== 'all' && !exhibitions.some(e => e.id === view)) view = 'all';
+  if (String(S.music).startsWith('track:') && !tracks.some(t => 'track:' + t.id === S.music)) S.music = modeOf(S.mode).set.music;
+  if (!String(S.music).startsWith('track:') && !OPTIONS.music.some(o => o.id === S.music)) S.music = modeOf(S.mode).set.music;
+}
+
 // ---------- i18n ----------
+const titleOf = (w) => (lang === 'zh' ? (w.title.zh || w.title.en) : (w.title.en || w.title.zh)) || T('untitled', w.no || 0);
+const metaOf = (w) => [w.year, w.medium, w.size].filter(Boolean).join(' · ');
+const statementOf = (w) => (w.statement && (lang === 'zh' ? (w.statement.zh || w.statement.en) : (w.statement.en || w.statement.zh))) || '';
+const showTitle = (e) => (lang === 'zh' ? (e.title.zh || e.title.en) : (e.title.en || e.title.zh)) || T('untitledShow');
 function applyLang() {
   document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
   document.querySelectorAll('[data-i18n]').forEach(el => { const v = T(el.dataset.i18n); if (typeof v === 'string') el.textContent = v; });
   $('#langToggle').textContent = lang === 'zh' ? 'EN' : '中文';
   $('#langToggle').setAttribute('aria-label', lang === 'zh' ? 'Switch to English' : '切換至中文');
-  fx.lang = lang;
-  renderWall(); renderSettings(); updateMusicNote();
+  renderAll(); renderSettings();
 }
 $('#langToggle').addEventListener('click', () => { lang = lang === 'zh' ? 'en' : 'zh'; lsSet('ae-language', lang); applyLang(); });
 
-// ---------- Works / wall ----------
-const titleOf = (w) => w.title || T('untitled', w.no);
-const wall = $('#wall');
+// ---------- views: all works / exhibitions ----------
+const currentShow = () => exhibitions.find(e => e.id === view) || null;
+function viewWorks() {
+  const sh = currentShow();
+  if (!sh) return works;
+  return sh.items.map(it => works.find(w => w.id === it.id)).filter(Boolean);
+}
+const itemOf = (id) => { const sh = currentShow(); return sh ? sh.items.find(it => it.id === id) || null : null; };
+function setView(id, { applyShowMode = true } = {}) {
+  view = exhibitions.some(e => e.id === id) ? id : 'all';
+  wall.classList.remove('settled');
+  const sh = currentShow();
+  if (sh && applyShowMode) applyMode(modeOf(sh.mode), { quiet: true });
+  renderAll();
+}
 
-function renderWall() {
+const shows = $('#shows');
+function renderShows() {
   const frag = document.createDocumentFragment();
-  works.forEach((w, i) => {
+  const tab = (id, label) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'lw-show-tab'; b.dataset.view = id; b.setAttribute('aria-pressed', String(view === id));
+    b.textContent = label; frag.appendChild(b);
+  };
+  tab('all', T('all'));
+  for (const e of exhibitions) tab(e.id, showTitle(e));
+  const spacer = document.createElement('span'); spacer.className = 'lw-show-spacer'; frag.appendChild(spacer);
+  const act = (id, label, cls = '') => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lw-show-act ' + cls; b.dataset.showAct = id; b.textContent = label; frag.appendChild(b); };
+  act('share', T('shareLink'));
+  if (studio) {
+    act('new', '＋ ' + T('newShow'), 'studio');
+    if (currentShow()) { act('update', T('updateShow'), 'studio'); act('edit', T('editShow'), 'studio'); }
+  }
+  shows.replaceChildren(frag);
+  const sh = currentShow();
+  const note = $('#showNote');
+  const txt = sh ? (lang === 'zh' ? (sh.note?.zh || sh.note?.en) : (sh.note?.en || sh.note?.zh)) : '';
+  note.hidden = !txt; note.textContent = txt || '';
+}
+shows.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-view]');
+  if (t) { setView(t.dataset.view); return; }
+  const a = e.target.closest('[data-show-act]'); if (!a) return;
+  const act = a.dataset.showAct;
+  if (act === 'share') return shareLink();
+  if (!studio) return;
+  if (act === 'new') {
+    const ids = S.selected.filter(id => works.some(w => w.id === id));
+    if (!ids.length) { toast(T('needSelection')); return; }
+    openShowDialog({ title: { zh: '', en: '' }, note: { zh: '', en: '' }, mode: S.mode, items: ids.map(id => ({ id })) });
+  }
+  if (act === 'edit') openShowDialog(currentShow());
+  if (act === 'update') {
+    const sh = currentShow(); if (!sh) return;
+    const ids = S.selected.filter(id => works.some(w => w.id === id));
+    if (!ids.length) { toast(T('needSelection')); return; }
+    const keep = new Map(sh.items.map(it => [it.id, it]));
+    await saveShow({ ...sh, items: ids.map(id => keep.get(id) || { id }) });
+  }
+});
+
+async function shareLink() {
+  const u = new URL(location.href);
+  u.search = '';
+  if (currentShow()) u.searchParams.set('show', view);
+  u.searchParams.set('mode', S.mode);
+  u.searchParams.set('autoplay', '1');
+  const link = u.toString();
+  try { await navigator.clipboard.writeText(link); toast(T('linkCopied')); }
+  catch { window.prompt(T('shareLink'), link); }
+}
+
+// ---------- wall ----------
+const wall = $('#wall');
+const ICON = {
+  play: '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  view: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M11 8v6M8 11h6"/></svg>',
+  edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  left: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  right: '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
+  remove: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+function renderWall() {
+  const list = viewWorks();
+  const frag = document.createDocumentFragment();
+  list.forEach((w, i) => {
     const sel = S.selected.indexOf(w.id);
     const el = document.createElement('div');
-    el.className = 'screen' + (sel >= 0 ? ' selected' : '');
+    el.className = 'screen' + (sel >= 0 ? ' selected' : '') + (w.hidden ? ' is-hidden' : '');
     el.dataset.id = w.id;
     el.style.animationDelay = `${Math.min(i, 24) * 40}ms`;
-    const no = String(i + 1).padStart(2, '0');
+    const btn = (act, label, cls = '') => `<button type="button" class="screen-act ${cls}" data-act="${act}" aria-label="${esc(label)}" title="${esc(label)}">${ICON[act]}</button>`;
+    const tags = [w.type === 'video' ? T('videoTag') : '', studio && w.hidden ? T('hiddenTag') : ''].filter(Boolean);
     el.innerHTML = `
-      <button type="button" class="screen-hit" aria-pressed="${sel >= 0}" aria-label="${escapeHtml(titleOf(w))}">
+      <button type="button" class="screen-hit" aria-pressed="${sel >= 0}">
         <span class="screen-bg"></span>
-        <img class="screen-art" alt="" loading="lazy" decoding="async" draggable="false">
         <span class="screen-glass"></span>
-        <span class="screen-meta"><b>${no}</b><em></em></span>
+        <span class="screen-meta"><b>${String(i + 1).padStart(2, '0')}</b><em></em></span>
       </button>
       <span class="screen-badge" aria-hidden="true">${sel >= 0 ? sel + 1 : ''}</span>
-      ${w.builtin ? '' : `<span class="screen-tag">${escapeHtml(T('yours'))}</span>`}
+      ${tags.length ? `<span class="screen-tag">${esc(tags.join(' · '))}</span>` : ''}
       <span class="screen-actions">
-        <button type="button" class="screen-act play" data-act="play" aria-label="${escapeHtml(T('playFrom'))}" title="${escapeHtml(T('playFrom'))}"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
-        ${w.builtin || !studio ? '' : `<button type="button" class="screen-act" data-act="remove" aria-label="${escapeHtml(T('remove'))}" title="${escapeHtml(T('remove'))}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`}
+        ${btn('play', T('playFrom'), 'play')}${btn('view', T('view'))}
+        ${studio ? btn('edit', T('edit')) + btn('left', T('moveLeft')) + btn('right', T('moveRight')) + btn('remove', currentShow() ? T('removeFromShow') : T('del')) : ''}
       </span>`;
-    el.querySelector('.screen-art').src = w.src;
-    el.querySelector('.screen-bg').style.backgroundImage = `url("${w.src}")`;
+    const hit = el.querySelector('.screen-hit');
+    hit.setAttribute('aria-label', titleOf(w));
+    let art;
+    if (w.thumb) { art = document.createElement('img'); art.loading = 'lazy'; art.decoding = 'async'; art.src = w.thumb; el.querySelector('.screen-bg').style.backgroundImage = `url("${w.thumb}")`; }
+    else { art = document.createElement('video'); art.muted = true; art.playsInline = true; art.preload = 'metadata'; art.src = w.src + '#t=0.5'; }
+    art.className = 'screen-art'; art.draggable = false; art.alt = '';
+    hit.insertBefore(art, hit.querySelector('.screen-glass'));
     el.querySelector('em').textContent = titleOf(w);
     frag.appendChild(el);
   });
   wall.replaceChildren(frag);
   updateCount();
+  // entrance animation only on first paint / view change, not on every curator edit
+  clearTimeout(renderWall.t); renderWall.t = setTimeout(() => wall.classList.add('settled'), 2200);
 }
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-
 function updateCount() {
-  $('#selCount').textContent = S.selected.length;
-  $('#allCount').textContent = works.length;
+  const ids = new Set(viewWorks().map(w => w.id));
+  $('#selCount').textContent = S.selected.filter(id => ids.has(id)).length;
+  $('#allCount').textContent = ids.size;
 }
 function refreshBadges() {
   wall.querySelectorAll('.screen').forEach(el => {
@@ -141,24 +248,35 @@ function refreshBadges() {
   updateCount();
   saveSettings(S);
 }
+function renderAll() { renderShows(); renderWall(); }
 
 wall.addEventListener('click', async (e) => {
   const screen = e.target.closest('.screen'); if (!screen) return;
   const id = screen.dataset.id;
-  const act = e.target.closest('[data-act]');
-  if (act?.dataset.act === 'play') { openPlayer(id); return; }
-  if (act?.dataset.act === 'remove' && studio) { await removeWork(id); return; }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'play') return openPlayer(id);
+  if (act === 'view') return openViewer(id);
+  if (act && studio) {
+    if (act === 'edit') return openEdit(id);
+    if (act === 'left' || act === 'right') return move(id, act === 'left' ? -1 : 1);
+    if (act === 'remove') return removeWork(id);
+    return;
+  }
   if (e.target.closest('.screen-hit')) {
     const i = S.selected.indexOf(id);
     if (i >= 0) S.selected.splice(i, 1); else S.selected.push(id);
     refreshBadges();
   }
 });
-$('#selectAll').addEventListener('click', () => { for (const w of works) if (!S.selected.includes(w.id)) S.selected.push(w.id); refreshBadges(); });
-$('#clearSel').addEventListener('click', () => { S.selected = []; refreshBadges(); });
+$('#selectAll').addEventListener('click', () => { for (const w of viewWorks()) if (!S.selected.includes(w.id)) S.selected.push(w.id); refreshBadges(); });
+$('#clearSel').addEventListener('click', () => { const ids = new Set(viewWorks().map(w => w.id)); S.selected = S.selected.filter(id => !ids.has(id)); refreshBadges(); });
 $('#playBtn').addEventListener('click', () => openPlayer(null));
+// phones: the toolbar scrolls away, so a slim floating "Begin show" appears instead
+$('#fab').addEventListener('click', () => openPlayer(null));
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver(([en]) => { $('#fab').hidden = en.isIntersecting || window.innerWidth > 760; }).observe($('.lw-toolbar'));
+}
 
-// gentle gloss sweep across the wall
 setInterval(() => {
   if (!player.hidden || document.hidden) return;
   const tiles = wall.querySelectorAll('.screen'); if (!tiles.length) return;
@@ -166,69 +284,122 @@ setInterval(() => {
   el.classList.add('gloss'); setTimeout(() => el.classList.remove('gloss'), 2500);
 }, 2200);
 
-// ---------- Uploads ----------
-async function loadUploads() {
+// ---------- studio: auth ----------
+function setStudio(on, newToken) {
+  if (on && newToken) { token = newToken.token; try { sessionStorage.setItem('ae-studio-token', JSON.stringify(newToken)); } catch { /* ignore */ } }
+  if (!on) { token = null; try { sessionStorage.removeItem('ae-studio-token'); } catch { /* ignore */ } }
+  studio = on;
+  document.documentElement.classList.toggle('studio', on);
+  document.querySelectorAll('[data-studio]').forEach(el => { el.hidden = !on; });
+}
+async function enterStudio() {
+  const pw = window.prompt(T('studioPrompt'));
+  if (!pw) return;
   try {
-    const rows = await db.all('works');
-    rows.sort((a, b) => a.added - b.added);
-    for (const r of rows) works.push({ id: r.id, title: r.title, src: URL.createObjectURL(r.blob), builtin: false, no: 0 });
-    const m = await db.get('media', 'music');
-    if (m?.blob) { sound.setCustom(m.blob); S.musicName = m.name || S.musicName; }
-  } catch { persistOK = false; }
-  if (S.music === 'custom' && (!sound.customUrl || !studio)) S.music = modeOf(S.mode).set.music;
-  if (!OPTIONS.music.some(o => o.id === S.music)) S.music = modeOf(S.mode).set.music;
-  const ids = new Set(works.map(w => w.id));
-  S.selected = S.selected.filter(id => ids.has(id));
+    const t = await api('login', { method: 'POST', body: { password: pw.trim() } });
+    setStudio(true, t);
+    await loadCatalog(); renderAll(); renderSettings();
+    toast(T('studioOn'));
+  } catch (err) {
+    toast(err.code === 'STUDIO_NOT_CONFIGURED' ? T('studioNotConfigured') : err.code === 'WRONG_PASSWORD' ? T('studioWrong') : T('offline'));
+  }
+}
+(() => {
+  const mark = $('.lw-wordmark');
+  let timer = null, fired = false;
+  const cancel = () => { clearTimeout(timer); timer = null; mark.classList.remove('pressing'); };
+  mark.addEventListener('pointerdown', () => {
+    fired = false; cancel(); mark.classList.add('pressing');
+    timer = setTimeout(() => { fired = true; cancel(); if (!studio) enterStudio(); }, 3000);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => mark.addEventListener(ev, cancel));
+  mark.addEventListener('click', (e) => { if (fired) { e.preventDefault(); fired = false; } });
+  mark.addEventListener('contextmenu', (e) => e.preventDefault());
+})();
+$('#studioLock').addEventListener('click', async () => { setStudio(false); await loadCatalog(); renderAll(); renderSettings(); toast(T('studioOff')); });
+
+function studioError(err) {
+  if (err.code === 'STORAGE_NOT_READY') toast(T('storageNotReady'), 6000);
+  else if (err.code === 'TOO_LARGE') toast(T('tooLarge', ''), 5000);
+  else if (err.status !== 401) toast(T('addFailed'));
 }
 
-async function fileToImageBlob(file) {
+// ---------- studio: uploads ----------
+function canvasBlob(c, type = 'image/jpeg', q = 0.9) { return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('encode')), type, q)); }
+async function decodeImage(file) {
   const url = URL.createObjectURL(file);
-  try {
-    const img = new Image(); img.src = url;
-    await img.decode();
-    const max = 2560, w = img.naturalWidth, h = img.naturalHeight;
-    if (!w || !h) throw new Error('empty');
-    if (Math.max(w, h) <= max && /image\/(jpeg|png|webp|gif|avif)/.test(file.type)) return file;
-    const s = Math.min(1, max / Math.max(w, h));
-    const c = document.createElement('canvas'); c.width = Math.round(w * s); c.height = Math.round(h * s);
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    return await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('encode')), 'image/jpeg', 0.92));
-  } finally { URL.revokeObjectURL(url); }
+  const img = new Image(); img.src = url;
+  try { await img.decode(); return img; } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
 }
-
+async function scaled(source, w, h, max, q) {
+  const s = Math.min(1, max / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.round(w * s); c.height = Math.round(h * s);
+  c.getContext('2d').drawImage(source, 0, 0, c.width, c.height);
+  return canvasBlob(c, 'image/jpeg', q);
+}
+async function prepareImage(file) {
+  if (file.type === 'image/gif') { if (file.size > MAX_UPLOAD) throw Object.assign(new Error('big'), { code: 'TOO_LARGE' }); const img = await decodeImage(file); return { blob: file, type: 'image/gif', thumb: await scaled(img, img.naturalWidth, img.naturalHeight, 720, 0.85) }; }
+  const img = await decodeImage(file);
+  const w = img.naturalWidth, h = img.naturalHeight;
+  if (!w || !h) throw new Error('empty');
+  let blob = (file.size <= MAX_UPLOAD && Math.max(w, h) <= 2560 && /image\/(jpeg|png|webp|avif)/.test(file.type)) ? file : null;
+  for (const [max, q] of [[2560, 0.9], [2560, 0.8], [2048, 0.82], [1600, 0.82]]) {
+    if (blob && blob.size <= MAX_UPLOAD) break;
+    blob = await scaled(img, w, h, max, q);
+  }
+  if (blob.size > MAX_UPLOAD) throw Object.assign(new Error('big'), { code: 'TOO_LARGE' });
+  return { blob, type: blob.type || file.type, thumb: await scaled(img, w, h, 720, 0.85) };
+}
+function videoPoster(file) {
+  return new Promise((resolve) => {
+    const v = document.createElement('video');
+    const url = URL.createObjectURL(file);
+    v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+    const done = (b) => { URL.revokeObjectURL(url); resolve(b); };
+    const t = setTimeout(() => done(null), 10000);
+    v.addEventListener('loadeddata', () => { v.currentTime = Math.min(0.5, (v.duration || 1) / 3); }, { once: true });
+    v.addEventListener('seeked', async () => {
+      clearTimeout(t);
+      try { done(await scaled(v, v.videoWidth, v.videoHeight, 720, 0.85)); } catch { done(null); }
+    }, { once: true });
+    v.addEventListener('error', () => { clearTimeout(t); done(null); }, { once: true });
+  });
+}
 async function addFiles(files) {
   if (!studio) return;
-  const list = [...files].filter(f => f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|avif|heic)$/i.test(f.name));
+  const list = [...files].filter(f => /^(image|video)\//.test(f.type) || /\.(jpe?g|png|webp|gif|avif|heic|mp4|webm|mov)$/i.test(f.name));
   if (!list.length) return;
-  let ok = 0, failed = 0;
-  for (const f of list) {
+  const added = [];
+  for (let i = 0; i < list.length; i++) {
+    const f = list[i];
+    toast(T('uploading', i + 1, list.length), 60000);
+    const name = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim().slice(0, 80);
     try {
-      const blob = await fileToImageBlob(f);
-      const id = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-      const title = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim().slice(0, 80) || 'Untitled';
-      if (persistOK) { try { await db.put('works', { id, title, blob, added: Date.now() }); } catch { persistOK = false; toast(T('noPersist'), 5000); } }
-      works.push({ id, title, src: URL.createObjectURL(blob), builtin: false, no: 0 });
-      S.selected.push(id);
-      ok++;
-    } catch { failed++; }
+      let raw, type, thumb;
+      if (f.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(f.name)) {
+        if (f.size > MAX_UPLOAD) { toast(T('tooLarge', f.name), 5000); continue; }
+        raw = f; type = f.type || 'video/mp4'; thumb = await videoPoster(f);
+      } else ({ blob: raw, type, thumb } = await prepareImage(f));
+      const { work } = await api('upload', { method: 'POST', query: { kind: 'work', name }, raw, type });
+      if (thumb) { try { await api('upload', { method: 'POST', query: { kind: 'thumb', id: work.id }, raw: thumb, type: 'image/jpeg' }); } catch { /* poster optional */ } }
+      added.push(work.id);
+    } catch (err) {
+      if (err.code === 'TOO_LARGE') toast(T('tooLarge', f.name), 5000);
+      else if (err.code === 'STORAGE_NOT_READY') { toast(T('storageNotReady'), 6000); break; }
+      else if (err.status === 401) break;
+      else toast(T('addFailed'), 4000);
+    }
   }
-  renderWall(); saveSettings(S);
-  if (ok) toast(T('added', ok)); else if (failed) toast(T('addFailed'));
-  if (ok) wall.lastElementChild?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+  await loadCatalog();
+  S.selected.push(...added.filter(id => !S.selected.includes(id)));
+  if (added.length && currentShow()) {
+    const sh = currentShow();
+    await saveShow({ ...sh, items: [...sh.items, ...added.map(id => ({ id }))] }, { silent: true });
+  }
+  renderAll(); saveSettings(S);
+  if (added.length) { toast(T('added', added.length)); wall.lastElementChild?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }); }
 }
 $('#fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
-
-async function removeWork(id) {
-  if (!confirm(T('confirmRemove'))) return;
-  const w = works.find(x => x.id === id); if (!w || w.builtin) return;
-  works = works.filter(x => x.id !== id);
-  S.selected = S.selected.filter(x => x !== id);
-  try { await db.del('works', id); } catch { /* ignore */ }
-  URL.revokeObjectURL(w.src);
-  renderWall(); saveSettings(S);
-}
-
-// drag & drop anywhere
 const drop = $('#dropZone'); let dragDepth = 0;
 const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
 window.addEventListener('dragenter', (e) => { if (!studio || !hasFiles(e) || !player.hidden) return; e.preventDefault(); dragDepth++; drop.hidden = false; });
@@ -236,7 +407,107 @@ window.addEventListener('dragover', (e) => { if (studio && hasFiles(e)) e.preven
 window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) drop.hidden = true; });
 window.addEventListener('drop', (e) => { if (!studio || !hasFiles(e)) return; e.preventDefault(); dragDepth = 0; drop.hidden = true; if (player.hidden) addFiles(e.dataTransfer.files); });
 
-// ---------- Settings sheet ----------
+// ---------- studio: edit / order / remove ----------
+const editDialog = $('#editDialog'), editForm = $('#editForm');
+let editing = null;
+function openEdit(id) {
+  const w = works.find(x => x.id === id); if (!w) return;
+  editing = w;
+  const f = editForm.elements;
+  f.titleZh.value = w.title.zh || ''; f.titleEn.value = w.title.en || '';
+  f.year.value = w.year || ''; f.medium.value = w.medium || ''; f.size.value = w.size || '';
+  f.stZh.value = w.statement?.zh || ''; f.stEn.value = w.statement?.en || '';
+  f.hidden.checked = !!w.hidden;
+  const it = itemOf(id);
+  $('#inShow').hidden = !it;
+  const sel = f.transition; sel.replaceChildren();
+  for (const o of OPTIONS.transitions) { const op = document.createElement('option'); op.value = o.id === 'random' ? '' : o.id; op.textContent = o.id === 'random' ? T('modeLabel') : L(o); sel.appendChild(op); }
+  if (it) { f.duration.value = it.duration || ''; sel.value = it.transition || ''; }
+  $('#editDelete').textContent = currentShow() ? T('removeFromShow') : T('del');
+  editDialog.showModal();
+}
+$('#editCancel').addEventListener('click', () => editDialog.close());
+$('#editDelete').addEventListener('click', async () => { const id = editing?.id; editDialog.close(); if (id) await removeWork(id); });
+editForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = editForm.elements, w = editing; if (!w) return;
+  const patch = { title: { zh: f.titleZh.value, en: f.titleEn.value }, year: f.year.value, medium: f.medium.value, size: f.size.value,
+    statement: { zh: f.stZh.value, en: f.stEn.value }, hidden: f.hidden.checked };
+  try {
+    await api('update', { method: 'POST', body: { id: w.id, patch } });
+    const sh = currentShow();
+    if (sh && itemOf(w.id)) {
+      const d = parseInt(f.duration.value, 10);
+      const items = sh.items.map(it => it.id !== w.id ? it : { id: it.id, ...(d >= 3 ? { duration: d } : {}), ...(f.transition.value ? { transition: f.transition.value } : {}) });
+      await saveShow({ ...sh, items }, { silent: true });
+    }
+    editDialog.close();
+    await loadCatalog(); renderAll(); toast(T('saved'));
+  } catch (err) { studioError(err); }
+});
+async function move(id, dir) {
+  const sh = currentShow();
+  if (sh) {
+    const items = [...sh.items]; const i = items.findIndex(it => it.id === id); const j = i + dir;
+    if (i < 0 || j < 0 || j >= items.length) return;
+    [items[i], items[j]] = [items[j], items[i]];
+    await saveShow({ ...sh, items }, { silent: true });
+  } else {
+    const ids = works.map(w => w.id); const i = ids.indexOf(id); const j = i + dir;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    works = ids.map(x => works.find(w => w.id === x)); renderWall();
+    try { await api('reorder', { method: 'POST', body: { ids } }); } catch (err) { studioError(err); }
+  }
+  renderWall();
+}
+async function removeWork(id) {
+  const sh = currentShow();
+  if (sh) { await saveShow({ ...sh, items: sh.items.filter(it => it.id !== id) }, { silent: true }); renderAll(); return; }
+  if (!confirm(T('confirmRemove'))) return;
+  try { await api('delete', { method: 'POST', body: { id } }); S.selected = S.selected.filter(x => x !== id); await loadCatalog(); renderAll(); saveSettings(S); }
+  catch (err) { studioError(err); }
+}
+
+// ---------- studio: exhibitions ----------
+const showDialog = $('#showDialog'), showForm = $('#showForm');
+let showDraft = null;
+function openShowDialog(sh) {
+  showDraft = sh;
+  const f = showForm.elements;
+  f.titleZh.value = sh.title?.zh || ''; f.titleEn.value = sh.title?.en || '';
+  f.noteZh.value = sh.note?.zh || ''; f.noteEn.value = sh.note?.en || '';
+  f.mode.replaceChildren(...OPTIONS.modes.map(m => { const o = document.createElement('option'); o.value = m.id; o.textContent = L(m); return o; }));
+  f.mode.value = sh.mode || S.mode;
+  $('#showDelete').hidden = !sh.id;
+  showDialog.showModal();
+}
+$('#showCancel').addEventListener('click', () => showDialog.close());
+$('#showDelete').addEventListener('click', async () => {
+  if (!showDraft?.id || !confirm(T('confirmDeleteShow'))) return;
+  showDialog.close();
+  try { await api('exhibition-delete', { method: 'POST', body: { id: showDraft.id } }); await loadCatalog(); view = 'all'; renderAll(); }
+  catch (err) { studioError(err); }
+});
+showForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = showForm.elements;
+  const sh = { ...showDraft, title: { zh: f.titleZh.value, en: f.titleEn.value }, note: { zh: f.noteZh.value, en: f.noteEn.value }, mode: f.mode.value };
+  showDialog.close();
+  const saved = await saveShow(sh);
+  if (saved) setView(saved.id);
+});
+async function saveShow(sh, { silent = false } = {}) {
+  try {
+    const { exhibition } = await api('exhibition-save', { method: 'POST', body: { exhibition: sh } });
+    await loadCatalog();
+    if (!silent) toast(T('showSaved'));
+    renderAll();
+    return exhibition;
+  } catch (err) { studioError(err); return null; }
+}
+
+// ---------- settings sheet ----------
 const sheet = $('#settings'), scrim = $('#scrim');
 function openSheet() { renderSettings(); sheet.hidden = false; scrim.hidden = false; $('#closeSettings').focus(); showControls(); }
 function closeSheet() { const had = !sheet.hidden; sheet.hidden = true; scrim.hidden = true; if (had && !player.hidden) player.focus({ preventScroll: true }); }
@@ -254,7 +525,7 @@ function chip(label, pressed, ae, onClick) {
 }
 function toggle(opt, on, onClick) {
   const b = document.createElement('button');
-  b.type = 'button'; b.className = 'lw-toggle'; b.setAttribute('role', 'switch'); b.setAttribute('aria-checked', String(on));
+  b.type = 'button'; b.className = 'lw-toggle'; b.dataset.opt = opt.id; b.setAttribute('role', 'switch'); b.setAttribute('aria-checked', String(on));
   b.innerHTML = `<span class="lw-toggle-text"><b></b><small></small></span><span class="lw-switch" aria-hidden="true"></span>`;
   b.querySelector('b').textContent = L(opt);
   if (opt.ae) { const s = document.createElement('span'); s.className = 'ae'; s.textContent = 'AE'; b.querySelector('b').appendChild(s); }
@@ -262,14 +533,13 @@ function toggle(opt, on, onClick) {
   b.addEventListener('click', onClick);
   return b;
 }
-
 function renderSettings() {
   const modes = $('#modeCards'); modes.replaceChildren();
   for (const m of OPTIONS.modes) {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'lw-mode'; b.dataset.mode = m.id; b.setAttribute('aria-pressed', String(S.mode === m.id));
     b.innerHTML = '<b></b><i></i><small></small>';
-    b.querySelector('b').textContent = m.zh === L(m) ? m.zh : m.en;
+    b.querySelector('b').textContent = L(m);
     b.querySelector('i').textContent = lang === 'zh' ? m.en : m.zh;
     b.querySelector('small').textContent = lang === 'zh' ? m.dzh : m.den;
     b.addEventListener('click', () => applyMode(m));
@@ -286,19 +556,26 @@ function renderSettings() {
   const it = $('#interactToggles'); it.replaceChildren();
   for (const o of OPTIONS.interact) it.appendChild(toggle(o, S.interact[o.id], () => { S.interact[o.id] = !S.interact[o.id]; adj(); commit(); }));
   const di = $('#displayToggles'); di.replaceChildren();
-  for (const o of OPTIONS.display) di.appendChild(toggle(o, S.display[o.id], () => { S.display[o.id] = !S.display[o.id]; adj(); commit(); if (o.id === 'mat' && !player.hidden) layout(); }));
+  for (const o of OPTIONS.display) di.appendChild(toggle(o, !!S.display[o.id], () => { S.display[o.id] = !S.display[o.id]; adj(); commit(); if ((o.id === 'mat') && !player.hidden) layout(); }));
   const mu = $('#musicChips'); mu.replaceChildren();
-  for (const o of OPTIONS.music) {
-    if (o.studio && (!studio || !sound.customUrl)) continue;
-    mu.appendChild(chip(L(o), S.music === o.id, false, () => { const changed = S.music !== o.id; S.music = o.id; adj(); commit(changed); }));
+  for (const o of OPTIONS.music) mu.appendChild(chip(L(o), S.music === o.id, false, () => { const ch = S.music !== o.id; S.music = o.id; adj(); commit(ch); }));
+  for (const t of tracks) {
+    const id = 'track:' + t.id;
+    mu.appendChild(chip(`${T('track')} · ${t.name}`, S.music === id, false, () => { const ch = S.music !== id; S.music = id; adj(); commit(ch); }));
   }
-  const iv = $('#interval'); iv.value = S.interval; $('#intervalOut').textContent = S.interval + 's';
+  const note = $('#musicNote'); note.replaceChildren();
+  const curTrack = tracks.find(t => 'track:' + t.id === S.music);
+  if (studio && curTrack) {
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'lw-reset'; del.textContent = `${T('del')} · ${curTrack.name}`;
+    del.addEventListener('click', async () => { if (!confirm(T('del') + '?')) return; try { await api('track-delete', { method: 'POST', body: { id: curTrack.id } }); await loadCatalog(); S.music = modeOf(S.mode).set.music; commit(true); } catch (err) { studioError(err); } });
+    note.appendChild(del);
+  }
+  const iv = $('#interval'); iv.min = 0; iv.max = STEPS.length - 1; iv.step = 1;
+  iv.value = STEPS.reduce((bi, v, i) => Math.abs(v - S.interval) < Math.abs(STEPS[bi] - S.interval) ? i : bi, 0);
+  $('#intervalOut').textContent = fmtSec(S.interval);
   const vo = $('#volume'); vo.value = S.volume; $('#volumeOut').textContent = Math.round(S.volume * 100) + '%';
-  updateMusicNote();
 }
-function updateMusicNote() { $('#musicNote').textContent = sound.customUrl && S.musicName ? T('customMusic', S.musicName) : ''; }
-
-function applyMode(m) {
+function applyMode(m, { quiet = false } = {}) {
   const set = m.set;
   S.mode = m.id; S.adjusted = false;
   for (const k of Object.keys(S.effects)) S.effects[k] = set.effects.includes(k);
@@ -308,45 +585,107 @@ function applyMode(m) {
   S.transition = 'random';
   const musicChanged = S.music !== set.music;
   S.music = set.music;
-  commit(musicChanged);
+  commit(musicChanged && !quiet);
   if (!player.hidden) layout();
 }
 $('#resetMode').addEventListener('click', () => applyMode(modeOf(S.mode)));
-
 function commit(musicChanged = false) {
-  saveSettings(S);
-  renderSettings();
-  applyLive();
+  saveSettings(S); renderSettings(); applyLive();
   if (musicChanged && !player.hidden) startMusic();
 }
-
-$('#interval').addEventListener('input', (e) => { S.interval = +e.target.value; $('#intervalOut').textContent = S.interval + 's'; saveSettings(S); });
+$('#interval').addEventListener('input', (e) => { S.interval = STEPS[+e.target.value] || 10; S.adjusted = true; $('#intervalOut').textContent = fmtSec(S.interval); const rs = $('#resetMode'); rs.hidden = false; rs.textContent = `${T('adjusted')} · ${T('resetMode')}`; saveSettings(S); });
 $('#volume').addEventListener('input', (e) => { S.volume = +e.target.value; $('#volumeOut').textContent = Math.round(S.volume * 100) + '%'; sound.setVolume(S.volume); saveSettings(S); });
 $('#musicInput').addEventListener('change', async (e) => {
   const f = e.target.files[0]; e.target.value = '';
   if (!f || !studio) return;
-  sound.setCustom(f);
-  S.musicName = f.name.replace(/\.[^.]+$/, '');
-  S.music = 'custom';
-  try { await db.put('media', { id: 'music', blob: f, name: S.musicName }); } catch { /* session only */ }
-  toast(T('musicSaved', S.musicName));
-  commit(true);
+  if (f.size > MAX_UPLOAD) { toast(T('tooLarge', f.name), 5000); return; }
+  try {
+    toast(T('uploading', 1, 1), 60000);
+    const { track } = await api('upload', { method: 'POST', query: { kind: 'track', name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) }, raw: f, type: f.type || 'audio/mpeg' });
+    await loadCatalog();
+    S.music = 'track:' + track.id; toast(T('musicSaved', track.name)); commit(true);
+  } catch (err) { studioError(err); }
 });
 
-// ---------- Player ----------
+// ---------- static viewing (賞析) ----------
+const viewer = $('#viewer'), vwStage = $('#vwStage'), vwImg = $('#vwImg'), vwVideo = $('#vwVideo');
+let vList = [], vIdx = 0;
+const Z = { s: 1, x: 0, y: 0 };
+const vwMedia = () => (vwVideo.hidden ? vwImg : vwVideo);
+function applyZoom() { vwMedia().style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.s})`; viewer.classList.toggle('zoomed', Z.s > 1.01); }
+function clampPan() {
+  const m = vwMedia(), r = vwStage.getBoundingClientRect();
+  const w = m.offsetWidth * Z.s, h = m.offsetHeight * Z.s;
+  const mx = Math.max(0, (w - r.width) / 2), my = Math.max(0, (h - r.height) / 2);
+  Z.x = Math.max(-mx, Math.min(mx, Z.x)); Z.y = Math.max(-my, Math.min(my, Z.y));
+}
+function zoomAt(ns, cx, cy) {
+  const r = vwStage.getBoundingClientRect();
+  const px = cx - (r.left + r.width / 2), py = cy - (r.top + r.height / 2);
+  ns = Math.max(1, Math.min(6, ns));
+  Z.x = px - (px - Z.x) * (ns / Z.s); Z.y = py - (py - Z.y) * (ns / Z.s); Z.s = ns;
+  if (ns === 1) { Z.x = 0; Z.y = 0; }
+  clampPan(); applyZoom();
+}
+function renderViewer() {
+  const w = vList[vIdx]; if (!w) return;
+  Z.s = 1; Z.x = 0; Z.y = 0;
+  if (w.type === 'video') { vwImg.hidden = true; vwVideo.hidden = false; vwVideo.src = w.src; vwVideo.play().catch(() => {}); }
+  else { vwVideo.pause(); vwVideo.hidden = true; vwImg.hidden = false; vwImg.src = w.src; }
+  applyZoom();
+  $('#vwIndex').textContent = `${String(vIdx + 1).padStart(2, '0')} / ${String(vList.length).padStart(2, '0')}`;
+  $('#vwTitle').textContent = titleOf(w);
+  $('#vwMeta').textContent = metaOf(w);
+  $('#vwStatement').textContent = statementOf(w);
+}
+function openViewer(id) {
+  vList = viewWorks(); vIdx = Math.max(0, vList.findIndex(w => w.id === id));
+  viewer.hidden = false; document.body.classList.add('no-scroll');
+  renderViewer(); viewer.focus({ preventScroll: true });
+}
+function closeViewer() { viewer.hidden = true; vwVideo.pause(); document.body.classList.remove('no-scroll'); }
+const vwStep = (d) => { vIdx = (vIdx + d + vList.length) % vList.length; renderViewer(); };
+$('#vwPrev').addEventListener('click', () => vwStep(-1));
+$('#vwNext').addEventListener('click', () => vwStep(1));
+$('#vwClose').addEventListener('click', closeViewer);
+$('#vwPlay').addEventListener('click', () => { const id = vList[vIdx]?.id; closeViewer(); openPlayer(id); });
+vwStage.addEventListener('wheel', (e) => { e.preventDefault(); zoomAt(Z.s * (e.deltaY < 0 ? 1.18 : 1 / 1.18), e.clientX, e.clientY); }, { passive: false });
+vwStage.addEventListener('dblclick', (e) => zoomAt(Z.s > 1.01 ? 1 : 2.6, e.clientX, e.clientY));
+const vp = new Map(); let pinch = null, lastTap = 0;
+vwStage.addEventListener('pointerdown', (e) => {
+  vwStage.setPointerCapture(e.pointerId);
+  vp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (vp.size === 2) { const [a, b] = [...vp.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: Z.s }; }
+  if (e.pointerType !== 'mouse') { const now = performance.now(); if (now - lastTap < 300 && vp.size === 1) zoomAt(Z.s > 1.01 ? 1 : 2.6, e.clientX, e.clientY); lastTap = now; }
+});
+vwStage.addEventListener('pointermove', (e) => {
+  const p = vp.get(e.pointerId); if (!p) return;
+  if (vp.size === 2 && pinch) {
+    vp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const [a, b] = [...vp.values()];
+    zoomAt(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2);
+    return;
+  }
+  if (Z.s > 1.01) { Z.x += e.clientX - p.x; Z.y += e.clientY - p.y; clampPan(); applyZoom(); }
+  vp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+});
+const vpEnd = (e) => { vp.delete(e.pointerId); if (vp.size < 2) pinch = null; };
+vwStage.addEventListener('pointerup', vpEnd); vwStage.addEventListener('pointercancel', vpEnd);
+
+// ---------- player ----------
 const player = $('#player');
 const stage = $('#stage');
 const slides = [$('#slideA'), $('#slideB')];
 const ambs = [$('#ambA'), $('#ambB')];
 const neon = $('#neon');
-const fxCanvas = $('#fx');
-const fx = new FX(fxCanvas, { reduced });
-let list = [], idx = 0, cur = 0, ambCur = 0;
-let playing = false, busy = false, pending = 0, elapsed = 0, shown = false;
+const fx = new FX($('#fx'), { reduced });
+let list = [], idx = 0, cur = 0, ambCur = 0, curDur = 10, curItem = null;
+let playing = false, busy = false, pending = null, elapsed = 0, shown = false;
 let wakeLock = null, idleTimer = null, captionTimer = null, nextLumi = 0;
 const paletteCache = new Map();
-const slideWork = [null, null];
 
+const mediaOf = (i) => slides[i].dataset.kind === 'video' ? slides[i].querySelector('video') : slides[i].querySelector('img');
+const dims = (el) => el.tagName === 'VIDEO' ? [el.videoWidth, el.videoHeight] : [el.naturalWidth, el.naturalHeight];
 function fitRect(nw, nh) {
   const W = stage.clientWidth, H = stage.clientHeight;
   const pad = S.display.mat ? Math.max(12, Math.min(64, Math.min(W, H) * (Math.min(W, H) < 600 ? 0.035 : 0.05))) : 0;
@@ -355,31 +694,27 @@ function fitRect(nw, nh) {
   return { x: (W - w) / 2, y: (H - h) / 2, w, h };
 }
 function placeSlide(i) {
-  const img = slides[i].querySelector('img');
-  if (!img.naturalWidth) return null;
-  const r = fitRect(img.naturalWidth, img.naturalHeight);
-  Object.assign(img.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+  const el = mediaOf(i); const [nw, nh] = dims(el);
+  if (!nw) return null;
+  const r = fitRect(nw, nh);
+  Object.assign(el.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
   slides[i].rect = r;
   return r;
 }
-function placeNeon(r) {
-  if (!r) return;
-  Object.assign(neon.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
-}
+function placeNeon(r) { if (r) Object.assign(neon.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' }); }
 function layout() {
-  const W = stage.clientWidth, H = stage.clientHeight;
-  fx.resize(W, H);
+  fx.resize(stage.clientWidth, stage.clientHeight);
   placeSlide(0); placeSlide(1);
   const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); }
 }
 window.addEventListener('resize', () => { if (!player.hidden) layout(); });
 window.addEventListener('orientationchange', () => setTimeout(() => { if (!player.hidden) layout(); }, 250));
 
-function extractPalette(img) {
+function extractPalette(el) {
   try {
     const c = document.createElement('canvas'); c.width = c.height = 36;
     const x = c.getContext('2d', { willReadFrequently: true });
-    x.drawImage(img, 0, 0, 36, 36);
+    x.drawImage(el, 0, 0, 36, 36);
     const d = x.getImageData(0, 0, 36, 36).data;
     const bins = Array.from({ length: 12 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
     for (let i = 0; i < d.length; i += 4) {
@@ -392,8 +727,7 @@ function extractPalette(img) {
       const bin = bins[Math.floor(h / 30) % 12], w = s * v;
       bin.w += w; bin.r += d[i] * w; bin.g += d[i + 1] * w; bin.b += d[i + 2] * w;
     }
-    const top = bins.filter(b => b.w > 0).sort((a, b) => b.w - a.w).slice(0, 5);
-    const out = top.map(b => brighten([b.r / b.w, b.g / b.w, b.b / b.w]));
+    const out = bins.filter(b => b.w > 0).sort((a, b) => b.w - a.w).slice(0, 5).map(b => brighten([b.r / b.w, b.g / b.w, b.b / b.w]));
     while (out.length < 3) out.push(out.length ? [236, 205, 140] : [214, 228, 217]);
     return out;
   } catch { return null; }
@@ -416,101 +750,118 @@ function loadImg(img, src) {
     img.src = src;
   }).then(ok => ok && img.decode ? img.decode().then(() => true, () => true) : ok);
 }
+function loadVideo(v, src) {
+  return new Promise((resolve) => {
+    const abs = new URL(src, location.href).href;
+    if (v.src === abs && v.readyState >= 2) return resolve(true);
+    const t = setTimeout(() => resolve(v.readyState >= 1), 10000);
+    v.onloadeddata = () => { clearTimeout(t); resolve(true); };
+    v.onerror = () => { clearTimeout(t); resolve(false); };
+    v.src = abs; v.load();
+  });
+}
+async function loadInto(slot, work) {
+  const s = slides[slot], img = s.querySelector('img'), v = s.querySelector('video');
+  if (work.type === 'video') {
+    img.hidden = true; v.hidden = false; s.dataset.kind = 'video';
+    const ok = await loadVideo(v, work.src);
+    if (ok) { try { v.currentTime = 0; } catch { /* ignore */ } v.play().catch(() => {}); }
+    return ok;
+  }
+  v.pause(); v.hidden = true; s.dataset.kind = 'image'; img.hidden = false;
+  return loadImg(img, work.src);
+}
 
 function buildList(startId) {
-  const ids = S.selected.length ? [...S.selected] : works.map(w => w.id);
-  let l = ids.map(id => works.find(w => w.id === id)).filter(Boolean);
-  if (S.display.shuffle) {
-    for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; }
-  }
+  const base = viewWorks();
+  const inView = new Set(base.map(w => w.id));
+  const sel = S.selected.filter(id => inView.has(id));
+  let l = sel.length ? sel.map(id => works.find(w => w.id === id)).filter(Boolean) : [...base];
+  if (S.display.shuffle) for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; }
   let start = 0;
-  if (startId) {
-    start = l.findIndex(w => w.id === startId);
-    if (start < 0) { l.unshift(works.find(w => w.id === startId)); start = 0; }
-  }
+  if (startId) { start = l.findIndex(w => w.id === startId); if (start < 0) { const w = works.find(x => x.id === startId); if (w) l.unshift(w); start = 0; } }
   return { l, start };
 }
 
 async function openPlayer(startId) {
   const { l, start } = buildList(startId);
   if (!l.length) return;
-  list = l; idx = start; shown = false; busy = false; pending = 0; elapsed = 0;
-  sound.ensure(); // unlock audio synchronously inside the user gesture (Safari)
+  list = l; idx = start; shown = false; busy = false; pending = null; elapsed = 0;
+  sound.ensure(); // unlock audio inside the user gesture (Safari)
   player.hidden = false;
   document.body.classList.add('no-scroll');
   player.focus({ preventScroll: true });
-  const root = document.documentElement;
-  try { if (root.requestFullscreen && !document.fullscreenElement) await root.requestFullscreen({ navigationUI: 'hide' }); } catch { /* not supported (iPhone) */ }
-  slides.forEach(s => resetSlide(s, false));
-  slides.forEach(s => s.classList.remove('live'));
+  try { if (document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch { /* iPhone */ }
+  slides.forEach(s => { resetSlide(s, false); s.classList.remove('live'); });
   ambs.forEach(a => a.classList.remove('on'));
   closeSheet();
-  layout();
-  applyLive();
-  fx.start();
+  buildStrip();
+  layout(); applyLive(); fx.start();
   playing = true; player.classList.remove('paused');
-  startMusic();
-  requestWake();
-  showControls();
+  startMusic(); requestWake(); showControls();
   if (S.interact.ripple || S.interact.seeds) { const h = $('#hint'); setTimeout(() => h.classList.add('on'), 1400); setTimeout(() => h.classList.remove('on'), 5200); }
   if (S.interact.lumi) setTimeout(() => fx.say(T('lumiHello')), 3000);
   nextLumi = 40;
-  await show(idx, 0);
+  await show(idx);
 }
-
 function closePlayer() {
   playing = false;
-  fx.stop();
-  sound.stop();
+  fx.stop(); sound.stop();
+  slides.forEach(s => s.querySelector('video').pause());
   player.hidden = true;
   document.body.classList.remove('no-scroll');
   $('#hint').classList.remove('on');
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  releaseWake();
-  closeSheet();
+  releaseWake(); closeSheet();
   $('#playBtn').focus();
 }
-
 function startMusic() {
   if (S.music === 'none') { sound.stop(); player.classList.add('muted'); return; }
   sound.setVolume(S.volume);
-  sound.play(S.music);
+  if (String(S.music).startsWith('track:')) {
+    const t = tracks.find(x => 'track:' + x.id === S.music);
+    if (!t) { S.music = modeOf(S.mode).set.music; return startMusic(); }
+    sound.setCustom(t.src); sound.play('custom');
+  } else sound.play(S.music);
   player.classList.remove('muted');
 }
 
-async function show(i, dir) {
+async function show(i) {
   busy = true;
   const work = list[i];
   const nextSlot = shown ? 1 - cur : cur;
   const incoming = slides[nextSlot];
-  const img = incoming.querySelector('img');
-  const ok = await loadImg(img, work.src);
-  if (!ok) { busy = false; if (list.length > 1) { list.splice(i, 1); idx = i % list.length; return show(idx, dir); } return; }
+  const ok = await loadInto(nextSlot, work);
+  if (!ok) { busy = false; if (list.length > 1) { list.splice(i, 1); idx = i % list.length; buildStrip(); return show(idx); } return; }
   const r = placeSlide(nextSlot);
-  slideWork[nextSlot] = work;
+  const media = mediaOf(nextSlot);
+  curItem = itemOf(work.id);
+  curDur = (curItem && curItem.duration) || S.interval;
+  if (work.type === 'video' && Number.isFinite(media.duration) && media.duration > curDur) curDur = Math.min(600, media.duration);
   let pal = paletteCache.get(work.id);
-  if (!pal) { pal = extractPalette(img); if (pal) paletteCache.set(work.id, pal); }
+  if (!pal) { pal = extractPalette(media); if (pal && work.type !== 'video') paletteCache.set(work.id, pal); }
   if (pal) { fx.setPalette(pal); neon.style.setProperty('--neon', `rgb(${pal[0].join(',')})`); }
-  // ambient wash
   const na = 1 - ambCur;
-  ambs[na].style.backgroundImage = `url("${work.src}")`;
+  ambs[na].style.backgroundImage = `url("${work.thumb || work.src}")`;
   ambs[na].classList.add('on'); ambs[ambCur].classList.remove('on'); ambCur = na;
   setCaption(work, i);
+  markStrip(i);
   const from = shown ? slides[cur] : null;
-  const fromImg = from ? from.querySelector('img') : null;
-  let kind = S.transition;
+  const fromMedia = from ? mediaOf(cur) : null;
+  let kind = (curItem && curItem.transition) || S.transition;
   if (kind === 'random') kind = pickTransition(modeOf(S.mode).set.pool);
   if (reduced) kind = 'dissolve';
+  media.style.setProperty('--kb-x', `${25 + Math.random() * 50}%`);
+  media.style.setProperty('--kb-y', `${25 + Math.random() * 50}%`);
+  media.style.setProperty('--kb-dur', `${curDur + 4}s`);
   incoming.classList.add('live');
-  fx.setArtRect(r);
-  placeNeon(r);
-  await runTransition(kind, { from, to: incoming, fromImg, fromRect: from ? from.rect : null, rect: r, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, S.interval / 12)) });
-  if (from) from.classList.remove('live');
+  fx.setArtRect(r); placeNeon(r);
+  await runTransition(kind, { from, to: incoming, fromImg: fromMedia, fromRect: from ? from.rect : null, rect: r, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, curDur / 12)) });
+  if (from) { from.classList.remove('live'); from.querySelector('video').pause(); }
   cur = nextSlot; shown = true; elapsed = 0; busy = false;
-  // preload next
   const nx = list[(i + 1) % list.length];
-  if (nx) { const p = new Image(); p.decoding = 'async'; p.src = nx.src; }
-  if (pending) { const d = pending; pending = 0; go(d); }
+  if (nx && nx.type !== 'video') { const p = new Image(); p.decoding = 'async'; p.src = nx.src; }
+  if (pending) { const p = pending; pending = null; p.to != null ? jump(p.to) : go(p.dir); }
 }
 let lastKind = '';
 function pickTransition(modePool) {
@@ -519,18 +870,20 @@ function pickTransition(modePool) {
   lastKind = pool[Math.floor(Math.random() * pool.length)];
   return lastKind;
 }
-
 function go(dir) {
   if (!list.length) return;
-  if (busy) { pending = dir; return; }
+  if (busy) { pending = { dir }; return; }
   let n = idx + dir;
   if (n >= list.length) { if (!S.display.loop && dir > 0 && playing) { setPaused(true); toast(T('endOfShow')); return; } n = 0; }
   if (n < 0) n = list.length - 1;
   if (n === idx && shown) return;
-  idx = n;
-  show(idx, dir);
+  idx = n; show(idx);
 }
-
+function jump(n) {
+  if (busy) { pending = { to: n }; return; }
+  if (n === idx || n < 0 || n >= list.length) return;
+  idx = n; elapsed = 0; show(idx);
+}
 function setCaption(work, i) {
   const cap = $('#caption');
   cap.classList.add('off');
@@ -539,26 +892,47 @@ function setCaption(work, i) {
   captionTimer = setTimeout(() => {
     $('#capTitle').textContent = titleOf(work);
     $('#capIndex').textContent = `${String(i + 1).padStart(2, '0')} / ${String(list.length).padStart(2, '0')}`;
+    const lab = S.display.label;
+    $('#capLabel').textContent = lab ? metaOf(work) : '';
+    $('#capStatement').textContent = lab ? statementOf(work) : '';
     cap.classList.remove('off');
-    captionTimer = setTimeout(() => cap.classList.add('off'), 6500);
+    captionTimer = setTimeout(() => cap.classList.add('off'), lab ? 11000 : 6500);
   }, 1100);
 }
-
 function setPaused(p) {
   playing = !p;
   player.classList.toggle('paused', p);
   $('#pauseBtn').setAttribute('aria-label', p ? 'Play' : 'Pause');
+  const v = mediaOf(cur); if (v.tagName === 'VIDEO') { if (p) v.pause(); else v.play().catch(() => {}); }
 }
 
-// frame tick (driven by FX loop)
+// film strip
+const strip = $('#strip');
+function buildStrip() {
+  strip.replaceChildren(...list.map((w, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pl-thumb'; b.dataset.i = i; b.setAttribute('aria-label', titleOf(w));
+    if (w.thumb) { const im = document.createElement('img'); im.src = w.thumb; im.alt = ''; im.loading = 'lazy'; b.appendChild(im); }
+    else { const sp = document.createElement('span'); sp.textContent = '▶'; b.appendChild(sp); }
+    return b;
+  }));
+}
+function markStrip(i) {
+  strip.querySelectorAll('.pl-thumb').forEach((b, k) => b.classList.toggle('on', k === i));
+  const on = strip.querySelector('.pl-thumb.on'); if (on && !strip.hidden) on.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+}
+strip.addEventListener('click', (e) => { const b = e.target.closest('.pl-thumb'); if (b) jump(+b.dataset.i); });
+$('#stripBtn').addEventListener('click', () => { strip.hidden = !strip.hidden; player.classList.toggle('strip-open', !strip.hidden); markStrip(idx); });
+
+// frame tick
 const progressBar = $('#progressBar');
 const breathEl = $('#breathGuide');
 fx.onFrame = (dt) => {
   if (playing && shown && !busy) {
     elapsed += dt;
-    if (elapsed >= S.interval) { elapsed = 0; go(1); }
+    if (elapsed >= curDur) { elapsed = 0; go(1); }
   }
-  progressBar.style.width = (shown ? Math.min(100, elapsed / S.interval * 100) : 0) + '%';
+  progressBar.style.width = (shown ? Math.min(100, elapsed / curDur * 100) : 0) + '%';
   if (S.effects.breath) {
     breathEl.style.setProperty('--b', (0.55 + 0.45 * fx.breath).toFixed(3));
     const txt = fx.inhaling ? T('inhale') : T('exhale');
@@ -569,15 +943,15 @@ fx.onFrame = (dt) => {
     if (nextLumi <= 0) { const lines = T('lumiLines'); fx.say(lines[Math.floor(Math.random() * lines.length)]); nextLumi = 45 + Math.random() * 40; }
   }
 };
-
 function applyLive() {
   fx.tempo = modeOf(S.mode).set.tempo || 1;
   fx.setEffects(S.effects);
   fx.setInteract(S.interact);
   sound.chimeOn = S.interact.chime;
-  neon.classList.toggle('on', !!S.effects.neon);
+  neon.classList.toggle('on', !!S.effects.neon && !S.display.camera);
   breathEl.classList.toggle('on', !!S.effects.breath);
   player.classList.toggle('nodrift', !S.display.drift || reduced);
+  player.classList.toggle('camera', !!S.display.camera && !reduced);
   if (!S.display.captions) $('#caption').classList.add('off');
 }
 
@@ -588,27 +962,22 @@ $('#pauseBtn').addEventListener('click', () => setPaused(playing));
 $('#closeBtn').addEventListener('click', closePlayer);
 $('#fxBtn').addEventListener('click', openSheet);
 $('#musicBtn').addEventListener('click', () => {
-  if (player.classList.contains('muted')) {
-    if (S.music === 'none') { S.music = 'celestial'; saveSettings(S); }
-    startMusic();
-  } else { sound.stop(); player.classList.add('muted'); }
+  if (player.classList.contains('muted')) { if (S.music === 'none') { S.music = modeOf(S.mode).set.music === 'none' ? 'celestial' : modeOf(S.mode).set.music; saveSettings(S); } startMusic(); }
+  else { sound.stop(); player.classList.add('muted'); }
 });
 $('#fsBtn').addEventListener('click', () => {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   else document.documentElement.requestFullscreen?.().catch(() => {});
 });
 document.addEventListener('fullscreenchange', () => { if (!player.hidden) setTimeout(layout, 120); });
-
-// idle → hide controls & cursor
 function showControls() {
   player.classList.remove('idle');
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => { if (sheet.hidden) player.classList.add('idle'); }, 3200);
+  idleTimer = setTimeout(() => { if (sheet.hidden && strip.hidden) player.classList.add('idle'); }, 3200);
 }
 
-// pointer interaction
 let down = null;
-const isUi = (el) => el.closest('.pl-controls, .lw-sheet');
+const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip');
 player.addEventListener('pointerdown', (e) => {
   showControls();
   if (isUi(e.target)) return;
@@ -638,6 +1007,15 @@ player.addEventListener('pointerup', endPointer);
 player.addEventListener('pointercancel', endPointer);
 
 document.addEventListener('keydown', (e) => {
+  if (e.target.closest?.('dialog')) return;
+  if (!viewer.hidden) {
+    if (e.key === 'Escape') closeViewer();
+    else if (e.key === 'ArrowRight') vwStep(1);
+    else if (e.key === 'ArrowLeft') vwStep(-1);
+    else if (e.key === '+' || e.key === '=') { const r = vwStage.getBoundingClientRect(); zoomAt(Z.s * 1.3, r.left + r.width / 2, r.top + r.height / 2); }
+    else if (e.key === '-') { const r = vwStage.getBoundingClientRect(); zoomAt(Z.s / 1.3, r.left + r.width / 2, r.top + r.height / 2); }
+    return;
+  }
   if (player.hidden) { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); return; }
   if (!sheet.hidden && e.target.closest?.('.lw-sheet')) { if (e.key === 'Escape') closeSheet(); return; }
   showControls();
@@ -647,48 +1025,36 @@ document.addEventListener('keydown', (e) => {
     case ' ': case 'k': setPaused(playing); e.preventDefault(); break;
     case 'f': case 'F': $('#fsBtn').click(); break;
     case 'm': case 'M': $('#musicBtn').click(); break;
-    case 'Escape': if (!sheet.hidden) closeSheet(); else if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else closePlayer(); break;
+    case 't': case 'T': $('#stripBtn').click(); break;
+    case 'Escape': if (!sheet.hidden) closeSheet(); else if (!strip.hidden) $('#stripBtn').click(); else if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else closePlayer(); break;
   }
 });
 
-// wake lock & visibility
-async function requestWake() { try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } catch { wakeLock = null; } }
+async function requestWake() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch { wakeLock = null; } }
 function releaseWake() { try { wakeLock?.release(); } catch { /* ignore */ } wakeLock = null; }
 document.addEventListener('visibilitychange', () => {
   if (player.hidden) return;
-  if (document.hidden) sound.suspend();
-  else { sound.resume(); requestWake(); }
+  if (document.hidden) sound.suspend(); else { sound.resume(); requestWake(); }
 });
 
-// Hidden entrance: long-press the Three Rings mark for 3 s
-(() => {
-  const mark = $('.lw-wordmark');
-  let timer = null, fired = false;
-  const cancel = () => { clearTimeout(timer); timer = null; mark.classList.remove('pressing'); };
-  mark.addEventListener('pointerdown', () => {
-    fired = false; cancel(); mark.classList.add('pressing');
-    timer = setTimeout(async () => {
-      fired = true; cancel();
-      if (studio) return;
-      const pw = window.prompt(T('studioPrompt'));
-      if (!pw) return;
-      if (await verifyStudio(pw.trim())) { setStudio(true); toast(T('studioOn')); } else toast(T('studioWrong'));
-    }, 3000);
-  });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => mark.addEventListener(ev, cancel));
-  mark.addEventListener('click', (e) => { if (fired) { e.preventDefault(); fired = false; } });
-  mark.addEventListener('contextmenu', (e) => e.preventDefault());
-})();
-$('#studioLock').addEventListener('click', () => { setStudio(false); toast(T('studioOff')); });
-
-// ---------- Boot ----------
+// ---------- boot (+ kiosk / shared links: ?show=&mode=&autoplay=1&lang=) ----------
 (async function boot() {
-  await loadUploads();
-  document.documentElement.classList.toggle('studio', studio);
-  document.querySelectorAll('[data-studio]').forEach(el => { el.hidden = !studio; });
-  if (!persistOK) { /* in-memory only; warn on first upload */ }
+  const q = new URLSearchParams(location.search);
+  if (q.get('lang') === 'en' || q.get('lang') === 'zh') lang = q.get('lang');
+  setStudio(studio);
+  await loadCatalog();
+  if (q.get('show') && exhibitions.some(e => e.id === q.get('show'))) setView(q.get('show'), { applyShowMode: !q.get('mode') });
+  if (q.get('mode') && OPTIONS.modes.some(m => m.id === q.get('mode'))) applyMode(modeOf(q.get('mode')), { quiet: true });
   applyLang();
   saveSettings(S);
-  // expose a tiny hook for automated QA
-  window.__lumina = { get state() { return { idx, playing, busy, shown, list: list.length, cur, works: works.length, selected: S.selected.length, settings: S }; }, go, openPlayer, closePlayer };
+  if (q.get('autoplay') === '1') {
+    const gate = $('#startGate');
+    $('#gateShow').textContent = currentShow() ? showTitle(currentShow()) : 'AE Universe Creation';
+    gate.hidden = false;
+    $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
+  }
+  window.__lumina = {
+    get state() { return { idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud }; },
+    go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
+  };
 })();

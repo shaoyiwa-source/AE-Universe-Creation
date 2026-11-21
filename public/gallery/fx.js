@@ -193,7 +193,7 @@ export class FX {
 
   // ---- transitions hooks ----
   dustFrom(img, rect) {
-    if (!img || !img.naturalWidth) return;
+    if (!img || !(img.naturalWidth || img.videoWidth)) return;
     const maxP = this.reduced ? 1800 : 6500;
     let step = Math.max(5, Math.sqrt((rect.w * rect.h) / maxP));
     const cols = Math.floor(rect.w / step), rows = Math.floor(rect.h / step);

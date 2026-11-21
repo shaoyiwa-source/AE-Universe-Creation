@@ -59,9 +59,11 @@ export class Sound {
     if (this.ctx) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.1);
   }
 
-  setCustom(blob) {
-    if (this.customUrl) URL.revokeObjectURL(this.customUrl);
-    this.customUrl = blob ? URL.createObjectURL(blob) : null;
+  // src: a URL string (AE cloud track) or a Blob
+  setCustom(src) {
+    if (this.customUrl && this._ownUrl) URL.revokeObjectURL(this.customUrl);
+    this._ownUrl = !!src && typeof src !== 'string';
+    this.customUrl = !src ? null : typeof src === 'string' ? src : URL.createObjectURL(src);
     if (this.customEl) { this.customEl.pause(); this.customEl.src = this.customUrl || ''; }
   }
 
@@ -393,11 +395,11 @@ export class Sound {
     if (!this.customEl) {
       this.customEl = new Audio();
       this.customEl.loop = true;
-      this.customEl.crossOrigin = 'anonymous';
       try { this.customNode = this.ctx.createMediaElementSource(this.customEl); this.customNode.connect(this.master); } catch { /* fallback to element output */ }
     }
     clearInterval(this.fadeIv);
-    if (this.customEl.src !== this.customUrl) this.customEl.src = this.customUrl;
+    const abs = new URL(this.customUrl, location.href).href;
+    if (this.customEl.src !== abs) this.customEl.src = abs;
     this.customEl.volume = 1;
     this.customEl.play().catch(() => {});
   }
