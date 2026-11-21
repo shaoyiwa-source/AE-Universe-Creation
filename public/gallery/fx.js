@@ -594,7 +594,7 @@ export class FX {
     }
   }
 
-  // 精品光澤 — a slow silk sheen glides across the work every ~14 s
+  // 絲緞光澤 — a slow silk sheen glides across the work every ~14 s
   _drawSheen() {
     const ctx = this.ctx, r = this.rect, t = this.t;
     const cycle = 14, dur = 3.6;

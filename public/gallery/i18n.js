@@ -1,6 +1,10 @@
 // AE Lumina Wall — bilingual copy (繁中 / English)
 export const STR = {
   zh: {
+    rec: '錄製影片', recTitle: '錄製動態影片', fmtStory: 'IG 限動・Reels', fmtStoryD: '直式 9:16，含片頭與標題', fmtWide: '橫式', fmtWideD: '16:9，適合 YouTube 與簡報', fmtSquare: '方形', fmtSquareD: '1:1，適合貼文', fmtWall: '動態桌布', fmtWallD: '直式全螢幕、無文字，可循環',
+    secs: (n) => `${n} 秒`, watermarkOpt: '加上 Maison AE 浮水印', captionOpt: '顯示作品標題', recStart: '開始錄製', recording: (a, b) => `錄製中 ${a} / ${b} 秒`, recCancel: '取消錄製',
+    recDone: '影片完成', share: '分享', saveVideo: '下載影片', again: '再錄一次', done: '完成', recNote: '錄製依實際時間進行，期間請保持畫面開啟。完成後可直接分享到 IG／FB，或存成動態桌布。',
+    recUnsupported: '這個瀏覽器不支援錄影', recFailed: '錄製失敗，請再試一次', recLength: '長度', recFormat: '版型',
     exportEd: '匯出典藏版', kindClient: '客戶版：可離線播放，附官網連結', kindNft: 'NFT 版：單一檔案、無任何外部連結', quality: '畫質', qStd: '標準（長邊 1600px，檔案較小）', qHigh: '高畫質（長邊 2560px）', qLight: '輕量（長邊 1280px，適合手機與分享）',
     edArtist: '藝術家', edNo: '版本編號', edOf: '限量總數', edKind: '版本類型', exporting: (s) => `匯出中… ${s}`, exported: (mb) => `已匯出典藏版（${mb} MB）`, exportFailed: '匯出失敗，請再試一次',
     download: '下載原檔', editionOf: (n, of) => `典藏版 ${n} / ${of}`, certificate: '典藏證書', fingerprint: '數位指紋', worksCount: (n) => `${n} 件作品`,
@@ -15,7 +19,7 @@ export const STR = {
     f_hidden: '對客戶隱藏', f_inShow: '在此展覽中', f_duration: '停留秒數（空白＝依模式）', f_transition: '轉場', save: '儲存', cancel: '取消', del: '刪除',
     removeFromShow: '從展覽移除', saved: '已儲存', tapToBegin: '輕觸開始展演', zoomHint: '雙擊或滾輪放大・拖曳移動', filmstrip: '作品列', track: 'AE 曲目',
     showNote: '展覽說明', untitledShow: '未命名展覽', modeLabel: '場景模式',
-    skip: '跳至作品牆', home: '官網', eyebrow: 'Maison AE · 精品數位藝術',
+    skip: '跳至作品牆', home: '官網', eyebrow: 'Maison AE · 數位藝術典藏',
     heroTitle: '外在沈靜，內在綻放。', motto: '外在沈靜，內在綻放', heroSub: '讓畫作，在光裡呼吸', arena: '場域',
     heroLede: '輕觸畫面選取作品，依選取順序化為一場沉浸式光影展演。選擇空間的場景模式，轉場、音景與可觸碰的光，皆由 AE 獨家調校。',
     studio: 'AE 工作室', studioLock: '鎖定', studioPrompt: 'AE 工作室密碼', studioWrong: '密碼不正確', studioOn: '已進入 AE 工作室：可加入作品與音樂', studioOff: '已鎖定 AE 工作室',
@@ -35,6 +39,10 @@ export const STR = {
     lumiLines: ['深呼吸，慢慢看。', '今天也辛苦了。', '點點看漂浮的光種子 ✦', '這幅畫裡藏著光。', '讓心安靜一下。', '你的眼睛在微笑喔。', '行動創造無限 ∞'],
   },
   en: {
+    rec: 'Record', recTitle: 'Record a moving clip', fmtStory: 'Stories & Reels', fmtStoryD: '9:16 with title card and captions', fmtWide: 'Landscape', fmtWideD: '16:9 for YouTube and presentations', fmtSquare: 'Square', fmtSquareD: '1:1 for feed posts', fmtWall: 'Live wallpaper', fmtWallD: 'Full-bleed 9:16, no text, loops',
+    secs: (n) => `${n} s`, watermarkOpt: 'Add the Maison AE watermark', captionOpt: 'Show titles', recStart: 'Start recording', recording: (a, b) => `Recording ${a} / ${b} s`, recCancel: 'Cancel',
+    recDone: 'Your clip is ready', share: 'Share', saveVideo: 'Save video', again: 'Record again', done: 'Done', recNote: 'Recording runs in real time — keep this screen open. Then share straight to Instagram or Facebook, or keep it as a live wallpaper.',
+    recUnsupported: 'This browser cannot record video', recFailed: 'Recording failed — please try again', recLength: 'Length', recFormat: 'Format',
     exportEd: 'Export edition', kindClient: 'Client edition: plays offline, links to the maison', kindNft: 'NFT edition: one file, no external links', quality: 'Quality', qStd: 'Standard (1600 px long edge, smaller file)', qHigh: 'High (2560 px long edge)', qLight: 'Light (1280 px, for phones and sharing)',
     edArtist: 'Artist', edNo: 'Edition no.', edOf: 'Edition size', edKind: 'Edition type', exporting: (s) => `Exporting… ${s}`, exported: (mb) => `Edition exported (${mb} MB)`, exportFailed: 'Export failed — please try again',
     download: 'Download original', editionOf: (n, of) => `Edition ${n} of ${of}`, certificate: 'Certificate', fingerprint: 'Digital fingerprint', worksCount: (n) => `${n} work${n > 1 ? 's' : ''}`,
@@ -49,8 +57,8 @@ export const STR = {
     f_hidden: 'Hide from visitors', f_inShow: 'In this exhibition', f_duration: 'Seconds on screen (blank = mode)', f_transition: 'Transition', save: 'Save', cancel: 'Cancel', del: 'Delete',
     removeFromShow: 'Remove from exhibition', saved: 'Saved', tapToBegin: 'Tap to begin', zoomHint: 'Double-tap or scroll to zoom · drag to move', filmstrip: 'Works', track: 'AE track',
     showNote: 'Exhibition note', untitledShow: 'Untitled exhibition', modeLabel: 'Scene mode',
-    skip: 'Skip to the wall', home: 'Home', eyebrow: 'Maison AE · Fine Digital Art',
-    heroTitle: 'Still without, blooming within.', motto: 'Still without, blooming within', heroSub: 'Let art breathe in light', arena: 'Setting',
+    skip: 'Skip to the wall', home: 'Home', eyebrow: 'Maison AE · Digital Art Collection',
+    heroTitle: 'Outer Calm, Inner Bloom.', motto: 'Outer Calm · Inner Bloom', heroSub: 'Let art breathe in light', arena: 'Setting',
     heroLede: 'Tap the screens to choose works; they play in the order you pick them, as an immersive show of light. Choose the scene mode for your space; transitions, soundscapes and touchable light are all tuned exclusively by AE.',
     studio: 'AE Studio', studioLock: 'Lock', studioPrompt: 'AE Studio password', studioWrong: 'Incorrect password', studioOn: 'AE Studio unlocked: works and music can be added', studioOff: 'AE Studio locked',
     selected: 'Selected', selectAll: 'Select all', clear: 'Clear', addWorks: 'Add works', settings: 'Show settings', play: 'Begin show',
@@ -82,7 +90,7 @@ export const OPTIONS = {
       set: { interval: 20, pool: ['dissolve', 'ink', 'silk', 'innerbloom'], effects: ['lumiere'], interact: [], music: 'hall', display: { intro: true, captions: true, label: true, camera: false, mat: true, drift: true }, tempo: 0.8 } },
     { id: 'healing', arena: 'onsite', zh: '療癒空間', en: 'Healing Space', dzh: '身心靈・瑜伽・冥想：流水、風聲與風鈴', den: 'Wellness, yoga, meditation: water, wind and chimes',
       set: { interval: 16, pool: ['dissolve', 'silk', 'ink', 'innerbloom'], effects: ['breath', 'aurora', 'innerbloom'], interact: ['ripple', 'chime', 'seeds'], music: 'nature', display: { intro: false, captions: false, label: false, camera: false, mat: true, drift: true }, tempo: 0.7 } },
-    { id: 'hotel', arena: 'onsite', zh: '飯店・精品空間', en: 'Hotel & Boutique', dzh: '大廳、精品店、會所：優雅而有存在感', den: 'Lobbies, boutiques, lounges: elegant presence',
+    { id: 'hotel', arena: 'onsite', zh: '飯店・商業空間', en: 'Hotel & Lounge', dzh: '大廳、選品店、會所：優雅而有存在感', den: 'Lobbies, boutiques, lounges: elegant presence',
       set: { interval: 12, pool: ['innerbloom', 'bloom', 'rings', 'dissolve', 'silk'], effects: ['echo', 'lumiere', 'innerbloom'], interact: ['ripple'], music: 'lounge', display: { intro: true, captions: true, label: false, camera: false, mat: true, drift: true }, tempo: 1 } },
     { id: 'residence', arena: 'onsite', zh: '私人宅邸', en: 'Residence', dzh: '豪宅與居家：溫暖、細膩、陪伴', den: 'Private homes: warm, refined companionship',
       set: { interval: 18, pool: ['dissolve', 'innerbloom', 'ink'], effects: ['echo', 'breath', 'innerbloom', 'lumiere'], interact: ['ripple', 'chime', 'lumi', 'seeds'], music: 'dawn', display: { intro: false, captions: false, label: false, camera: true, mat: true, drift: true }, tempo: 0.85 } },
@@ -92,7 +100,7 @@ export const OPTIONS = {
       set: { interval: 8, pool: ['bubbles', 'silk', 'bloom'], effects: ['petals', 'stardust', 'echo'], interact: ['ripple', 'chime', 'lumi', 'seeds', 'cute'], music: 'dawn', display: { intro: false, captions: false, label: false, camera: false, mat: true, drift: true }, tempo: 1.3 } },
     { id: 'online', arena: 'online', zh: '線上展覽', en: 'Online Exhibition', dzh: '片頭、標題與展簽，適合直播與分享', den: 'Title card, titles and labels for streaming and sharing',
       set: { interval: 10, pool: ['innerbloom', 'dissolve', 'bloom', 'rings', 'ink', 'silk', 'stardust'], effects: ['echo', 'stardust', 'innerbloom', 'lumiere'], interact: ['ripple', 'chime', 'lumi', 'seeds'], music: 'celestial', display: { intro: true, captions: true, label: true, camera: false, mat: true, drift: true }, tempo: 1 } },
-    { id: 'cinema', arena: 'online', zh: '精品影像', en: 'Maison Film', dzh: '如品牌形象片：慢鏡、內在綻放、膠片光澤', den: 'Like a maison film: slow camera, inner bloom, film sheen',
+    { id: 'cinema', arena: 'online', zh: '藝術影像', en: 'Maison Film', dzh: '如品牌形象片：慢鏡、內在綻放、膠片光澤', den: 'Like a maison film: slow camera, inner bloom, film sheen',
       set: { interval: 12, pool: ['innerbloom', 'dissolve', 'ink'], effects: ['innerbloom', 'lumiere', 'stardust'], interact: [], music: 'celestial', display: { intro: true, captions: true, label: false, camera: true, mat: true, drift: true }, tempo: 0.8 } },
   ],
   transitions: [
@@ -108,7 +116,7 @@ export const OPTIONS = {
   ],
   effects: [
     { id: 'innerbloom', zh: '內在綻放', en: 'Inner Bloom', ae: true, dzh: '光從畫作最亮處緩緩綻放：外在沈靜，內在綻放', den: 'Light slowly blooms from the brightest places in the work' },
-    { id: 'lumiere', zh: '精品光澤', en: 'Maison Sheen', ae: true, dzh: '如絲綢掠過的光澤與細緻膠片顆粒', den: 'A silk-like sheen and fine film grain' },
+    { id: 'lumiere', zh: '絲緞光澤', en: 'Silk Sheen', ae: true, dzh: '如絲綢掠過的光澤與細緻膠片顆粒', den: 'A silk-like sheen and fine film grain' },
     { id: 'echo', zh: '色彩回聲', en: 'Color Echo', ae: true, dzh: '從畫作取色，化為漂浮光暈', den: 'Floating bokeh sampled from each work' },
     { id: 'breath', zh: '無限呼吸', en: 'Infinity Breath', ae: true, dzh: '∞ 光軌與每分鐘六次的放鬆呼吸', den: 'An ∞ light trail paced at six calm breaths a minute' },
     { id: 'stardust', zh: '星塵', en: 'Stardust', dzh: '細微星光與流星', den: 'Fine twinkling stars and shooting stars' },

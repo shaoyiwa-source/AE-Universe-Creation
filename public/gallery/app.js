@@ -4,6 +4,7 @@ import { Sound } from './audio.js';
 import { FX } from './fx.js';
 import { runTransition, resetSlide, TRANSITIONS } from './transitions.js';
 import { STR, OPTIONS } from './i18n.js';
+import { recordClip, canRecord } from './recorder.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1051,6 +1052,109 @@ function setPaused(p) {
   const v = mediaOf(cur); if (v.tagName === 'VIDEO') { if (p) v.pause(); else v.play().catch(() => {}); }
 }
 
+// ---------- R6: record a moving clip (IG / FB / live wallpaper) ----------
+const recDialog = $('#recDialog');
+const rec = { format: 'story', secs: 15, ctrl: null, blob: null, name: '', wasPlaying: false };
+const recPane = (id) => ['recSetup', 'recProgress', 'recResult'].forEach(k => { $('#' + k).hidden = k !== id; });
+function openRecord() {
+  if (!canRecord()) { toast(T('recUnsupported')); return; }
+  rec.wasPlaying = playing; setPaused(true);
+  recPane('recSetup');
+  recDialog.showModal();
+}
+$('#recFormats').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-format]'); if (!b) return;
+  rec.format = b.dataset.format;
+  document.querySelectorAll('#recFormats [data-format]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  $('#recCaptions').disabled = rec.format === 'wallpaper';
+});
+$('#recSecs').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-secs]'); if (!b) return;
+  rec.secs = +b.dataset.secs;
+  document.querySelectorAll('#recSecs [data-secs]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+});
+function closeRecord() {
+  if (rec.ctrl) rec.ctrl.abort();
+  recDialog.close();
+  const v = $('#recPreview'); v.pause(); if (v.src) { URL.revokeObjectURL(v.src); v.removeAttribute('src'); }
+  if (!player.hidden && rec.wasPlaying) setPaused(false);
+}
+$('#recClose').addEventListener('click', closeRecord);
+$('#recDone').addEventListener('click', closeRecord);
+$('#recAbort').addEventListener('click', () => { if (rec.ctrl) rec.ctrl.abort(); });
+$('#recAgain').addEventListener('click', () => recPane('recSetup'));
+recDialog.addEventListener('cancel', (e) => { e.preventDefault(); closeRecord(); });
+async function loadForClip(w) {
+  if (w.type === 'video') {
+    const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto';
+    const ok = await loadVideo(v, w.src); if (!ok) return null;
+    v.play().catch(() => {}); return v;
+  }
+  const im = new Image(); im.decoding = 'async';
+  const ok = await loadImg(im, w.src); return ok ? im : null;
+}
+$('#recGo').addEventListener('click', async () => {
+  const wallpaper = rec.format === 'wallpaper';
+  const n = wallpaper ? 1 : Math.min(list.length, rec.secs <= 15 ? 4 : 7);
+  const picks = Array.from({ length: n }, (_, k) => list[(idx + k) % list.length]);
+  recPane('recProgress');
+  $('#recStatus').textContent = T('recording', 0, rec.secs); $('#recBar').style.width = '0%';
+  const ctrl = rec.ctrl = new AbortController();
+  fx.stop();
+  try {
+    const items = [];
+    for (const w of picks) {
+      const el = await loadForClip(w); if (!el) continue;
+      let pal = paletteCache.get(w.id); if (!pal) { pal = extractPalette(el); if (pal) paletteCache.set(w.id, pal); }
+      let pts = pointCache.get(w.id); if (!pts) { pts = brightPoints(el); pointCache.set(w.id, pts); }
+      items.push({ el, title: titleOf(w), meta: S.display.label ? metaOf(w) : '', points: pts, palette: pal });
+    }
+    if (!items.length) throw new Error('no works');
+    const supported = ['innerbloom', 'dissolve', 'rings', 'bubbles'];
+    const pool = modeOf(S.mode).set.pool.map(k => supported.includes(k) ? k : (k === 'ink' || k === 'bloom' ? 'innerbloom' : 'dissolve'));
+    const transitions = [...new Set(['innerbloom', ...pool])];
+    let audioStream = null;
+    if (S.music !== 'none') { if (player.classList.contains('muted')) startMusic(); audioStream = sound.captureStream(); }
+    const logo = $('.pl-mark img');
+    const sh = currentShow();
+    const small = Math.min(window.innerWidth, window.innerHeight) < 820 || (navigator.hardwareConcurrency || 8) <= 4;
+    const out = await recordClip({
+      works: items, format: rec.format, seconds: rec.secs, watermark: $('#recWatermark').checked, captions: $('#recCaptions').checked && !wallpaper,
+      scale: small ? 2 / 3 : 1, effects: { ...S.effects }, tempo: modeOf(S.mode).set.tempo || 1, transitions, logo, motto: T('motto'),
+      showTitle: sh ? showTitle(sh) : (ED ? (lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) : 'Maison AE'),
+      audioStream, signal: ctrl.signal, monitor: $('#recMonitor'),
+      onProgress: (t, total) => { $('#recStatus').textContent = T('recording', Math.floor(t), total); $('#recBar').style.width = (t / total * 100) + '%'; },
+    });
+    rec.blob = out.blob;
+    const slug = (sh ? (sh.title.en || 'exhibition') : 'maison-ae').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'maison-ae';
+    rec.name = `MaisonAE-${slug}-${rec.format}-${rec.secs}s.${out.ext}`;
+    const v = $('#recPreview'); v.src = URL.createObjectURL(out.blob); v.play().catch(() => {});
+    $('#recInfo').textContent = `${out.width}×${out.height} · ${rec.secs}s · ${(out.blob.size / 1048576).toFixed(1)} MB · ${out.ext.toUpperCase()}`;
+    const file = new File([out.blob], rec.name, { type: out.mime });
+    $('#recShare').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+    recPane('recResult');
+    window.__lumina.lastClip = { size: out.blob.size, mime: out.mime, width: out.width, height: out.height, name: rec.name, audio: !!audioStream };
+  } catch (err) {
+    if (err.code !== 'ABORTED') { console.warn('record', err); toast(T('recFailed')); }
+    recPane('recSetup');
+  } finally {
+    rec.ctrl = null;
+    if (!player.hidden) fx.start();
+  }
+});
+$('#recSave').addEventListener('click', () => {
+  if (!rec.blob) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(rec.blob); a.download = rec.name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+});
+$('#recShare').addEventListener('click', async () => {
+  if (!rec.blob) return;
+  const file = new File([rec.blob], rec.name, { type: rec.blob.type });
+  try { await navigator.share({ files: [file], title: 'Maison AE', text: T('motto') }); } catch { /* user cancelled */ }
+});
+$('#recBtn').addEventListener('click', openRecord);
+$('#recBtn').hidden = !canRecord();
+
 // never let the player (or its stage) be scrolled by focus or scrollIntoView
 for (const el of [player, stage]) el.addEventListener('scroll', () => { if (el.scrollTop || el.scrollLeft) { el.scrollTop = 0; el.scrollLeft = 0; } });
 
@@ -1127,7 +1231,7 @@ function showControls() {
 }
 
 let down = null;
-const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip');
+const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip, dialog');
 player.addEventListener('pointerdown', (e) => {
   showControls();
   if (isUi(e.target)) return;
@@ -1176,6 +1280,7 @@ document.addEventListener('keydown', (e) => {
     case 'f': case 'F': $('#fsBtn').click(); break;
     case 'm': case 'M': $('#musicBtn').click(); break;
     case 't': case 'T': $('#stripBtn').click(); break;
+    case 'r': case 'R': openRecord(); break;
     case 'Escape': if (!sheet.hidden) closeSheet(); else if (!strip.hidden) $('#stripBtn').click(); else if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else closePlayer(); break;
   }
 });
@@ -1188,7 +1293,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) sound.suspend(); else { sound.resume(); requestWake(); }
 });
 
-// fine film grain for 精品光澤 (generated once, animated in CSS)
+// fine film grain for 絲緞光澤 (generated once, animated in CSS)
 function makeGrain() {
   try {
     const c = document.createElement('canvas'); c.width = c.height = 160;
@@ -1221,6 +1326,6 @@ function makeGrain() {
   }
   window.__lumina = {
     get state() { return { edition: !!ED, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
-    go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
+    rec, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();

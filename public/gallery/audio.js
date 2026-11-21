@@ -27,6 +27,7 @@ export class Sound {
       const comp = ctx.createDynamicsCompressor();
       comp.threshold.value = -18; comp.ratio.value = 3; comp.attack.value = 0.02; comp.release.value = 0.4;
       this.master.connect(comp).connect(ctx.destination);
+      this.comp = comp;
       this.reverb = ctx.createConvolver();
       this.reverb.buffer = this._impulse(4.2, 2.6);
       this.wet = ctx.createGain(); this.wet.gain.value = 0.55;
@@ -52,6 +53,13 @@ export class Sound {
       for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
     }
     return buf;
+  }
+
+  // A MediaStream of everything we play (music + chimes) — used to put sound into recorded clips
+  captureStream() {
+    if (!this.ensure()) return null;
+    if (!this.capDest) { this.capDest = this.ctx.createMediaStreamDestination(); this.comp.connect(this.capDest); }
+    return this.capDest.stream;
   }
 
   setVolume(v) {

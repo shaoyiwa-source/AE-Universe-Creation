@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="ae-version" content="lumina-r5">
+<meta name="ae-version" content="lumina-r6">
 <meta name="theme-color" content="#0b100d">
 <title>Lumina Wall · Maison AE</title>
-<meta name="description" content="AE Lumina Wall — 外在沈靜，內在綻放。精品數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
+<meta name="description" content="AE Lumina Wall — 外在沈靜，內在綻放。數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="gallery/gallery.css?v=r5">
+<link rel="stylesheet" href="gallery/gallery.css?v=r6">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -165,6 +165,7 @@
     <button type="button" class="pl-btn" id="nextBtn" aria-label="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
     <span class="pl-sep" aria-hidden="true"></span>
     <button type="button" class="pl-btn" id="stripBtn" aria-label="Works"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="5" height="10" rx="1"/><rect x="9.5" y="7" width="5" height="10" rx="1"/><rect x="16" y="7" width="5" height="10" rx="1"/></svg></button>
+    <button type="button" class="pl-btn pl-rec" id="recBtn" aria-label="Record"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2" class="dot"/></svg></button>
     <button type="button" class="pl-btn" id="musicBtn" aria-label="Music"><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-note"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-mute"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path d="M3 3l18 18"/></svg></button>
     <button type="button" class="pl-btn" id="fxBtn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></svg></button>
     <button type="button" class="pl-btn" id="fsBtn" aria-label="Fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
@@ -263,6 +264,39 @@
   </form>
 </dialog>
 
+<!-- Record a moving clip (IG / FB / live wallpaper) -->
+<dialog class="lw-dialog lw-rec" id="recDialog">
+  <div class="rec-pane" id="recSetup">
+    <p class="lw-eyebrow" data-i18n="recTitle">錄製動態影片</p>
+    <p class="rec-label" data-i18n="recFormat">版型</p>
+    <div class="rec-formats" id="recFormats">
+      <button type="button" class="rec-format" data-format="story" aria-pressed="true"><i class="r916"></i><b data-i18n="fmtStory">IG 限動</b><small data-i18n="fmtStoryD"></small></button>
+      <button type="button" class="rec-format" data-format="wide" aria-pressed="false"><i class="r169"></i><b data-i18n="fmtWide">橫式</b><small data-i18n="fmtWideD"></small></button>
+      <button type="button" class="rec-format" data-format="square" aria-pressed="false"><i class="r11"></i><b data-i18n="fmtSquare">方形</b><small data-i18n="fmtSquareD"></small></button>
+      <button type="button" class="rec-format" data-format="wallpaper" aria-pressed="false"><i class="r916 wall"></i><b data-i18n="fmtWall">動態桌布</b><small data-i18n="fmtWallD"></small></button>
+    </div>
+    <p class="rec-label" data-i18n="recLength">長度</p>
+    <div class="lw-chips" id="recSecs"><button type="button" class="lw-chip" data-secs="15" aria-pressed="true">15</button><button type="button" class="lw-chip" data-secs="30" aria-pressed="false">30</button></div>
+    <label class="lw-check rec-check"><input type="checkbox" id="recWatermark" checked><span data-i18n="watermarkOpt">加上 Maison AE 浮水印</span></label>
+    <label class="lw-check rec-check"><input type="checkbox" id="recCaptions" checked><span data-i18n="captionOpt">顯示作品標題</span></label>
+    <p class="lw-note" data-i18n="recNote"></p>
+    <div class="lw-dialog-actions"><span></span><button type="button" class="lw-btn ghost" id="recClose" data-i18n="cancel">取消</button><button type="button" class="lw-btn primary" id="recGo" data-i18n="recStart">開始錄製</button></div>
+  </div>
+  <div class="rec-pane" id="recProgress" hidden>
+    <p class="lw-eyebrow" data-i18n="recTitle">錄製動態影片</p>
+    <div class="rec-live"><span class="rec-dot"></span><span id="recStatus"></span></div>
+    <div class="rec-bar"><i id="recBar"></i></div>
+    <canvas class="rec-monitor" id="recMonitor" aria-hidden="true"></canvas>
+    <div class="lw-dialog-actions"><span></span><button type="button" class="lw-btn ghost" id="recAbort" data-i18n="recCancel">取消錄製</button></div>
+  </div>
+  <div class="rec-pane" id="recResult" hidden>
+    <p class="lw-eyebrow" data-i18n="recDone">影片完成</p>
+    <video class="rec-preview" id="recPreview" controls playsinline loop></video>
+    <p class="lw-note" id="recInfo"></p>
+    <div class="lw-dialog-actions"><button type="button" class="lw-btn ghost" id="recAgain" data-i18n="again">再錄一次</button><span></span><button type="button" class="lw-btn ghost" id="recSave" data-i18n="saveVideo">下載影片</button><button type="button" class="lw-btn primary" id="recShare" data-i18n="share">分享</button><button type="button" class="lw-btn ghost" id="recDone" data-i18n="done">完成</button></div>
+  </div>
+</dialog>
+
 <!-- Kiosk / shared link start -->
 <div class="lw-gate" id="startGate" hidden>
   <img src="assets/ae-three-rings-transparent.webp" alt="" width="120" height="60">
@@ -276,6 +310,6 @@
 
 <div class="lw-toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="gallery/app.js?v=r5"></script>
+<script type="module" src="gallery/app.js?v=r6"></script>
 </body>
 </html>

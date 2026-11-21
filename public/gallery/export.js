@@ -1,6 +1,6 @@
 // AE Lumina Wall — export an exhibition as a single, self-contained player file (客戶版 / NFT 版).
 // Studio-only: loaded with import() from app.js. The output needs no server and makes no network requests.
-const MODULES = ['store', 'audio', 'fx', 'transitions', 'i18n', 'app']; // dependency order
+const MODULES = ['store', 'audio', 'fx', 'transitions', 'i18n', 'recorder', 'app']; // dependency order
 
 const timeout = (ms) => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined);
 async function text(url, ms = 20000) { const r = await fetch(url, { cache: 'no-store', signal: timeout(ms) }); if (!r.ok) throw new Error(`${url} ${r.status}`); return r.text(); }

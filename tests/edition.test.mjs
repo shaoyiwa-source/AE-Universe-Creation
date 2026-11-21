@@ -118,6 +118,7 @@ try {
     await fr.waitForFunction((b) => !window.__lumina.state.busy && window.__lumina.state.idx !== b, b, { timeout: 12000 }).catch(() => { trOk = false; });
   }
   check(`[${which}] NFT sandbox: signature transitions run`, trOk);
+  check(`[${which}] NFT sandbox: recording is available in the edition`, await fr.evaluate(() => !document.getElementById('recBtn').hidden && !!window.MediaRecorder));
   const vIdx = await fr.evaluate(() => [...document.querySelectorAll('.pl-thumb')].findIndex(b => b.querySelector('span')) );
   const vi = vIdx >= 0 ? vIdx : 3;
   await fr.evaluate((i) => window.__lumina.jump(i), vi);
