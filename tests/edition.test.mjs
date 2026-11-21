@@ -63,6 +63,13 @@ try {
   await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])');
   await page.click('.lw-mode[data-mode=hotel]'); await page.click('#closeSettings');
 
+  // export with nothing selected: hidden (unnamed) works must stay out
+  const keep = await page.evaluate(() => [...window.__lumina.state.settings.selected]);
+  await page.evaluate(() => document.querySelector('#clearSel').click());
+  await page.click('[data-show-act=export]'); await page.waitForSelector('#exportDialog[open]');
+  check(`[${which}] exporting everything leaves hidden (unnamed) works out`, /22/.test(await page.textContent('#exportStatus')), await page.textContent('#exportStatus'));
+  await page.click('#exportCancel');
+  for (const id of keep) await page.locator(`.screen[data-id="${id}"] .screen-hit`).click();
   await page.click('[data-show-act=export]');
   await page.waitForSelector('#exportDialog[open]');
   check(`[${which}] export dialog lists the selected works`, /4/.test(await page.textContent('#exportStatus')));

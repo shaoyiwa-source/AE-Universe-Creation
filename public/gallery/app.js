@@ -565,7 +565,7 @@ function exportList() {
   const inView = new Set(base.map(w => w.id));
   const sel = S.selected.filter(id => inView.has(id));
   const l = sel.length ? sel.map(id => works.find(w => w.id === id)) : base;
-  return l.filter(Boolean).map(w => ({ ...w, ...(itemOf(w.id) || {}) }));
+  return l.filter(w => w && !w.hidden).map(w => ({ ...w, ...(itemOf(w.id) || {}) })); // hidden works never leave the studio
 }
 function openExport() {
   const sh = currentShow(), f = exportForm.elements;
