@@ -1,7 +1,7 @@
 // AE Lumina Wall — bilingual copy (繁中 / English)
 export const STR = {
   zh: {
-    exportEd: '匯出典藏版', kindClient: '客戶版：可離線播放，附官網連結', kindNft: 'NFT 版：單一檔案、無任何外部連結', quality: '畫質', qStd: '標準（長邊 1600px，檔案較小）', qHigh: '高畫質（長邊 2560px）',
+    exportEd: '匯出典藏版', kindClient: '客戶版：可離線播放，附官網連結', kindNft: 'NFT 版：單一檔案、無任何外部連結', quality: '畫質', qStd: '標準（長邊 1600px，檔案較小）', qHigh: '高畫質（長邊 2560px）', qLight: '輕量（長邊 1280px，適合手機與分享）',
     edArtist: '藝術家', edNo: '版本編號', edOf: '限量總數', edKind: '版本類型', exporting: (s) => `匯出中… ${s}`, exported: (mb) => `已匯出典藏版（${mb} MB）`, exportFailed: '匯出失敗，請再試一次',
     download: '下載原檔', editionOf: (n, of) => `典藏版 ${n} / ${of}`, certificate: '典藏證書', fingerprint: '數位指紋', worksCount: (n) => `${n} 件作品`,
     issued: '發行', kindName: (k) => k === 'nft' ? 'NFT 典藏版' : '客戶典藏版', certNote: '本典藏版由 Maison AE 策展與封存；數位指紋可用於驗證作品內容未經更動。',
@@ -35,7 +35,7 @@ export const STR = {
     lumiLines: ['深呼吸，慢慢看。', '今天也辛苦了。', '點點看漂浮的光種子 ✦', '這幅畫裡藏著光。', '讓心安靜一下。', '你的眼睛在微笑喔。', '行動創造無限 ∞'],
   },
   en: {
-    exportEd: 'Export edition', kindClient: 'Client edition: plays offline, links to the maison', kindNft: 'NFT edition: one file, no external links', quality: 'Quality', qStd: 'Standard (1600 px long edge, smaller file)', qHigh: 'High (2560 px long edge)',
+    exportEd: 'Export edition', kindClient: 'Client edition: plays offline, links to the maison', kindNft: 'NFT edition: one file, no external links', quality: 'Quality', qStd: 'Standard (1600 px long edge, smaller file)', qHigh: 'High (2560 px long edge)', qLight: 'Light (1280 px, for phones and sharing)',
     edArtist: 'Artist', edNo: 'Edition no.', edOf: 'Edition size', edKind: 'Edition type', exporting: (s) => `Exporting… ${s}`, exported: (mb) => `Edition exported (${mb} MB)`, exportFailed: 'Export failed — please try again',
     download: 'Download original', editionOf: (n, of) => `Edition ${n} of ${of}`, certificate: 'Certificate', fingerprint: 'Digital fingerprint', worksCount: (n) => `${n} work${n > 1 ? 's' : ''}`,
     issued: 'Issued', kindName: (k) => k === 'nft' ? 'NFT Edition' : 'Collector Edition', certNote: 'Curated and sealed by Maison AE. The digital fingerprint verifies the contents have not been altered.',

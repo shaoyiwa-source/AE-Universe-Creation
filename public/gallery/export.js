@@ -59,7 +59,8 @@ async function sha256(str) {
 export async function exportEdition(o) {
   const base = o.base || new URL('.', location.href).href; // …/ (site root that holds gallery.html)
   const step = (msg) => o.onProgress && o.onProgress(msg);
-  const max = o.meta.quality === 'high' ? 2560 : 1600;
+  const max = o.meta.quality === 'high' ? 2560 : o.meta.quality === 'light' ? 1280 : 1600;
+  const q = o.meta.quality === 'light' ? 0.8 : 0.9;
 
   step('page');
   const [html, css, ...mods] = await Promise.all([
@@ -76,7 +77,7 @@ export async function exportEdition(o) {
   for (let i = 0; i < o.works.length; i++) {
     const w = o.works[i];
     step(`work:${i + 1}/${o.works.length}`);
-    const src = w.type === 'video' ? await urlToDataURL(new URL(w.src, base).href) : await encodeImage(new URL(w.src, base).href, max, 0.9);
+    const src = w.type === 'video' ? await urlToDataURL(new URL(w.src, base).href) : await encodeImage(new URL(w.src, base).href, max, q);
     const thumb = w.thumb ? await encodeImage(new URL(w.thumb, base).href, 480, 0.82) : '';
     works.push({
       id: w.id, no: i + 1, type: w.type || 'image', src, thumb,
