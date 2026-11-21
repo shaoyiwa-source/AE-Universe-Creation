@@ -61,7 +61,7 @@ export async function recordClip(o) {
   const segDur = body / works.length;
   const trans = Math.min(1.5, segDur * 0.38);
   const minDim = Math.min(W, H);
-  const pad = wallpaper ? 0 : Math.round(minDim * 0.06);
+  const pad = wallpaper ? Math.round(minDim * 0.04) : Math.round(minDim * 0.06);
 
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const ctx = cv.getContext('2d');
@@ -69,6 +69,7 @@ export async function recordClip(o) {
   const mask = document.createElement('canvas'); mask.width = W; mask.height = H; const mctx = mask.getContext('2d');
   const fxc = document.createElement('canvas');
   const fx = new FX(fxc, { reduced: false });
+  fx.density = o.density || 1;
   fx.resize(W, H);
   fx.tempo = o.tempo || 1;
   const eff = { ...(o.effects || {}) }; eff.lasers = eff.lasers && !wallpaper; eff.neon = false;
@@ -76,7 +77,7 @@ export async function recordClip(o) {
   fx.setInteract({});
   const prepared = works.map((w) => {
     const [nw, nh] = dimsOf(w.el);
-    return { ...w, rect: fit(nw, nh, W, H, pad, wallpaper), amb: ambientOf(w.el, W, H) };
+    return { ...w, rect: fit(nw, nh, W, H, pad, false), amb: ambientOf(w.el, W, H) };
   });
   try {
     await Promise.all([
@@ -94,7 +95,7 @@ export async function recordClip(o) {
     c.fillStyle = 'rgba(5,8,6,0.64)'; c.fillRect(0, 0, W, H);
     const r = w.rect;
     const focus = (w.points && w.points[0]) || { u: 0.5, v: 0.5 };
-    const z = 1 + 0.06 * ease(clamp01(k));
+    const z = 0.94 + 0.06 * ease(clamp01(k)); // grows to full size, never beyond: the whole work (incl. handwriting) stays in frame
     const fxp = r.x + focus.u * r.w, fyp = r.y + focus.v * r.h;
     if (!wallpaper) {
       c.save(); c.shadowColor = 'rgba(0,0,0,0.6)'; c.shadowBlur = minDim * 0.05; c.shadowOffsetY = minDim * 0.015;
@@ -267,7 +268,7 @@ export async function recordClip(o) {
       fx.setArtRect(w.rect); if (w.palette) fx.setPalette(w.palette);
       if (fx._lastWork !== i) { fx.setBloomPoints(w.points || []); fx._lastWork = i; }
       fx.t += dt; fx._update(dt); fx._draw();
-      ctx.drawImage(fxc, 0, 0, W, H);
+      ctx.globalAlpha = o.fxOpacity || 1; ctx.drawImage(fxc, 0, 0, W, H); ctx.globalAlpha = 1;
       if (tb >= 0 && t < total - outroDur) caption(w, i, seg(local, 0.5, 1.2) * (1 - seg(local, segDur - 0.6, segDur - 0.1)));
       if (outroDur && t >= total - outroDur) { const a = seg(t, total - outroDur, total - outroDur + 0.8); titleCard(a, 1, true); }
       watermark();

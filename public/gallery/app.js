@@ -5,6 +5,7 @@ import { FX } from './fx.js';
 import { runTransition, resetSlide, TRANSITIONS } from './transitions.js';
 import { STR, OPTIONS } from './i18n.js';
 import { recordClip, canRecord } from './recorder.js';
+import { Listener } from './listen.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -36,9 +37,9 @@ const fmtSec = (s) => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)} min` 
 const DEFAULTS = {
   mode: 'online', adjusted: false, transition: 'random', interval: 10,
   effects: { innerbloom: true, lumiere: true, echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
-  interact: { ripple: true, chime: true, lumi: true, seeds: true, cute: false },
+  interact: { ripple: true, chime: true, lumi: true, seeds: true, cute: false, listen: false },
   display: { intro: true, captions: true, label: true, camera: false, mat: true, drift: true, shuffle: false, loop: true },
-  music: 'celestial', volume: 0.6, selected: [],
+  music: 'celestial', volume: 0.6, intensity: 3, selected: [],
 };
 
 // Edition (exported 客戶版 / NFT 版): everything comes from the embedded manifest; no server, no studio
@@ -671,9 +672,13 @@ function renderSettings() {
   const tr = $('#transitionChips'); tr.replaceChildren();
   for (const o of OPTIONS.transitions) tr.appendChild(chip(L(o), S.transition === o.id, o.ae, () => { S.transition = o.id; adj(); commit(); }));
   const ef = $('#effectToggles'); ef.replaceChildren();
-  for (const o of OPTIONS.effects) ef.appendChild(toggle(o, S.effects[o.id], () => { S.effects[o.id] = !S.effects[o.id]; adj(); commit(); }));
+  for (const o of OPTIONS.effects) { if (o.partyOnly && S.mode !== 'party') continue; ef.appendChild(toggle(o, S.effects[o.id], () => { S.effects[o.id] = !S.effects[o.id]; adj(); commit(); })); }
+  const inten = $('#intensity'); inten.value = S.intensity; $('#intensityOut').textContent = S.intensity;
   const it = $('#interactToggles'); it.replaceChildren();
-  for (const o of OPTIONS.interact) it.appendChild(toggle(o, S.interact[o.id], () => { S.interact[o.id] = !S.interact[o.id]; adj(); commit(); }));
+  for (const o of OPTIONS.interact) it.appendChild(toggle(o, S.interact[o.id], () => {
+    if (o.id === 'listen') { setListen(!S.interact.listen); return; }
+    S.interact[o.id] = !S.interact[o.id]; adj(); commit();
+  }));
   const di = $('#displayToggles'); di.replaceChildren();
   for (const o of OPTIONS.display) di.appendChild(toggle(o, !!S.display[o.id], () => { S.display[o.id] = !S.display[o.id]; adj(); commit(); if ((o.id === 'mat') && !player.hidden) layout(); }));
   const mu = $('#musicChips'); mu.replaceChildren();
@@ -698,7 +703,7 @@ function applyMode(m, { quiet = false } = {}) {
   const set = m.set;
   S.mode = m.id; S.adjusted = false;
   for (const k of Object.keys(S.effects)) S.effects[k] = set.effects.includes(k);
-  for (const k of Object.keys(S.interact)) S.interact[k] = set.interact.includes(k);
+  for (const k of Object.keys(S.interact)) if (k !== 'listen') S.interact[k] = set.interact.includes(k); // the microphone is never switched on by a mode
   Object.assign(S.display, set.display);
   S.interval = set.interval;
   S.transition = 'random';
@@ -943,6 +948,7 @@ async function openPlayer(startId) {
   layout(); applyLive(); fx.start();
   playing = true; player.classList.remove('paused');
   startMusic(); requestWake(); showControls();
+  if (S.interact.listen) startListening(false).then(ok => { $('#micDot').hidden = !ok; });
   nextLumi = 40;
   if (S.display.intro) await playIntro();
   if (player.hidden) return;
@@ -966,6 +972,7 @@ function playIntro() {
 }
 function closePlayer() {
   playing = false;
+  stopListening(); toggleInfo(false);
   fx.stop(); sound.stop();
   slides.forEach(s => s.querySelector('video').pause());
   player.hidden = true;
@@ -1008,6 +1015,7 @@ async function show(i) {
   ambs[na].style.backgroundImage = `url("${work.thumb || work.src}")`;
   ambs[na].classList.add('on'); ambs[ambCur].classList.remove('on'); ambCur = na;
   setCaption(work, i, r);
+  if (!$('#plInfo').hidden) fillInfo(work);
   markStrip(i);
   const from = shown ? slides[cur] : null;
   const fromMedia = from ? mediaOf(cur) : null;
@@ -1078,7 +1086,7 @@ function setCaption(work, i, rect) {
     $('#capIndex').textContent = `${String(i + 1).padStart(2, '0')} / ${String(list.length).padStart(2, '0')}`;
     const lab = S.display.label;
     $('#capLabel').textContent = lab ? metaOf(work) : '';
-    $('#capStatement').textContent = lab ? statementOf(work) : '';
+    $('#capStatement').textContent = '';
     positionCaption(rect || slides[cur].rect);
     cap.classList.remove('off');
     captionTimer = setTimeout(() => cap.classList.add('off'), lab ? 11000 : 6500);
@@ -1159,7 +1167,7 @@ $('#recGo').addEventListener('click', async () => {
     const small = Math.min(window.innerWidth, window.innerHeight) < 820 || (navigator.hardwareConcurrency || 8) <= 4;
     const out = await recordClip({
       works: items, format: rec.format, seconds: rec.secs, watermark: $('#recWatermark').checked, captions: $('#recCaptions').checked && !wallpaper,
-      scale: small ? 2 / 3 : 1, effects: { ...S.effects }, tempo: modeOf(S.mode).set.tempo || 1, transitions, logo, motto: T('motto'), lang,
+      scale: small ? 2 / 3 : 1, effects: liveEffects(), density: INTENSITY_DENSITY[(S.intensity || 3) - 1], fxOpacity: INTENSITY_ALPHA[(S.intensity || 3) - 1], tempo: modeOf(S.mode).set.tempo || 1, transitions, logo, motto: T('motto'), lang,
       showTitle: sh ? showTitle(sh) : (ED ? (lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) : 'AE Universe Creation'),
       audioStream, signal: ctrl.signal, monitor: $('#recMonitor'),
       onProgress: (t, total) => { $('#recStatus').textContent = T('recording', Math.floor(t), total); $('#recBar').style.width = (t / total * 100) + '%'; },
@@ -1194,6 +1202,53 @@ $('#recShare').addEventListener('click', async () => {
 $('#recBtn').addEventListener('click', openRecord);
 $('#recBtn').hidden = !canRecord();
 
+// ---------- R8: bilingual note, opened on demand (never pops up by itself) ----------
+function fillInfo(w) {
+  $('#infoTitle').textContent = titleOf(w);
+  $('#infoSub').textContent = subtitleOf(w);
+  $('#infoMeta').textContent = metaOf(w);
+  const zh = w.statement?.zh || '', en = w.statement?.en || '';
+  $('#infoZh').textContent = zh || (en ? '' : T('infoEmpty'));
+  $('#infoEn').textContent = en;
+}
+function toggleInfo(force) {
+  const el = $('#plInfo'); const open = force != null ? force : el.hidden;
+  if (open) fillInfo(list[idx]);
+  el.hidden = !open; player.classList.toggle('info-open', open);
+}
+$('#infoBtn').addEventListener('click', () => toggleInfo());
+$('#infoClose').addEventListener('click', () => toggleInfo(false));
+$('#intensity').addEventListener('input', (e) => { S.intensity = +e.target.value; $('#intensityOut').textContent = S.intensity; S.adjusted = true; saveSettings(S, SKEY); applyLive(); });
+
+// ---------- R8: sound reaction (microphone; analysed on this device only) ----------
+const listener = new Listener();
+async function startListening(fromGesture) {
+  if (listener.on) return true;
+  if (!Listener.supported()) { toast(T('micUnavailable')); return false; }
+  try { sound.ensure(); await listener.start(sound.ctx); $('#micDot').hidden = player.hidden; return true; }
+  catch (err) { if (fromGesture) toast(err && err.name === 'NotAllowedError' ? T('micDenied') : T('micUnavailable')); return false; }
+}
+function stopListening() { listener.stop(); $('#micDot').hidden = true; fx.setSound(0, null); }
+async function setListen(on) {
+  if (on) { const ok = await startListening(true); S.interact.listen = ok; }
+  else { S.interact.listen = false; stopListening(); }
+  S.adjusted = true; saveSettings(S, SKEY); renderSettings();
+}
+
+// ---------- R8: automatic lighter quality on slow devices (old TVs, tablets) ----------
+let lowPower = false, fpsAcc = 0, fpsFrames = 0, slowWins = 0, lastFps = 0;
+function trackFps(dt) {
+  if (lowPower || !playing || !shown) return;
+  fpsAcc += dt; fpsFrames++;
+  if (fpsAcc < 2) return;
+  const f = fpsFrames / fpsAcc; fpsAcc = 0; fpsFrames = 0; lastFps = Math.round(f);
+  if (f < 30) { if (++slowWins >= 2) enterLowPower(); } else slowWins = 0;
+}
+function enterLowPower() {
+  lowPower = true; fx.maxDpr = 0.75; player.classList.add('lowpower');
+  layout(); applyLive(); toast(T('lowPower'));
+}
+
 // never let the player (or its stage) be scrolled by focus or scrollIntoView
 for (const el of [player, stage]) el.addEventListener('scroll', () => { if (el.scrollTop || el.scrollLeft) { el.scrollTop = 0; el.scrollLeft = 0; } });
 
@@ -1220,6 +1275,14 @@ $('#stripBtn').addEventListener('click', () => { strip.hidden = !strip.hidden; p
 const progressBar = $('#progressBar');
 const breathEl = $('#breathGuide');
 fx.onFrame = (dt) => {
+  trackFps(dt);
+  if (listener.on) {
+    const r = listener.update(dt);
+    fx.setSound(r.level, r.kind);
+    if (r.clap) fx.soundClap(Math.max(1, r.tier));
+    if (r.beat && r.kind === 'music') fx.soundBeat(Math.max(1, r.tier));
+    const md = $('#micDot'); md.style.setProperty('--lv', r.level.toFixed(2)); md.dataset.kind = r.kind || '';
+  }
   if (playing && shown && !busy) {
     elapsed += dt;
     if (elapsed >= curDur) { elapsed = 0; go(1); }
@@ -1235,9 +1298,14 @@ fx.onFrame = (dt) => {
     if (nextLumi <= 0) { const lines = T('lumiLines'); fx.say(lines[Math.floor(Math.random() * lines.length)]); nextLumi = 45 + Math.random() * 40; }
   }
 };
+const INTENSITY_ALPHA = [0.55, 0.72, 0.88, 1, 1], INTENSITY_DENSITY = [0.6, 0.8, 1, 1.15, 1.3];
+const liveEffects = () => ({ ...S.effects, lasers: !!S.effects.lasers && S.mode === 'party' }); // lasers belong to Night Party only
 function applyLive() {
   fx.tempo = modeOf(S.mode).set.tempo || 1;
-  fx.setEffects(S.effects);
+  const lvl = Math.max(1, Math.min(5, S.intensity || 3));
+  fx.density = INTENSITY_DENSITY[lvl - 1] * (lowPower ? 0.6 : 1);
+  $('#fx').style.opacity = INTENSITY_ALPHA[lvl - 1];
+  fx.setEffects(liveEffects());
   fx.setInteract(S.interact);
   sound.chimeOn = S.interact.chime;
   neon.classList.toggle('on', !!S.effects.neon && !S.display.camera);
@@ -1270,7 +1338,7 @@ function showControls() {
 }
 
 let down = null;
-const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip, dialog');
+const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip, .pl-info, dialog');
 player.addEventListener('pointerdown', (e) => {
   showControls();
   if (isUi(e.target)) return;
@@ -1320,6 +1388,7 @@ document.addEventListener('keydown', (e) => {
     case 'm': case 'M': $('#musicBtn').click(); break;
     case 't': case 'T': $('#stripBtn').click(); break;
     case 'r': case 'R': openRecord(); break;
+    case 'i': case 'I': toggleInfo(); break;
     case 'Escape': if (!sheet.hidden) closeSheet(); else if (!strip.hidden) $('#stripBtn').click(); else if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else closePlayer(); break;
   }
 });
@@ -1363,7 +1432,7 @@ function makeGrain() {
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
-    rec, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
+    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
+    rec, enterLowPower, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();

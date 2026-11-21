@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="ae-version" content="lumina-r6">
+<meta name="ae-version" content="lumina-r8">
 <meta name="theme-color" content="#0b100d">
 <title>Lumina Wall · AE Universe Creation</title>
 <meta name="description" content="AE Lumina Wall — 外在沉靜，內在綻放。數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&family=Cinzel:wght@400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="gallery/gallery.css?v=r6">
+<link rel="stylesheet" href="gallery/gallery.css?v=r8">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -105,6 +105,7 @@
     <section class="lw-field">
       <h3 data-i18n="effects">光影特效</h3>
       <div class="lw-toggles" id="effectToggles"></div>
+      <label class="lw-range"><span data-i18n="intensity">光影強度</span><input type="range" id="intensity" min="1" max="5" step="1"><output id="intensityOut">3</output></label>
     </section>
     <section class="lw-field">
       <h3 data-i18n="interaction">互動</h3>
@@ -148,6 +149,15 @@
     <p class="pl-caption-statement" id="capStatement"></p>
   </div>
   <div class="pl-strip" id="strip" hidden></div>
+  <aside class="pl-info" id="plInfo" hidden aria-live="polite">
+    <button type="button" class="pl-info-close" id="infoClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <p class="pl-info-eyebrow">AE Universe Creation</p>
+    <h3 id="infoTitle"></h3><p class="pl-info-sub" id="infoSub"></p>
+    <p class="pl-info-meta" id="infoMeta"></p>
+    <p class="pl-info-text" id="infoZh"></p>
+    <p class="pl-info-text en" id="infoEn"></p>
+  </aside>
+  <div class="pl-mic" id="micDot" hidden aria-hidden="true"><i></i><span data-i18n="listening">聲音互動中</span></div>
   <div class="pl-intro" id="plIntro" hidden>
     <img src="assets/ae-three-rings-transparent.webp" alt="" width="160" height="80">
     <div class="ae-motto" id="introMotto" data-motto="p"></div>
@@ -160,6 +170,7 @@
     <button type="button" class="pl-btn pl-btn-main" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-pause"><path d="M9 6v12M15 6v12"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-play"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
     <button type="button" class="pl-btn" id="nextBtn" aria-label="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
     <span class="pl-sep" aria-hidden="true"></span>
+    <button type="button" class="pl-btn" id="infoBtn" aria-label="About this work"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
     <button type="button" class="pl-btn" id="stripBtn" aria-label="Works"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="5" height="10" rx="1"/><rect x="9.5" y="7" width="5" height="10" rx="1"/><rect x="16" y="7" width="5" height="10" rx="1"/></svg></button>
     <button type="button" class="pl-btn pl-rec" id="recBtn" aria-label="Record"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2" class="dot"/></svg></button>
     <button type="button" class="pl-btn" id="musicBtn" aria-label="Music"><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-note"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-mute"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path d="M3 3l18 18"/></svg></button>
@@ -307,6 +318,6 @@
 
 <div class="lw-toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="gallery/app.js?v=r6"></script>
+<script type="module" src="gallery/app.js?v=r8"></script>
 </body>
 </html>

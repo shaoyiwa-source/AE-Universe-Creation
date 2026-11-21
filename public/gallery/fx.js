@@ -29,6 +29,7 @@ export class FX {
     this.ripples = []; this.sparks = []; this.seeds = []; this.flowers = []; this.dust = [];
     this.trail = [];
     this.flash = 0; this.rings = null;
+    this.snd = { level: 0, kind: null }; this.beatPulse = 0; this.soundStats = { bursts: 0, beats: 0 };
     this.blooms = []; this.cuties = []; this.glowPts = null; this.bubbleRings = null; this.sheenAt = 3;
     this.nextSeed = 4;
     this.lumi = { x: -100, y: -100, vx: 0, vy: 0, lastInput: -99, blink: 0, nextBlink: 2, bubble: null, nextBubble: 30, wing: 0, hop: 0 };
@@ -40,7 +41,7 @@ export class FX {
 
   resize(W, H) {
     this.W = W; this.H = H;
-    let dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    let dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr || 1.5);
     dpr = Math.min(dpr, Math.sqrt(2.6e6 / Math.max(1, W * H)));
     this.dpr = Math.max(0.5, dpr);
     this.cv.width = Math.round(W * this.dpr);
@@ -68,7 +69,7 @@ export class FX {
   get breath() { return 0.5 - 0.5 * Math.cos(this.t * TAU / 10); }
   get inhaling() { return (this.t % 10) < 5; }
 
-  _scale(n) { return Math.round(n * (this.reduced ? 0.4 : 1)); }
+  _scale(n) { return Math.round(n * (this.reduced ? 0.4 : 1) * (this.density || 1)); }
   _area() { return this.W * this.H; }
 
   _populate(force) {
@@ -176,6 +177,32 @@ export class FX {
     this.cuties.push({ x, y, t0: this.t, kind: pick(kinds), c: pick(PASTEL), size: rand(22, 32) * s, rot: rand(-0.4, 0.4), vx: rand(-20, 20) });
     if (this.cuties.length > 40) this.cuties.shift();
   }
+  // ---- sound reaction (champagne gold) ----
+  setSound(level, kind) { this.snd.level = level; this.snd.kind = kind; }
+  soundClap(tier) {
+    const r = this.rect, pts = this.blooms.length ? this.blooms : [{ u: 0.5, v: 0.5 }];
+    const n = 1 + Math.floor(tier / 2);
+    for (let i = 0; i < n; i++) {
+      const q = pts[Math.floor(Math.random() * pts.length)];
+      const x = r.x + q.u * r.w + rand(-20, 20), y = r.y + q.v * r.h + rand(-20, 20);
+      this._burst(x, y, 6 + tier * 4, GOLD, 80 + tier * 40);
+    }
+    this.ripples.push({ x: r.x + r.w / 2, y: r.y + r.h / 2, t0: this.t, c: GOLD });
+    this.soundStats.bursts++;
+  }
+  soundBeat(tier) { this.beatPulse = Math.min(1, 0.45 + tier * 0.12); this.soundStats.beats++; }
+  _drawSoundHalo() {
+    const lv = this.snd.kind === 'music' || this.snd.kind === 'voice' ? this.snd.level : 0;
+    const a = Math.max(lv * 0.55, this.beatPulse * 0.8);
+    if (a < 0.02) return;
+    const ctx = this.ctx, r = this.rect;
+    ctx.strokeStyle = 'rgb(236,205,140)';
+    for (const [w, k] of [[34, 0.07], [16, 0.16], [5, 0.34], [1.5, 0.8]]) {
+      ctx.globalAlpha = a * k; ctx.lineWidth = w;
+      ctx.strokeRect(r.x - w / 2 - 6, r.y - w / 2 - 6, r.w + w + 12, r.h + w + 12);
+    }
+  }
+
   setBloomPoints(pts) { this.blooms = (pts || []).map((p, i) => ({ ...p, off: Math.random() * 10, period: 11 + i * 1.7 })); }
   pointerMove(x, y) {
     const p = this.pointer;
@@ -261,6 +288,7 @@ export class FX {
     }
     // interaction
     this.ripples = this.ripples.filter(r => t - r.t0 < 2);
+    this.beatPulse = Math.max(0, this.beatPulse - dt * 2.2);
     for (const s of this.sparks) { s.age += dt; s.vx *= 0.96; s.vy = s.vy * 0.96 - 18 * dt; s.x += s.vx * dt; s.y += s.vy * dt; }
     this.sparks = this.sparks.filter(s => s.age < s.life);
     this.flowers = this.flowers.filter(f => t - f.t0 < 2.6);
@@ -367,7 +395,8 @@ export class FX {
       ctx.globalCompositeOperation = 'lighter';
     }
     if (e.breath) this._drawInfinity();
-    if (e.innerbloom) this._drawInnerBloom();
+    if (e.innerbloom || this.snd.kind === 'voice') this._drawInnerBloom();
+    this._drawSoundHalo();
     if (e.lumiere) this._drawSheen();
 
     // stardust transition
@@ -574,7 +603,8 @@ export class FX {
     const ctx = this.ctx, r = this.rect, t = this.t, m = Math.min(r.w, r.h);
     for (const b of this.blooms) {
       const ph = ((t * this.tempo + b.off) % b.period) / b.period;
-      const env = Math.pow(Math.sin(Math.PI * ph), 2);
+      const voice = this.snd.kind === 'voice' ? Math.min(1, this.snd.level * 1.3) : 0;
+      const env = Math.max(this.effects.innerbloom ? Math.pow(Math.sin(Math.PI * ph), 2) : 0, voice);
       if (env < 0.02) continue;
       const x = r.x + b.u * r.w, y = r.y + b.v * r.h;
       const R0 = (0.045 + 0.075 * env) * m;

@@ -1,6 +1,8 @@
 // AE Lumina Wall — bilingual copy (繁中 / English)
 export const STR = {
   zh: {
+    micDenied: '沒有取得麥克風權限，聲音互動已關閉', micUnavailable: '這個環境無法使用麥克風', listening: '聲音互動中', infoEmpty: '這件作品的介紹即將補上。',
+    intensity: '光影強度', info: '作品介紹', infoClose: '關閉介紹', lowPower: '已自動切換省電畫質，讓播放更順暢',
     countAll: '幅作品・將全部播放', countSel: '已選取・依選取順序播放', playAll: '播放全部', playSel: (n) => `播放已選 ${n} 幅`,
     rec: '錄製影片', recTitle: '錄製動態影片', fmtStory: 'IG 限動・Reels', fmtStoryD: '直式 9:16，含片頭與標題', fmtWide: '橫式', fmtWideD: '16:9，適合 YouTube 與簡報', fmtSquare: '方形', fmtSquareD: '1:1，適合貼文', fmtWall: '動態桌布', fmtWallD: '直式全螢幕、無文字，可循環',
     secs: (n) => `${n} 秒`, watermarkOpt: '加上 AE Universe Creation 浮水印', captionOpt: '顯示作品標題', recStart: '開始錄製', recording: (a, b) => `錄製中 ${a} / ${b} 秒`, recCancel: '取消錄製',
@@ -40,6 +42,8 @@ export const STR = {
     lumiLines: ['深呼吸，慢慢看。', '今天也辛苦了。', '點點看漂浮的光種子 ✦', '這幅畫裡藏著光。', '讓心安靜一下。', '你的眼睛在微笑喔。', '行動創造無限 ∞'],
   },
   en: {
+    micDenied: 'Microphone not allowed — sound reaction is off', micUnavailable: 'The microphone is not available here', listening: 'Listening', infoEmpty: 'A note about this work is coming soon.',
+    intensity: 'Light intensity', info: 'About this work', infoClose: 'Close', lowPower: 'Switched to a lighter quality for smoother playback',
     countAll: 'works · all will play', countSel: 'selected · plays in your order', playAll: 'Play all', playSel: (n) => `Play ${n} selected`,
     rec: 'Record', recTitle: 'Record a moving clip', fmtStory: 'Stories & Reels', fmtStoryD: '9:16 with title card and captions', fmtWide: 'Landscape', fmtWideD: '16:9 for YouTube and presentations', fmtSquare: 'Square', fmtSquareD: '1:1 for feed posts', fmtWall: 'Live wallpaper', fmtWallD: 'Full-bleed 9:16, no text, loops',
     secs: (n) => `${n} s`, watermarkOpt: 'Add the AE Universe Creation watermark', captionOpt: 'Show titles', recStart: 'Start recording', recording: (a, b) => `Recording ${a} / ${b} s`, recCancel: 'Cancel',
@@ -124,13 +128,14 @@ export const OPTIONS = {
     { id: 'stardust', zh: '星塵', en: 'Stardust', dzh: '細微星光與流星', den: 'Fine twinkling stars and shooting stars' },
     { id: 'aurora', zh: '極光帷幕', en: 'Aurora Veil', dzh: '緩慢流動的極光', den: 'Slow flowing aurora ribbons' },
     { id: 'petals', zh: '光之花瓣', en: 'Light Petals', dzh: '依畫作色彩飄落的花瓣', den: 'Petals tinted by the artwork' },
-    { id: 'lasers', zh: '彩虹雷射', en: 'Prism Lasers', dzh: '掃動的虹光雷射', den: 'Sweeping rainbow beams' },
+    { id: 'lasers', partyOnly: true, zh: '彩虹雷射', en: 'Prism Lasers', dzh: '掃動的虹光雷射（只在夜光派對）', den: 'Sweeping rainbow beams (Night Party only)' },
     { id: 'neon', zh: '霓虹畫框', en: 'Neon Halo', dzh: '貼合畫作的霓虹光框', den: 'A neon frame that hugs the work' },
   ],
   interact: [
     { id: 'ripple', zh: '光之漣漪', en: 'Light Ripples', dzh: '觸碰或滑過，綻放光圈與星火', den: 'Touch or glide to leave rings and sparks' },
     { id: 'chime', zh: '觸碰和弦', en: 'Touch Chimes', ae: true, dzh: '每一次觸碰都是和諧的音', den: 'Every touch plays a note that always harmonizes' },
     { id: 'lumi', zh: '光靈 Lumi', en: 'Lumi', ae: true, dzh: '陪你看展的小光靈', den: 'A tiny light spirit who keeps you company' },
+    { id: 'listen', zh: '聲音互動', en: 'Sound reaction', ae: true, dzh: '拍手、說話或音樂，香檳金光會回應（只在本機分析，不錄音、不上傳）', den: 'Claps, voices and music light up in champagne gold (analysed on this device only; nothing is recorded or uploaded)' },
     { id: 'cute', zh: '可愛小驚喜', en: 'Little Surprises', dzh: '點一下冒出愛心、星星、小花', den: 'Hearts, stars and flowers pop up where you tap' },
     { id: 'seeds', zh: '光種子', en: 'Light Seeds', dzh: '漂浮的光點，點一下會開花', den: 'Floating seeds that bloom when tapped' },
   ],
@@ -138,8 +143,8 @@ export const OPTIONS = {
     { id: 'captions', zh: '顯示作品標題', en: 'Show titles', dzh: '每幅作品開場時淡入標題', den: 'Fade in each title' },
     { id: 'mat', zh: '留白畫框', en: 'Museum margin', dzh: '畫作四周保留呼吸空間', den: 'Leave breathing room around the work' },
     { id: 'intro', zh: '開場片頭', en: 'Title card', dzh: '三環金印、展覽名稱與「外在沉靜，內在綻放」', den: 'Gold Three Rings, exhibition title and the house motto' },
-    { id: 'label', zh: '作品說明卡', en: 'Museum label', dzh: '標題下方顯示年份、媒材與作品說明', den: 'Year, medium and statement under the title' },
-    { id: 'camera', zh: '鏡頭漫遊', en: 'Camera drift', dzh: '緩慢推近並遊走於畫作細節（會裁切邊緣）', den: 'A slow push-in across details (crops the edges)' },
+    { id: 'label', zh: '年份與媒材', en: 'Year & medium', dzh: '標題下方顯示年份與媒材；完整中英介紹按 ⓘ 打開', den: 'Year and medium under the title; tap ⓘ for the full bilingual note' },
+    { id: 'camera', zh: '鏡頭漫遊', en: 'Camera drift', dzh: '畫作緩緩推近到滿框，整幅（含手寫字）始終留在框內', den: 'A slow push-in to full frame; the whole work, handwriting included, always stays in view' },
     { id: 'drift', zh: '微動呼吸', en: 'Living motion', dzh: '畫作極緩慢地呼吸縮放', den: 'A barely-there slow breathing zoom' },
     { id: 'shuffle', zh: '隨機順序', en: 'Shuffle', dzh: '不依選取順序播放', den: 'Ignore the selection order' },
     { id: 'loop', zh: '循環播放', en: 'Loop', dzh: '播完自動從頭開始', den: 'Start over after the last work' },
