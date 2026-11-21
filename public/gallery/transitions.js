@@ -1,8 +1,9 @@
 // AE Lumina Wall — signature transitions
-export const TRANSITIONS = ['dissolve', 'bloom', 'rings', 'ink', 'silk', 'stardust'];
+export const TRANSITIONS = ['innerbloom', 'dissolve', 'bloom', 'rings', 'ink', 'silk', 'stardust', 'bubbles'];
 
 const easeInOut = (p) => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 const easeOut = (p) => 1 - Math.pow(1 - p, 3);
+const easeOutBack = (p) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const seg = (p, a, b) => clamp01((p - a) / (b - a));
 
@@ -139,6 +140,41 @@ export async function runTransition(kind, o) {
         to.style.opacity = String(b);
         to.style.filter = `blur(${(1 - b) * 8}px) brightness(${1 + (1 - b) * 0.3})`;
       });
+      break;
+    }
+
+    case 'innerbloom': { // 內在綻放 — the next work opens from the brightest places of its own light
+      const r = o.rect, m = Math.min(r.w, r.h);
+      const pts = (o.points && o.points.length ? o.points : [{ u: 0.5, v: 0.45 }]).slice(0, 4)
+        .map((q, i) => ({ x: r.x + q.u * r.w, y: r.y + q.v * r.h, d: i * 0.07, c: q.c }));
+      const feather = Math.max(160, m * 0.35);
+      to.style.opacity = '1';
+      await animate(3400, (p) => {
+        setMask(to, pts.map(q => {
+          const R = easeInOut(seg(p, 0.12 + q.d, 0.96)) * (maxR + feather);
+          return `radial-gradient(circle at ${q.x}px ${q.y}px, #000 ${Math.max(0, R - feather)}px, transparent ${R}px)`;
+        }).join(','));
+        const lift = Math.sin(Math.PI * seg(p, 0, 0.7));
+        from.style.filter = `brightness(${1 + lift * 0.28}) saturate(${1 - p * 0.3})`;
+        fx.glowPts = pts.map(q => { const e = Math.sin(Math.PI * seg(p, q.d, 0.85)); return { x: q.x, y: q.y, r: m * (0.05 + 0.24 * e), a: 0.5 * e, c: q.c }; });
+      });
+      fx.glowPts = null;
+      break;
+    }
+
+    case 'bubbles': { // 泡泡樂園 — playful bubbles pop the next work into view
+      const n = 16;
+      const bs = Array.from({ length: n }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, d: (i / n) * 0.45 + Math.random() * 0.08, h: Math.random() * 360 }));
+      const goal = maxR * 0.42;
+      to.style.opacity = '1';
+      await animate(2600, (p) => {
+        const rs = bs.map(b => { const q = seg(p, b.d, b.d + 0.5); return q <= 0 ? 0 : easeOutBack(q) * goal; });
+        const fin = easeInOut(seg(p, 0.75, 1)) * (maxR + 10);
+        setMask(to, bs.map((b, i) => `radial-gradient(circle at ${b.x}px ${b.y}px, #000 ${Math.max(0, rs[i] - 3)}px, transparent ${rs[i] + 2}px)`)
+          .concat(`radial-gradient(circle at ${W / 2}px ${H / 2}px, #000 ${fin}px, transparent ${fin + 2}px)`).join(','));
+        fx.bubbleRings = bs.map((b, i) => ({ x: b.x, y: b.y, r: rs[i], h: b.h, a: rs[i] > 0 ? 0.85 * (1 - seg(p, b.d + 0.15, b.d + 0.55)) : 0 }));
+      });
+      fx.bubbleRings = null;
       break;
     }
 

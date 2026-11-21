@@ -34,9 +34,9 @@ const fmtSec = (s) => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)} min` 
 
 const DEFAULTS = {
   mode: 'online', adjusted: false, transition: 'random', interval: 10,
-  effects: { echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
-  interact: { ripple: true, chime: true, lumi: true, seeds: true },
-  display: { captions: true, label: true, camera: false, mat: true, drift: true, shuffle: false, loop: true },
+  effects: { innerbloom: true, lumiere: true, echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
+  interact: { ripple: true, chime: true, lumi: true, seeds: true, cute: false },
+  display: { intro: true, captions: true, label: true, camera: false, mat: true, drift: true, shuffle: false, loop: true },
   music: 'celestial', volume: 0.6, selected: [],
 };
 
@@ -535,7 +535,15 @@ function toggle(opt, on, onClick) {
 }
 function renderSettings() {
   const modes = $('#modeCards'); modes.replaceChildren();
+  let lastArena = '';
   for (const m of OPTIONS.modes) {
+    if (m.arena !== lastArena) {
+      lastArena = m.arena;
+      const ar = OPTIONS.arenas.find(a => a.id === m.arena);
+      const h = document.createElement('p'); h.className = 'lw-arena'; h.dataset.arena = ar.id;
+      h.innerHTML = '<b></b><small></small>'; h.querySelector('b').textContent = L(ar); h.querySelector('small').textContent = lang === 'zh' ? ar.dzh : ar.den;
+      modes.appendChild(h);
+    }
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'lw-mode'; b.dataset.mode = m.id; b.setAttribute('aria-pressed', String(S.mode === m.id));
     b.innerHTML = '<b></b><i></i><small></small>';
@@ -683,6 +691,7 @@ let list = [], idx = 0, cur = 0, ambCur = 0, curDur = 10, curItem = null;
 let playing = false, busy = false, pending = null, elapsed = 0, shown = false;
 let wakeLock = null, idleTimer = null, captionTimer = null, nextLumi = 0;
 const paletteCache = new Map();
+const pointCache = new Map();
 
 const mediaOf = (i) => slides[i].dataset.kind === 'video' ? slides[i].querySelector('video') : slides[i].querySelector('img');
 const dims = (el) => el.tagName === 'VIDEO' ? [el.videoWidth, el.videoHeight] : [el.naturalWidth, el.naturalHeight];
@@ -742,6 +751,29 @@ function brighten([r, g, b]) {
   return [f(h + 1 / 3), f(h), f(h - 1 / 3)].map(v => Math.round(v * 255));
 }
 
+// 內在綻放：find up to 4 well-separated bright, luminous places in a work (normalized u,v + color)
+function brightPoints(el) {
+  try {
+    const N = 40, c = document.createElement('canvas'); c.width = c.height = N;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(el, 0, 0, N, N);
+    const d = x.getImageData(0, 0, N, N).data;
+    const cells = [];
+    for (let j = 2; j < N - 2; j++) for (let i = 2; i < N - 2; i++) {
+      let r = 0, g = 0, b = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const k = ((j + dy) * N + (i + dx)) * 4; r += d[k]; g += d[k + 1]; b += d[k + 2]; }
+      r /= 9; g /= 9; b /= 9;
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b, sat = mx ? (mx - mn) / mx : 0;
+      cells.push({ u: (i + 0.5) / N, v: (j + 0.5) / N, s: lum * (0.75 + 0.5 * sat) - (mn > 235 ? 60 : 0), c: [r, g, b].map(Math.round) });
+    }
+    cells.sort((a, b) => b.s - a.s);
+    const out = [];
+    for (const q of cells) { if (out.every(o => Math.hypot(o.u - q.u, o.v - q.v) > 0.24)) out.push(q); if (out.length === 4) break; }
+    return out.map(({ u, v, c }) => ({ u, v, c }));
+  } catch { return []; }
+}
+
 function loadImg(img, src) {
   return new Promise((resolve) => {
     if (img.getAttribute('src') === src && img.complete && img.naturalWidth) return resolve(true);
@@ -799,10 +831,28 @@ async function openPlayer(startId) {
   layout(); applyLive(); fx.start();
   playing = true; player.classList.remove('paused');
   startMusic(); requestWake(); showControls();
-  if (S.interact.ripple || S.interact.seeds) { const h = $('#hint'); setTimeout(() => h.classList.add('on'), 1400); setTimeout(() => h.classList.remove('on'), 5200); }
-  if (S.interact.lumi) setTimeout(() => fx.say(T('lumiHello')), 3000);
   nextLumi = 40;
+  if (S.display.intro) await playIntro();
+  if (player.hidden) return;
   await show(idx);
+  if (player.hidden) return;
+  if (S.interact.ripple || S.interact.seeds || S.interact.cute) { const h = $('#hint'); h.classList.add('on'); setTimeout(() => h.classList.remove('on'), 3800); }
+  if (S.interact.lumi) setTimeout(() => fx.say(T('lumiHello')), 1200);
+}
+// Maison title card: gold Three Rings, the exhibition title and the house motto
+function playIntro() {
+  const el = $('#plIntro');
+  const sh = currentShow();
+  $('#introEyebrow').textContent = 'Maison AE · AE Universe Creation';
+  $('#introTitle').textContent = sh ? showTitle(sh) : (lang === 'zh' ? '數位藝術典藏' : 'Fine Digital Art');
+  $('#introMotto').textContent = T('motto');
+  el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => { if (done) return; done = true; el.classList.add('out'); setTimeout(() => { el.hidden = true; el.classList.remove('on', 'out'); resolve(); }, 900); };
+    const t = setTimeout(finish, reduced ? 1500 : 4200);
+    el.onpointerdown = () => { clearTimeout(t); finish(); };
+  });
 }
 function closePlayer() {
   playing = false;
@@ -841,6 +891,9 @@ async function show(i) {
   let pal = paletteCache.get(work.id);
   if (!pal) { pal = extractPalette(media); if (pal && work.type !== 'video') paletteCache.set(work.id, pal); }
   if (pal) { fx.setPalette(pal); neon.style.setProperty('--neon', `rgb(${pal[0].join(',')})`); }
+  let pts = pointCache.get(work.id);
+  if (!pts) { pts = brightPoints(media); if (work.type !== 'video') pointCache.set(work.id, pts); }
+  fx.setBloomPoints(pts);
   const na = 1 - ambCur;
   ambs[na].style.backgroundImage = `url("${work.thumb || work.src}")`;
   ambs[na].classList.add('on'); ambs[ambCur].classList.remove('on'); ambCur = na;
@@ -856,7 +909,7 @@ async function show(i) {
   media.style.setProperty('--kb-dur', `${curDur + 4}s`);
   incoming.classList.add('live');
   fx.setArtRect(r); placeNeon(r);
-  await runTransition(kind, { from, to: incoming, fromImg: fromMedia, fromRect: from ? from.rect : null, rect: r, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, curDur / 12)) });
+  await runTransition(kind, { from, to: incoming, fromImg: fromMedia, fromRect: from ? from.rect : null, rect: r, points: pts, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, curDur / 12)) });
   if (from) { from.classList.remove('live'); from.querySelector('video').pause(); }
   cur = nextSlot; shown = true; elapsed = 0; busy = false;
   const nx = list[(i + 1) % list.length];
@@ -906,6 +959,9 @@ function setPaused(p) {
   const v = mediaOf(cur); if (v.tagName === 'VIDEO') { if (p) v.pause(); else v.play().catch(() => {}); }
 }
 
+// never let the player (or its stage) be scrolled by focus or scrollIntoView
+for (const el of [player, stage]) el.addEventListener('scroll', () => { if (el.scrollTop || el.scrollLeft) { el.scrollTop = 0; el.scrollLeft = 0; } });
+
 // film strip
 const strip = $('#strip');
 function buildStrip() {
@@ -919,7 +975,8 @@ function buildStrip() {
 }
 function markStrip(i) {
   strip.querySelectorAll('.pl-thumb').forEach((b, k) => b.classList.toggle('on', k === i));
-  const on = strip.querySelector('.pl-thumb.on'); if (on && !strip.hidden) on.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  const on = strip.querySelector('.pl-thumb.on');
+  if (on && !strip.hidden) strip.scrollTo({ left: on.offsetLeft - strip.clientWidth / 2 + on.offsetWidth / 2, behavior: 'smooth' });
 }
 strip.addEventListener('click', (e) => { const b = e.target.closest('.pl-thumb'); if (b) jump(+b.dataset.i); });
 $('#stripBtn').addEventListener('click', () => { strip.hidden = !strip.hidden; player.classList.toggle('strip-open', !strip.hidden); markStrip(idx); });
@@ -952,6 +1009,7 @@ function applyLive() {
   breathEl.classList.toggle('on', !!S.effects.breath);
   player.classList.toggle('nodrift', !S.display.drift || reduced);
   player.classList.toggle('camera', !!S.display.camera && !reduced);
+  player.classList.toggle('grain', !!S.effects.lumiere);
   if (!S.display.captions) $('#caption').classList.add('off');
 }
 
@@ -1037,6 +1095,17 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) sound.suspend(); else { sound.resume(); requestWake(); }
 });
 
+// fine film grain for 精品光澤 (generated once, animated in CSS)
+function makeGrain() {
+  try {
+    const c = document.createElement('canvas'); c.width = c.height = 160;
+    const x = c.getContext('2d'); const img = x.createImageData(160, 160);
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    x.putImageData(img, 0, 0);
+    $('#grain').style.backgroundImage = `url(${c.toDataURL('image/png')})`;
+  } catch { /* optional */ }
+}
+
 // ---------- boot (+ kiosk / shared links: ?show=&mode=&autoplay=1&lang=) ----------
 (async function boot() {
   const q = new URLSearchParams(location.search);
@@ -1047,14 +1116,16 @@ document.addEventListener('visibilitychange', () => {
   if (q.get('mode') && OPTIONS.modes.some(m => m.id === q.get('mode'))) applyMode(modeOf(q.get('mode')), { quiet: true });
   applyLang();
   saveSettings(S);
+  makeGrain();
   if (q.get('autoplay') === '1') {
     const gate = $('#startGate');
     $('#gateShow').textContent = currentShow() ? showTitle(currentShow()) : 'AE Universe Creation';
+    $('#gateMotto').textContent = T('motto');
     gate.hidden = false;
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud }; },
+    get state() { return { idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
     go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();

@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="ae-version" content="lumina-r3">
+<meta name="ae-version" content="lumina-r4">
 <meta name="theme-color" content="#0b100d">
-<title>Lumina Wall · AE Universe Creation</title>
-<meta name="description" content="AE Lumina Wall — 數位藝術沙龍。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
+<title>Lumina Wall · Maison AE</title>
+<meta name="description" content="AE Lumina Wall — 外在沉靜，內在綻放。精品數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="gallery/gallery.css?v=r3">
+<link rel="stylesheet" href="gallery/gallery.css?v=r4">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -33,7 +33,9 @@
 <main>
   <section class="lw-hero">
     <p class="lw-eyebrow" data-i18n="eyebrow">AE Digital Art Salon · 數位藝術沙龍</p>
-    <h1 data-i18n="heroTitle">讓畫作，在光裡呼吸。</h1>
+    <h1 data-i18n="heroTitle">外在沉靜，內在綻放。</h1>
+    <p class="lw-hero-sub" data-i18n="heroSub">讓畫作，在光裡呼吸</p>
+    <span class="lw-hero-rule" aria-hidden="true"></span>
     <p class="lw-lede" data-i18n="heroLede">輕觸畫面選取作品，依選取順序化為一場沉浸式光影展演。轉場、音景與可觸碰的光，皆由 AE 獨家調校。</p>
   </section>
 
@@ -67,7 +69,8 @@
 <footer class="lw-footer">
   <img src="assets/ae-three-rings-transparent.webp" alt="" width="44" height="22">
   <p>Aurelia &amp; Elion · AE Universe Creation</p>
-  <p class="lw-footer-motto">Action Creates Infinity · 行動創造無限</p>
+  <p class="lw-footer-motto" data-i18n="motto">外在沉靜，內在綻放</p>
+  <p>Action Creates Infinity · 行動創造無限</p>
 </footer>
 
 <div class="lw-drop" id="dropZone" hidden><div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><p data-i18n="dropHere">放開以加入作品</p></div></div>
@@ -127,6 +130,7 @@
     <div class="pl-neon" id="neon"><i></i></div>
   </div>
   <canvas class="pl-fx" id="fx" aria-hidden="true"></canvas>
+  <div class="pl-grain" id="grain" aria-hidden="true"></div>
   <div class="pl-progress" aria-hidden="true"><i id="progressBar"></i></div>
   <div class="pl-mark" aria-hidden="true"><img src="assets/ae-three-rings-transparent.webp" alt="" width="44" height="22"></div>
   <div class="pl-caption" id="caption" aria-live="polite">
@@ -136,6 +140,13 @@
     <p class="pl-caption-statement" id="capStatement"></p>
   </div>
   <div class="pl-strip" id="strip" hidden></div>
+  <div class="pl-intro" id="plIntro" hidden>
+    <img src="assets/ae-three-rings-transparent.webp" alt="" width="160" height="80">
+    <p class="pl-intro-eyebrow" id="introEyebrow"></p>
+    <h2 id="introTitle"></h2>
+    <span class="pl-intro-rule" aria-hidden="true"></span>
+    <p class="pl-intro-motto" id="introMotto"></p>
+  </div>
   <div class="pl-breath" id="breathGuide" aria-hidden="true"><i></i><span></span></div>
   <div class="pl-hint" id="hint" data-i18n="hint">輕觸畫面，讓光回應你</div>
   <div class="pl-controls" id="controls">
@@ -221,6 +232,7 @@
 <div class="lw-gate" id="startGate" hidden>
   <img src="assets/ae-three-rings-transparent.webp" alt="" width="120" height="60">
   <p class="lw-eyebrow" id="gateShow"></p>
+  <p class="lw-gate-motto" id="gateMotto"></p>
   <button type="button" class="lw-gate-btn" id="gateBtn"><span data-i18n="tapToBegin">輕觸開始展演</span></button>
 </div>
 
@@ -228,6 +240,6 @@
 
 <div class="lw-toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="gallery/app.js?v=r3"></script>
+<script type="module" src="gallery/app.js?v=r4"></script>
 </body>
 </html>

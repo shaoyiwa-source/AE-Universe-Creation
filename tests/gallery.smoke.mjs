@@ -67,8 +67,8 @@ async function scenario(label, ctxOpts, port) {
 
   // settings: modes + frame interval + camera
   await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])'); await wait(500);
-  check(`[${label}] 6 scene modes`, (await page.locator('#modeCards .lw-mode').count()) === 6);
-  const expect = { gallery: [20, 'hall'], healing: [16, 'nature'], hotel: [12, 'lounge'], residence: [18, 'dawn'], party: [6, 'pulse'], online: [10, 'celestial'] };
+  check(`[${label}] 8 scene modes grouped in 2 arenas (on-site / online)`, (await page.locator('#modeCards .lw-mode').count()) === 8 && (await page.locator('#modeCards .lw-arena').count()) === 2);
+  const expect = { gallery: [20, 'hall'], healing: [16, 'nature'], hotel: [12, 'lounge'], residence: [18, 'dawn'], party: [6, 'pulse'], kids: [8, 'dawn'], cinema: [12, 'celestial'], online: [10, 'celestial'] };
   let modesOk = true;
   for (const [id, [iv, mu]] of Object.entries(expect)) {
     await page.click(`.lw-mode[data-mode=${id}]`);
@@ -99,21 +99,26 @@ async function scenario(label, ctxOpts, port) {
 
   // player
   await page.click('#playBtn');
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 9000 }); await wait(500);
+  await wait(1800);
+  check(`[${label}] maison title card opens the show (motto shown)`, await page.isVisible('#plIntro') && (await page.textContent('#introMotto')).length > 0);
+  await page.screenshot({ path: `${shots}/${label}-intro.png` });
+  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 15000 }); await wait(500);
+  check(`[${label}] Inner Bloom finds light points in the work`, (await st()).blooms > 0);
   const fit = await page.evaluate(() => { const s = window.__lumina.state; const el = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img'); const r = el.getBoundingClientRect(); return { ok: r.width <= innerWidth + 1 && r.height <= innerHeight + 1, fill: Math.max(r.width / innerWidth, r.height / innerHeight) }; });
   check(`[${label}] first work fully visible and well sized`, fit.ok && fit.fill > 0.84, JSON.stringify(fit));
   await page.mouse.click(page.viewportSize().width * 0.3, page.viewportSize().height * 0.4);
   await page.screenshot({ path: `${shots}/${label}-play.png` });
   let trOk = true;
-  for (const k of ['bloom', 'rings', 'ink', 'silk', 'stardust', 'dissolve']) {
+  for (const k of ['innerbloom', 'bloom', 'rings', 'ink', 'silk', 'stardust', 'bubbles', 'dissolve']) {
     await page.evaluate((k) => { window.__lumina.state.settings.transition = k; }, k);
     const before = (await st()).idx;
     await page.evaluate(() => window.__lumina.go(1));
+    if (k === 'innerbloom' || k === 'bubbles') { await wait(1300); await page.screenshot({ path: `${shots}/${label}-tr-${k}.png` }); }
     await page.waitForFunction((b) => !window.__lumina.state.busy && window.__lumina.state.idx !== b, before, { timeout: 9000 }).catch(() => { trOk = false; });
     const g = await page.evaluate(() => { const s = window.__lumina.state; const sl = document.querySelectorAll('.pl-slide')[s.cur]; return getComputedStyle(sl).opacity === '1' && !(sl.style.maskImage || sl.style.webkitMaskImage); });
     if (!g) trOk = false;
   }
-  check(`[${label}] all 6 transitions complete cleanly`, trOk);
+  check(`[${label}] all 8 transitions complete cleanly`, trOk);
   // film strip
   await ui('#stripBtn');
   await page.waitForSelector('#strip:not([hidden])');
@@ -124,23 +129,26 @@ async function scenario(label, ctxOpts, port) {
   await ui('#stripBtn');
   // camera drift + every mode in the player
   let modesPlay = true;
-  for (const id of ['gallery', 'healing', 'hotel', 'residence', 'party', 'online']) {
+  for (const id of ['gallery', 'healing', 'hotel', 'residence', 'party', 'kids', 'cinema', 'online']) {
     await ui('#fxBtn');
     await page.click(`.lw-mode[data-mode=${id}]`);
     await page.click('#closeSettings');
     await page.evaluate(() => window.__lumina.go(1));
     await wait(1500);
-    if (['party', 'residence', 'gallery'].includes(id)) await page.screenshot({ path: `${shots}/${label}-mode-${id}.png` });
+    if (id === 'kids') { const v = page.viewportSize(); for (const [fx, fy] of [[0.3, 0.4], [0.6, 0.55], [0.45, 0.3]]) await page.mouse.click(v.width * fx, v.height * fy); await wait(250); if ((await st()).cuties < 1) modesPlay = false; }
+    if (['party', 'residence', 'gallery', 'kids', 'cinema', 'hotel'].includes(id)) await page.screenshot({ path: `${shots}/${label}-mode-${id}.png` });
     await page.waitForFunction(() => !window.__lumina.state.busy, null, { timeout: 9000 }).catch(() => { modesPlay = false; });
     if (id === 'residence' && !(await page.evaluate(() => document.getElementById('player').classList.contains('camera')))) modesPlay = false;
   }
-  check(`[${label}] all 6 modes play (incl. camera drift in Residence)`, modesPlay);
+  check(`[${label}] all 8 modes play (camera drift in Residence, cute pops in Little Ones)`, modesPlay);
+  const shift = await page.evaluate(() => { const p = document.getElementById('player'), s = document.getElementById('stage'); return p.scrollTop + p.scrollLeft + s.scrollTop + s.scrollLeft + Math.abs(s.getBoundingClientRect().left) + Math.abs(s.getBoundingClientRect().top); });
+  check(`[${label}] stage stays perfectly in place (no scroll drift)`, shift === 0, 'offset=' + shift);
   await page.keyboard.press(' ');
   check(`[${label}] space pauses`, !(await st()).playing);
   await page.keyboard.press(' ');
   const fps = await page.evaluate(() => new Promise(r => { let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 1500) requestAnimationFrame(f); else r(n / 1.5); }; requestAnimationFrame(f); }));
   check(`[${label}] animation runs`, fps > 20, `fps≈${Math.round(fps)}`);
-  await page.keyboard.press('Escape'); await wait(300); await page.keyboard.press('Escape'); await wait(300);
+  for (let k = 0; k < 4 && !(await page.evaluate(() => document.getElementById('player').hidden)); k++) { await page.keyboard.press('Escape'); await wait(500); }
   check(`[${label}] Esc closes the player`, await page.evaluate(() => document.getElementById('player').hidden));
 
   // ---------- AE Studio ----------
@@ -230,10 +238,10 @@ async function scenario(label, ctxOpts, port) {
   page = await ctx.newPage(); watch(page);
   await page.goto(link.replace(/^https?:\/\/[^/]+/, srv.base), { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.__lumina);
-  check(`[${label}] shared link shows the start gate`, await page.isVisible('#startGate'));
+  check(`[${label}] shared link shows the start gate with the motto`, await page.isVisible('#startGate') && (await page.textContent('#gateMotto')).length > 0);
   await page.screenshot({ path: `${shots}/${label}-gate.png` });
   await page.click('#gateBtn');
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 9000 });
+  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 15000 });
   const sp = await st();
   check(`[${label}] shared exhibition plays its own works (hidden one excluded) in its mode`, sp.list === 4 && sp.mode === 'healing' && sp.view !== 'all', JSON.stringify({ list: sp.list, mode: sp.mode }));
   check(`[${label}] per-work timing applied (work 1 = 7 s)`, sp.curDur === 7, 'curDur=' + sp.curDur);

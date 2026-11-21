@@ -29,6 +29,7 @@ export class FX {
     this.ripples = []; this.sparks = []; this.seeds = []; this.flowers = []; this.dust = [];
     this.trail = [];
     this.flash = 0; this.rings = null;
+    this.blooms = []; this.cuties = []; this.glowPts = null; this.bubbleRings = null; this.sheenAt = 3;
     this.nextSeed = 4;
     this.lumi = { x: -100, y: -100, vx: 0, vy: 0, lastInput: -99, blink: 0, nextBlink: 2, bubble: null, nextBubble: 30, wing: 0, hop: 0 };
     this.pointer = { x: 0, y: 0, down: false, lastMove: -99 };
@@ -92,7 +93,7 @@ export class FX {
       x: rand(0, this.W), y: anywhere ? rand(0, this.H) : this.H + 60,
       r: rand(18, 72) * clamp(s, 0.6, 1.8), c: pick(this.palette),
       vx: rand(-6, 6), vy: rand(-14, -4), ph: rand(0, TAU),
-      age: anywhere ? rand(0, 10) : 0, life: rand(10, 18), a: rand(0.08, 0.2),
+      age: anywhere ? rand(0, 10) : 0, life: rand(10, 18), a: rand(0.06, 0.16),
     };
   }
   _newStar() {
@@ -161,10 +162,21 @@ export class FX {
     if (this.interact.ripple) {
       const c = pick(this.palette);
       this.ripples.push({ x, y, t0: this.t, c });
-      this._burst(x, y, this._scale(16), c, 140);
+      this._burst(x, y, this._scale(9), c, 110);
     }
+    if (this.interact.cute) this._cute(x, y);
     return { seed: false };
   }
+
+  // 童趣：a little heart / star / flower / smile pops up where you tap
+  _cute(x, y) {
+    const PASTEL = [[255, 154, 190], [255, 214, 112], [140, 220, 255], [180, 160, 255], [130, 230, 170]];
+    const kinds = ['heart', 'star', 'flower', 'smile'];
+    const s = Math.max(0.8, Math.min(1.6, Math.sqrt(this._area()) / 900));
+    this.cuties.push({ x, y, t0: this.t, kind: pick(kinds), c: pick(PASTEL), size: rand(22, 32) * s, rot: rand(-0.4, 0.4), vx: rand(-20, 20) });
+    if (this.cuties.length > 40) this.cuties.shift();
+  }
+  setBloomPoints(pts) { this.blooms = (pts || []).map((p, i) => ({ ...p, off: Math.random() * 10, period: 11 + i * 1.7 })); }
   pointerMove(x, y) {
     const p = this.pointer;
     const d = Math.hypot(x - p.x, y - p.y);
@@ -355,6 +367,8 @@ export class FX {
       ctx.globalCompositeOperation = 'lighter';
     }
     if (e.breath) this._drawInfinity();
+    if (e.innerbloom) this._drawInnerBloom();
+    if (e.lumiere) this._drawSheen();
 
     // stardust transition
     if (this.dust.length) {
@@ -387,14 +401,34 @@ export class FX {
         }
       }
     }
+    if (this.glowPts) {
+      for (const g of this.glowPts) {
+        if (g.a <= 0.01) continue;
+        ctx.globalAlpha = g.a; const sp = this._glow(g.c || WARM, true);
+        ctx.drawImage(sp, g.x - g.r, g.y - g.r, g.r * 2, g.r * 2);
+        ctx.globalAlpha = g.a * 0.5; const core = this._glow(WARM, true);
+        ctx.drawImage(core, g.x - g.r * 0.25, g.y - g.r * 0.25, g.r * 0.5, g.r * 0.5);
+      }
+    }
+    if (this.bubbleRings) {
+      for (const b of this.bubbleRings) {
+        if (b.a <= 0.01 || b.r <= 2) continue;
+        ctx.globalAlpha = b.a;
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = `hsla(${(b.h + this.t * 60) % 360},90%,80%,0.9)`;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.stroke();
+        ctx.globalAlpha = b.a * 0.8; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.78, Math.PI * 1.1, Math.PI * 1.45); ctx.stroke();
+      }
+    }
     // ripples
     for (const r of this.ripples) {
       const age = t - r.t0;
       for (let k = 0; k < 3; k++) {
         const a = age - k * 0.16; if (a <= 0) continue;
         const rad = 10 + a * 150 + k * 6;
-        ctx.globalAlpha = Math.max(0, 0.55 * (1 - a / 1.6));
-        ctx.strokeStyle = rgba(k === 0 ? GOLD : r.c, 1); ctx.lineWidth = 1.4 - k * 0.3;
+        ctx.globalAlpha = Math.max(0, 0.42 * (1 - a / 1.6));
+        ctx.strokeStyle = rgba(k === 0 ? GOLD : r.c, 1); ctx.lineWidth = 1 - k * 0.25;
         ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, TAU); ctx.stroke();
       }
       const ga = Math.max(0, 1 - age / 0.7);
@@ -437,6 +471,7 @@ export class FX {
       ctx.beginPath(); ctx.moveTo(-L, 0); ctx.lineTo(L, 0); ctx.moveTo(0, -L); ctx.lineTo(0, L); ctx.stroke();
       ctx.restore();
     }
+    if (this.cuties.length) this._drawCuties();
     if (this.interact.lumi) this._drawLumi();
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
@@ -531,6 +566,89 @@ export class FX {
       const g = this._glow(i % 9 === 0 ? this.palette[1 % this.palette.length] : GOLD);
       ctx.drawImage(g, x - sz, y - sz, sz * 2, sz * 2);
     }
+  }
+
+  // 內在綻放 — light opens slowly, like a flower, from the brightest places inside the work
+  _drawInnerBloom() {
+    if (!this.blooms.length) return;
+    const ctx = this.ctx, r = this.rect, t = this.t, m = Math.min(r.w, r.h);
+    for (const b of this.blooms) {
+      const ph = ((t * this.tempo + b.off) % b.period) / b.period;
+      const env = Math.pow(Math.sin(Math.PI * ph), 2);
+      if (env < 0.02) continue;
+      const x = r.x + b.u * r.w, y = r.y + b.v * r.h;
+      const R0 = (0.045 + 0.075 * env) * m;
+      const tint = b.c.map((v, i) => Math.round(v * 0.45 + WARM[i] * 0.55));
+      ctx.globalAlpha = 0.32 * env;
+      const halo = this._glow(tint, true); ctx.drawImage(halo, x - R0 * 1.6, y - R0 * 1.6, R0 * 3.2, R0 * 3.2);
+      const petal = this._glow(tint);
+      const n = 6, L = R0 * 1.9 * (0.55 + 0.45 * env), base = t * 0.05 + b.off;
+      ctx.globalAlpha = 0.2 * env;
+      for (let i = 0; i < n; i++) {
+        const a = base + i / n * TAU;
+        ctx.save(); ctx.translate(x + Math.cos(a) * L * 0.42, y + Math.sin(a) * L * 0.42); ctx.rotate(a); ctx.scale(1, 0.3);
+        ctx.drawImage(petal, -L * 0.5, -L * 0.5, L, L); ctx.restore();
+      }
+      ctx.globalAlpha = 0.5 * env; const core = this._glow([255, 250, 238]);
+      ctx.drawImage(core, x - R0 * 0.3, y - R0 * 0.3, R0 * 0.6, R0 * 0.6);
+    }
+  }
+
+  // 精品光澤 — a slow silk sheen glides across the work every ~14 s
+  _drawSheen() {
+    const ctx = this.ctx, r = this.rect, t = this.t;
+    const cycle = 14, dur = 3.6;
+    const p = ((t + this.sheenAt) % cycle) / dur;
+    if (p > 1) return;
+    const band = Math.max(r.w, r.h) * 0.35;
+    const span = r.w + r.h + band * 2;
+    const pos = -band + p * span;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
+    const x0 = r.x + pos - r.h, y0 = r.y + r.h, x1 = x0 + band * 0.7, y1 = y0 - band * 0.7;
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    const a = 0.13 * Math.sin(Math.PI * p);
+    g.addColorStop(0, 'rgba(255,248,232,0)'); g.addColorStop(0.5, `rgba(255,248,232,${a})`); g.addColorStop(1, 'rgba(255,248,232,0)');
+    ctx.globalAlpha = 1; ctx.fillStyle = g;
+    ctx.translate(0, 0); ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.restore();
+  }
+
+  _drawCuties() {
+    const ctx = this.ctx, t = this.t;
+    ctx.globalCompositeOperation = 'source-over';
+    this.cuties = this.cuties.filter(c => t - c.t0 < 2);
+    for (const c of this.cuties) {
+      const age = t - c.t0;
+      const pop = age < 0.35 ? 1.15 * Math.sin((age / 0.35) * Math.PI / 2) : 1 + 0.15 * Math.exp(-(age - 0.35) * 6) * Math.cos((age - 0.35) * 18);
+      const alpha = age > 1.4 ? Math.max(0, 1 - (age - 1.4) / 0.6) : 1;
+      const x = c.x + c.vx * age, y = c.y - 46 * age;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(c.rot + Math.sin(age * 5) * 0.12); ctx.scale(pop, pop);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = rgba(c.c, 1); ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 2;
+      const s = c.size / 2;
+      ctx.beginPath();
+      if (c.kind === 'heart') {
+        ctx.moveTo(0, s * 0.85);
+        ctx.bezierCurveTo(-s * 1.2, s * 0.05, -s * 0.75, -s * 0.95, 0, -s * 0.35);
+        ctx.bezierCurveTo(s * 0.75, -s * 0.95, s * 1.2, s * 0.05, 0, s * 0.85);
+      } else if (c.kind === 'star') {
+        for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? s * 0.45 : s; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+        ctx.closePath();
+      } else if (c.kind === 'flower') {
+        for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; ctx.moveTo(Math.cos(a) * s * 0.55 + s * 0.42, Math.sin(a) * s * 0.55); ctx.arc(Math.cos(a) * s * 0.55, Math.sin(a) * s * 0.55, s * 0.42, 0, TAU); }
+      } else { ctx.arc(0, 0, s * 0.9, 0, TAU); }
+      ctx.fill(); ctx.stroke();
+      if (c.kind === 'flower') { ctx.beginPath(); ctx.fillStyle = '#fff3b0'; ctx.arc(0, 0, s * 0.3, 0, TAU); ctx.fill(); }
+      if (c.kind === 'smile' || c.kind === 'heart') {
+        ctx.fillStyle = '#4a2a2a';
+        const ey = c.kind === 'heart' ? -s * 0.05 : -s * 0.15;
+        ctx.beginPath(); ctx.arc(-s * 0.28, ey, s * 0.09, 0, TAU); ctx.arc(s * 0.28, ey, s * 0.09, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#4a2a2a'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(0, ey + s * 0.12, s * 0.2, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.globalCompositeOperation = 'lighter';
   }
 
   _drawLumi() {

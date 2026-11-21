@@ -344,3 +344,62 @@ html.studio .screen-act{width:30px;height:30px;flex:none}
 .lw-fab svg{fill:currentColor;stroke:none;width:13px;height:13px}
 @media (max-width:760px){.lw-toolbar{position:relative}}
 @media (min-width:761px){.lw-fab{display:none!important}}
+/* ===== r4: Maison AE — 外在沉靜，內在綻放 ===== */
+:root{--foil:linear-gradient(100deg,#a8823a 0%,#e9d39b 22%,#fff3cf 32%,#c9a55c 46%,#8f6c2c 62%,#e2c98d 80%,#a8823a 100%);
+  --monogram:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='112' viewBox='0 0 112 112'%3E%3Cg fill='none' stroke='%23c9a55c' stroke-width='1'%3E%3Ccircle cx='22' cy='28' r='7'/%3E%3Ccircle cx='30' cy='28' r='7'/%3E%3Ccircle cx='38' cy='28' r='7'/%3E%3Ccircle cx='78' cy='84' r='7'/%3E%3Ccircle cx='86' cy='84' r='7'/%3E%3Ccircle cx='94' cy='84' r='7'/%3E%3C/g%3E%3Cg fill='%23c9a55c'%3E%3Cpath d='M86 24l1.6 4.4L92 30l-4.4 1.6L86 36l-1.6-4.4L80 30l4.4-1.6z'/%3E%3Cpath d='M30 80l1.6 4.4L36 86l-4.4 1.6L30 92l-1.6-4.4L24 86l4.4-1.6z'/%3E%3C/g%3E%3C/svg%3E")}
+@keyframes foil{to{background-position:200% 0}}
+.foil,.lw-product span,.pl-intro h2{background:var(--foil);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:foil 9s linear infinite}
+.lw-hero{position:relative;isolation:isolate}
+.lw-hero::before{content:"";position:absolute;inset:-20px -40vw;z-index:-1;background-image:var(--monogram);background-size:112px;opacity:.07;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 10%,transparent 62%);mask-image:radial-gradient(ellipse at 50% 40%,#000 10%,transparent 62%)}
+.lw-hero h1{margin-bottom:14px}
+.lw-hero-sub{font-family:var(--display);font-style:italic;font-size:clamp(18px,2vw,24px);color:var(--muted);letter-spacing:.06em;margin:0 0 26px}
+.lw-hero-rule{display:block;width:64px;height:1px;margin:0 auto 26px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.lw-footer-motto{background:var(--foil);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:foil 9s linear infinite;font-size:19px!important;letter-spacing:.12em!important}
+/* arena headings in the mode picker */
+.lw-arena{grid-column:1/-1;margin:14px 0 2px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.lw-arena:first-child{margin-top:0}
+.lw-arena b{font-family:var(--display);font-weight:500;font-size:15px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.lw-arena small{font-size:11px;color:var(--faint);letter-spacing:.04em}
+/* film grain (精品光澤) */
+.pl-grain{position:absolute;inset:-60%;pointer-events:none;opacity:0;mix-blend-mode:overlay;background-size:160px;transition:opacity 1.2s;animation:grain .9s steps(6) infinite}
+.lw-player.grain .pl-grain{opacity:.075}
+@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-7%,4%)}40%{transform:translate(5%,-6%)}60%{transform:translate(-4%,-3%)}80%{transform:translate(6%,5%)}100%{transform:translate(0,0)}}
+/* maison title card */
+.pl-intro{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;
+  background:radial-gradient(ellipse at center,rgba(20,28,24,.96) 0%,#040605 72%);opacity:0;transition:opacity .9s var(--ease)}
+.pl-intro::before{content:"";position:absolute;inset:0;background-image:var(--monogram);background-size:112px;opacity:.05;-webkit-mask-image:radial-gradient(ellipse at center,#000,transparent 70%);mask-image:radial-gradient(ellipse at center,#000,transparent 70%)}
+.pl-intro.on{opacity:1}.pl-intro.out{opacity:0}
+.pl-intro img{width:clamp(110px,14vw,170px);height:auto;filter:drop-shadow(0 0 26px rgba(201,165,92,.5));clip-path:inset(0 100% 0 0)}
+.pl-intro.on img{animation:reveal 1.6s .2s var(--ease) forwards}
+@keyframes reveal{to{clip-path:inset(0 0 0 0)}}
+.pl-intro-eyebrow{margin:6px 0 0;font-size:10.5px;letter-spacing:.42em;text-transform:uppercase;color:var(--muted);opacity:0}
+.pl-intro h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(30px,4.4vw,60px);letter-spacing:.06em;opacity:0}
+.pl-intro-rule{width:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.pl-intro-motto{margin:0;font-family:"Noto Serif TC",var(--display);font-size:clamp(15px,1.6vw,20px);letter-spacing:.5em;color:rgba(244,244,237,.82);opacity:0;padding-left:.5em}
+.pl-intro.on .pl-intro-eyebrow{animation:fadeUp 1s 1s var(--ease) forwards}
+.pl-intro.on h2{animation:fadeUp 1.2s 1.3s var(--ease) forwards,foil 9s linear infinite}
+.pl-intro.on .pl-intro-rule{animation:rule 1.4s 1.7s var(--ease) forwards}
+.pl-intro.on .pl-intro-motto{animation:fadeUp 1.2s 2.1s var(--ease) forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes rule{to{width:96px}}
+.lw-gate-motto{margin:-8px 0 0;font-family:"Noto Serif TC",var(--display);letter-spacing:.5em;padding-left:.5em;color:var(--muted);font-size:14px}
+.lw-gate::before{content:"";position:absolute;inset:0;background-image:var(--monogram);background-size:112px;opacity:.06;-webkit-mask-image:radial-gradient(ellipse at center,#000,transparent 70%);mask-image:radial-gradient(ellipse at center,#000,transparent 70%);pointer-events:none}
+/* quieter, more refined chrome */
+.pl-caption-meta{align-items:center}
+.pl-caption-meta::before{content:"";width:28px;height:1px;background:var(--gold);opacity:.8}
+.pl-controls{border-color:rgba(201,165,92,.22)}
+.pl-hint{border-color:rgba(201,165,92,.28);letter-spacing:.22em}
+@media (prefers-reduced-motion:reduce){.pl-grain{animation:none}.foil,.lw-product span,.pl-intro h2,.lw-footer-motto{animation:none}}
+.lw-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lw-arena{min-width:0}
+.lw-arena small{min-width:0;flex:1 1 100%}
+.lw-hero{overflow:hidden}
+.lw-hero::before{inset:-20px 0}
+.pl-grain{inset:-8%;animation-timing-function:steps(4)}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}100%{transform:translate(0,0)}}
+.pl-intro img{filter:none;position:relative}
+.pl-intro::after{content:"";position:absolute;left:50%;top:50%;width:min(520px,80vw);height:min(520px,80vw);transform:translate(-50%,-62%);background:radial-gradient(circle,rgba(201,165,92,.16),transparent 60%);pointer-events:none}
+.pl-intro>*{position:relative;z-index:1}
+/* the player must never scroll (focus/scrollIntoView could otherwise shift the whole stage) */
+.lw-player,.pl-stage{overflow:clip}
