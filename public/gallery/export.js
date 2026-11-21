@@ -102,23 +102,23 @@ export async function exportEdition(o) {
   const edition = {
     v: 1, id: (fingerprint || String(Date.now())).slice(0, 16), kind: m.kind === 'nft' ? 'nft' : 'client',
     title: { zh: m.titleZh, en: m.titleEn }, note: { zh: m.noteZh || '', en: m.noteEn || '' },
-    artist: m.artist || 'Aurelia & Elion', edition: { no: Number(m.no) || 1, of: Number(m.of) || 1 }, year: m.year || String(new Date().getFullYear()),
+    artist: m.artist || 'Aurelia & Elion', edition: m.kind === 'nft' ? { no: Number(m.no) || 1, of: Number(m.of) || 1 } : { no: 1, of: 1 }, year: m.year || String(new Date().getFullYear()),
     mode: o.mode, settings: o.settings, site: m.kind === 'nft' ? '' : 'https://ae-universe-creation.vercel.app/',
     fingerprint, exportedAt: new Date().toISOString(), works,
   };
   const manifest = JSON.stringify(edition).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 
   step('pack');
-  const titleTxt = (m.titleZh || m.titleEn || 'Maison AE').replace(/[<&]/g, '');
+  const titleTxt = (m.titleZh || m.titleEn || 'AE Universe Creation').replace(/[<&]/g, '');
   let page = html
     .replace(/<link rel="preconnect"[^>]*>\s*/g, '')
     .replace(/<link href="https:\/\/fonts\.googleapis\.com[^>]*>\s*/g, '')
     .replace(/<link rel="(?:icon|apple-touch-icon)"[^>]*>\s*/g, '')
     .replace(/<link rel="stylesheet" href="gallery\/gallery\.css[^"]*">/, () => `<style>\n${fonts}\n${css}\n</style>\n<link rel="icon" href="${logo}">`)
-    .replace(/<title>[^<]*<\/title>/, () => `<title>${titleTxt} · Maison AE</title>\n<meta name="ae-edition" content="${edition.kind} ${edition.edition.no}/${edition.edition.of} ${fingerprint.slice(0, 16)}">`)
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${titleTxt} · AE Universe Creation</title>\n<meta name="ae-edition" content="${edition.kind} ${edition.edition.no}/${edition.edition.of} ${fingerprint.slice(0, 16)}">`)
     .replace(/src="assets\/ae-three-rings-transparent\.webp"/g, () => `src="${logo}"`)
     .replace(/<script type="module" src="gallery\/app\.js[^"]*"><\/script>/, () => `<script>window.__AE_EDITION__ = ${manifest};</script>\n<script type="module">\n${bundle}\n</script>`);
   const blob = new Blob([page], { type: 'text/html' });
   const slug = (m.titleEn || 'edition').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'edition';
-  return { blob, size: blob.size, filename: `MaisonAE-${slug}-${edition.kind}-${edition.edition.no}of${edition.edition.of}.html` };
+  return { blob, size: blob.size, filename: `AE-Universe-Creation-${slug}-${edition.kind}${edition.kind === 'nft' && edition.edition.of > 1 ? `-${edition.edition.no}of${edition.edition.of}` : ''}.html` };
 }

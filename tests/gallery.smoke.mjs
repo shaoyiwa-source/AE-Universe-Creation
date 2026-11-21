@@ -57,12 +57,14 @@ async function scenario(label, ctxOpts, port) {
 
   await open();
   // ---------- customer ----------
-  check(`[${label}] wall renders the 27-work house collection from the cloud API`, (await page.locator('.screen').count()) === 27 && (await st()).cloud === 'fs');
+  check(`[${label}] wall shows the 21 named works (6 unnamed stay hidden) from the cloud API`, (await page.locator('.screen').count()) === 21 && (await st()).cloud === 'fs');
+  check(`[${label}] nothing selected → button says "play all"`, /全部|all/i.test(await page.textContent('#playBtn')));
   check(`[${label}] no horizontal scroll`, (await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0);
   check(`[${label}] customers cannot add or edit (no upload, no studio actions)`,
     !(await page.locator('label.lw-upload').first().isVisible()) && (await page.locator('[data-act=edit]').count()) === 0);
   await page.screenshot({ path: `${shots}/${label}-wall.png` });
   for (const n of [2, 3, 10]) await tile(n - 1).locator('.screen-hit').click();
+  check(`[${label}] with a selection the button says how many will play`, /3/.test(await page.textContent('#playBtn')));
   check(`[${label}] selection order badges`, (await page.$$eval('.screen.selected .screen-badge', els => els.map(e => e.textContent).join(','))) === '1,2,3');
 
   // settings: modes + frame interval + camera
@@ -108,6 +110,19 @@ async function scenario(label, ctxOpts, port) {
   check(`[${label}] first work fully visible and well sized`, fit.ok && fit.fill > 0.84, JSON.stringify(fit));
   await page.mouse.click(page.viewportSize().width * 0.3, page.viewportSize().height * 0.4);
   await page.screenshot({ path: `${shots}/${label}-play.png` });
+  // landscape work: its title must sit in the margin, not on the painting
+  await page.evaluate(() => window.__lumina.jump(1));
+  await page.waitForFunction(() => window.__lumina.state.idx === 1 && !window.__lumina.state.busy, null, { timeout: 12000 }).catch(() => {});
+  await page.waitForFunction(() => !document.getElementById('caption').classList.contains('off'), null, { timeout: 5000 }).catch(() => {});
+  const ov = await page.evaluate(() => {
+    const cap = document.getElementById('caption'), s = window.__lumina.state;
+    const art = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img').getBoundingClientRect();
+    const h2 = document.getElementById('capTitle').getBoundingClientRect();
+    const ix = Math.max(0, Math.min(h2.right, art.right) - Math.max(h2.left, art.left)), iy = Math.max(0, Math.min(h2.bottom, art.bottom) - Math.max(h2.top, art.top));
+    return { over: cap.classList.contains('over'), overlap: +(ix * iy / Math.max(1, h2.width * h2.height)).toFixed(2), id: s.curId };
+  });
+  check(`[${label}] title of a landscape work sits beside/below it, not on it`, ov.over || ov.overlap < 0.05, JSON.stringify(ov));
+  await page.screenshot({ path: `${shots}/${label}-caption-landscape.png` });
   let trOk = true;
   for (const k of ['innerbloom', 'bloom', 'rings', 'ink', 'silk', 'stardust', 'bubbles', 'dissolve']) {
     await page.evaluate((k) => { window.__lumina.state.settings.transition = k; }, k);
@@ -189,13 +204,16 @@ async function scenario(label, ctxOpts, port) {
   const n = await page.locator('.screen').count();
   await act(n - 2, 'edit');
   await page.waitForSelector('#editDialog[open]');
-  await page.fill('#editForm [name=titleZh]', '晨光'); await page.fill('#editForm [name=year]', '2026');
+  await page.fill('#editForm [name=titleZh]', '晨光'); await page.fill('#editForm [name=titleEn]', 'Morning Light II'); await page.fill('#editForm [name=year]', '2026');
   await page.fill('#editForm [name=medium]', 'Digital'); await page.fill('#editForm [name=stZh]', '一束光，落在心上。');
   await page.screenshot({ path: `${shots}/${label}-edit.png` });
   await page.click('#editSave');
   await page.waitForFunction(() => !document.getElementById('editDialog').open);
   await wait(800);
-  check(`[${label}] edited title shows on the wall`, (await page.locator('.screen').nth(n - 2).locator('em').textContent()) === '晨光');
+  check(`[${label}] edited title shows on the wall (one consistent name)`, (await page.locator('.screen').nth(n - 2).locator('em').textContent()) === 'Morning Light II');
+  await act(n - 2, 'view'); await page.waitForSelector('#viewer:not([hidden])');
+  check(`[${label}] Chinese title appears as the subtitle`, (await page.textContent('#vwTitle')) === 'Morning Light II' && (await page.textContent('#vwSub')) === '晨光');
+  await page.keyboard.press('Escape'); await wait(300);
 
   // reorder: move the first work later
   const firstId = await tile(0).getAttribute('data-id');
@@ -231,7 +249,7 @@ async function scenario(label, ctxOpts, port) {
   check(`[${label}] share link carries exhibition + mode + autoplay`, /show=x[a-z0-9]+/.test(link) && /mode=healing/.test(link) && /autoplay=1/.test(link), link);
   await page.click('#studioLock'); await wait(800);
   check(`[${label}] locking the studio hides curator tools again`, !(await st()).studio && (await page.locator('[data-act=edit]').count()) === 0);
-  check(`[${label}] hidden work is invisible to visitors`, (await st()).works === 28);
+  check(`[${label}] hidden work is invisible to visitors`, (await st()).works === 22);
 
   // ---------- a visitor opens the shared link (fresh page, no studio) ----------
   await page.close();

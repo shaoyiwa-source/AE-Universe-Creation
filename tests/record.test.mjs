@@ -72,7 +72,7 @@ try {
     const dl = page.waitForEvent('download');
     await page.click('#recSave');
     const d = await dl; const f = path.join(out, `${which}-${d.suggestedFilename()}`); await d.saveAs(f);
-    check(`[${which}] ${format}: video file saved`, fs.statSync(f).size === clip.size && new RegExp(`^MaisonAE-.*-${format}-6s\\.(mp4|webm)$`).test(d.suggestedFilename()), d.suggestedFilename());
+    check(`[${which}] ${format}: video file saved`, fs.statSync(f).size === clip.size && new RegExp(`^AE-Universe-Creation-.*-${format}-6s\\.(mp4|webm)$`).test(d.suggestedFilename()), d.suggestedFilename());
     await page.click('#recDone');
     await wait(400);
   }

@@ -27,7 +27,7 @@ const FALLBACK = [
   ['', 'assets/selected-works-v2/selected-23.webp'], ['', 'assets/selected-works-v2/selected-24.webp'],
   ['', 'assets/selected-works-v2/selected-25.webp'], ['', 'assets/selected-works-v2/selected-26.webp'],
   ['', 'assets/selected-works-v2/selected-27.webp'],
-].map(([en, src], i) => ({ id: 'ae' + String(i + 1).padStart(2, '0'), no: i + 1, builtin: true, type: 'image', src, thumb: src, title: { en, zh: i === 0 ? '盛明' : '' } }));
+].map(([en, src], i) => ({ id: 'ae' + String(i + 1).padStart(2, '0'), no: i + 1, builtin: true, type: 'image', src, thumb: src, title: { en, zh: i === 0 ? '盛明' : '' } })).filter(w => w.title.en); // unnamed works are not shown
 
 // Interval steps: 4 s … 1 h (frame mode)
 const STEPS = [4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 40, 50, 60, 90, 120, 180, 300, 600, 900, 1800, 3600];
@@ -119,7 +119,9 @@ async function loadCatalog() {
 }
 
 // ---------- i18n ----------
-const titleOf = (w) => (lang === 'zh' ? (w.title.zh || w.title.en) : (w.title.en || w.title.zh)) || T('untitled', w.no || 0);
+// One consistent name per work: the English title everywhere; the Chinese title (if any) as a quiet subtitle
+const titleOf = (w) => w.title.en || w.title.zh || T('untitled', w.no || 0);
+const subtitleOf = (w) => (w.title.en && w.title.zh && w.title.zh !== w.title.en) ? w.title.zh : '';
 const metaOf = (w) => [w.year, w.medium, w.size].filter(Boolean).join(' · ');
 const statementOf = (w) => (w.statement && (lang === 'zh' ? (w.statement.zh || w.statement.en) : (w.statement.en || w.statement.zh))) || '';
 const showTitle = (e) => (lang === 'zh' ? (e.title.zh || e.title.en) : (e.title.en || e.title.zh)) || T('untitledShow');
@@ -266,10 +268,16 @@ function renderWall() {
   // entrance animation only on first paint / view change, not on every curator edit
   clearTimeout(renderWall.t); renderWall.t = setTimeout(() => wall.classList.add('settled'), 2200);
 }
+// Count + play label say exactly what will play: everything (nothing selected) or the selection, in order
 function updateCount() {
   const ids = new Set(viewWorks().map(w => w.id));
-  $('#selCount').textContent = S.selected.filter(id => ids.has(id)).length;
+  const n = S.selected.filter(id => ids.has(id)).length;
+  $('#selCount').textContent = n || ids.size;
   $('#allCount').textContent = ids.size;
+  $('#allCount').hidden = !n; $('.lw-count-sep').hidden = !n;
+  $('.lw-count-label').textContent = n ? T('countSel') : T('countAll');
+  const pl = $('#playBtn span'); if (pl) pl.textContent = n ? T('playSel', n) : T('playAll');
+  const fab = $('#fab span'); if (fab) fab.textContent = n ? T('playSel', n) : T('playAll');
 }
 function refreshBadges() {
   wall.querySelectorAll('.screen').forEach(el => {
@@ -566,6 +574,8 @@ function openExport() {
   f.artist.value = 'Aurelia & Elion'; f.year.value = String(new Date().getFullYear());
   $('#exportStatus').textContent = T('worksCount', exportList().length);
   $('#exportGo').disabled = false;
+  const syncKind = () => exportForm.querySelectorAll('.nft-only').forEach(el => { el.hidden = f.kind.value !== 'nft'; });
+  f.kind.onchange = syncKind; syncKind();
   exportDialog.showModal();
 }
 $('#exportCancel').addEventListener('click', () => exportDialog.close());
@@ -594,18 +604,18 @@ exportForm.addEventListener('submit', async (e) => {
 function renderEdition() {
   if (!ED) return;
   const tt = (o) => (lang === 'zh' ? (o.zh || o.en) : (o.en || o.zh)) || '';
-  const ed = T('editionOf', ED.edition.no, ED.edition.of);
-  const he = $('#heroEdition'); he.hidden = false; he.textContent = `${tt(ED.title) || 'AE Universe Creation'} · ${ed}`;
+  const ed = ED.kind === 'nft' && ED.edition && ED.edition.of > 1 ? T('editionOf', ED.edition.no, ED.edition.of) : T('kindName', ED.kind);
+  const he = $('#heroEdition'); he.hidden = false; he.textContent = tt(ED.title) || 'AE Universe Creation';
   $('.lw-lede').textContent = tt(ED.note) || T('heroLede');
   const home = $('.lw-header-actions a.lw-link');
   if (ED.site) { home.href = ED.site; home.target = '_blank'; home.rel = 'noopener'; $('.lw-wordmark').href = ED.site; $('.lw-wordmark').target = '_blank'; }
   else { home.hidden = true; $('.lw-wordmark').removeAttribute('href'); }
   const cert = $('#cert'); cert.hidden = false;
-  $('#certTitle').textContent = tt(ED.title) || 'Maison AE';
-  const rows = [[T('edKind'), T('kindName', ED.kind)], [T('edNo'), `${ED.edition.no} / ${ED.edition.of}`], [T('edArtist'), ED.artist], [T('f_year'), ED.year],
+  $('#certTitle').textContent = tt(ED.title) || 'AE Universe Creation';
+  const numbered = ED.kind === 'nft' && ED.edition && ED.edition.of > 1;
+  const rows = [[T('edKind'), T('kindName', ED.kind)], ...(numbered ? [[T('edNo'), `${ED.edition.no} / ${ED.edition.of}`]] : []), [T('edArtist'), ED.artist], [T('f_year'), ED.year],
     [lang === 'zh' ? '作品' : 'Works', T('worksCount', ED.works.length)], [T('issued'), (ED.exportedAt || '').slice(0, 10)]];
   $('#certList').replaceChildren(...rows.flatMap(([k, v]) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; return [dt, dd]; }));
-  $('#certFp').textContent = ED.fingerprint ? `${T('fingerprint')} · ${ED.fingerprint.match(/.{1,8}/g).join(' ')}` : '';
 }
 
 // ---------- settings sheet ----------
@@ -744,6 +754,7 @@ function renderViewer() {
   applyZoom();
   $('#vwIndex').textContent = `${String(vIdx + 1).padStart(2, '0')} / ${String(vList.length).padStart(2, '0')}`;
   $('#vwTitle').textContent = titleOf(w);
+  $('#vwSub').textContent = subtitleOf(w);
   $('#vwMeta').textContent = metaOf(w);
   $('#vwStatement').textContent = statementOf(w);
 }
@@ -815,7 +826,7 @@ function placeNeon(r) { if (r) Object.assign(neon.style, { left: r.x + 'px', top
 function layout() {
   fx.resize(stage.clientWidth, stage.clientHeight);
   placeSlide(0); placeSlide(1);
-  const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); }
+  const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); positionCaption(r); }
 }
 window.addEventListener('resize', () => { if (!player.hidden) layout(); });
 window.addEventListener('orientationchange', () => setTimeout(() => { if (!player.hidden) layout(); }, 250));
@@ -940,7 +951,7 @@ async function openPlayer(startId) {
   if (S.interact.ripple || S.interact.seeds || S.interact.cute) { const h = $('#hint'); h.classList.add('on'); setTimeout(() => h.classList.remove('on'), 3800); }
   if (S.interact.lumi) setTimeout(() => fx.say(T('lumiHello')), 1200);
 }
-// Maison title card: gold Three Rings, the exhibition title and the house motto
+// Title card: gold Three Rings, the exhibition title and the house motto
 function playIntro() {
   const el = $('#plIntro');
   const sh = currentShow();
@@ -996,7 +1007,7 @@ async function show(i) {
   const na = 1 - ambCur;
   ambs[na].style.backgroundImage = `url("${work.thumb || work.src}")`;
   ambs[na].classList.add('on'); ambs[ambCur].classList.remove('on'); ambCur = na;
-  setCaption(work, i);
+  setCaption(work, i, r);
   markStrip(i);
   const from = shown ? slides[cur] : null;
   const fromMedia = from ? mediaOf(cur) : null;
@@ -1036,17 +1047,39 @@ function jump(n) {
   if (n === idx || n < 0 || n >= list.length) return;
   idx = n; elapsed = 0; show(idx);
 }
-function setCaption(work, i) {
+// Put the title in the dark margin around the artwork (below it, or beside it); overlay only when the work fills the screen
+function positionCaption(r) {
+  const cap = $('#caption'); if (!r) return;
+  const W = stage.clientWidth, H = stage.clientHeight, narrow = W < 760;
+  const minBottom = narrow ? 88 : 22;
+  cap.style.left = ''; cap.style.bottom = ''; cap.style.maxWidth = ''; cap.classList.remove('over', 'side');
+  const capH = cap.offsetHeight || 90;
+  const below = H - (r.y + r.h), left = r.x;
+  if (below >= capH + minBottom + 8) {
+    cap.style.left = Math.max(16, r.x) + 'px';
+    cap.style.maxWidth = Math.max(220, Math.min(r.w, W - 32)) + 'px';
+    cap.style.bottom = Math.max(minBottom, (below - capH) / 2) + 'px';
+  } else if (left >= 250) {
+    cap.classList.add('side');
+    cap.style.left = Math.max(20, left * 0.12) + 'px';
+    cap.style.maxWidth = (left - Math.max(20, left * 0.12) - 28) + 'px';
+    cap.style.bottom = Math.max(minBottom, H - (r.y + r.h)) + 'px';
+  } else cap.classList.add('over');
+}
+
+function setCaption(work, i, rect) {
   const cap = $('#caption');
   cap.classList.add('off');
   clearTimeout(captionTimer);
   if (!S.display.captions) return;
   captionTimer = setTimeout(() => {
     $('#capTitle').textContent = titleOf(work);
+    $('#capSub').textContent = subtitleOf(work);
     $('#capIndex').textContent = `${String(i + 1).padStart(2, '0')} / ${String(list.length).padStart(2, '0')}`;
     const lab = S.display.label;
     $('#capLabel').textContent = lab ? metaOf(work) : '';
     $('#capStatement').textContent = lab ? statementOf(work) : '';
+    positionCaption(rect || slides[cur].rect);
     cap.classList.remove('off');
     captionTimer = setTimeout(() => cap.classList.add('off'), lab ? 11000 : 6500);
   }, 1100);
@@ -1113,7 +1146,7 @@ $('#recGo').addEventListener('click', async () => {
       const el = await loadForClip(w); if (!el) continue;
       let pal = paletteCache.get(w.id); if (!pal) { pal = extractPalette(el); if (pal) paletteCache.set(w.id, pal); }
       let pts = pointCache.get(w.id); if (!pts) { pts = brightPoints(el); pointCache.set(w.id, pts); }
-      items.push({ el, title: titleOf(w), meta: S.display.label ? metaOf(w) : '', points: pts, palette: pal });
+      items.push({ el, title: titleOf(w), sub: subtitleOf(w), meta: S.display.label ? metaOf(w) : '', points: pts, palette: pal });
     }
     if (!items.length) throw new Error('no works');
     const supported = ['innerbloom', 'dissolve', 'rings', 'bubbles'];
@@ -1127,13 +1160,13 @@ $('#recGo').addEventListener('click', async () => {
     const out = await recordClip({
       works: items, format: rec.format, seconds: rec.secs, watermark: $('#recWatermark').checked, captions: $('#recCaptions').checked && !wallpaper,
       scale: small ? 2 / 3 : 1, effects: { ...S.effects }, tempo: modeOf(S.mode).set.tempo || 1, transitions, logo, motto: T('motto'), lang,
-      showTitle: sh ? showTitle(sh) : (ED ? (lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) : 'Maison AE'),
+      showTitle: sh ? showTitle(sh) : (ED ? (lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) : 'AE Universe Creation'),
       audioStream, signal: ctrl.signal, monitor: $('#recMonitor'),
       onProgress: (t, total) => { $('#recStatus').textContent = T('recording', Math.floor(t), total); $('#recBar').style.width = (t / total * 100) + '%'; },
     });
     rec.blob = out.blob;
-    const slug = (sh ? (sh.title.en || 'exhibition') : 'maison-ae').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'maison-ae';
-    rec.name = `MaisonAE-${slug}-${rec.format}-${rec.secs}s.${out.ext}`;
+    const slug = (sh ? (sh.title.en || 'exhibition') : 'lumina').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'lumina';
+    rec.name = `AE-Universe-Creation-${slug}-${rec.format}-${rec.secs}s.${out.ext}`;
     const v = $('#recPreview'); v.src = URL.createObjectURL(out.blob); v.play().catch(() => {});
     $('#recInfo').textContent = `${out.width}×${out.height} · ${rec.secs}s · ${(out.blob.size / 1048576).toFixed(1)} MB · ${out.ext.toUpperCase()}`;
     const file = new File([out.blob], rec.name, { type: out.mime });
@@ -1156,7 +1189,7 @@ $('#recSave').addEventListener('click', () => {
 $('#recShare').addEventListener('click', async () => {
   if (!rec.blob) return;
   const file = new File([rec.blob], rec.name, { type: rec.blob.type });
-  try { await navigator.share({ files: [file], title: 'Maison AE', text: T('motto') }); } catch { /* user cancelled */ }
+  try { await navigator.share({ files: [file], title: 'AE Universe Creation', text: T('motto') }); } catch { /* user cancelled */ }
 });
 $('#recBtn').addEventListener('click', openRecord);
 $('#recBtn').hidden = !canRecord();
@@ -1321,16 +1354,16 @@ function makeGrain() {
   applyLang();
   saveSettings(S, SKEY);
   makeGrain();
-  if (ED) { document.documentElement.classList.add('edition'); document.title = `${(lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) || 'Maison AE'} · Maison AE`; }
+  if (ED) { document.documentElement.classList.add('edition'); document.title = `${(lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) || 'AE Universe Creation'} · AE Universe Creation`; }
   if (q.get('autoplay') === '1' || ED) {
     const gate = $('#startGate');
-    if (ED) { const ge = $('#gateEdition'); ge.hidden = false; ge.textContent = `${T('kindName', ED.kind)} · ${ED.edition.no} / ${ED.edition.of}`; }
+    if (ED) { const ge = $('#gateEdition'); ge.hidden = false; ge.textContent = ED.kind === 'nft' && ED.edition && ED.edition.of > 1 ? `${T('kindName', ED.kind)} · ${ED.edition.no} / ${ED.edition.of}` : T('kindName', ED.kind); }
     $('#gateShow').textContent = currentShow() ? showTitle(currentShow()) : 'AE Universe Creation';
     gate.hidden = false;
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { edition: !!ED, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
+    get state() { return { edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
     rec, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();

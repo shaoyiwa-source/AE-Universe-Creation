@@ -66,9 +66,10 @@ try {
   await page.click('[data-show-act=export]');
   await page.waitForSelector('#exportDialog[open]');
   check(`[${which}] export dialog lists the selected works`, /4/.test(await page.textContent('#exportStatus')));
-  await page.fill('#exportForm [name=titleZh]', 'Maison 首展'); await page.fill('#exportForm [name=titleEn]', 'Maison Premiere');
-  await page.fill('#exportForm [name=no]', '3'); await page.fill('#exportForm [name=of]', '88');
+  await page.fill('#exportForm [name=titleZh]', 'AE 首展'); await page.fill('#exportForm [name=titleEn]', 'AE Premiere');
+  check(`[${which}] client player has no edition numbering`, !(await page.isVisible('#exportForm [name=no]')));
   await page.selectOption('#exportForm [name=kind]', 'nft');
+  await page.fill('#exportForm [name=no]', '3'); await page.fill('#exportForm [name=of]', '88');
   await page.screenshot({ path: `${out}/${which}-export-dialog.png` });
   const dl = page.waitForEvent('download', { timeout: 120000 });
   await page.click('#exportGo');
@@ -77,7 +78,7 @@ try {
   await d.saveAs(file);
   const html = fs.readFileSync(file, 'utf8');
   const mb = fs.statSync(file).size / 1048576;
-  check(`[${which}] edition exported as one HTML file`, /^MaisonAE-maison-premiere-nft-3of88\.html$/.test(d.suggestedFilename()) && mb > 0.2, `${d.suggestedFilename()} ${mb.toFixed(2)} MB`);
+  check(`[${which}] edition exported as one HTML file`, /^AE-Universe-Creation-ae-premiere-nft-3of88\.html$/.test(d.suggestedFilename()) && mb > 0.2, `${d.suggestedFilename()} ${mb.toFixed(2)} MB`);
   check(`[${which}] edition has no external references (fonts, API, assets, module files)`,
     !/fonts\.googleapis|fonts\.gstatic|src="assets\/|src="gallery\/|href="gallery\/|href="\/favicon/.test(html), '');
   check(`[${which}] edition embeds manifest, fonts and bundle`, html.includes('window.__AE_EDITION__') && /@font-face/.test(html) && html.includes('const __ae_app'));
@@ -107,7 +108,8 @@ try {
   check(`[${which}] NFT sandbox: no studio, no upload, no share/export`, !st.studio && !(await fr.isVisible('label.lw-upload')) && (await fr.locator('[data-show-act]').count()) === 0 && (await fr.locator('[data-act=edit], [data-act=download]').count()) === 0);
   await fr.click('#gateBtn');
   await fr.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 20000 });
-  const ps = await fr.evaluate(() => { const s = window.__lumina.state; return { list: s.list, mode: s.settings.mode, blooms: s.blooms }; });
+  const ps = await fr.evaluate(() => { const s = window.__lumina.state; return { list: s.list, mode: s.settings.mode, blooms: s.blooms, first: s.curId }; });
+  check(`[${which}] NFT sandbox: the show opens on the first work (Eternal Sun 盛明)`, ps.first === 'ae01', ps.first);
   check(`[${which}] NFT sandbox: show plays in the exported mode (Hotel) with Inner Bloom`, ps.list === 4 && ps.mode === 'hotel' && ps.blooms > 0, JSON.stringify(ps));
   await wait(800); await p2.screenshot({ path: `${out}/${which}-nft-play.png` });
   let trOk = true;
@@ -136,7 +138,8 @@ try {
   check(`[${which}] NFT sandbox: hidden studio entrance is disabled`, dialogs === 0);
   await fr.evaluate(() => document.getElementById('cert').scrollIntoView());
   await wait(400);
-  check(`[${which}] NFT sandbox: certificate with fingerprint`, (await fr.isVisible('#cert')) && /[0-9a-f]{8}/.test(await fr.textContent('#certFp')));
+  const certTxt = await fr.textContent('#cert');
+  check(`[${which}] NFT sandbox: "about this work" card without unverifiable claims`, (await fr.isVisible('#cert')) && /AE Universe Creation/.test(certTxt) && !/指紋|fingerprint|1 \/ 1|Maison/i.test(certTxt), certTxt.replace(/\s+/g, ' ').slice(0, 160));
   await p2.screenshot({ path: `${out}/${which}-nft-certificate.png` });
   check(`[${which}] NFT sandbox: zero network requests leave the file`, external.length === 0, external.slice(0, 3).join(' '));
   check(`[${which}] NFT sandbox: no console errors`, cerr.length === 0, cerr.slice(0, 2).join(' | '));

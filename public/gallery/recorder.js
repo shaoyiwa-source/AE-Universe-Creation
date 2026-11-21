@@ -91,7 +91,7 @@ export async function recordClip(o) {
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     c.imageSmoothingEnabled = true;
     c.drawImage(w.amb, 0, 0, W, H);
-    c.fillStyle = 'rgba(5,8,6,0.5)'; c.fillRect(0, 0, W, H);
+    c.fillStyle = 'rgba(5,8,6,0.64)'; c.fillRect(0, 0, W, H);
     const r = w.rect;
     const focus = (w.points && w.points[0]) || { u: 0.5, v: 0.5 };
     const z = 1 + 0.06 * ease(clamp01(k));
@@ -211,6 +211,7 @@ export async function recordClip(o) {
     spaced(ctx, `AE UNIVERSE CREATION   ${String(i + 1).padStart(2, '0')} / ${String(works.length).padStart(2, '0')}`, x + minDim * 0.07, base - minDim * 0.08, minDim * 0.006, 'left');
     ctx.fillStyle = '#f4f4ed'; ctx.font = `400 ${Math.round(minDim * 0.058)}px "Cormorant Garamond", "Noto Serif TC", Georgia, serif`;
     ctx.fillText(w.title || '', x, base);
+    if (w.sub) { const tw = ctx.measureText(w.title || '').width; ctx.fillStyle = 'rgba(224,200,148,0.9)'; ctx.font = `300 ${Math.round(minDim * 0.032)}px "Noto Serif TC", "Songti TC", serif`; ctx.fillText(w.sub, x + tw + minDim * 0.025, base); }
     if (w.meta) { ctx.fillStyle = 'rgba(169,181,172,0.95)'; ctx.font = `400 ${Math.round(minDim * 0.02)}px "Noto Sans TC", Arial, sans-serif`; spaced(ctx, w.meta.toUpperCase(), x, base + minDim * 0.045, minDim * 0.004, 'left'); }
     ctx.globalAlpha = 1;
   }
@@ -220,7 +221,7 @@ export async function recordClip(o) {
     const x = W - W * 0.06 - lw, y = (o.format === 'story' || wallpaper) ? H * 0.06 : H * 0.07;
     ctx.globalAlpha = 0.72; ctx.drawImage(o.logo, x, y, lw, lh);
     ctx.fillStyle = 'rgba(244,244,237,0.8)'; ctx.font = `italic 400 ${Math.round(minDim * 0.022)}px "Cormorant Garamond", Georgia, serif`;
-    ctx.textAlign = 'right'; ctx.fillText('Maison AE', x + lw, y + lh + minDim * 0.03); ctx.globalAlpha = 1;
+    ctx.textAlign = 'right'; ctx.fillText('AE Universe Creation', x + lw, y + lh + minDim * 0.03); ctx.globalAlpha = 1;
   }
 
   // ---- recording ----

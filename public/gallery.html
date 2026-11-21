@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="ae-version" content="lumina-r6">
 <meta name="theme-color" content="#0b100d">
-<title>Lumina Wall · Maison AE</title>
+<title>Lumina Wall · AE Universe Creation</title>
 <meta name="description" content="AE Lumina Wall — 外在沉靜，內在綻放。數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,10 +66,9 @@
 
 <section class="lw-cert" id="cert" hidden aria-labelledby="certTitle">
   <img src="assets/ae-three-rings-transparent.webp" alt="" width="96" height="48">
-  <p class="lw-eyebrow" data-i18n="certificate">典藏證書</p>
+  <p class="lw-eyebrow" data-i18n="certificate">關於這份作品</p>
   <h2 id="certTitle"></h2>
   <dl class="lw-cert-list" id="certList"></dl>
-  <p class="lw-cert-fp" id="certFp"></p>
   <p class="lw-cert-note" data-i18n="certNote"></p>
   <p class="lw-cert-sign">AE Universe Creation<span data-i18n="motto">外在沉靜，內在綻放</span></p>
 </section>
@@ -144,6 +143,7 @@
   <div class="pl-caption" id="caption" aria-live="polite">
     <p class="pl-caption-meta"><span>AE Universe Creation</span><span id="capIndex">01 / 01</span></p>
     <h2 id="capTitle"></h2>
+    <p class="pl-caption-sub" id="capSub"></p>
     <p class="pl-caption-label" id="capLabel"></p>
     <p class="pl-caption-statement" id="capStatement"></p>
   </div>
@@ -175,6 +175,7 @@
   <div class="vw-label">
     <p class="lw-eyebrow" id="vwIndex"></p>
     <h2 id="vwTitle"></h2>
+    <p class="vw-sub" id="vwSub"></p>
     <p class="vw-meta" id="vwMeta"></p>
     <p class="vw-statement" id="vwStatement"></p>
     <p class="vw-hint" data-i18n="zoomHint">雙擊或滾輪放大・拖曳移動</p>
@@ -238,14 +239,14 @@
 <!-- Studio: export an edition (客戶版 / NFT 版) -->
 <dialog class="lw-dialog" id="exportDialog">
   <form method="dialog" id="exportForm">
-    <p class="lw-eyebrow" data-i18n="exportEd">匯出典藏版</p>
+    <p class="lw-eyebrow" data-i18n="exportEd">匯出播放版</p>
     <div class="lw-form-grid">
       <label><span>中文名稱</span><input name="titleZh" maxlength="80"></label>
       <label><span>English title</span><input name="titleEn" maxlength="80"></label>
       <label><span data-i18n="edArtist">藝術家</span><input name="artist" maxlength="80"></label>
       <label><span data-i18n="f_year">年份</span><input name="year" maxlength="20"></label>
-      <label><span data-i18n="edNo">版本編號</span><input name="no" type="number" min="1" max="10000" value="1"></label>
-      <label><span data-i18n="edOf">限量總數</span><input name="of" type="number" min="1" max="10000" value="1"></label>
+      <label class="nft-only"><span data-i18n="edNo">NFT 編號</span><input name="no" type="number" min="1" max="10000" value="1"></label>
+      <label class="nft-only"><span data-i18n="edOf">NFT 發行總數</span><input name="of" type="number" min="1" max="10000" value="1"></label>
       <label class="wide"><span data-i18n="edKind">版本類型</span><select name="kind"><option value="client" data-i18n="kindClient">客戶版</option><option value="nft" data-i18n="kindNft">NFT 版</option></select></label>
       <label class="wide"><span data-i18n="quality">畫質</span><select name="quality"><option value="standard" data-i18n="qStd">標準</option><option value="high" data-i18n="qHigh">高畫質</option><option value="light" data-i18n="qLight">輕量</option></select></label>
       <label class="wide"><span data-i18n="showNote">展覽說明</span><textarea name="noteZh" rows="2" maxlength="600" placeholder="中文"></textarea></label>
@@ -255,7 +256,7 @@
     <div class="lw-dialog-actions">
       <span></span>
       <button type="button" class="lw-btn ghost" id="exportCancel" data-i18n="cancel">取消</button>
-      <button type="submit" class="lw-btn primary" id="exportGo" data-i18n="exportEd">匯出典藏版</button>
+      <button type="submit" class="lw-btn primary" id="exportGo" data-i18n="exportEd">匯出播放版</button>
     </div>
   </form>
 </dialog>
@@ -273,7 +274,7 @@
     </div>
     <p class="rec-label" data-i18n="recLength">長度</p>
     <div class="lw-chips" id="recSecs"><button type="button" class="lw-chip" data-secs="15" aria-pressed="true">15</button><button type="button" class="lw-chip" data-secs="30" aria-pressed="false">30</button></div>
-    <label class="lw-check rec-check"><input type="checkbox" id="recWatermark" checked><span data-i18n="watermarkOpt">加上 Maison AE 浮水印</span></label>
+    <label class="lw-check rec-check"><input type="checkbox" id="recWatermark" checked><span data-i18n="watermarkOpt">加上 AE Universe Creation 浮水印</span></label>
     <label class="lw-check rec-check"><input type="checkbox" id="recCaptions" checked><span data-i18n="captionOpt">顯示作品標題</span></label>
     <p class="lw-note" data-i18n="recNote"></p>
     <div class="lw-dialog-actions"><span></span><button type="button" class="lw-btn ghost" id="recClose" data-i18n="cancel">取消</button><button type="button" class="lw-btn primary" id="recGo" data-i18n="recStart">開始錄製</button></div>

@@ -53,7 +53,7 @@ function seedCatalog() {
     v: 1, updatedAt: 0,
     works: BUILTIN.map(([en, zh, src], i) => ({
       id: 'ae' + String(i + 1).padStart(2, '0'), no: i + 1, builtin: true, type: 'image', src, thumb: src,
-      title: { en, zh }, year: '', medium: '', size: '', statement: { en: '', zh: '' }, hidden: false,
+      title: { en, zh }, year: '', medium: '', size: '', statement: { en: '', zh: '' }, hidden: !en, // unnamed works stay hidden until AE names them
     })),
     exhibitions: [],
     tracks: [],
