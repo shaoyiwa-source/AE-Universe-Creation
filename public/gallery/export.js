@@ -31,18 +31,28 @@ export function bundleModules(sources) {
   return out.replace(/<\/script/gi, '<\\/script');
 }
 
+async function facesFrom(url, latinOnly) {
+  const css = await text(url, 8000);
+  const blocks = latinOnly
+    ? [...css.matchAll(/\/\*\s*latin\s*\*\/\s*@font-face\s*\{([^}]*)\}/g)].map(m => m[1])
+    : [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map(m => m[1]);
+  const faces = [];
+  for (const b of blocks) {
+    const url2 = /url\(([^)]+)\)/.exec(b)?.[1]; if (!url2) continue;
+    const data = await urlToDataURL(url2.replace(/['"]/g, ''), 8000);
+    faces.push(`@font-face{${b.replace(/url\([^)]+\)/, `url(${data})`)}}`);
+  }
+  return faces.join('\n');
+}
 async function embedFonts() {
-  try {
-    const css = await text('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap', 8000);
-    const blocks = [...css.matchAll(/\/\*\s*latin\s*\*\/\s*@font-face\s*\{([^}]*)\}/g)].map(m => m[1]);
-    const faces = [];
-    for (const b of blocks) {
-      const url = /url\(([^)]+)\)/.exec(b)?.[1]; if (!url) continue;
-      const data = await urlToDataURL(url.replace(/['"]/g, ''), 8000);
-      faces.push(`@font-face{${b.replace(/url\([^)]+\)/, `url(${data})`)}}`);
-    }
-    return faces.join('\n');
-  } catch { return ''; } // falls back to the elegant serif stack (Georgia / Noto Serif TC)
+  const out = [];
+  // Cormorant Garamond + Cinzel (Latin) and only the motto glyphs of Noto Serif TC 300 (a few KB)
+  for (const [url, latin] of [
+    ['https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap', true],
+    ['https://fonts.googleapis.com/css2?family=Cinzel:wght@400&display=swap', true],
+    [`https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300&text=${encodeURIComponent('外在沉靜內在綻放·')}&display=swap`, false],
+  ]) { try { out.push(await facesFrom(url, latin)); } catch { /* falls back to the serif stack */ } }
+  return out.join('\n');
 }
 
 async function sha256(str) {

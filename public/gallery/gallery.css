@@ -344,7 +344,7 @@ html.studio .screen-act{width:30px;height:30px;flex:none}
 .lw-fab svg{fill:currentColor;stroke:none;width:13px;height:13px}
 @media (max-width:760px){.lw-toolbar{position:relative}}
 @media (min-width:761px){.lw-fab{display:none!important}}
-/* ===== r4: Maison AE — 外在沈靜，內在綻放 ===== */
+/* ===== r4: Maison AE — 外在沉靜，內在綻放 ===== */
 :root{--foil:linear-gradient(100deg,#a8823a 0%,#e9d39b 22%,#fff3cf 32%,#c9a55c 46%,#8f6c2c 62%,#e2c98d 80%,#a8823a 100%);
   --monogram:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='112' viewBox='0 0 112 112'%3E%3Cg fill='none' stroke='%23c9a55c' stroke-width='1'%3E%3Ccircle cx='22' cy='28' r='7'/%3E%3Ccircle cx='30' cy='28' r='7'/%3E%3Ccircle cx='38' cy='28' r='7'/%3E%3Ccircle cx='78' cy='84' r='7'/%3E%3Ccircle cx='86' cy='84' r='7'/%3E%3Ccircle cx='94' cy='84' r='7'/%3E%3C/g%3E%3Cg fill='%23c9a55c'%3E%3Cpath d='M86 24l1.6 4.4L92 30l-4.4 1.6L86 36l-1.6-4.4L80 30l4.4-1.6z'/%3E%3Cpath d='M30 80l1.6 4.4L36 86l-4.4 1.6L30 92l-1.6-4.4L24 86l4.4-1.6z'/%3E%3C/g%3E%3C/svg%3E")}
 @keyframes foil{to{background-position:200% 0}}
@@ -443,3 +443,30 @@ html.edition .lw-drop-note,html.edition .lw-shows{display:none}
 .rec-monitor{align-self:center;max-height:240px;max-width:100%;border:1px solid var(--line);background:#040605}
 .rec-preview{width:100%;max-height:56dvh;background:#040605;border:1px solid var(--gold-soft)}
 @media (max-width:520px){.rec-formats{grid-template-columns:1fr 1fr}.rec-pane{padding:20px 18px 18px}}
+/* ===== 「外在沉靜，內在綻放」motto block — design from the AE player (Grok / 林星宇), per Owner ===== */
+.ae-motto{text-align:center}
+.ae-motto .brand{font-family:Cinzel,"Cormorant Garamond",serif;font-size:13px;letter-spacing:.32em;text-indent:.32em;color:#e0c894;margin:0 0 36px}
+.ae-motto .tg{margin:0;font-family:Cinzel,"Cormorant Garamond",serif;font-weight:400;font-size:clamp(28px,8vw,56px);line-height:1.28;letter-spacing:.28em;text-indent:.28em;
+  background:linear-gradient(180deg,#f3e2b6 0%,#e2c487 30%,#c9a263 52%,#b48a4e 70%,#d9bb80 86%,#a37c45 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.ae-motto .tg span{display:block}
+.ae-motto .tg.zh-hero{font-family:"Noto Serif TC","Songti TC",serif;font-weight:300;letter-spacing:.2em;text-indent:.2em}
+.ae-motto .gr{display:block;width:72px;height:1px;margin:28px auto 18px;background:linear-gradient(90deg,transparent,#b8955c,#d9bd85,#b8955c,transparent)}
+.ae-motto .sub-zh{font-family:"Noto Serif TC","Songti TC",serif;font-weight:300;font-size:15px;letter-spacing:.32em;text-indent:.32em;color:#e0c894}
+.ae-motto .sub-en{font-family:Cinzel,"Cormorant Garamond",serif;font-weight:400;font-size:13px;letter-spacing:.28em;text-indent:.28em;color:#e0c894}
+/* placement */
+.lw-hero .ae-motto{margin-bottom:34px}
+.lw-hero-title{font-family:var(--display);font-size:clamp(20px,2.4vw,28px);letter-spacing:.08em;color:var(--ink);margin:-6px 0 22px}
+.lw-gate .ae-motto .brand{margin-bottom:26px}
+.lw-gate .ae-motto .tg{font-size:clamp(28px,7vw,52px)}
+.pl-intro .ae-motto .brand,.pl-intro .ae-motto .tg span,.pl-intro .ae-motto .sub-en,.pl-intro .ae-motto .sub-zh,.pl-intro-title{opacity:0}
+.pl-intro .ae-motto .gr{width:0}
+.pl-intro.on .ae-motto .brand{animation:fadeUp 1s .9s var(--ease) forwards}
+.pl-intro.on .ae-motto .tg span:first-child{animation:fadeUp 1.2s 1.2s var(--ease) forwards}
+.pl-intro.on .ae-motto .tg span:last-child{animation:fadeUp 1.2s 1.55s var(--ease) forwards}
+.pl-intro.on .ae-motto .gr{animation:mottoRule 1.2s 2s var(--ease) forwards}
+.pl-intro.on .ae-motto .sub-en,.pl-intro.on .ae-motto .sub-zh{animation:fadeUp 1s 2.3s var(--ease) forwards}
+.pl-intro-title{margin:6px 0 0;font-family:var(--display);font-style:italic;font-size:clamp(16px,1.8vw,22px);letter-spacing:.06em;color:var(--muted)}
+.pl-intro.on .pl-intro-title{animation:fadeUp 1s 2.7s var(--ease) forwards}
+.pl-intro-title:empty{display:none}
+@keyframes mottoRule{to{width:72px}}
+@media (prefers-reduced-motion:reduce){.pl-intro .ae-motto *,.pl-intro-title{opacity:1!important;animation:none!important}.pl-intro .ae-motto .gr{width:72px}}

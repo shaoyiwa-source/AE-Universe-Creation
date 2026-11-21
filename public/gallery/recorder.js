@@ -55,7 +55,7 @@ export async function recordClip(o) {
   const wallpaper = o.format === 'wallpaper';
   const works = wallpaper ? o.works.slice(0, 1) : o.works;
   const total = o.seconds;
-  const introDur = wallpaper ? 0 : Math.min(2.8, total * 0.18);
+  const introDur = wallpaper ? 0 : Math.min(3.4, total * 0.22);
   const outroDur = wallpaper ? 0 : Math.min(2.2, total * 0.14);
   const body = total - introDur - outroDur;
   const segDur = body / works.length;
@@ -78,7 +78,13 @@ export async function recordClip(o) {
     const [nw, nh] = dimsOf(w.el);
     return { ...w, rect: fit(nw, nh, W, H, pad, wallpaper), amb: ambientOf(w.el, W, H) };
   });
-  try { await document.fonts.load(`${Math.round(minDim * 0.06)}px "Cormorant Garamond"`); } catch { /* fallback serif */ }
+  try {
+    await Promise.all([
+      document.fonts.load(`${Math.round(minDim * 0.06)}px "Cormorant Garamond"`),
+      document.fonts.load('400 40px Cinzel', 'AE UNIVERSE CREATION OUTER CALM'),
+      document.fonts.load('300 40px "Noto Serif TC"', '外在沉靜內在綻放'),
+    ]);
+  } catch { /* fallback serif */ }
 
   // ---- drawing helpers ----
   function drawWork(c, w, k) {
@@ -146,25 +152,51 @@ export async function recordClip(o) {
     if ('letterSpacing' in c) { c.letterSpacing = `${spacing}px`; c.textAlign = align; c.fillText(text, x + (align === 'center' ? spacing / 2 : 0), y); c.letterSpacing = '0px'; return; }
     c.textAlign = align; c.fillText(text.split('').join(' '), x, y);
   }
-  function titleCard(alpha, reveal, sub) {
+  // Title card — the house motto in the AE player design: AE UNIVERSE CREATION / 外在沉靜 · 內在綻放 (gold gradient) / gold rule / OUTER CALM · INNER BLOOM
+  function titleCard(alpha, reveal, closing) {
     ctx.globalAlpha = alpha;
     const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, maxR / 2);
     g.addColorStop(0, '#16201a'); g.addColorStop(1, '#040605');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    const lw = minDim * 0.34, lh = lw * (o.logo.naturalHeight / o.logo.naturalWidth || 0.5);
-    const ly = H / 2 - lh - minDim * 0.06;
-    ctx.save(); ctx.beginPath(); ctx.rect(W / 2 - lw / 2, ly - 10, lw * clamp01(reveal), lh + 20); ctx.clip();
-    ctx.drawImage(o.logo, W / 2 - lw / 2, ly, lw, lh); ctx.restore();
-    const t2 = clamp01((reveal - 0.45) / 0.55);
-    ctx.globalAlpha = alpha * t2; ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = 'rgba(169,181,172,0.95)'; ctx.font = `400 ${Math.round(minDim * 0.022)}px "Noto Sans TC", Arial, sans-serif`;
-    spaced(ctx, sub || 'MAISON AE · AE UNIVERSE CREATION', W / 2, H / 2 + minDim * 0.005, minDim * 0.008);
-    ctx.font = `400 ${Math.round(minDim * 0.075)}px "Cormorant Garamond", "Noto Serif TC", Georgia, serif`;
-    ctx.fillStyle = foil(ctx, W / 2 - minDim * 0.4, W / 2 + minDim * 0.4);
-    spaced(ctx, o.showTitle || 'Maison AE', W / 2, H / 2 + minDim * 0.11, minDim * 0.004);
-    ctx.fillStyle = 'rgba(201,165,92,0.9)'; ctx.fillRect(W / 2 - minDim * 0.06 * t2, H / 2 + minDim * 0.15, minDim * 0.12 * t2, Math.max(1, minDim * 0.0016));
-    ctx.fillStyle = 'rgba(244,244,237,0.86)'; ctx.font = `400 ${Math.round(minDim * 0.03)}px "Noto Serif TC", "Cormorant Garamond", serif`;
-    spaced(ctx, o.motto || '', W / 2, H / 2 + minDim * 0.215, minDim * 0.018);
+    const u = minDim / 600; // CSS px → canvas px
+    const zh = (o.lang || 'zh') === 'zh';
+    const lines = zh ? ['外在沉靜', '內在綻放'] : ['OUTER CALM', 'INNER BLOOM'];
+    const size = zh ? Math.min(W * 0.11, 50 * u) : Math.min(W * 0.075, 40 * u);
+    const lineH = size * 1.28;
+    const lw = 150 * u, lh = lw * (o.logo.naturalHeight / o.logo.naturalWidth || 0.5);
+    const blockH = lh + 40 * u + 13 * u + 36 * u + lineH * 2 + 46 * u + 15 * u + (closing ? 0 : 50 * u);
+    let y = (H - blockH) / 2;
+    ctx.save(); ctx.beginPath(); ctx.rect(W / 2 - lw / 2, y - 10, lw * clamp01(reveal * 1.6), lh + 20); ctx.clip();
+    ctx.drawImage(o.logo, W / 2 - lw / 2, y, lw, lh); ctx.restore();
+    y += lh + 40 * u;
+    const a1 = clamp01((reveal - 0.25) / 0.3), a2 = clamp01((reveal - 0.4) / 0.3), a3 = clamp01((reveal - 0.55) / 0.3), a4 = clamp01((reveal - 0.7) / 0.3);
+    ctx.textBaseline = 'alphabetic';
+    ctx.globalAlpha = alpha * a1; ctx.fillStyle = '#e0c894'; ctx.font = `400 ${Math.round(13 * u)}px Cinzel, "Cormorant Garamond", serif`;
+    spaced(ctx, 'AE UNIVERSE CREATION', W / 2, y + 13 * u, 13 * u * 0.32);
+    y += 13 * u + 36 * u;
+    ctx.font = zh ? `300 ${Math.round(size)}px "Noto Serif TC", "Songti TC", serif` : `400 ${Math.round(size)}px Cinzel, "Cormorant Garamond", serif`;
+    lines.forEach((line, k) => {
+      const top = y + k * lineH, base = top + size * 1.0;
+      const gr = ctx.createLinearGradient(0, top, 0, top + lineH);
+      [[0, '#f3e2b6'], [0.3, '#e2c487'], [0.52, '#c9a263'], [0.7, '#b48a4e'], [0.86, '#d9bb80'], [1, '#a37c45']].forEach(([o2, c]) => gr.addColorStop(o2, c));
+      ctx.globalAlpha = alpha * (k ? a3 : a2); ctx.fillStyle = gr;
+      spaced(ctx, line, W / 2, base, size * (zh ? 0.2 : 0.28));
+    });
+    y += lineH * 2 + 28 * u;
+    const rw = 72 * u * a4;
+    const rg = ctx.createLinearGradient(W / 2 - rw / 2, 0, W / 2 + rw / 2, 0);
+    rg.addColorStop(0, 'rgba(184,149,92,0)'); rg.addColorStop(0.3, '#b8955c'); rg.addColorStop(0.5, '#d9bd85'); rg.addColorStop(0.7, '#b8955c'); rg.addColorStop(1, 'rgba(184,149,92,0)');
+    ctx.globalAlpha = alpha; ctx.fillStyle = rg; ctx.fillRect(W / 2 - rw / 2, y, rw, Math.max(1, u));
+    y += 18 * u;
+    ctx.globalAlpha = alpha * a4; ctx.fillStyle = '#e0c894';
+    ctx.font = zh ? `400 ${Math.round(13 * u)}px Cinzel, "Cormorant Garamond", serif` : `300 ${Math.round(15 * u)}px "Noto Serif TC", "Songti TC", serif`;
+    spaced(ctx, zh ? 'OUTER CALM · INNER BLOOM' : '外在沉靜 · 內在綻放', W / 2, y + 15 * u, (zh ? 13 : 15) * u * (zh ? 0.28 : 0.32));
+    if (!closing && o.showTitle) {
+      y += 15 * u + 40 * u;
+      ctx.globalAlpha = alpha * a4; ctx.fillStyle = 'rgba(169,181,172,0.95)';
+      ctx.font = `italic 400 ${Math.round(20 * u)}px "Cormorant Garamond", "Noto Serif TC", Georgia, serif`;
+      ctx.textAlign = 'center'; ctx.fillText(o.showTitle, W / 2, y);
+    }
     ctx.globalAlpha = 1;
   }
   function caption(w, i, a) {
@@ -222,7 +254,7 @@ export async function recordClip(o) {
       if (tb < 0) { // title card, crossfading into the first work
         drawWork(ctx, prepared[0], 0);
         const a = 1 - seg(t, introDur - 0.7, introDur);
-        titleCard(a, seg(t, 0.15, 1.6));
+        titleCard(a, seg(t, 0.1, Math.max(1.2, introDur - 0.6)));
       } else if (i > 0 && local < trans) {
         const kind = o.transitions[(i - 1) % o.transitions.length] || 'innerbloom';
         transitionDraw(kind, prepared[i - 1], w, 1, k, local / trans);
@@ -236,7 +268,7 @@ export async function recordClip(o) {
       fx.t += dt; fx._update(dt); fx._draw();
       ctx.drawImage(fxc, 0, 0, W, H);
       if (tb >= 0 && t < total - outroDur) caption(w, i, seg(local, 0.5, 1.2) * (1 - seg(local, segDur - 0.6, segDur - 0.1)));
-      if (outroDur && t >= total - outroDur) { const a = seg(t, total - outroDur, total - outroDur + 0.8); titleCard(a, 1, 'AE UNIVERSE CREATION'); }
+      if (outroDur && t >= total - outroDur) { const a = seg(t, total - outroDur, total - outroDur + 0.8); titleCard(a, 1, true); }
       watermark();
       if (o.onProgress) o.onProgress(Math.min(total, t), total);
       if (o.monitor && (monitorTick++ % 3 === 0)) { const m = o.monitor; m.getContext('2d').drawImage(cv, 0, 0, m.width, m.height); }

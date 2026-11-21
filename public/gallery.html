@@ -6,10 +6,10 @@
 <meta name="ae-version" content="lumina-r6">
 <meta name="theme-color" content="#0b100d">
 <title>Lumina Wall · Maison AE</title>
-<meta name="description" content="AE Lumina Wall — 外在沈靜，內在綻放。數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
+<meta name="description" content="AE Lumina Wall — 外在沉靜，內在綻放。數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&family=Cinzel:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="gallery/gallery.css?v=r6">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png">
@@ -32,10 +32,8 @@
 
 <main>
   <section class="lw-hero">
-    <p class="lw-eyebrow" data-i18n="eyebrow">AE Digital Art Salon · 數位藝術沙龍</p>
-    <h1 data-i18n="heroTitle">外在沈靜，內在綻放。</h1>
-    <p class="lw-hero-sub" data-i18n="heroSub">讓畫作，在光裡呼吸</p>
-    <span class="lw-hero-rule" aria-hidden="true"></span>
+    <div class="ae-motto" id="heroMotto" data-motto="h1"></div>
+    <p class="lw-hero-title" id="heroEdition" hidden></p>
     <p class="lw-lede" data-i18n="heroLede">輕觸畫面選取作品，依選取順序化為一場沉浸式光影展演。轉場、音景與可觸碰的光，皆由 AE 獨家調校。</p>
   </section>
 
@@ -73,13 +71,13 @@
   <dl class="lw-cert-list" id="certList"></dl>
   <p class="lw-cert-fp" id="certFp"></p>
   <p class="lw-cert-note" data-i18n="certNote"></p>
-  <p class="lw-cert-sign">Maison AE<span data-i18n="motto">外在沈靜，內在綻放</span></p>
+  <p class="lw-cert-sign">AE Universe Creation<span data-i18n="motto">外在沉靜，內在綻放</span></p>
 </section>
 
 <footer class="lw-footer">
   <img src="assets/ae-three-rings-transparent.webp" alt="" width="44" height="22">
   <p>Aurelia &amp; Elion · AE Universe Creation</p>
-  <p class="lw-footer-motto" data-i18n="motto">外在沈靜，內在綻放</p>
+  <p class="lw-footer-motto" data-i18n="motto">外在沉靜，內在綻放</p>
   <p>Action Creates Infinity · 行動創造無限</p>
 </footer>
 
@@ -152,10 +150,8 @@
   <div class="pl-strip" id="strip" hidden></div>
   <div class="pl-intro" id="plIntro" hidden>
     <img src="assets/ae-three-rings-transparent.webp" alt="" width="160" height="80">
-    <p class="pl-intro-eyebrow" id="introEyebrow"></p>
-    <h2 id="introTitle"></h2>
-    <span class="pl-intro-rule" aria-hidden="true"></span>
-    <p class="pl-intro-motto" id="introMotto"></p>
+    <div class="ae-motto" id="introMotto" data-motto="p"></div>
+    <p class="pl-intro-title" id="introTitle"></p>
   </div>
   <div class="pl-breath" id="breathGuide" aria-hidden="true"><i></i><span></span></div>
   <div class="pl-hint" id="hint" data-i18n="hint">輕觸畫面，讓光回應你</div>
@@ -300,8 +296,8 @@
 <!-- Kiosk / shared link start -->
 <div class="lw-gate" id="startGate" hidden>
   <img src="assets/ae-three-rings-transparent.webp" alt="" width="120" height="60">
+  <div class="ae-motto" id="gateMotto" data-motto="p"></div>
   <p class="lw-eyebrow" id="gateShow"></p>
-  <p class="lw-gate-motto" id="gateMotto"></p>
   <p class="lw-gate-edition" id="gateEdition" hidden></p>
   <button type="button" class="lw-gate-btn" id="gateBtn"><span data-i18n="tapToBegin">輕觸開始展演</span></button>
 </div>

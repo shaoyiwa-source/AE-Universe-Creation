@@ -20,7 +20,7 @@ export const STR = {
     removeFromShow: '從展覽移除', saved: '已儲存', tapToBegin: '輕觸開始展演', zoomHint: '雙擊或滾輪放大・拖曳移動', filmstrip: '作品列', track: 'AE 曲目',
     showNote: '展覽說明', untitledShow: '未命名展覽', modeLabel: '場景模式',
     skip: '跳至作品牆', home: '官網', eyebrow: 'Maison AE · 數位藝術典藏',
-    heroTitle: '外在沈靜，內在綻放。', motto: '外在沈靜，內在綻放', heroSub: '讓畫作，在光裡呼吸', arena: '場域',
+    heroTitle: '外在沉靜，內在綻放。', motto: '外在沉靜，內在綻放', heroSub: '讓畫作，在光裡呼吸', arena: '場域',
     heroLede: '輕觸畫面選取作品，依選取順序化為一場沉浸式光影展演。選擇空間的場景模式，轉場、音景與可觸碰的光，皆由 AE 獨家調校。',
     studio: 'AE 工作室', studioLock: '鎖定', studioPrompt: 'AE 工作室密碼', studioWrong: '密碼不正確', studioOn: '已進入 AE 工作室：可加入作品與音樂', studioOff: '已鎖定 AE 工作室',
     selected: '已選取', selectAll: '全選', clear: '清除', addWorks: '加入作品', settings: '展演設定', play: '開始展演',
@@ -115,7 +115,7 @@ export const OPTIONS = {
     { id: 'bubbles', zh: '泡泡樂園', en: 'Bubbles' },
   ],
   effects: [
-    { id: 'innerbloom', zh: '內在綻放', en: 'Inner Bloom', ae: true, dzh: '光從畫作最亮處緩緩綻放：外在沈靜，內在綻放', den: 'Light slowly blooms from the brightest places in the work' },
+    { id: 'innerbloom', zh: '內在綻放', en: 'Inner Bloom', ae: true, dzh: '光從畫作最亮處緩緩綻放：外在沉靜，內在綻放', den: 'Light slowly blooms from the brightest places in the work' },
     { id: 'lumiere', zh: '絲緞光澤', en: 'Silk Sheen', ae: true, dzh: '如絲綢掠過的光澤與細緻膠片顆粒', den: 'A silk-like sheen and fine film grain' },
     { id: 'echo', zh: '色彩回聲', en: 'Color Echo', ae: true, dzh: '從畫作取色，化為漂浮光暈', den: 'Floating bokeh sampled from each work' },
     { id: 'breath', zh: '無限呼吸', en: 'Infinity Breath', ae: true, dzh: '∞ 光軌與每分鐘六次的放鬆呼吸', den: 'An ∞ light trail paced at six calm breaths a minute' },
@@ -135,7 +135,7 @@ export const OPTIONS = {
   display: [
     { id: 'captions', zh: '顯示作品標題', en: 'Show titles', dzh: '每幅作品開場時淡入標題', den: 'Fade in each title' },
     { id: 'mat', zh: '留白畫框', en: 'Museum margin', dzh: '畫作四周保留呼吸空間', den: 'Leave breathing room around the work' },
-    { id: 'intro', zh: '開場片頭', en: 'Title card', dzh: '三環金印、展覽名稱與「外在沈靜，內在綻放」', den: 'Gold Three Rings, exhibition title and the house motto' },
+    { id: 'intro', zh: '開場片頭', en: 'Title card', dzh: '三環金印、展覽名稱與「外在沉靜，內在綻放」', den: 'Gold Three Rings, exhibition title and the house motto' },
     { id: 'label', zh: '作品說明卡', en: 'Museum label', dzh: '標題下方顯示年份、媒材與作品說明', den: 'Year, medium and statement under the title' },
     { id: 'camera', zh: '鏡頭漫遊', en: 'Camera drift', dzh: '緩慢推近並遊走於畫作細節（會裁切邊緣）', den: 'A slow push-in across details (crops the edges)' },
     { id: 'drift', zh: '微動呼吸', en: 'Living motion', dzh: '畫作極緩慢地呼吸縮放', den: 'A barely-there slow breathing zoom' },

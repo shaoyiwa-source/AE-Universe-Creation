@@ -128,7 +128,17 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => { const v = T(el.dataset.i18n); if (typeof v === 'string') el.textContent = v; });
   $('#langToggle').textContent = lang === 'zh' ? 'EN' : '中文';
   $('#langToggle').setAttribute('aria-label', lang === 'zh' ? 'Switch to English' : '切換至中文');
+  renderMottos();
   renderAll(); renderSettings(); renderEdition();
+}
+// 「外在沉靜，內在綻放」— the house motto block (design from the AE player; gold gradient, Cinzel + Noto Serif TC)
+function renderMottos() {
+  document.querySelectorAll('.ae-motto').forEach(el => {
+    const tag = el.dataset.motto === 'h1' ? 'h1' : 'p';
+    el.innerHTML = '<p class="brand">AE UNIVERSE CREATION</p>' + (lang === 'zh'
+      ? `<${tag} class="tg zh-hero"><span>外在沉靜</span><span>內在綻放</span></${tag}><i class="gr" aria-hidden="true"></i><div class="sub-en">OUTER CALM · INNER BLOOM</div>`
+      : `<${tag} class="tg"><span>OUTER CALM</span><span>INNER BLOOM</span></${tag}><i class="gr" aria-hidden="true"></i><div class="sub-zh">外在沉靜 · 內在綻放</div>`);
+  });
 }
 $('#langToggle').addEventListener('click', () => { lang = lang === 'zh' ? 'en' : 'zh'; lsSet('ae-language', lang); applyLang(); });
 
@@ -585,9 +595,7 @@ function renderEdition() {
   if (!ED) return;
   const tt = (o) => (lang === 'zh' ? (o.zh || o.en) : (o.en || o.zh)) || '';
   const ed = T('editionOf', ED.edition.no, ED.edition.of);
-  $('.lw-hero .lw-eyebrow').textContent = `Maison AE · ${ed}`;
-  $('.lw-hero h1').textContent = tt(ED.title) || 'Maison AE';
-  $('.lw-hero-sub').textContent = T('motto');
+  const he = $('#heroEdition'); he.hidden = false; he.textContent = `${tt(ED.title) || 'AE Universe Creation'} · ${ed}`;
   $('.lw-lede').textContent = tt(ED.note) || T('heroLede');
   const home = $('.lw-header-actions a.lw-link');
   if (ED.site) { home.href = ED.site; home.target = '_blank'; home.rel = 'noopener'; $('.lw-wordmark').href = ED.site; $('.lw-wordmark').target = '_blank'; }
@@ -936,14 +944,12 @@ async function openPlayer(startId) {
 function playIntro() {
   const el = $('#plIntro');
   const sh = currentShow();
-  $('#introEyebrow').textContent = 'Maison AE · AE Universe Creation';
-  $('#introTitle').textContent = sh ? showTitle(sh) : (lang === 'zh' ? '數位藝術典藏' : 'Fine Digital Art');
-  $('#introMotto').textContent = T('motto');
+  $('#introTitle').textContent = sh ? showTitle(sh) : (ED ? (lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) : '');
   el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   return new Promise((resolve) => {
     let done = false;
     const finish = () => { if (done) return; done = true; el.classList.add('out'); setTimeout(() => { el.hidden = true; el.classList.remove('on', 'out'); resolve(); }, 900); };
-    const t = setTimeout(finish, reduced ? 1500 : 4200);
+    const t = setTimeout(finish, reduced ? 1500 : 4800);
     el.onpointerdown = () => { clearTimeout(t); finish(); };
   });
 }
@@ -1120,7 +1126,7 @@ $('#recGo').addEventListener('click', async () => {
     const small = Math.min(window.innerWidth, window.innerHeight) < 820 || (navigator.hardwareConcurrency || 8) <= 4;
     const out = await recordClip({
       works: items, format: rec.format, seconds: rec.secs, watermark: $('#recWatermark').checked, captions: $('#recCaptions').checked && !wallpaper,
-      scale: small ? 2 / 3 : 1, effects: { ...S.effects }, tempo: modeOf(S.mode).set.tempo || 1, transitions, logo, motto: T('motto'),
+      scale: small ? 2 / 3 : 1, effects: { ...S.effects }, tempo: modeOf(S.mode).set.tempo || 1, transitions, logo, motto: T('motto'), lang,
       showTitle: sh ? showTitle(sh) : (ED ? (lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) : 'Maison AE'),
       audioStream, signal: ctrl.signal, monitor: $('#recMonitor'),
       onProgress: (t, total) => { $('#recStatus').textContent = T('recording', Math.floor(t), total); $('#recBar').style.width = (t / total * 100) + '%'; },
@@ -1320,7 +1326,6 @@ function makeGrain() {
     const gate = $('#startGate');
     if (ED) { const ge = $('#gateEdition'); ge.hidden = false; ge.textContent = `${T('kindName', ED.kind)} · ${ED.edition.no} / ${ED.edition.of}`; }
     $('#gateShow').textContent = currentShow() ? showTitle(currentShow()) : 'AE Universe Creation';
-    $('#gateMotto').textContent = T('motto');
     gate.hidden = false;
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }

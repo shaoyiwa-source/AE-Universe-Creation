@@ -102,7 +102,7 @@ try {
   await fr.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0, null, { timeout: 15000 });
   const st = await fr.evaluate(() => { const s = window.__lumina.state; return { edition: s.edition, works: s.works, studio: s.studio, cloud: s.cloud, mode: s.settings.mode, origin: self.origin }; });
   check(`[${which}] NFT sandbox: edition boots from the embedded manifest (opaque origin)`, st.edition && st.works === 4 && st.cloud === 'edition' && st.origin === 'null', JSON.stringify(st));
-  check(`[${which}] NFT sandbox: start gate shows edition 3 / 88 and the motto`, (await fr.isVisible('#startGate')) && /3/.test(await fr.textContent('#gateEdition')) && /88/.test(await fr.textContent('#gateEdition')) && (await fr.textContent('#gateMotto')).includes('外在沈靜'));
+  check(`[${which}] NFT sandbox: start gate shows edition 3 / 88 and the motto`, (await fr.isVisible('#startGate')) && /3/.test(await fr.textContent('#gateEdition')) && /88/.test(await fr.textContent('#gateEdition')) && (await fr.textContent('#gateMotto')).includes('外在沉靜'));
   await p2.screenshot({ path: `${out}/${which}-nft-gate.png` });
   check(`[${which}] NFT sandbox: no studio, no upload, no share/export`, !st.studio && !(await fr.isVisible('label.lw-upload')) && (await fr.locator('[data-show-act]').count()) === 0 && (await fr.locator('[data-act=edit], [data-act=download]').count()) === 0);
   await fr.click('#gateBtn');
