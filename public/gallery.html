@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="ae-version" content="lumina-r1">
+<meta name="theme-color" content="#0b100d">
+<title>Lumina Wall · AE Universe Creation</title>
+<meta name="description" content="AE Lumina Wall — 數位藝術沙龍。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="gallery/gallery.css?v=r1">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body>
+<a class="skip-link" href="#wall" data-i18n="skip">跳至作品牆</a>
+
+<header class="lw-header">
+  <a class="lw-wordmark" href="index.html" aria-label="AE Universe Creation — Home">
+    <img src="assets/ae-three-rings-transparent.webp" alt="" width="60" height="30">
+    <span class="lw-wordmark-name">AE Universe<span>CREATION</span></span>
+  </a>
+  <div class="lw-product" aria-hidden="true"><span>Lumina</span> Wall</div>
+  <nav class="lw-header-actions" aria-label="Site">
+    <a href="index.html" class="lw-link" data-i18n="home">官網</a>
+    <button type="button" class="lw-link" id="langToggle">EN</button>
+  </nav>
+</header>
+
+<main>
+  <section class="lw-hero">
+    <p class="lw-eyebrow" data-i18n="eyebrow">AE Digital Art Salon · 數位藝術沙龍</p>
+    <h1 data-i18n="heroTitle">讓畫作，在光裡呼吸。</h1>
+    <p class="lw-lede" data-i18n="heroLede">輕觸畫面選取作品，依選取順序化為一場沉浸式光影展演。轉場、音景與可觸碰的光，皆由 AE 獨家調校。</p>
+  </section>
+
+  <div class="lw-toolbar" role="toolbar" aria-label="Wall tools">
+    <div class="lw-toolbar-inner">
+      <div class="lw-count" aria-live="polite"><span id="selCount">0</span><span class="lw-count-sep">/</span><span id="allCount">0</span><span class="lw-count-label" data-i18n="selected">已選取</span></div>
+      <div class="lw-tools">
+        <button type="button" class="lw-btn ghost" id="selectAll" data-i18n="selectAll">全選</button>
+        <button type="button" class="lw-btn ghost" id="clearSel" data-i18n="clear">清除</button>
+        <label class="lw-btn ghost lw-upload">
+          <input type="file" id="fileInput" accept="image/*" multiple>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="addWorks">加入作品</span>
+        </label>
+        <button type="button" class="lw-btn ghost" id="openSettings" aria-controls="settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span data-i18n="settings">展演設定</span>
+        </button>
+        <button type="button" class="lw-btn primary" id="playBtn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg><span data-i18n="play">開始展演</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <section id="wall" class="lw-wall" aria-label="Artwork wall"></section>
+  <p class="lw-drop-note" data-i18n="dropNote">也可以直接把圖片拖曳到頁面上加入。上傳的作品只保存在這台裝置的瀏覽器中。</p>
+</main>
+
+<footer class="lw-footer">
+  <img src="assets/ae-three-rings-transparent.webp" alt="" width="44" height="22">
+  <p>Aurelia &amp; Elion · AE Universe Creation</p>
+  <p class="lw-footer-motto">Action Creates Infinity · 行動創造無限</p>
+</footer>
+
+<div class="lw-drop" id="dropZone" hidden><div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><p data-i18n="dropHere">放開以加入作品</p></div></div>
+
+<!-- Settings sheet -->
+<aside class="lw-sheet" id="settings" hidden aria-label="Presentation settings">
+  <div class="lw-sheet-head">
+    <p class="lw-eyebrow" data-i18n="settings">展演設定</p>
+    <button type="button" class="lw-icon-btn" id="closeSettings" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="lw-sheet-body">
+    <section class="lw-field">
+      <h3 data-i18n="mood">情境</h3>
+      <div class="lw-chips" id="moodChips"></div>
+    </section>
+    <section class="lw-field">
+      <h3 data-i18n="transition">轉場</h3>
+      <div class="lw-chips" id="transitionChips"></div>
+      <label class="lw-range"><span data-i18n="interval">每幅停留</span><input type="range" id="interval" min="4" max="40" step="1"><output id="intervalOut">8s</output></label>
+    </section>
+    <section class="lw-field">
+      <h3 data-i18n="effects">光影特效</h3>
+      <div class="lw-toggles" id="effectToggles"></div>
+    </section>
+    <section class="lw-field">
+      <h3 data-i18n="interaction">互動</h3>
+      <div class="lw-toggles" id="interactToggles"></div>
+    </section>
+    <section class="lw-field">
+      <h3 data-i18n="music">音樂</h3>
+      <div class="lw-chips" id="musicChips"></div>
+      <label class="lw-btn ghost lw-upload lw-music-upload">
+        <input type="file" id="musicInput" accept="audio/*">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg><span data-i18n="uploadMusic">上傳自己的音樂</span>
+      </label>
+      <p class="lw-note" id="musicNote"></p>
+      <label class="lw-range"><span data-i18n="volume">音量</span><input type="range" id="volume" min="0" max="1" step="0.05"><output id="volumeOut">60%</output></label>
+    </section>
+    <section class="lw-field">
+      <h3 data-i18n="display">呈現</h3>
+      <div class="lw-toggles" id="displayToggles"></div>
+    </section>
+  </div>
+</aside>
+<div class="lw-scrim" id="scrim" hidden></div>
+
+<!-- Player -->
+<section class="lw-player" id="player" hidden tabindex="-1" aria-label="Presentation" aria-roledescription="slideshow">
+  <div class="pl-ambient"><div class="pl-amb" id="ambA"></div><div class="pl-amb" id="ambB"></div></div>
+  <div class="pl-stage" id="stage">
+    <div class="pl-slide" id="slideA"><img alt="" draggable="false"></div>
+    <div class="pl-slide" id="slideB"><img alt="" draggable="false"></div>
+    <div class="pl-neon" id="neon"><i></i></div>
+  </div>
+  <canvas class="pl-fx" id="fx" aria-hidden="true"></canvas>
+  <div class="pl-progress" aria-hidden="true"><i id="progressBar"></i></div>
+  <div class="pl-mark" aria-hidden="true"><img src="assets/ae-three-rings-transparent.webp" alt="" width="44" height="22"></div>
+  <div class="pl-caption" id="caption" aria-live="polite">
+    <p class="pl-caption-meta"><span>AE Universe Creation</span><span id="capIndex">01 / 01</span></p>
+    <h2 id="capTitle"></h2>
+  </div>
+  <div class="pl-breath" id="breathGuide" aria-hidden="true"><i></i><span></span></div>
+  <div class="pl-hint" id="hint" data-i18n="hint">輕觸畫面，讓光回應你</div>
+  <div class="pl-controls" id="controls">
+    <button type="button" class="pl-btn" id="prevBtn" aria-label="Previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button type="button" class="pl-btn pl-btn-main" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-pause"><path d="M9 6v12M15 6v12"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-play"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
+    <button type="button" class="pl-btn" id="nextBtn" aria-label="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    <span class="pl-sep" aria-hidden="true"></span>
+    <button type="button" class="pl-btn" id="musicBtn" aria-label="Music"><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-note"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="ic-mute"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path d="M3 3l18 18"/></svg></button>
+    <button type="button" class="pl-btn" id="fxBtn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></svg></button>
+    <button type="button" class="pl-btn" id="fsBtn" aria-label="Fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
+    <button type="button" class="pl-btn" id="closeBtn" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+</section>
+
+<div class="lw-toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="gallery/app.js?v=r1"></script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+// AE Lumina Wall — signature transitions
+export const TRANSITIONS = ['dissolve', 'bloom', 'rings', 'ink', 'silk', 'stardust'];
+
+const easeInOut = (p) => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const easeOut = (p) => 1 - Math.pow(1 - p, 3);
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const seg = (p, a, b) => clamp01((p - a) / (b - a));
+
+function animate(dur, fn) {
+  return new Promise((resolve) => {
+    const t0 = performance.now();
+    let done = false;
+    const finish = () => { if (done) return; done = true; try { fn(1); } catch { /* ignore */ } resolve(); };
+    // Safety: if rAF is throttled (background tab) never hang the slideshow.
+    const guard = setTimeout(finish, dur + 1500);
+    const step = (now) => {
+      if (done) return;
+      const p = Math.min(1, (now - t0) / dur);
+      fn(p);
+      if (p < 1) requestAnimationFrame(step);
+      else { clearTimeout(guard); done = true; resolve(); }
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+function setMask(el, value) {
+  el.style.webkitMaskImage = value;
+  el.style.maskImage = value;
+}
+
+export function resetSlide(el, visible) {
+  if (!el) return;
+  el.style.opacity = visible ? '1' : '0';
+  el.style.filter = '';
+  el.style.transform = '';
+  setMask(el, '');
+}
+
+/**
+ * Run a transition between two slide layers.
+ * @param {string} kind
+ * @param {{from:HTMLElement|null,to:HTMLElement,fromImg:HTMLImageElement|null,rect:object,fromRect:object|null,W:number,H:number,fx:object}} o
+ */
+export async function runTransition(kind, o) {
+  const { from, to, fx, W, H } = o;
+  const maxR = Math.hypot(W, H);
+  to.style.opacity = '0';
+  if (!from) kind = 'first';
+
+  switch (kind) {
+    case 'first':
+      await animate(2200, (p) => {
+        const e = easeInOut(p);
+        to.style.opacity = String(e);
+        to.style.filter = `blur(${(1 - e) * 14}px) brightness(${1 + (1 - e) * 0.4})`;
+        fx.flash = Math.sin(Math.PI * p) * 0.35;
+      });
+      break;
+
+    case 'dissolve': // 柔光溶接
+      await animate(2000, (p) => {
+        const e = easeInOut(p);
+        from.style.opacity = String(1 - e);
+        from.style.filter = `blur(${e * 6}px)`;
+        to.style.opacity = String(e);
+        to.style.filter = `blur(${(1 - e) * 10}px) brightness(${1 + (1 - e) * 0.15})`;
+      });
+      break;
+
+    case 'bloom': // 光暈綻放
+      await animate(2600, (p) => {
+        const a = easeInOut(seg(p, 0, 0.55));
+        const b = easeInOut(seg(p, 0.35, 1));
+        from.style.opacity = String(1 - a);
+        from.style.filter = `brightness(${1 + a * 1.6}) blur(${a * 5}px)`;
+        to.style.opacity = String(b);
+        to.style.filter = `brightness(${1 + (1 - b) * 1.4}) blur(${(1 - b) * 6}px)`;
+        fx.flash = Math.sin(Math.PI * p) * 0.6;
+      });
+      break;
+
+    case 'rings': { // 三環共鳴 — brand Three Rings iris
+      const r = o.rect;
+      const cy = r.y + r.h / 2, cx = r.x + r.w / 2, off = Math.min(r.w, W) * 0.26;
+      const centers = [[cx - off, cy], [cx, cy], [cx + off, cy]];
+      const order = [1, 0, 2];
+      const feather = 70;
+      to.style.opacity = '1';
+      await animate(2800, (p) => {
+        const radii = centers.map((_, i) => easeInOut(seg(p, order.indexOf(i) * 0.12, 0.76 + order.indexOf(i) * 0.12)) * (maxR + feather));
+        setMask(to, centers.map((c, i) => `radial-gradient(circle at ${c[0]}px ${c[1]}px, #000 ${Math.max(0, radii[i] - feather)}px, transparent ${radii[i]}px)`).join(','));
+        from.style.filter = `brightness(${1 - p * 0.35})`;
+        fx.rings = { centers, radii: radii.map(v => v - feather * 0.4), alpha: Math.sin(Math.PI * p) * 0.9 };
+      });
+      fx.rings = null;
+      break;
+    }
+
+    case 'ink': { // 墨韻暈染 — organic watercolor bloom
+      const r = o.rect;
+      const seeds = Array.from({ length: 7 }, (_, i) => ({
+        x: r.x + r.w * (0.15 + Math.random() * 0.7), y: r.y + r.h * (0.15 + Math.random() * 0.7),
+        d: i === 0 ? 0 : Math.random() * 0.35, ph: Math.random() * 6.28,
+      }));
+      const feather = 140;
+      to.style.opacity = '1';
+      await animate(3200, (p) => {
+        setMask(to, seeds.map(s => {
+          const q = easeOut(seg(p, s.d, 1));
+          const R = q * (maxR + feather) * (1 + 0.06 * Math.sin(p * 9 + s.ph));
+          return `radial-gradient(circle at ${s.x}px ${s.y}px, #000 ${Math.max(0, R - feather)}px, transparent ${R}px)`;
+        }).join(','));
+        from.style.filter = `saturate(${1 - p * 0.6}) brightness(${1 - p * 0.2})`;
+      });
+      break;
+    }
+
+    case 'silk': { // 絲綢簾幕
+      to.style.opacity = '1';
+      await animate(2600, (p) => {
+        const e = easeInOut(p);
+        const pos = -30 + e * 160;
+        setMask(to, `linear-gradient(105deg, #000 ${pos - 28}%, rgba(0,0,0,.5) ${pos - 12}%, transparent ${pos}%)`);
+        to.style.transform = `translateX(${(1 - e) * 1.5}%)`;
+        from.style.transform = `translateX(${-e * 1.5}%)`;
+        from.style.opacity = String(1 - seg(p, 0.5, 1));
+      });
+      break;
+    }
+
+    case 'stardust': { // 星塵聚散 — the outgoing work dissolves into its own colored dust
+      fx.dustFrom(o.fromImg, o.fromRect || o.rect);
+      await animate(3000, (p) => {
+        from.style.opacity = String(1 - easeInOut(seg(p, 0, 0.3)));
+        const b = easeInOut(seg(p, 0.28, 1));
+        to.style.opacity = String(b);
+        to.style.filter = `blur(${(1 - b) * 8}px) brightness(${1 + (1 - b) * 0.3})`;
+      });
+      break;
+    }
+
+    default:
+      await animate(1000, (p) => { if (from) from.style.opacity = String(1 - p); to.style.opacity = String(p); });
+  }
+
+  fx.flash = 0;
+  resetSlide(from, false);
+  resetSlide(to, true);
+}
