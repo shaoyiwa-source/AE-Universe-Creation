@@ -7,6 +7,7 @@ const { chromium, devices } = require('playwright');
 const base = process.argv[2] || 'http://localhost:8765';
 const shots = process.argv[3] || '.';
 const results = [];
+const STUDIO_PASS = process.env.LUMINA_STUDIO_PASS || '';
 const check = (name, ok, info = '') => { results.push({ name, ok, info }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${info ? '  — ' + info : ''}`); };
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -33,7 +34,24 @@ async function scenario(label, ctxOpts) {
   const badges = await page.$$eval('.screen.selected .screen-badge', els => els.map(e => e.textContent));
   check(`[${label}] selection order badges`, badges.join(',') === '1,2,3', badges.join(','));
 
-  // upload a generated image
+  // customers cannot add works
+  check(`[${label}] customer view hides "add works" & music upload`, !(await page.locator('label.lw-upload').first().isVisible()) && !(await page.locator('.lw-music-upload').isVisible()));
+  const longPress = async (pw) => {
+    await page.evaluate(() => window.scrollTo(0, 0)); await wait(300); // the header is not sticky
+    const box = await page.locator('.lw-wordmark').boundingBox();
+    page.once('dialog', d => d.accept(pw));
+    await page.mouse.move(box.x + 20, box.y + box.height / 2);
+    await page.mouse.down(); await wait(3300); await page.mouse.up();
+    await wait(1200);
+  };
+  await longPress('wrong-password');
+  check(`[${label}] wrong studio password is rejected`, !(await page.locator('label.lw-upload').first().isVisible()));
+  if (!STUDIO_PASS) throw new Error('set LUMINA_STUDIO_PASS to run the studio checks');
+  await longPress(STUDIO_PASS);
+  await page.waitForSelector('label.lw-upload:not([hidden])', { timeout: 8000 }).catch(() => {});
+  check(`[${label}] long-press + password opens AE Studio`, await page.locator('label.lw-upload').first().isVisible());
+
+  // upload a generated image (studio only)
   const png = await page.evaluate(async () => {
     const c = document.createElement('canvas'); c.width = 1200; c.height = 800;
     const x = c.getContext('2d'); const g = x.createLinearGradient(0, 0, 1200, 800);
@@ -51,6 +69,18 @@ async function scenario(label, ctxOpts) {
   await page.screenshot({ path: `${shots}/${label}-settings.png` });
   const chips = await page.locator('#transitionChips .lw-chip').count();
   check(`[${label}] settings shows 7 transitions`, chips === 7);
+  check(`[${label}] settings shows 6 scene modes`, (await page.locator('#modeCards .lw-mode').count()) === 6);
+  const expect = { gallery: [20, 'hall'], healing: [16, 'nature'], hotel: [12, 'lounge'], residence: [18, 'dawn'], online: [10, 'celestial'], party: [6, 'pulse'] };
+  for (const [id, [iv, mu]] of Object.entries(expect)) {
+    await page.click(`.lw-mode[data-mode=${id}]`);
+    const st = await page.evaluate(() => ({ iv: window.__lumina.state.settings.interval, mu: window.__lumina.state.settings.music, m: window.__lumina.state.settings.mode }));
+    check(`[${label}] mode ${id} applies its preset`, st.iv === iv && st.mu === mu && st.m === id, JSON.stringify(st));
+  }
+  await page.locator('#effectToggles .lw-toggle').first().click();
+  check(`[${label}] fine-tune marks mode as adjusted + offers reset`, await page.locator('#resetMode').isVisible());
+  await page.click('#resetMode');
+  check(`[${label}] reset restores the mode`, !(await page.locator('#resetMode').isVisible()));
+  await page.click('.lw-mode[data-mode=online]');
   await page.click('#closeSettings');
 
   // play
@@ -89,17 +119,28 @@ async function scenario(label, ctxOpts) {
     check(`[${label}] after ${k}: art fully visible & opaque, no mask`, g.ok && g.op === '1' && !g.mask, JSON.stringify(g));
   }
 
+  // every scene mode runs in the player (soundscapes, tempo, mode transitions) without errors
+  for (const id of ['gallery', 'healing', 'hotel', 'residence', 'party', 'online']) {
+    await ui(page, '#fxBtn');
+    await page.click(`.lw-mode[data-mode=${id}]`);
+    await page.click('#closeSettings');
+    await page.evaluate(() => window.__lumina.go(1));
+    await wait(1800);
+    if (id === 'party' || id === 'healing' || id === 'gallery') await page.screenshot({ path: `${shots}/${label}-mode-${id}.png` });
+    await page.waitForFunction(() => !window.__lumina.state.busy, null, { timeout: 9000 });
+  }
+  check(`[${label}] all 6 modes play`, true);
+
   // effects: turn everything on
   await page.evaluate(() => { const s = window.__lumina.state.settings; Object.keys(s.effects).forEach(k => s.effects[k] = true); });
   await ui(page, '#fxBtn');
   await page.waitForSelector('#settings:not([hidden])');
-  await page.locator('#moodChips .lw-chip').nth(3).click(); // Neon Prism
+  await page.click('.lw-mode[data-mode=party]');
   await page.click('#closeSettings');
   await wait(2500);
   await page.screenshot({ path: `${shots}/${label}-prism.png` });
-  await page.locator('#moodChips .lw-chip').count();
   await page.evaluate(() => { const s = window.__lumina.state.settings; s.effects.aurora = true; s.effects.petals = true; });
-  await ui(page, '#fxBtn'); await page.locator('#moodChips .lw-chip').nth(1).click(); await page.click('#closeSettings');
+  await ui(page, '#fxBtn'); await page.click('.lw-mode[data-mode=healing]'); await page.click('#closeSettings');
   await wait(2500);
   await page.screenshot({ path: `${shots}/${label}-aurora.png` });
 

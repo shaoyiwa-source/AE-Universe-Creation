@@ -6,7 +6,7 @@ const easeOut = (p) => 1 - Math.pow(1 - p, 3);
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const seg = (p, a, b) => clamp01((p - a) / (b - a));
 
-function animate(dur, fn) {
+function animateRaw(dur, fn) {
   return new Promise((resolve) => {
     const t0 = performance.now();
     let done = false;
@@ -44,6 +44,8 @@ export function resetSlide(el, visible) {
  */
 export async function runTransition(kind, o) {
   const { from, to, fx, W, H } = o;
+  const speed = o.speed || 1; // mode tempo: party is faster, gallery is slower
+  const animate = (d, fn) => animateRaw(d * speed, fn);
   const maxR = Math.hypot(W, H);
   to.style.opacity = '0';
   if (!from) kind = 'first';

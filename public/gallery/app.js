@@ -27,8 +27,8 @@ const BUILTIN = [
 ].map(([title, src], i) => ({ id: 'ae' + String(i + 1).padStart(2, '0'), no: i + 1, title, src, builtin: true }));
 
 const DEFAULTS = {
-  mood: 'serene', transition: 'random', interval: 9,
-  effects: { echo: true, breath: true, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
+  mode: 'online', adjusted: false, transition: 'random', interval: 10,
+  effects: { echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
   interact: { ripple: true, chime: true, lumi: true, seeds: true },
   display: { captions: true, mat: true, drift: true, shuffle: false, loop: true },
   music: 'celestial', volume: 0.6, selected: [], musicName: '',
@@ -38,6 +38,33 @@ const S = loadSettings(DEFAULTS);
 let lang = lsGet('ae-language', 'zh') === 'en' ? 'en' : 'zh';
 const T = (k, ...a) => { const v = STR[lang][k]; return typeof v === 'function' ? v(...a) : v; };
 const L = (o) => o[lang];
+const modeOf = (id) => OPTIONS.modes.find(m => m.id === id) || OPTIONS.modes.find(m => m.id === 'online');
+
+// ---------- AE Studio (hidden curator entrance) ----------
+// Customers cannot add works. AE unlocks the studio by long-pressing the Three Rings mark (3 s) + password.
+// NOTE (R2): checked in the browser against a salted PBKDF2 hash — a placeholder gate. R3 moves this to the server.
+const STUDIO_SALT = '577221ecad4d1dab8fb0f88a5c68b057';
+const STUDIO_HASH = '6330e9e9a9c4770fea436c54379e43146b922758972a622c0674c9109b49d56d';
+let studio = false;
+try { studio = sessionStorage.getItem('ae-studio') === '1'; } catch { studio = false; }
+async function verifyStudio(pw) {
+  try {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+    const salt = new Uint8Array(STUDIO_SALT.match(/../g).map(h => parseInt(h, 16)));
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 250000 }, key, 256);
+    const hex = [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
+    return hex === STUDIO_HASH;
+  } catch { return false; }
+}
+function setStudio(on) {
+  studio = on;
+  try { if (on) sessionStorage.setItem('ae-studio', '1'); else sessionStorage.removeItem('ae-studio'); } catch { /* ignore */ }
+  document.documentElement.classList.toggle('studio', on);
+  document.querySelectorAll('[data-studio]').forEach(el => { el.hidden = !on; });
+  if (!on && S.music === 'custom') S.music = modeOf(S.mode).set.music;
+  renderWall(); renderSettings();
+}
 
 let works = [...BUILTIN];
 let persistOK = true;
@@ -88,7 +115,7 @@ function renderWall() {
       ${w.builtin ? '' : `<span class="screen-tag">${escapeHtml(T('yours'))}</span>`}
       <span class="screen-actions">
         <button type="button" class="screen-act play" data-act="play" aria-label="${escapeHtml(T('playFrom'))}" title="${escapeHtml(T('playFrom'))}"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
-        ${w.builtin ? '' : `<button type="button" class="screen-act" data-act="remove" aria-label="${escapeHtml(T('remove'))}" title="${escapeHtml(T('remove'))}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`}
+        ${w.builtin || !studio ? '' : `<button type="button" class="screen-act" data-act="remove" aria-label="${escapeHtml(T('remove'))}" title="${escapeHtml(T('remove'))}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`}
       </span>`;
     el.querySelector('.screen-art').src = w.src;
     el.querySelector('.screen-bg').style.backgroundImage = `url("${w.src}")`;
@@ -120,7 +147,7 @@ wall.addEventListener('click', async (e) => {
   const id = screen.dataset.id;
   const act = e.target.closest('[data-act]');
   if (act?.dataset.act === 'play') { openPlayer(id); return; }
-  if (act?.dataset.act === 'remove') { await removeWork(id); return; }
+  if (act?.dataset.act === 'remove' && studio) { await removeWork(id); return; }
   if (e.target.closest('.screen-hit')) {
     const i = S.selected.indexOf(id);
     if (i >= 0) S.selected.splice(i, 1); else S.selected.push(id);
@@ -148,7 +175,8 @@ async function loadUploads() {
     const m = await db.get('media', 'music');
     if (m?.blob) { sound.setCustom(m.blob); S.musicName = m.name || S.musicName; }
   } catch { persistOK = false; }
-  if (S.music === 'custom' && !sound.customUrl) S.music = 'celestial';
+  if (S.music === 'custom' && (!sound.customUrl || !studio)) S.music = modeOf(S.mode).set.music;
+  if (!OPTIONS.music.some(o => o.id === S.music)) S.music = modeOf(S.mode).set.music;
   const ids = new Set(works.map(w => w.id));
   S.selected = S.selected.filter(id => ids.has(id));
 }
@@ -169,6 +197,7 @@ async function fileToImageBlob(file) {
 }
 
 async function addFiles(files) {
+  if (!studio) return;
   const list = [...files].filter(f => f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|avif|heic)$/i.test(f.name));
   if (!list.length) return;
   let ok = 0, failed = 0;
@@ -202,10 +231,10 @@ async function removeWork(id) {
 // drag & drop anywhere
 const drop = $('#dropZone'); let dragDepth = 0;
 const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
-window.addEventListener('dragenter', (e) => { if (!hasFiles(e) || !player.hidden) return; e.preventDefault(); dragDepth++; drop.hidden = false; });
-window.addEventListener('dragover', (e) => { if (hasFiles(e)) e.preventDefault(); });
+window.addEventListener('dragenter', (e) => { if (!studio || !hasFiles(e) || !player.hidden) return; e.preventDefault(); dragDepth++; drop.hidden = false; });
+window.addEventListener('dragover', (e) => { if (studio && hasFiles(e)) e.preventDefault(); });
 window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) drop.hidden = true; });
-window.addEventListener('drop', (e) => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth = 0; drop.hidden = true; if (player.hidden) addFiles(e.dataTransfer.files); });
+window.addEventListener('drop', (e) => { if (!studio || !hasFiles(e)) return; e.preventDefault(); dragDepth = 0; drop.hidden = true; if (player.hidden) addFiles(e.dataTransfer.files); });
 
 // ---------- Settings sheet ----------
 const sheet = $('#settings'), scrim = $('#scrim');
@@ -235,20 +264,33 @@ function toggle(opt, on, onClick) {
 }
 
 function renderSettings() {
-  const moods = $('#moodChips'); moods.replaceChildren();
-  for (const m of OPTIONS.moods) moods.appendChild(chip(L(m), S.mood === m.id, false, () => applyMood(m)));
+  const modes = $('#modeCards'); modes.replaceChildren();
+  for (const m of OPTIONS.modes) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'lw-mode'; b.dataset.mode = m.id; b.setAttribute('aria-pressed', String(S.mode === m.id));
+    b.innerHTML = '<b></b><i></i><small></small>';
+    b.querySelector('b').textContent = m.zh === L(m) ? m.zh : m.en;
+    b.querySelector('i').textContent = lang === 'zh' ? m.en : m.zh;
+    b.querySelector('small').textContent = lang === 'zh' ? m.dzh : m.den;
+    b.addEventListener('click', () => applyMode(m));
+    modes.appendChild(b);
+  }
+  const rs = $('#resetMode');
+  rs.hidden = !S.adjusted;
+  rs.textContent = `${T('adjusted')} · ${T('resetMode')}`;
+  const adj = () => { S.adjusted = true; };
   const tr = $('#transitionChips'); tr.replaceChildren();
-  for (const o of OPTIONS.transitions) tr.appendChild(chip(L(o), S.transition === o.id, o.ae, () => { S.transition = o.id; S.mood = 'custom'; commit(); }));
+  for (const o of OPTIONS.transitions) tr.appendChild(chip(L(o), S.transition === o.id, o.ae, () => { S.transition = o.id; adj(); commit(); }));
   const ef = $('#effectToggles'); ef.replaceChildren();
-  for (const o of OPTIONS.effects) ef.appendChild(toggle(o, S.effects[o.id], () => { S.effects[o.id] = !S.effects[o.id]; S.mood = 'custom'; commit(); }));
+  for (const o of OPTIONS.effects) ef.appendChild(toggle(o, S.effects[o.id], () => { S.effects[o.id] = !S.effects[o.id]; adj(); commit(); }));
   const it = $('#interactToggles'); it.replaceChildren();
-  for (const o of OPTIONS.interact) it.appendChild(toggle(o, S.interact[o.id], () => { S.interact[o.id] = !S.interact[o.id]; commit(); }));
+  for (const o of OPTIONS.interact) it.appendChild(toggle(o, S.interact[o.id], () => { S.interact[o.id] = !S.interact[o.id]; adj(); commit(); }));
   const di = $('#displayToggles'); di.replaceChildren();
-  for (const o of OPTIONS.display) di.appendChild(toggle(o, S.display[o.id], () => { S.display[o.id] = !S.display[o.id]; commit(); if (o.id === 'mat' && !player.hidden) layout(); }));
+  for (const o of OPTIONS.display) di.appendChild(toggle(o, S.display[o.id], () => { S.display[o.id] = !S.display[o.id]; adj(); commit(); if (o.id === 'mat' && !player.hidden) layout(); }));
   const mu = $('#musicChips'); mu.replaceChildren();
   for (const o of OPTIONS.music) {
-    if (o.id === 'custom' && !sound.customUrl) continue;
-    mu.appendChild(chip(L(o), S.music === o.id, false, () => { const changed = S.music !== o.id; S.music = o.id; commit(changed); }));
+    if (o.studio && (!studio || !sound.customUrl)) continue;
+    mu.appendChild(chip(L(o), S.music === o.id, false, () => { const changed = S.music !== o.id; S.music = o.id; adj(); commit(changed); }));
   }
   const iv = $('#interval'); iv.value = S.interval; $('#intervalOut').textContent = S.interval + 's';
   const vo = $('#volume'); vo.value = S.volume; $('#volumeOut').textContent = Math.round(S.volume * 100) + '%';
@@ -256,14 +298,20 @@ function renderSettings() {
 }
 function updateMusicNote() { $('#musicNote').textContent = sound.customUrl && S.musicName ? T('customMusic', S.musicName) : ''; }
 
-function applyMood(m) {
-  S.mood = m.id;
-  for (const k of Object.keys(S.effects)) S.effects[k] = m.set.effects.includes(k);
-  const musicChanged = S.music !== m.set.music && !(S.music === 'custom');
-  if (S.music !== 'custom') S.music = m.set.music;
-  S.transition = m.set.transition;
+function applyMode(m) {
+  const set = m.set;
+  S.mode = m.id; S.adjusted = false;
+  for (const k of Object.keys(S.effects)) S.effects[k] = set.effects.includes(k);
+  for (const k of Object.keys(S.interact)) S.interact[k] = set.interact.includes(k);
+  Object.assign(S.display, set.display);
+  S.interval = set.interval;
+  S.transition = 'random';
+  const musicChanged = S.music !== set.music;
+  S.music = set.music;
   commit(musicChanged);
+  if (!player.hidden) layout();
 }
+$('#resetMode').addEventListener('click', () => applyMode(modeOf(S.mode)));
 
 function commit(musicChanged = false) {
   saveSettings(S);
@@ -276,7 +324,7 @@ $('#interval').addEventListener('input', (e) => { S.interval = +e.target.value; 
 $('#volume').addEventListener('input', (e) => { S.volume = +e.target.value; $('#volumeOut').textContent = Math.round(S.volume * 100) + '%'; sound.setVolume(S.volume); saveSettings(S); });
 $('#musicInput').addEventListener('change', async (e) => {
   const f = e.target.files[0]; e.target.value = '';
-  if (!f) return;
+  if (!f || !studio) return;
   sound.setCustom(f);
   S.musicName = f.name.replace(/\.[^.]+$/, '');
   S.music = 'custom';
@@ -451,12 +499,12 @@ async function show(i, dir) {
   const from = shown ? slides[cur] : null;
   const fromImg = from ? from.querySelector('img') : null;
   let kind = S.transition;
-  if (kind === 'random') kind = pickTransition();
+  if (kind === 'random') kind = pickTransition(modeOf(S.mode).set.pool);
   if (reduced) kind = 'dissolve';
   incoming.classList.add('live');
   fx.setArtRect(r);
   placeNeon(r);
-  await runTransition(kind, { from, to: incoming, fromImg, fromRect: from ? from.rect : null, rect: r, W: stage.clientWidth, H: stage.clientHeight, fx });
+  await runTransition(kind, { from, to: incoming, fromImg, fromRect: from ? from.rect : null, rect: r, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, S.interval / 12)) });
   if (from) from.classList.remove('live');
   cur = nextSlot; shown = true; elapsed = 0; busy = false;
   // preload next
@@ -465,8 +513,9 @@ async function show(i, dir) {
   if (pending) { const d = pending; pending = 0; go(d); }
 }
 let lastKind = '';
-function pickTransition() {
-  const pool = TRANSITIONS.filter(k => k !== lastKind);
+function pickTransition(modePool) {
+  const base = (modePool && modePool.length ? modePool : TRANSITIONS);
+  const pool = base.length > 1 ? base.filter(k => k !== lastKind) : base;
   lastKind = pool[Math.floor(Math.random() * pool.length)];
   return lastKind;
 }
@@ -522,6 +571,7 @@ fx.onFrame = (dt) => {
 };
 
 function applyLive() {
+  fx.tempo = modeOf(S.mode).set.tempo || 1;
   fx.setEffects(S.effects);
   fx.setInteract(S.interact);
   sound.chimeOn = S.interact.chime;
@@ -610,9 +660,32 @@ document.addEventListener('visibilitychange', () => {
   else { sound.resume(); requestWake(); }
 });
 
+// Hidden entrance: long-press the Three Rings mark for 3 s
+(() => {
+  const mark = $('.lw-wordmark');
+  let timer = null, fired = false;
+  const cancel = () => { clearTimeout(timer); timer = null; mark.classList.remove('pressing'); };
+  mark.addEventListener('pointerdown', () => {
+    fired = false; cancel(); mark.classList.add('pressing');
+    timer = setTimeout(async () => {
+      fired = true; cancel();
+      if (studio) return;
+      const pw = window.prompt(T('studioPrompt'));
+      if (!pw) return;
+      if (await verifyStudio(pw.trim())) { setStudio(true); toast(T('studioOn')); } else toast(T('studioWrong'));
+    }, 3000);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => mark.addEventListener(ev, cancel));
+  mark.addEventListener('click', (e) => { if (fired) { e.preventDefault(); fired = false; } });
+  mark.addEventListener('contextmenu', (e) => e.preventDefault());
+})();
+$('#studioLock').addEventListener('click', () => { setStudio(false); toast(T('studioOff')); });
+
 // ---------- Boot ----------
 (async function boot() {
   await loadUploads();
+  document.documentElement.classList.toggle('studio', studio);
+  document.querySelectorAll('[data-studio]').forEach(el => { el.hidden = !studio; });
   if (!persistOK) { /* in-memory only; warn on first upload */ }
   applyLang();
   saveSettings(S);

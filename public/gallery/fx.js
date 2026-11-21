@@ -23,6 +23,7 @@ export class FX {
     this.last = 0;
     this.onFrame = null;
     this.lang = 'zh';
+    this.tempo = 1;
     // particle pools
     this.bokeh = []; this.stars = []; this.petals = []; this.shooting = null;
     this.ripples = []; this.sparks = []; this.seeds = []; this.flowers = []; this.dust = [];
@@ -231,7 +232,7 @@ export class FX {
     for (let i = 0; i < this.bokeh.length; i++) {
       const b = this.bokeh[i];
       b.age += dt;
-      b.x += (b.vx + Math.sin(t * 0.3 + b.ph) * 8) * dt; b.y += b.vy * dt;
+      b.x += (b.vx + Math.sin(t * 0.3 + b.ph) * 8) * dt * this.tempo; b.y += b.vy * dt * this.tempo;
       if (b.age > b.life || b.y < -b.r * 2) this.bokeh[i] = this._newBokeh(b.y < -b.r * 2 ? false : true), this.bokeh[i].age = 0;
     }
     for (const s of this.stars) { s.y += s.vy * dt; if (s.y < -4) { s.y = H + 4; s.x = rand(0, W); } }
@@ -475,7 +476,7 @@ export class FX {
   }
 
   _drawLasers() {
-    const ctx = this.ctx, W = this.W, H = this.H, t = this.t;
+    const ctx = this.ctx, W = this.W, H = this.H, t = this.t * this.tempo;
     const L = Math.hypot(W, H) * 1.1;
     const origins = [[0, H], [W, H], [W * 0.5, H + 10]];
     let n = 0;
