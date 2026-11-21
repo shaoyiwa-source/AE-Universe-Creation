@@ -42,9 +42,9 @@ export const db = {
 };
 
 const SETTINGS_KEY = 'ae-lumina-settings';
-export function loadSettings(defaults) {
+export function loadSettings(defaults, key = SETTINGS_KEY) {
   let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch { saved = {}; }
+  try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
   const out = structuredClone(defaults);
   for (const k of Object.keys(defaults)) {
     if (!(k in saved)) continue;
@@ -56,8 +56,8 @@ export function loadSettings(defaults) {
   }
   return out;
 }
-export function saveSettings(s) {
-  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch { /* private mode: ignore */ }
+export function saveSettings(s, key = SETTINGS_KEY) {
+  try { localStorage.setItem(key, JSON.stringify(s)); } catch { /* private mode: ignore */ }
 }
 export function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } }
 export function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } }

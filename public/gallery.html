@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="ae-version" content="lumina-r4">
+<meta name="ae-version" content="lumina-r5">
 <meta name="theme-color" content="#0b100d">
 <title>Lumina Wall · Maison AE</title>
-<meta name="description" content="AE Lumina Wall — 外在沉靜，內在綻放。精品數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
+<meta name="description" content="AE Lumina Wall — 外在沈靜，內在綻放。精品數位藝術展演。選取作品，化為沉浸式光影展演：獨家轉場、療癒音景、可觸碰的光之互動。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="gallery/gallery.css?v=r4">
+<link rel="stylesheet" href="gallery/gallery.css?v=r5">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -33,7 +33,7 @@
 <main>
   <section class="lw-hero">
     <p class="lw-eyebrow" data-i18n="eyebrow">AE Digital Art Salon · 數位藝術沙龍</p>
-    <h1 data-i18n="heroTitle">外在沉靜，內在綻放。</h1>
+    <h1 data-i18n="heroTitle">外在沈靜，內在綻放。</h1>
     <p class="lw-hero-sub" data-i18n="heroSub">讓畫作，在光裡呼吸</p>
     <span class="lw-hero-rule" aria-hidden="true"></span>
     <p class="lw-lede" data-i18n="heroLede">輕觸畫面選取作品，依選取順序化為一場沉浸式光影展演。轉場、音景與可觸碰的光，皆由 AE 獨家調校。</p>
@@ -66,10 +66,20 @@
   <p class="lw-drop-note" data-studio hidden data-i18n="dropNote">也可以直接把圖片拖曳到頁面上加入。上傳的作品只保存在這台裝置的瀏覽器中。</p>
 </main>
 
+<section class="lw-cert" id="cert" hidden aria-labelledby="certTitle">
+  <img src="assets/ae-three-rings-transparent.webp" alt="" width="96" height="48">
+  <p class="lw-eyebrow" data-i18n="certificate">典藏證書</p>
+  <h2 id="certTitle"></h2>
+  <dl class="lw-cert-list" id="certList"></dl>
+  <p class="lw-cert-fp" id="certFp"></p>
+  <p class="lw-cert-note" data-i18n="certNote"></p>
+  <p class="lw-cert-sign">Maison AE<span data-i18n="motto">外在沈靜，內在綻放</span></p>
+</section>
+
 <footer class="lw-footer">
   <img src="assets/ae-three-rings-transparent.webp" alt="" width="44" height="22">
   <p>Aurelia &amp; Elion · AE Universe Creation</p>
-  <p class="lw-footer-motto" data-i18n="motto">外在沉靜，內在綻放</p>
+  <p class="lw-footer-motto" data-i18n="motto">外在沈靜，內在綻放</p>
   <p>Action Creates Infinity · 行動創造無限</p>
 </footer>
 
@@ -228,11 +238,37 @@
   </form>
 </dialog>
 
+<!-- Studio: export an edition (客戶版 / NFT 版) -->
+<dialog class="lw-dialog" id="exportDialog">
+  <form method="dialog" id="exportForm">
+    <p class="lw-eyebrow" data-i18n="exportEd">匯出典藏版</p>
+    <div class="lw-form-grid">
+      <label><span>中文名稱</span><input name="titleZh" maxlength="80"></label>
+      <label><span>English title</span><input name="titleEn" maxlength="80"></label>
+      <label><span data-i18n="edArtist">藝術家</span><input name="artist" maxlength="80"></label>
+      <label><span data-i18n="f_year">年份</span><input name="year" maxlength="20"></label>
+      <label><span data-i18n="edNo">版本編號</span><input name="no" type="number" min="1" max="10000" value="1"></label>
+      <label><span data-i18n="edOf">限量總數</span><input name="of" type="number" min="1" max="10000" value="1"></label>
+      <label class="wide"><span data-i18n="edKind">版本類型</span><select name="kind"><option value="client" data-i18n="kindClient">客戶版</option><option value="nft" data-i18n="kindNft">NFT 版</option></select></label>
+      <label class="wide"><span data-i18n="quality">畫質</span><select name="quality"><option value="standard" data-i18n="qStd">標準</option><option value="high" data-i18n="qHigh">高畫質</option></select></label>
+      <label class="wide"><span data-i18n="showNote">展覽說明</span><textarea name="noteZh" rows="2" maxlength="600" placeholder="中文"></textarea></label>
+      <label class="wide"><span>Note</span><textarea name="noteEn" rows="2" maxlength="600" placeholder="English"></textarea></label>
+    </div>
+    <p class="lw-note" id="exportStatus"></p>
+    <div class="lw-dialog-actions">
+      <span></span>
+      <button type="button" class="lw-btn ghost" id="exportCancel" data-i18n="cancel">取消</button>
+      <button type="submit" class="lw-btn primary" id="exportGo" data-i18n="exportEd">匯出典藏版</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- Kiosk / shared link start -->
 <div class="lw-gate" id="startGate" hidden>
   <img src="assets/ae-three-rings-transparent.webp" alt="" width="120" height="60">
   <p class="lw-eyebrow" id="gateShow"></p>
   <p class="lw-gate-motto" id="gateMotto"></p>
+  <p class="lw-gate-edition" id="gateEdition" hidden></p>
   <button type="button" class="lw-gate-btn" id="gateBtn"><span data-i18n="tapToBegin">輕觸開始展演</span></button>
 </div>
 
@@ -240,6 +276,6 @@
 
 <div class="lw-toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="gallery/app.js?v=r4"></script>
+<script type="module" src="gallery/app.js?v=r5"></script>
 </body>
 </html>

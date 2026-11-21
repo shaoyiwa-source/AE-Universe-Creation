@@ -1,6 +1,10 @@
 // AE Lumina Wall — bilingual copy (繁中 / English)
 export const STR = {
   zh: {
+    exportEd: '匯出典藏版', kindClient: '客戶版：可離線播放，附官網連結', kindNft: 'NFT 版：單一檔案、無任何外部連結', quality: '畫質', qStd: '標準（長邊 1600px，檔案較小）', qHigh: '高畫質（長邊 2560px）',
+    edArtist: '藝術家', edNo: '版本編號', edOf: '限量總數', edKind: '版本類型', exporting: (s) => `匯出中… ${s}`, exported: (mb) => `已匯出典藏版（${mb} MB）`, exportFailed: '匯出失敗，請再試一次',
+    download: '下載原檔', editionOf: (n, of) => `典藏版 ${n} / ${of}`, certificate: '典藏證書', fingerprint: '數位指紋', worksCount: (n) => `${n} 件作品`,
+    issued: '發行', kindName: (k) => k === 'nft' ? 'NFT 典藏版' : '客戶典藏版', certNote: '本典藏版由 Maison AE 策展與封存；數位指紋可用於驗證作品內容未經更動。',
     all: '全部作品', exhibitions: '展覽', newShow: '存成新展覽', editShow: '編輯展覽', updateShow: '以目前選取更新', deleteShow: '刪除展覽',
     confirmDeleteShow: '確定刪除這個展覽嗎？作品本身不會被刪除。', shareLink: '複製展演連結', linkCopied: '已複製展演連結，可在電視或其他裝置開啟',
     showNamePrompt: '展覽名稱', showSaved: '已儲存展覽', needSelection: '請先選取作品', view: '賞析', edit: '編輯', moveLeft: '往前', moveRight: '往後',
@@ -12,7 +16,7 @@ export const STR = {
     removeFromShow: '從展覽移除', saved: '已儲存', tapToBegin: '輕觸開始展演', zoomHint: '雙擊或滾輪放大・拖曳移動', filmstrip: '作品列', track: 'AE 曲目',
     showNote: '展覽說明', untitledShow: '未命名展覽', modeLabel: '場景模式',
     skip: '跳至作品牆', home: '官網', eyebrow: 'Maison AE · 精品數位藝術',
-    heroTitle: '外在沉靜，內在綻放。', motto: '外在沉靜，內在綻放', heroSub: '讓畫作，在光裡呼吸', arena: '場域',
+    heroTitle: '外在沈靜，內在綻放。', motto: '外在沈靜，內在綻放', heroSub: '讓畫作，在光裡呼吸', arena: '場域',
     heroLede: '輕觸畫面選取作品，依選取順序化為一場沉浸式光影展演。選擇空間的場景模式，轉場、音景與可觸碰的光，皆由 AE 獨家調校。',
     studio: 'AE 工作室', studioLock: '鎖定', studioPrompt: 'AE 工作室密碼', studioWrong: '密碼不正確', studioOn: '已進入 AE 工作室：可加入作品與音樂', studioOff: '已鎖定 AE 工作室',
     selected: '已選取', selectAll: '全選', clear: '清除', addWorks: '加入作品', settings: '展演設定', play: '開始展演',
@@ -31,6 +35,10 @@ export const STR = {
     lumiLines: ['深呼吸，慢慢看。', '今天也辛苦了。', '點點看漂浮的光種子 ✦', '這幅畫裡藏著光。', '讓心安靜一下。', '你的眼睛在微笑喔。', '行動創造無限 ∞'],
   },
   en: {
+    exportEd: 'Export edition', kindClient: 'Client edition: plays offline, links to the maison', kindNft: 'NFT edition: one file, no external links', quality: 'Quality', qStd: 'Standard (1600 px long edge, smaller file)', qHigh: 'High (2560 px long edge)',
+    edArtist: 'Artist', edNo: 'Edition no.', edOf: 'Edition size', edKind: 'Edition type', exporting: (s) => `Exporting… ${s}`, exported: (mb) => `Edition exported (${mb} MB)`, exportFailed: 'Export failed — please try again',
+    download: 'Download original', editionOf: (n, of) => `Edition ${n} of ${of}`, certificate: 'Certificate', fingerprint: 'Digital fingerprint', worksCount: (n) => `${n} work${n > 1 ? 's' : ''}`,
+    issued: 'Issued', kindName: (k) => k === 'nft' ? 'NFT Edition' : 'Collector Edition', certNote: 'Curated and sealed by Maison AE. The digital fingerprint verifies the contents have not been altered.',
     all: 'All works', exhibitions: 'Exhibitions', newShow: 'Save as exhibition', editShow: 'Edit exhibition', updateShow: 'Update from selection', deleteShow: 'Delete exhibition',
     confirmDeleteShow: 'Delete this exhibition? The works themselves stay.', shareLink: 'Copy show link', linkCopied: 'Show link copied — open it on a TV or any device',
     showNamePrompt: 'Exhibition name', showSaved: 'Exhibition saved', needSelection: 'Select works first', view: 'View', edit: 'Edit', moveLeft: 'Earlier', moveRight: 'Later',
@@ -99,7 +107,7 @@ export const OPTIONS = {
     { id: 'bubbles', zh: '泡泡樂園', en: 'Bubbles' },
   ],
   effects: [
-    { id: 'innerbloom', zh: '內在綻放', en: 'Inner Bloom', ae: true, dzh: '光從畫作最亮處緩緩綻放：外在沉靜，內在綻放', den: 'Light slowly blooms from the brightest places in the work' },
+    { id: 'innerbloom', zh: '內在綻放', en: 'Inner Bloom', ae: true, dzh: '光從畫作最亮處緩緩綻放：外在沈靜，內在綻放', den: 'Light slowly blooms from the brightest places in the work' },
     { id: 'lumiere', zh: '精品光澤', en: 'Maison Sheen', ae: true, dzh: '如絲綢掠過的光澤與細緻膠片顆粒', den: 'A silk-like sheen and fine film grain' },
     { id: 'echo', zh: '色彩回聲', en: 'Color Echo', ae: true, dzh: '從畫作取色，化為漂浮光暈', den: 'Floating bokeh sampled from each work' },
     { id: 'breath', zh: '無限呼吸', en: 'Infinity Breath', ae: true, dzh: '∞ 光軌與每分鐘六次的放鬆呼吸', den: 'An ∞ light trail paced at six calm breaths a minute' },
@@ -119,7 +127,7 @@ export const OPTIONS = {
   display: [
     { id: 'captions', zh: '顯示作品標題', en: 'Show titles', dzh: '每幅作品開場時淡入標題', den: 'Fade in each title' },
     { id: 'mat', zh: '留白畫框', en: 'Museum margin', dzh: '畫作四周保留呼吸空間', den: 'Leave breathing room around the work' },
-    { id: 'intro', zh: '開場片頭', en: 'Title card', dzh: '三環金印、展覽名稱與「外在沉靜，內在綻放」', den: 'Gold Three Rings, exhibition title and the house motto' },
+    { id: 'intro', zh: '開場片頭', en: 'Title card', dzh: '三環金印、展覽名稱與「外在沈靜，內在綻放」', den: 'Gold Three Rings, exhibition title and the house motto' },
     { id: 'label', zh: '作品說明卡', en: 'Museum label', dzh: '標題下方顯示年份、媒材與作品說明', den: 'Year, medium and statement under the title' },
     { id: 'camera', zh: '鏡頭漫遊', en: 'Camera drift', dzh: '緩慢推近並遊走於畫作細節（會裁切邊緣）', den: 'A slow push-in across details (crops the edges)' },
     { id: 'drift', zh: '微動呼吸', en: 'Living motion', dzh: '畫作極緩慢地呼吸縮放', den: 'A barely-there slow breathing zoom' },

@@ -40,7 +40,16 @@ const DEFAULTS = {
   music: 'celestial', volume: 0.6, selected: [],
 };
 
-const S = loadSettings(DEFAULTS);
+// Edition (exported 客戶版 / NFT 版): everything comes from the embedded manifest; no server, no studio
+const ED = window.__AE_EDITION__ || null;
+const SKEY = ED ? 'ae-lumina-ed-' + ED.id : 'ae-lumina-settings';
+const S = loadSettings(DEFAULTS, SKEY);
+if (ED && ED.settings && lsGet(SKEY, null) === null) {
+  const es = ED.settings;
+  for (const k of ['mode', 'transition', 'interval', 'music', 'volume']) if (k in es) S[k] = es[k];
+  for (const k of ['effects', 'interact', 'display']) if (es[k]) Object.assign(S[k], es[k]);
+  S.selected = [];
+}
 let lang = lsGet('ae-language', 'zh') === 'en' ? 'en' : 'zh';
 const T = (k, ...a) => { const v = STR[lang][k]; return typeof v === 'function' ? v(...a) : v; };
 const L = (o) => o[lang];
@@ -52,6 +61,7 @@ let works = [], exhibitions = [], tracks = [], cloud = 'none';
 let view = 'all';
 let token = null;
 try { const t = JSON.parse(sessionStorage.getItem('ae-studio-token') || 'null'); if (t && t.exp > Date.now()) token = t.token; } catch { token = null; }
+if (ED) token = null;
 let studio = !!token;
 const sound = new Sound();
 sound.setVolume(S.volume);
@@ -86,6 +96,14 @@ const normWork = (w, i) => ({
   statement: w.statement || { en: '', zh: '' },
 });
 async function loadCatalog() {
+  if (ED) {
+    works = ED.works.map(normWork); tracks = []; cloud = 'edition';
+    exhibitions = [{ id: 'xedition', title: ED.title, note: ED.note, mode: ED.mode, items: ED.works.map(w => ({ id: w.id, ...(w.duration ? { duration: w.duration } : {}), ...(w.transition ? { transition: w.transition } : {}) })) }];
+    view = 'xedition';
+    const ids = new Set(works.map(w => w.id)); S.selected = S.selected.filter(id => ids.has(id));
+    if (String(S.music).startsWith('track:') || !OPTIONS.music.some(o => o.id === S.music)) S.music = modeOf(S.mode).set.music;
+    return;
+  }
   try {
     const d = await api('catalog');
     works = d.works.map(normWork); exhibitions = d.exhibitions || []; tracks = d.tracks || []; cloud = d.storage || 'none';
@@ -109,7 +127,7 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => { const v = T(el.dataset.i18n); if (typeof v === 'string') el.textContent = v; });
   $('#langToggle').textContent = lang === 'zh' ? 'EN' : '中文';
   $('#langToggle').setAttribute('aria-label', lang === 'zh' ? 'Switch to English' : '切換至中文');
-  renderAll(); renderSettings();
+  renderAll(); renderSettings(); renderEdition();
 }
 $('#langToggle').addEventListener('click', () => { lang = lang === 'zh' ? 'en' : 'zh'; lsSet('ae-language', lang); applyLang(); });
 
@@ -131,6 +149,7 @@ function setView(id, { applyShowMode = true } = {}) {
 
 const shows = $('#shows');
 function renderShows() {
+  if (ED) { shows.hidden = true; $('#showNote').hidden = true; return; }
   const frag = document.createDocumentFragment();
   const tab = (id, label) => {
     const b = document.createElement('button');
@@ -143,6 +162,7 @@ function renderShows() {
   const act = (id, label, cls = '') => { const b = document.createElement('button'); b.type = 'button'; b.className = 'lw-show-act ' + cls; b.dataset.showAct = id; b.textContent = label; frag.appendChild(b); };
   act('share', T('shareLink'));
   if (studio) {
+    act('export', T('exportEd'), 'studio');
     act('new', '＋ ' + T('newShow'), 'studio');
     if (currentShow()) { act('update', T('updateShow'), 'studio'); act('edit', T('editShow'), 'studio'); }
   }
@@ -159,6 +179,7 @@ shows.addEventListener('click', async (e) => {
   const act = a.dataset.showAct;
   if (act === 'share') return shareLink();
   if (!studio) return;
+  if (act === 'export') return openExport();
   if (act === 'new') {
     const ids = S.selected.filter(id => works.some(w => w.id === id));
     if (!ids.length) { toast(T('needSelection')); return; }
@@ -194,6 +215,7 @@ const ICON = {
   left: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
   right: '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
   remove: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  download: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
 };
 function renderWall() {
   const list = viewWorks();
@@ -216,7 +238,7 @@ function renderWall() {
       ${tags.length ? `<span class="screen-tag">${esc(tags.join(' · '))}</span>` : ''}
       <span class="screen-actions">
         ${btn('play', T('playFrom'), 'play')}${btn('view', T('view'))}
-        ${studio ? btn('edit', T('edit')) + btn('left', T('moveLeft')) + btn('right', T('moveRight')) + btn('remove', currentShow() ? T('removeFromShow') : T('del')) : ''}
+        ${studio ? btn('edit', T('edit')) + btn('download', T('download')) + btn('left', T('moveLeft')) + btn('right', T('moveRight')) + btn('remove', currentShow() ? T('removeFromShow') : T('del')) : ''}
       </span>`;
     const hit = el.querySelector('.screen-hit');
     hit.setAttribute('aria-label', titleOf(w));
@@ -246,7 +268,7 @@ function refreshBadges() {
     el.querySelector('.screen-hit').setAttribute('aria-pressed', String(i >= 0));
   });
   updateCount();
-  saveSettings(S);
+  saveSettings(S, SKEY);
 }
 function renderAll() { renderShows(); renderWall(); }
 
@@ -258,6 +280,7 @@ wall.addEventListener('click', async (e) => {
   if (act === 'view') return openViewer(id);
   if (act && studio) {
     if (act === 'edit') return openEdit(id);
+    if (act === 'download') return downloadOriginal(id);
     if (act === 'left' || act === 'right') return move(id, act === 'left' ? -1 : 1);
     if (act === 'remove') return removeWork(id);
     return;
@@ -293,6 +316,7 @@ function setStudio(on, newToken) {
   document.querySelectorAll('[data-studio]').forEach(el => { el.hidden = !on; });
 }
 async function enterStudio() {
+  if (ED) return; // editions never contain the studio
   const pw = window.prompt(T('studioPrompt'));
   if (!pw) return;
   try {
@@ -305,6 +329,7 @@ async function enterStudio() {
   }
 }
 (() => {
+  if (ED) return;
   const mark = $('.lw-wordmark');
   let timer = null, fired = false;
   const cancel = () => { clearTimeout(timer); timer = null; mark.classList.remove('pressing'); };
@@ -396,7 +421,7 @@ async function addFiles(files) {
     const sh = currentShow();
     await saveShow({ ...sh, items: [...sh.items, ...added.map(id => ({ id }))] }, { silent: true });
   }
-  renderAll(); saveSettings(S);
+  renderAll(); saveSettings(S, SKEY);
   if (added.length) { toast(T('added', added.length)); wall.lastElementChild?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }); }
 }
 $('#fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
@@ -465,7 +490,7 @@ async function removeWork(id) {
   const sh = currentShow();
   if (sh) { await saveShow({ ...sh, items: sh.items.filter(it => it.id !== id) }, { silent: true }); renderAll(); return; }
   if (!confirm(T('confirmRemove'))) return;
-  try { await api('delete', { method: 'POST', body: { id } }); S.selected = S.selected.filter(x => x !== id); await loadCatalog(); renderAll(); saveSettings(S); }
+  try { await api('delete', { method: 'POST', body: { id } }); S.selected = S.selected.filter(x => x !== id); await loadCatalog(); renderAll(); saveSettings(S, SKEY); }
   catch (err) { studioError(err); }
 }
 
@@ -505,6 +530,73 @@ async function saveShow(sh, { silent = false } = {}) {
     renderAll();
     return exhibition;
   } catch (err) { studioError(err); return null; }
+}
+
+// ---------- studio: originals & edition export ----------
+function downloadOriginal(id) {
+  const w = works.find(x => x.id === id); if (!w) return;
+  const ext = (/\.(\w+)(?:$|[?#&])/.exec(decodeURIComponent(w.src)) || [, w.type === 'video' ? 'mp4' : 'webp'])[1];
+  const a = document.createElement('a');
+  a.href = w.src; a.download = `${(w.title.en || w.title.zh || 'AE-work').replace(/[\\/:*?"<>|]+/g, ' ').trim()}.${ext}`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+const exportDialog = $('#exportDialog'), exportForm = $('#exportForm');
+function exportList() {
+  const base = viewWorks();
+  const inView = new Set(base.map(w => w.id));
+  const sel = S.selected.filter(id => inView.has(id));
+  const l = sel.length ? sel.map(id => works.find(w => w.id === id)) : base;
+  return l.filter(Boolean).map(w => ({ ...w, ...(itemOf(w.id) || {}) }));
+}
+function openExport() {
+  const sh = currentShow(), f = exportForm.elements;
+  f.titleZh.value = sh?.title?.zh || ''; f.titleEn.value = sh?.title?.en || '';
+  f.noteZh.value = sh?.note?.zh || ''; f.noteEn.value = sh?.note?.en || '';
+  f.artist.value = 'Aurelia & Elion'; f.year.value = String(new Date().getFullYear());
+  $('#exportStatus').textContent = T('worksCount', exportList().length);
+  $('#exportGo').disabled = false;
+  exportDialog.showModal();
+}
+$('#exportCancel').addEventListener('click', () => exportDialog.close());
+exportForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = exportForm.elements, go = $('#exportGo'), status = $('#exportStatus');
+  const list = exportList(); if (!list.length) { toast(T('needSelection')); return; }
+  go.disabled = true;
+  try {
+    const { exportEdition } = await import('./export.js');
+    const settings = { mode: S.mode, transition: S.transition, interval: S.interval, music: String(S.music).startsWith('track:') ? modeOf(S.mode).set.music : S.music, volume: S.volume, effects: { ...S.effects }, interact: { ...S.interact }, display: { ...S.display } };
+    const out = await exportEdition({
+      meta: { titleZh: f.titleZh.value, titleEn: f.titleEn.value, noteZh: f.noteZh.value, noteEn: f.noteEn.value, artist: f.artist.value, year: f.year.value, no: f.no.value, of: f.of.value, kind: f.kind.value, quality: f.quality.value },
+      works: list, mode: S.mode, settings,
+      onProgress: (m) => { status.textContent = T('exporting', m); },
+    });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(out.blob); a.download = out.filename;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    exportDialog.close();
+    toast(T('exported', (out.size / 1048576).toFixed(1)), 5000);
+  } catch (err) { console.warn('export', err); status.textContent = T('exportFailed'); }
+  finally { go.disabled = false; }
+});
+
+// ---------- edition chrome (exported player) ----------
+function renderEdition() {
+  if (!ED) return;
+  const tt = (o) => (lang === 'zh' ? (o.zh || o.en) : (o.en || o.zh)) || '';
+  const ed = T('editionOf', ED.edition.no, ED.edition.of);
+  $('.lw-hero .lw-eyebrow').textContent = `Maison AE · ${ed}`;
+  $('.lw-hero h1').textContent = tt(ED.title) || 'Maison AE';
+  $('.lw-hero-sub').textContent = T('motto');
+  $('.lw-lede').textContent = tt(ED.note) || T('heroLede');
+  const home = $('.lw-header-actions a.lw-link');
+  if (ED.site) { home.href = ED.site; home.target = '_blank'; home.rel = 'noopener'; $('.lw-wordmark').href = ED.site; $('.lw-wordmark').target = '_blank'; }
+  else { home.hidden = true; $('.lw-wordmark').removeAttribute('href'); }
+  const cert = $('#cert'); cert.hidden = false;
+  $('#certTitle').textContent = tt(ED.title) || 'Maison AE';
+  const rows = [[T('edKind'), T('kindName', ED.kind)], [T('edNo'), `${ED.edition.no} / ${ED.edition.of}`], [T('edArtist'), ED.artist], [T('f_year'), ED.year],
+    [lang === 'zh' ? '作品' : 'Works', T('worksCount', ED.works.length)], [T('issued'), (ED.exportedAt || '').slice(0, 10)]];
+  $('#certList').replaceChildren(...rows.flatMap(([k, v]) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; return [dt, dd]; }));
+  $('#certFp').textContent = ED.fingerprint ? `${T('fingerprint')} · ${ED.fingerprint.match(/.{1,8}/g).join(' ')}` : '';
 }
 
 // ---------- settings sheet ----------
@@ -598,11 +690,11 @@ function applyMode(m, { quiet = false } = {}) {
 }
 $('#resetMode').addEventListener('click', () => applyMode(modeOf(S.mode)));
 function commit(musicChanged = false) {
-  saveSettings(S); renderSettings(); applyLive();
+  saveSettings(S, SKEY); renderSettings(); applyLive();
   if (musicChanged && !player.hidden) startMusic();
 }
-$('#interval').addEventListener('input', (e) => { S.interval = STEPS[+e.target.value] || 10; S.adjusted = true; $('#intervalOut').textContent = fmtSec(S.interval); const rs = $('#resetMode'); rs.hidden = false; rs.textContent = `${T('adjusted')} · ${T('resetMode')}`; saveSettings(S); });
-$('#volume').addEventListener('input', (e) => { S.volume = +e.target.value; $('#volumeOut').textContent = Math.round(S.volume * 100) + '%'; sound.setVolume(S.volume); saveSettings(S); });
+$('#interval').addEventListener('input', (e) => { S.interval = STEPS[+e.target.value] || 10; S.adjusted = true; $('#intervalOut').textContent = fmtSec(S.interval); const rs = $('#resetMode'); rs.hidden = false; rs.textContent = `${T('adjusted')} · ${T('resetMode')}`; saveSettings(S, SKEY); });
+$('#volume').addEventListener('input', (e) => { S.volume = +e.target.value; $('#volumeOut').textContent = Math.round(S.volume * 100) + '%'; sound.setVolume(S.volume); saveSettings(S, SKEY); });
 $('#musicInput').addEventListener('change', async (e) => {
   const f = e.target.files[0]; e.target.value = '';
   if (!f || !studio) return;
@@ -1020,7 +1112,7 @@ $('#pauseBtn').addEventListener('click', () => setPaused(playing));
 $('#closeBtn').addEventListener('click', closePlayer);
 $('#fxBtn').addEventListener('click', openSheet);
 $('#musicBtn').addEventListener('click', () => {
-  if (player.classList.contains('muted')) { if (S.music === 'none') { S.music = modeOf(S.mode).set.music === 'none' ? 'celestial' : modeOf(S.mode).set.music; saveSettings(S); } startMusic(); }
+  if (player.classList.contains('muted')) { if (S.music === 'none') { S.music = modeOf(S.mode).set.music === 'none' ? 'celestial' : modeOf(S.mode).set.music; saveSettings(S, SKEY); } startMusic(); }
   else { sound.stop(); player.classList.add('muted'); }
 });
 $('#fsBtn').addEventListener('click', () => {
@@ -1088,7 +1180,8 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-async function requestWake() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch { wakeLock = null; } }
+const canWake = () => 'wakeLock' in navigator && !(document.featurePolicy && !document.featurePolicy.allowsFeature('screen-wake-lock'));
+async function requestWake() { try { if (canWake()) wakeLock = await navigator.wakeLock.request('screen'); } catch { wakeLock = null; } }
 function releaseWake() { try { wakeLock?.release(); } catch { /* ignore */ } wakeLock = null; }
 document.addEventListener('visibilitychange', () => {
   if (player.hidden) return;
@@ -1115,17 +1208,19 @@ function makeGrain() {
   if (q.get('show') && exhibitions.some(e => e.id === q.get('show'))) setView(q.get('show'), { applyShowMode: !q.get('mode') });
   if (q.get('mode') && OPTIONS.modes.some(m => m.id === q.get('mode'))) applyMode(modeOf(q.get('mode')), { quiet: true });
   applyLang();
-  saveSettings(S);
+  saveSettings(S, SKEY);
   makeGrain();
-  if (q.get('autoplay') === '1') {
+  if (ED) { document.documentElement.classList.add('edition'); document.title = `${(lang === 'zh' ? ED.title.zh || ED.title.en : ED.title.en || ED.title.zh) || 'Maison AE'} · Maison AE`; }
+  if (q.get('autoplay') === '1' || ED) {
     const gate = $('#startGate');
+    if (ED) { const ge = $('#gateEdition'); ge.hidden = false; ge.textContent = `${T('kindName', ED.kind)} · ${ED.edition.no} / ${ED.edition.of}`; }
     $('#gateShow').textContent = currentShow() ? showTitle(currentShow()) : 'AE Universe Creation';
     $('#gateMotto').textContent = T('motto');
     gate.hidden = false;
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
+    get state() { return { edition: !!ED, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
     go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();
