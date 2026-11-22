@@ -518,3 +518,15 @@ html.edition .lw-drop-note,html.edition .lw-shows{display:none}
 .lw-player.info-open .pl-mic{opacity:0}
 .lw-player.lowpower .pl-grain{display:none}
 .lw-player.lowpower .pl-amb{filter:blur(28px) saturate(.85) brightness(.36)}
+
+/* R9.1 — no system image menu on long-press (iOS "save image"), and the magnifier */
+img,video{-webkit-touch-callout:none}
+.lw-player img,.lw-player video,.screen img{-webkit-user-drag:none;user-select:none;-webkit-user-select:none}
+.pl-loupe{position:absolute;left:0;top:0;z-index:30;width:var(--ls,200px);height:var(--ls,200px);border-radius:50%;overflow:hidden;pointer-events:none;
+  background:#050806;border:1px solid rgba(236,205,140,.85);box-shadow:0 0 0 4px rgba(5,8,6,.55),0 0 34px rgba(236,205,140,.28),0 18px 40px rgba(0,0,0,.55);
+  opacity:0;transform:scale(.86);transition:opacity .22s ease,transform .22s ease;will-change:transform}
+.pl-loupe.on{opacity:1;transform:scale(1)}
+.pl-loupe img{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;will-change:transform}
+.pl-loupe::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 24px rgba(0,0,0,.35);pointer-events:none}
+/* the images themselves never receive a touch, so no browser can offer "save image" on them; the player/tile handles every gesture */
+.pl-media,.screen img{pointer-events:none}

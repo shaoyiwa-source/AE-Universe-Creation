@@ -988,6 +988,7 @@ function playIntro() {
   });
 }
 function closePlayer() {
+  closeLoupe();
   playing = false;
   stopListening(); toggleInfo(false);
   fx.stop(); sound.stop();
@@ -1300,7 +1301,7 @@ fx.onFrame = (dt) => {
     if (r.beat && r.kind === 'music') fx.soundBeat(Math.max(1, r.tier));
     const md = $('#micDot'); md.style.setProperty('--lv', r.level.toFixed(2)); md.dataset.kind = r.kind || '';
   }
-  if (playing && shown && !busy) {
+  if (playing && shown && !busy && !loupeOn) { // the work stays while someone looks closely
     elapsed += dt;
     if (elapsed >= curDur) { elapsed = 0; go(1); }
   }
@@ -1357,12 +1358,48 @@ function showControls() {
 
 let down = null;
 const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip, .pl-info, dialog');
+// ---- magnifier (R9.1): long-press the work → a round lens; drag to look around; release to close ----
+const loupe = $('#loupe'), loupeImg = loupe.querySelector('img');
+const LOUPE_ZOOM = 2.6;
+let loupeOn = false, loupeTimer = null;
+function loupeSize() { const m = Math.min(player.clientWidth, player.clientHeight); return Math.round(Math.max(140, Math.min(260, m * 0.38))); }
+function openLoupe(x, y, touch) {
+  const sl = slides[cur], r = sl && sl.rect, el = sl && sl.querySelector('img:not([hidden])');
+  if (!r || !el || !el.currentSrc || !shown) return;
+  if (x < r.x - 8 || x > r.x + r.w + 8 || y < r.y - 8 || y > r.y + r.h + 8) return; // only on the work itself
+  if (loupeImg.src !== el.currentSrc) loupeImg.src = el.currentSrc;
+  const L = loupeSize(); loupe.style.setProperty('--ls', L + 'px');
+  loupeImg.style.width = (r.w * LOUPE_ZOOM) + 'px'; loupeImg.style.height = (r.h * LOUPE_ZOOM) + 'px';
+  loupeOn = { touch, L }; loupe.hidden = false; void loupe.offsetWidth; loupe.classList.add('on');
+  moveLoupe(x, y);
+}
+function moveLoupe(x, y) {
+  if (!loupeOn) return;
+  const r = slides[cur].rect, L = loupeOn.L, W = player.clientWidth, H = player.clientHeight;
+  const px = Math.max(0, Math.min(r.w, x - r.x)), py = Math.max(0, Math.min(r.h, y - r.y));
+  // keep the lens above the finger so the finger never covers what is being looked at
+  let lx = x - L / 2, ly = loupeOn.touch ? y - L - 28 : y - L / 2;
+  if (ly < 8) ly = loupeOn.touch ? Math.min(H - L - 8, y + 36) : 8;
+  lx = Math.max(8, Math.min(W - L - 8, lx)); ly = Math.max(8, Math.min(H - L - 8, ly));
+  loupe.style.left = lx + 'px'; loupe.style.top = ly + 'px';
+  loupeImg.style.transform = `translate(${(L / 2 - px * LOUPE_ZOOM).toFixed(1)}px, ${(L / 2 - py * LOUPE_ZOOM).toFixed(1)}px)`;
+}
+function closeLoupe() {
+  clearTimeout(loupeTimer); loupeTimer = null;
+  if (!loupeOn) return;
+  loupeOn = false; loupe.classList.remove('on');
+  setTimeout(() => { if (!loupeOn) loupe.hidden = true; }, 230);
+}
+player.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest('img, video, .screen, .vw-stage')) e.preventDefault(); });
 player.addEventListener('pointerdown', (e) => {
   showControls();
   if (isUi(e.target)) return;
   const r = player.getBoundingClientRect();
   const x = e.clientX - r.left, y = e.clientY - r.top;
   down = { x, y, t: performance.now(), id: e.pointerId };
+  clearTimeout(loupeTimer);
+  loupeTimer = setTimeout(() => { if (down && down.id === e.pointerId) openLoupe(down.lx ?? x, down.ly ?? y, e.pointerType !== 'mouse'); }, 450);
   sound.ensure();
   const hit = fx.pointerDown(x, y);
   if (hit.seed) sound.chime(x / r.width, y / r.height, true);
@@ -1372,10 +1409,18 @@ player.addEventListener('pointermove', (e) => {
   showControls();
   if (isUi(e.target)) return;
   const r = player.getBoundingClientRect();
-  if (e.pointerType === 'mouse' || down) fx.pointerMove(e.clientX - r.left, e.clientY - r.top);
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  if (loupeOn) { moveLoupe(x, y); return; }
+  if (down && down.id === e.pointerId) {
+    down.lx = x; down.ly = y;
+    if (Math.hypot(x - down.x, y - down.y) > 12) { clearTimeout(loupeTimer); loupeTimer = null; } // a swipe, not a long-press
+  }
+  if (e.pointerType === 'mouse' || down) fx.pointerMove(x, y);
 });
 const endPointer = (e) => {
   fx.pointerUp();
+  if (loupeOn) { closeLoupe(); down = null; return; } // looking closely never turns the page
+  clearTimeout(loupeTimer); loupeTimer = null;
   if (!down || down.id !== e.pointerId) { down = null; return; }
   const r = player.getBoundingClientRect();
   const dx = e.clientX - r.left - down.x, dy = e.clientY - r.top - down.y, dt = performance.now() - down.t;
