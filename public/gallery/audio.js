@@ -93,6 +93,7 @@ export class Sound {
     else if (preset === 'celestial') this._celestial();
     else if (preset === 'ocean') this._ocean();
     else if (preset === 'dawn') this._dawn();
+    else if (preset === 'hearth') this._hearth();
     else if (preset === 'custom') this._custom();
   }
 
@@ -151,12 +152,12 @@ export class Sound {
     o1.onended = () => this.voices.delete(v);
   }
 
-  _bell(freq, when, level = 0.05, decay = 3.2, bus = this.musicBus) {
+  _bell(freq, when, level = 0.05, decay = 3.2, bus = this.musicBus, ratio = 2.756) {
     const ctx = this.ctx;
     const g = ctx.createGain();
     const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
     o.type = 'sine'; o2.type = 'sine';
-    o.frequency.value = freq; o2.frequency.value = freq * 2.756;
+    o.frequency.value = freq; o2.frequency.value = freq * ratio;
     g2.gain.value = 0.18;
     o.connect(g); o2.connect(g2).connect(g); g.connect(bus);
     g.gain.setValueAtTime(0, when);
@@ -164,6 +165,27 @@ export class Sound {
     g.gain.exponentialRampToValueAtTime(0.0001, when + decay);
     o.start(when); o2.start(when); o.stop(when + decay + 0.1); o2.stop(when + decay + 0.1);
     if (bus === this.musicBus) { const v = this._track(g, [o, o2]); o.onended = () => this.voices.delete(v); }
+  }
+
+  // warm electric-piano voice: harmonic partials only (always in tune), a soft tine and a slow tremolo
+  _keys(freq, when, level = 0.03, decay = 4.5) {
+    const ctx = this.ctx;
+    const g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2200; f.Q.value = 0.2;
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), o3 = ctx.createOscillator();
+    const g2 = ctx.createGain(), g3 = ctx.createGain();
+    o1.type = 'sine'; o2.type = 'sine'; o3.type = 'triangle';
+    o1.frequency.value = freq; o2.frequency.value = freq * 2; o3.frequency.value = freq * 3;
+    g2.gain.setValueAtTime(0.22, when); g2.gain.exponentialRampToValueAtTime(0.02, when + 0.6);
+    g3.gain.setValueAtTime(0.05, when); g3.gain.exponentialRampToValueAtTime(0.002, when + 0.25);
+    const trem = ctx.createOscillator(), tg = ctx.createGain(); trem.frequency.value = 4.2; tg.gain.value = level * 0.12;
+    trem.connect(tg).connect(g.gain);
+    o1.connect(f); o2.connect(g2).connect(f); o3.connect(g3).connect(f); f.connect(g).connect(this.musicBus);
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(level, when + 0.012);
+    g.gain.exponentialRampToValueAtTime(level * 0.35, when + 1.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + decay);
+    [o1, o2, o3, trem].forEach(o => { o.start(when); o.stop(when + decay + 0.1); });
+    const v = this._track(g, [o1, o2, o3, trem]); o1.onended = () => this.voices.delete(v);
   }
 
   _noise(seconds = 4) {
@@ -390,10 +412,39 @@ export class Sound {
       const ch = prog[bar % prog.length];
       this._pad(midi(ch[0] - 12), t, 7.6, 0.035, 'sine', 900);
       this._pad(midi(ch[2] - 12), t + 0.2, 7.6, 0.022, 'sine', 900);
-      const order = [0, 2, 1, 3, 4, 3, 2, 1];
-      order.forEach((n, k) => { if (Math.random() < 0.88) this._bell(midi(ch[n] + 12), t + k * 0.95 + Math.random() * 0.04, 0.022, 3.6); });
+      // a gentle music box, in tune (harmonic partial), one octave lower than before, no stumbling notes
+      const order = bar % 2 ? [0, 2, 1, 3, 4, 3, 2] : [0, 2, 4, 3, 1, 2];
+      order.forEach((n, k) => this._bell(midi(ch[n]), t + k * (7.6 / order.length) + (k % 2) * 0.05, 0.02, 3.4, this.musicBus, 2));
       bar++;
       this._later(play, 7600);
+    };
+    play();
+  }
+
+  // 暖居時光 Warm Home — for private residences: unhurried electric-piano chords with soft jazz colour,
+  // a warm low pad and an occasional melody note, played with a human touch (never mechanical)
+  _hearth() {
+    // Fmaj9 → Em7 → Dm9 → Cmaj9 (gently descending, settling), bass + four-note voicings
+    const prog = [
+      { bass: 41, v: [57, 60, 64, 67], mel: [72, 69, 67] },
+      { bass: 40, v: [55, 59, 62, 64], mel: [71, 67, 64] },
+      { bass: 38, v: [53, 57, 60, 64], mel: [69, 65, 64] },
+      { bass: 36, v: [55, 59, 62, 64], mel: [67, 64, 62] },
+    ];
+    let bar = 0;
+    const play = () => {
+      if (this.preset !== 'hearth') return;
+      const t = this.ctx.currentTime + 0.05, c = prog[bar % prog.length], L = 9;
+      this._pad(midi(c.bass), t, L, 0.03, 'sine', 500);
+      this._pad(midi(c.bass + 12), t + 0.3, L, 0.012, 'sine', 700);
+      // the chord, rolled softly from the bottom like a hand on the keys
+      c.v.forEach((m, k) => this._keys(midi(m), t + 0.08 + k * 0.07 + Math.random() * 0.02, 0.022 - k * 0.002, 6));
+      // half-way: the chord again, quieter, a little higher voicing
+      c.v.slice(1).forEach((m, k) => this._keys(midi(m + (k === 2 ? 12 : 0)), t + 4.4 + k * 0.09 + Math.random() * 0.03, 0.013, 4.5));
+      // a few melody notes, not every bar
+      if (bar % 4 !== 3) c.mel.forEach((m, k) => { if (k < 2 || bar % 2) this._keys(midi(m), t + 2.2 + k * 1.35 + Math.random() * 0.12, 0.016 - k * 0.003, 4); });
+      bar++;
+      this._later(play, L * 1000);
     };
     play();
   }
