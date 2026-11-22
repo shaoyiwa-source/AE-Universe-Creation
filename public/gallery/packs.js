@@ -75,6 +75,16 @@ export class PackHost {
   get rect() { return this.alive.rect; }
   get front() { return this.alive.fx; }
   get back() { return this.alive.bx; }
+  // a layer above the work that the camera never moves (screen-fixed light such as LED strips); made on first use
+  get overlay() {
+    if (!this._ov) {
+      const f = this.alive.front; if (!f || !f.parentNode) return null;
+      const c = document.createElement('canvas'); c.className = 'pl-led'; f.parentNode.insertBefore(c, f.nextSibling);
+      this._ov = { c, x: c.getContext('2d') };
+    }
+    this._ovUsed = true;
+    return this._ov.x;
+  }
   get palette() { return this.alive.palette && this.alive.palette.length ? this.alive.palette : [[236, 205, 140]]; }
   get reading() { return this.alive.readingMap; }
   sprite(rgb, soft) { return this.alive.spriteOf(rgb, soft); }
@@ -160,12 +170,22 @@ export class PackHost {
     }
   }
   current() { return this.active.filter(a => !a.out).map(a => ({ id: a.pk.id, p: { ...a.p } })); }
+  // a new work: only effects the next work does not use fade out; the same effect keeps running through the change
+  keep(ids) { for (const a of this.active) if (!ids.includes(a.pk.id)) a.out = true; }
   clear(now = false) { if (now) { this.active.forEach(a => a.inst.dispose && a.inst.dispose()); this.active = []; this.wind.x = this.wind.y = 0; } else this.active.forEach(a => { a.out = true; }); }
   frame(dt) {
     if (this.bursts && this.bursts.length && this.alive.W) {
       this.bursts = this.bursts.filter(b => { try { return b.inst.frame(dt) !== false; } catch { return false; } });
       const fc = this.front; if (fc) { fc.globalAlpha = 1; fc.globalCompositeOperation = 'source-over'; }
     }
+    // the screen-fixed layer is cleared every frame and sized like the light layers
+    if (this._ov) {
+      const { c, x } = this._ov, W = this.alive.W, H = this.alive.H, dpr = Math.min(this.alive.maxDpr || 1, window.devicePixelRatio || 1);
+      const w = Math.round(W * dpr), h = Math.round(H * dpr);
+      if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+      x.setTransform(dpr, 0, 0, dpr, 0, 0); if (this._ovUsed) x.clearRect(0, 0, W, H); this._ovUsed = false;
+    }
+    this.lightsOnly = 0;
     if (!this.alive.W || !this.active.length) return;
     for (const a of this.active) {
       a.k += ((a.out ? 0 : 1) - a.k) * Math.min(1, dt * 1.6);

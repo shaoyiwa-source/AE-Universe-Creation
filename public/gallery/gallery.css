@@ -610,3 +610,9 @@ html.licensed body{background:#050806}
 .lw-lic-qr svg{display:block;width:150px;height:150px;background:#fff}
 .lw-lic-out code{font-size:18px;letter-spacing:.14em;color:var(--gold)}
 .lw-lic-url{word-break:break-all;font-size:12px;color:var(--muted)}
+
+/* LED strips and other screen-fixed light (never moved by the camera) */
+.pl-stage .pl-led{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+/* lights only: the painting, its title, Lumi, sparkles and grain leave the stage; only the lights remain */
+.lw-player.lights-only .pl-slide,.lw-player.lights-only .pl-neon,.lw-player.lights-only .pl-ambient,.lw-player.lights-only .pl-fx,.lw-player.lights-only .pl-grain,.lw-player.lights-only .pl-caption,.lw-player.lights-only .pl-mark,.lw-player.lights-only .pl-stage .pl-alive,.lw-player.lights-only .pl-stage .pl-alive-back{opacity:0!important}
+.lw-player.lights-only{background:#000}

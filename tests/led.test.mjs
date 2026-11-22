@@ -50,7 +50,7 @@ try {
   const P = '.lw-god-params[data-pack=led]';
   const nCtl = await page.evaluate((P) => document.querySelectorAll(`${P} .lw-param`).length, P);
   check('the LED strip is in God mode with its own controls (layout, pattern, colours, size, speed, sound, stage…)', nCtl === 14, `${nCtl} controls`);
-  const lit = () => page.evaluate(() => { const c = document.querySelector('.pl-alive'), x = c.getContext('2d'); const d = x.getImageData(0, 0, c.width, c.height).data; let n = 0, hues = new Set(); for (let i = 0; i < d.length; i += 16) if (d[i + 3] > 60) { n++; hues.add(`${d[i] >> 6}${d[i + 1] >> 6}${d[i + 2] >> 6}`); } return { n, hues: hues.size }; });
+  const lit = () => page.evaluate(() => { const c = document.querySelector('.pl-led'), x = c.getContext('2d'); const d = x.getImageData(0, 0, c.width, c.height).data; let n = 0, hues = new Set(); for (let i = 0; i < d.length; i += 16) if (d[i + 3] > 60) { n++; hues.add(`${d[i] >> 6}${d[i + 1] >> 6}${d[i + 2] >> 6}`); } return { n, hues: hues.size }; });
   const a = await lit();
   check('a rainbow row of LEDs lights the bottom of the screen', a.n > 200 && a.hues >= 6, JSON.stringify(a));
   await page.screenshot({ path: `${out}/led-rainbow.png` });
@@ -68,11 +68,23 @@ try {
   // pure light art: a wall of LEDs on a dark stage
   await pick('多排（燈牆）'); await pick('整個螢幕'); await pick('流動'); await pick('七彩'); await pick('只有燈光（黑幕）');
   await wait(1200);
-  const dark = await page.evaluate(() => { const c = document.querySelector('.pl-alive'), x = c.getContext('2d'); const d = x.getImageData(0, 0, c.width, c.height).data; let black = 0, n = 0; for (let i = 0; i < d.length; i += 64) { n++; if (d[i + 3] > 240 && d[i] + d[i + 1] + d[i + 2] < 30) black++; } return black / n; });
-  check('lights only: the painting goes dark, the LED wall glows', dark > 0.5, `${(dark * 100).toFixed(0)}% of the stage is dark`);
+  const dark = await page.evaluate(() => { const op = (sel) => +getComputedStyle(document.querySelector(sel)).opacity; return { on: document.getElementById('player').classList.contains('lights-only'), slide: op('.pl-slide.live') , caption: op('.pl-caption'), sparkles: op('.pl-fx'), mark: op('.pl-mark') }; });
+  const wall = await lit();
+  check('lights only: the painting, its title, Lumi and the sparkles leave; the LED wall glows', dark.on && dark.slide === 0 && dark.caption === 0 && dark.sparkles === 0 && dark.mark === 0 && wall.n > 1000, JSON.stringify({ ...dark, lit: wall.n }));
   await page.screenshot({ path: `${out}/led-wall-dark.png` });
   // sound: claps flash the strip
+  await page.locator('#godScope .lw-chip').nth(2).click(); await wait(200); // the whole exhibition
   await page.click('#godSave'); await wait(1500); await page.click('#godClose'); await wait(600);
+  const through = await page.evaluate(async () => {
+    const L = window.__lumina; const id0 = L.state.curId; let minLit = 1e9, dark = true;
+    const c = document.querySelector('.pl-led'), x = c.getContext('2d');
+    const count = () => { const d = x.getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 64) if (d[i] > 60) n++; return n; };
+    document.getElementById('nextBtn').click();
+    const t0 = performance.now();
+    while (performance.now() - t0 < 4000) { await new Promise(r => requestAnimationFrame(r)); minLit = Math.min(minLit, count()); dark = dark && document.getElementById('player').classList.contains('lights-only'); }
+    return { moved: L.state.curId !== id0, minLit, dark };
+  });
+  check('a change of work: the LED wall and the dark stage never go out', through.moved && through.minLit > 500 && through.dark, JSON.stringify(through));
   check('the arrangement is saved to the work (the client screen plays it as arranged)', await page.evaluate(() => window.__lumina.state.packs.some(p => p.id === 'led')));
   await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
   await page.click('#interactToggles [data-opt=listen]'); await wait(800); await page.click('#closeSettings');

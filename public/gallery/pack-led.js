@@ -52,31 +52,65 @@ export default {
       const n = cs.length, f = x * n, i = Math.floor(f) % n;
       return mix(cs[i], cs[(i + 1) % n], f - Math.floor(f));
     };
-    // where the LEDs are: a list of strips, each a list of [x, y]
+    // one ready-made image per LED colour (glow + lens + hot centre): one draw per LED, however big the wall
+    const sprites = new Map();
+    const spriteFor = (col, sz, glow) => {
+      const q = col.map(c => Math.min(255, Math.round(c / 17) * 17)), key = q.join() + '|' + sz.toFixed(1) + '|' + glow.toFixed(2);
+      let sp = sprites.get(key); if (sp) return sp;
+      if (sprites.size > 600) sprites.clear();
+      const halo = Math.max(sz, sz * (1 + glow * 4)), dim = Math.ceil(halo * 2 + 2), c = document.createElement('canvas');
+      const px = Math.min(2, window.devicePixelRatio || 1); c.width = c.height = Math.ceil(dim * px); // sharp on high-density screens
+      const x = c.getContext('2d'), m = dim / 2, [r, g, b] = q; x.scale(px, px);
+      if (glow > 0) { const gr = x.createRadialGradient(m, m, sz * 0.3, m, m, halo); gr.addColorStop(0, `rgba(${r},${g},${b},${0.55 * glow + 0.15})`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`); x.fillStyle = gr; x.fillRect(0, 0, dim, dim); }
+      x.fillStyle = `rgb(${r},${g},${b})`; x.beginPath(); x.arc(m, m, sz / 2, 0, TAU); x.fill();
+      x.globalAlpha = 0.8; x.fillStyle = '#fff'; x.beginPath(); x.arc(m, m, sz * 0.18, 0, TAU); x.fill(); // the hot centre of a real LED
+      sp = { c, dim }; sprites.set(key, sp); return sp;
+    };
+    // where the LEDs are: strips of { x, y, m } — m is the position for the sound meter (0 = where it starts to grow)
     const strips = () => {
-      const r = p.around === 'work' && host.rect ? host.rect : { x: 0, y: 0, w: host.W, h: host.H };
-      const m = p.around === 'work' ? -Math.max(10, p.size * 2.5) : Math.max(12, p.size * 2.5), n = Math.round(p.count);
-      const X0 = r.x + m, X1 = r.x + r.w - m, Y0 = r.y + m, Y1 = r.y + r.h - m;
-      const line = (ax, ay, bx, by, k = n) => Array.from({ length: k }, (_, i) => { const f = k === 1 ? 0.5 : i / (k - 1); return [ax + (bx - ax) * f, ay + (by - ay) * f]; });
-      const vn = Math.max(6, Math.round(n * (Y1 - Y0) / Math.max(1, X1 - X0)));
-      switch (p.layout) {
-        case 'top': return [line(X0, Y0, X1, Y0)];
-        case 'both': return [line(X0, Y0, X1, Y0), line(X0, Y1, X1, Y1)];
-        case 'sides': return [line(X0, Y1, X0, Y0, vn), line(X1, Y1, X1, Y0, vn)];
-        case 'middle': return [line(X0, (Y0 + Y1) / 2, X1, (Y0 + Y1) / 2)];
-        case 'rows': { const rows = Math.max(3, Math.min(12, Math.round(vn / 3))); return Array.from({ length: rows }, (_, j) => line(X0, Y0 + (Y1 - Y0) * (j / (rows - 1)), X1, Y0 + (Y1 - Y0) * (j / (rows - 1)))); }
-        case 'frame': { // one continuous strip around: bottom left → right, up, top right → left, down
-          const per = 2 * (X1 - X0) + 2 * (Y1 - Y0), k = Math.max(16, Math.round(n * per / Math.max(1, X1 - X0)));
-          return [Array.from({ length: k }, (_, i) => {
-            let d = (i / k) * per;
-            if (d < X1 - X0) return [X0 + d, Y1]; d -= X1 - X0;
-            if (d < Y1 - Y0) return [X1, Y1 - d]; d -= Y1 - Y0;
-            if (d < X1 - X0) return [X1 - d, Y0]; d -= X1 - X0;
-            return [X0, Y0 + d];
-          })];
-        }
-        default: return [line(X0, Y1, X1, Y1)];
+      const W = host.W, H = host.H, lowP = (host.alive && host.alive.quality < 1);
+      const MAX = Math.round(Math.max(240, Math.min(1500, (W * H) / 700)) * (lowP ? 0.5 : 1)); // a budget by screen size, so phones and TVs stay smooth
+      let r = { x: 0, y: 0, w: W, h: H };
+      if (p.around === 'work' && host.rect) {
+        r = { ...host.rect };
+        const cp = host.camPose; // follow the camera's framing of the work (zoom and drift)
+        if (cp && cp.s) { const cx = r.x + r.w / 2, cy = r.y + r.h / 2; r = { x: cx - (r.w / 2) * cp.s + (cp.tx || 0), y: cy - (r.h / 2) * cp.s + (cp.ty || 0), w: r.w * cp.s, h: r.h * cp.s }; }
       }
+      const n = Math.max(2, Math.round(p.count));
+      const g = p.around === 'work' ? -Math.max(8, p.size * 1.5) : Math.max(12, p.size * 2.5), e = Math.max(4, p.size); // outside the work, inside the screen
+      const X0 = Math.max(e, r.x + g), X1 = Math.min(W - e, r.x + r.w - g), Y0 = Math.max(e, r.y + g), Y1 = Math.min(H - e, r.y + r.h - g);
+      const sp = (X1 - X0) / (n - 1); // LEDs keep the same spacing in every direction, like a real strip
+      const line = (ax, ay, bx, by, k, meter) => Array.from({ length: k }, (_, i) => { const f = k === 1 ? 0.5 : i / (k - 1); return { x: ax + (bx - ax) * f, y: ay + (by - ay) * f, m: meter(f) }; });
+      const mid = (f) => Math.abs(f - 0.5) * 2, up = (f) => f;
+      const vn = Math.max(2, Math.round((Y1 - Y0) / Math.max(1, sp)) + 1);
+      let out;
+      switch (p.layout) {
+        case 'top': out = [line(X0, Y0, X1, Y0, n, mid)]; break;
+        case 'both': out = [line(X0, Y0, X1, Y0, n, mid), line(X0, Y1, X1, Y1, n, mid)]; break;
+        case 'sides': out = [line(X0, Y1, X0, Y0, vn, up), line(X1, Y1, X1, Y0, vn, up)]; break; // the meter grows from the floor up
+        case 'middle': out = [line(X0, (Y0 + Y1) / 2, X1, (Y0 + Y1) / 2, n, mid)]; break;
+        case 'rows': { // an even grid over the whole area; over budget, the LEDs spread further apart (still a full wall)
+          const spW = Math.max(sp, Math.sqrt(Math.max(1, (X1 - X0) * (Y1 - Y0)) / MAX));
+          const cols = Math.max(2, Math.round((X1 - X0) / spW) + 1), rows = Math.max(2, Math.round((Y1 - Y0) / spW) + 1);
+          out = Array.from({ length: rows }, (_, j) => { const y = Y0 + (Y1 - Y0) * j / (rows - 1); return line(X0, y, X1, y, cols, mid); });
+          return { strips: out, spacing: Math.max(1, Math.min((X1 - X0) / (cols - 1), (Y1 - Y0) / (rows - 1))) };
+        }
+        case 'frame': { // one strip all around with an LED on every corner; the meter grows from the bottom centre both ways
+          const side = Math.max(0, vn - 2), L = [];
+          for (let i = 0; i < n; i++) L.push({ x: X0 + (X1 - X0) * i / (n - 1), y: Y1 });
+          for (let i = 1; i <= side; i++) L.push({ x: X1, y: Y1 - (Y1 - Y0) * i / (side + 1) });
+          for (let i = 0; i < n; i++) L.push({ x: X1 - (X1 - X0) * i / (n - 1), y: Y0 });
+          for (let i = 1; i <= side; i++) L.push({ x: X0, y: Y0 + (Y1 - Y0) * i / (side + 1) });
+          const per = 2 * (X1 - X0) + 2 * (Y1 - Y0);
+          const pos = (q) => { if (q.y === Y1) return Math.abs(q.x - (X0 + X1) / 2); if (q.y === Y0) return (X1 - X0) / 2 + (Y1 - Y0) + Math.abs((X0 + X1) / 2 - q.x); return (X1 - X0) / 2 + (Y1 - q.y); };
+          out = [L.map(q => ({ ...q, m: Math.min(1, pos(q) / (per / 2)) }))]; break;
+        }
+        default: out = [line(X0, Y1, X1, Y1, n, mid)];
+      }
+      // never more than the budget (a very long frame on a big screen)
+      const total = out.reduce((a, l) => a + l.length, 0);
+      if (total > MAX) { const step = Math.ceil(total / MAX); out = out.map(l => l.filter((_, i) => i % step === 0)); }
+      return { strips: out, spacing: Math.max(1, sp) };
     };
     let S = null, key = '';
     return {
@@ -84,43 +118,48 @@ export default {
       frame(dt, k) {
         t += dt * p.speed;
         const r = host.rect; if (!r) return;
-        const kk = [p.layout, p.around, p.count, p.size, host.W, host.H, r.x, r.y, r.w, r.h].join();
+        const cp = p.around === 'work' ? host.camPose : null;
+        const kk = [p.layout, p.around, p.count, p.size, host.W, host.H, r.x, r.y, r.w, r.h, host.alive && host.alive.quality, cp ? [cp.s, cp.tx, cp.ty].join(':') : ''].join();
         if (kk !== key) { S = strips(); key = kk; }
         // sound: every clap / knock / beat flashes the strip and turns its colours
         let pulse = 0;
+        const b = p.sound ? (host.beat() || {}) : {};
+        if (!p.sound || b.hits == null) hitsSeen = null; else if (hitsSeen !== null && b.hits < hitsSeen) hitsSeen = b.hits;
         if (p.sound) {
-          const b = host.beat() || {};
-          if (b.hits == null) hitsSeen = null; else if (hitsSeen !== null && b.hits < hitsSeen) hitsSeen = b.hits;
-          if (b.hits != null) { if (hitsSeen === null) hitsSeen = b.hits; if (b.hits > hitsSeen) { hitsSeen = b.hits; flashT = t; shift += 0.17; host.ledHits = (host.ledHits || 0) + 1; } }
+          if (b.hits != null) {
+            if (hitsSeen === null) hitsSeen = b.hits;
+            if (b.hits > hitsSeen) { hitsSeen = b.hits; flashT = t; shift += 0.17; if (b.hits > (host.ledFlashed || 0)) { host.ledFlashed = b.hits; host.ledHits = (host.ledHits || 0) + 1; } }
+          }
           if (b.live && b.count != null) { if (lastCount !== null && b.count > lastCount) { flashT = t; shift += 0.08; } lastCount = b.count; }
           pulse = Math.max(Math.exp(-Math.max(0, t - flashT) / (0.12 * p.speed)), b.live ? (b.pulse || 0) * 0.6 : 0);
-          level = Math.max(b.energy ?? b.level ?? pulse, level * Math.pow(0.2, dt));
+          level = Math.max(b.energy ?? b.level ?? 0, pulse * 0.6, level * Math.pow(0.2, dt));
         }
-        const ctx = host.front;
+        // screen-fixed: the camera never moves the strips (those around the work follow its framing above)
+        const ctx = host.overlay || host.front;
         ctx.save();
-        // the stage: with the painting, dimmed, or dark (pure light art)
-        if (p.stage !== 'with') { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(0,0,0,${(p.stage === 'dark' ? 1 : 0.6) * k})`; ctx.fillRect(0, 0, host.W, host.H); }
+        // the stage: with the painting, dimmed, or lights only (the player hides the painting, title, Lumi and sparkles)
+        if (p.stage === 'dark') host.lightsOnly = Math.max(host.lightsOnly || 0, k);
+        if (p.stage === 'dim') { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(0,0,0,${0.6 * k})`; ctx.fillRect(0, 0, host.W, host.H); }
         ctx.globalCompositeOperation = 'lighter';
-        const sz = p.size, halo = sz * (2 + p.glow * 7);
-        S.forEach((leds, si) => {
+        const sz = Math.max(1.5, Math.min(p.size, S.spacing * 0.8)); // an LED is never bigger than the gap to the next one
+        const glow = (host.alive && host.alive.quality < 1) ? p.glow * 0.5 : p.glow;
+        S.strips.forEach((leds, si) => {
           const n = leds.length;
-          leds.forEach(([x, y], i) => {
+          leds.forEach((L, i) => {
             const u = i / n; let col, v;
             switch (p.pattern) {
               case 'breathe': col = palette(t * 0.05 + shift + si * 0.1); v = 0.12 + 0.88 * (0.5 - 0.5 * Math.cos(t * TAU / 4)); break;
               case 'chase': { const step = Math.floor(t * 8); col = palette(Math.floor((i + step) / 4) * 0.13 + shift); v = (i + step) % 4 === 0 ? 1 : 0.1; break; }
               case 'comet': { const head = (t * 0.35 + si * 0.5) % 1, d = ((head - u) % 1 + 1) % 1; col = palette(head + shift); v = d < 0.25 ? Math.pow(1 - d / 0.25, 2) : 0.04; break; }
               case 'twinkle': { const ph = tw[(i + si * 211) % tw.length]; col = palette(ph + shift); v = 0.08 + 0.92 * Math.pow(Math.max(0, Math.sin(t * (1.2 + ph * 2.4) + ph * 40)), 8); break; }
-              case 'meter': { const lit = Math.min(1, level * 1.4 + pulse * 0.3), d = Math.abs(u - 0.5) * 2; col = palette(d * 0.4 + shift); v = d <= lit ? 1 : 0.05; break; }
+              case 'meter': { const lit = Math.min(1, level * 1.4); col = palette(L.m * 0.4 + shift); v = L.m <= lit ? 1 : 0.05; break; }
               case 'solid': col = palette(u + shift); v = 1; break;
               default: col = palette(u * 1.5 - t * 0.12 + shift); v = 1; // flowing rainbow
             }
             v = Math.min(1, v * (0.75 + 0.6 * pulse)) * p.bright * k;
             if (v < 0.01) return;
-            if (p.glow > 0) { ctx.globalAlpha = v * (0.35 + 0.4 * pulse); ctx.drawImage(host.sprite(col), x - halo / 2, y - halo / 2, halo, halo); }
-            ctx.globalAlpha = v; ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
-            ctx.beginPath(); ctx.arc(x, y, sz / 2, 0, TAU); ctx.fill();
-            ctx.globalAlpha = v * 0.8; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, sz * 0.18, 0, TAU); ctx.fill(); // the hot centre of a real LED
+            const sp = spriteFor(col, sz, glow);
+            ctx.globalAlpha = v; ctx.drawImage(sp.c, L.x - sp.dim / 2, L.y - sp.dim / 2, sp.dim, sp.dim);
           });
         });
         ctx.restore();

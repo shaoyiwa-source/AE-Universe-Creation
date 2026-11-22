@@ -1276,8 +1276,9 @@ function startMusic() {
 
 async function show(i) {
   busy = true;
-  alive.detach(); packs.clear();
   const work = list[i];
+  alive.detach();
+  { const it = itemOf(work.id) || {}; packs.keep((god.open ? god.fx : (it.fx || modeFx())).map(e => e.id)); } // the same effect carries on through the change
   const nextSlot = shown ? 1 - cur : cur;
   const incoming = slides[nextSlot];
   const ok = await loadInto(nextSlot, work);
@@ -1578,6 +1579,7 @@ fx.onFrame = (dt) => {
   sound.visualLead = Math.min(0.05, (sound.visualLead || 0.016) * 0.9 + dt * 0.1); // one frame ahead, averaged
   alive.frame(dt, playing);
   packs.frame(dt);
+  player.classList.toggle('lights-only', (packs.lightsOnly || 0) > 0.5); // pure light art: only the lights are on stage
   // manual paging: the camera plays its move once and holds; God mode loops it; otherwise it follows the work's time
   if (packs.cam && shown) { const manual = S.advance === 'manual'; if (god.open || (manual && playing)) camT += dt; packs.cameraFrame(god.open ? (camT % curDur) / curDur : manual ? Math.min(1, camT / curDur) : elapsed / curDur); }
   // while the camera is close or at an angle, the title steps aside (like a documentary); it returns with the whole
