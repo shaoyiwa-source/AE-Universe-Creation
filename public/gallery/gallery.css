@@ -549,3 +549,5 @@ body.tuning .lw-scrim{background:transparent;pointer-events:none}
   .lw-player.tuning .pl-stage,.lw-player.tuning .pl-fx{bottom:50dvh;height:auto}
   .lw-player.tuning .pl-caption,.lw-player.tuning .pl-controls,.lw-player.tuning .pl-breath{display:none}
 }
+/* during a presentation, messages appear at the top so they never cover the control bar */
+body.no-scroll .lw-toast{bottom:auto;top:calc(22px + env(safe-area-inset-top))}
