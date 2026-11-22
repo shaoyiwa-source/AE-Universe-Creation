@@ -10,17 +10,21 @@
 // the phase of the beat are found; then each next beat is PREDICTED and the light fires on it — not after hearing it.
 // Every new kick nudges phase and tempo (a phase-locked loop); a new song re-locks; silence lets go.
 const ONSET_WORKLET = `class AeOnset extends AudioWorkletProcessor {
-  constructor() { super(); this.slow = 1e-5; this.hold = 0; this.prev = 0; this.pk = 0; this.pkT = 0; this.pkLeft = 0; }
+  constructor() { super(); this.slow = 1e-5; this.hold = 0; this.prev = 0; this.prev2 = 0; this.prev3 = 0; this.prev4 = 0; this.pk = 0; this.pkT = 0; this.pkLeft = 0; this.floor = 2e-6; this.done = false;
+    this.port.onmessage = (e) => { if (e.data && e.data.stop) this.done = true; else if (e.data && e.data.kickFloor) this.floor = e.data.kickFloor; }; }
   process(inputs) {
+    if (this.done) return false;
     const ch = inputs[0] && inputs[0][0];
     if (ch) {
       let e = 0; for (let i = 0; i < ch.length; i++) e += ch[i] * ch[i]; e /= ch.length;
       const blockDur = ch.length / sampleRate;
       this.hold = Math.max(0, this.hold - blockDur);
       if (this.pkLeft > 0) { this.pk = Math.max(this.pk, e); if (--this.pkLeft === 0) this.port.postMessage({ peakOf: this.pkT, e: this.pk }); }
-      if (e > this.slow * 4 && e > 2e-4 && e > this.prev * 1.8 && this.hold <= 0) { this.port.postMessage({ t: currentTime, e }); this.hold = 0.18; this.pk = e; this.pkT = currentTime; this.pkLeft = 8; }
+      // relative to the room's own bass level (quiet music, laptop and phone mics with little bass), never to digital zero
+      const recent = Math.max(this.prev, this.prev2, this.prev3, this.prev4);
+      if (e > Math.max(this.slow, this.floor) * 4 && e > recent * 1.8 && this.hold <= 0) { this.port.postMessage({ t: currentTime, e }); this.hold = 0.18; this.pk = e; this.pkT = currentTime; this.pkLeft = 8; }
       this.slow += (e - this.slow) * Math.min(1, blockDur / 0.6);
-      this.prev = e;
+      this.prev4 = this.prev3; this.prev3 = this.prev2; this.prev2 = this.prev; this.prev = e;
     }
     return true;
   }
@@ -29,8 +33,10 @@ registerProcessor('ae-onset', AeOnset);
 // claps, finger snaps, knocks: any sharp, bright sound (like an LED strip's "sound active" mode, but timed precisely)
 class AeTransient extends AudioWorkletProcessor {
   constructor() { super(); this.slow = 1e-6; this.hold = 0; this.prev = 0; this.prev2 = 0; this.prev3 = 0; this.prev4 = 0; this.pk = 0; this.pkT = 0; this.pkLeft = 0; this.k = 5; this.floor = 2e-6;
-    this.port.onmessage = (e) => { if (e.data && e.data.k) { this.k = e.data.k; this.floor = e.data.floor; } }; }
+    this.done = false;
+    this.port.onmessage = (e) => { if (e.data && e.data.stop) this.done = true; else if (e.data && e.data.k) { this.k = e.data.k; this.floor = e.data.floor; } }; }
   process(inputs) {
+    if (this.done) return false;
     const ch = inputs[0] && inputs[0][0];
     if (ch) {
       let e = 0; for (let i = 0; i < ch.length; i++) e += ch[i] * ch[i]; e /= ch.length;
@@ -65,7 +71,7 @@ export class BeatLock {
     let best = 0, score = 0; for (const [b, v] of hist) if (v > score) { score = v; best = b; }
     // refine: mean of the intervals near the winner
     let sum = 0, n = 0;
-    for (let i = 1; i < o.length; i++) { let iv = o[i] - o[i - 1]; while (iv < 0.333) iv *= 2; while (iv > 0.857) iv /= 2; if (Math.abs(iv - best / 200) < 0.012) { sum += iv; n++; } }
+    for (let i = 1; i < o.length; i++) { let iv = o[i] - o[i - 1]; if (iv <= 0) continue; while (iv < 0.333) iv *= 2; while (iv > 0.857) iv /= 2; if (Math.abs(iv - best / 200) < 0.012) { sum += iv; n++; } }
     return n ? sum / n : best / 200;
   }
   // the hits that sit on a grid of period p through t, and a straight-line fit through them (exact tempo and phase)
@@ -77,15 +83,16 @@ export class BeatLock {
     return { fit, period, phase: fit ? (sx - period * sk) / fit : t };
   }
   _lockTo(f) { this.period = f.period; this.next = f.phase + f.period; this.conf = 3; this.misses = 0; this.recent = []; }
-  onset(t) {
-    this.lastOnset = t;
+  onset(t, src = 'kick') {
+    if (!(t > this.lastOnset)) return; // time only moves forward (and a repeated time must never stall the estimate)
+    this.lastOnset = t; this.src = src;
     this.onsets.push(t); while (this.onsets.length > 16 || (this.onsets.length && t - this.onsets[0] > 10)) this.onsets.shift();
     if (!this.locked) {
       const p = this._estimate(); if (!p) return;
       const f = this._fit(this.onsets, p, t);
       // most of what was heard lately must sit on the grid: scattered claps or talking never lock
       const near = this.onsets.filter(x => t - x < p * 8.5), fn = this._fit(near, p, t).fit;
-      if (f.fit >= 4 && fn >= near.length * 0.75) this._lockTo(f);
+      if (f.fit >= 6 && fn >= near.length * 0.75) this._lockTo(f); // six on the grid: talking or a TV does not lock by chance
       return;
     }
     // a new song at a new tempo: the newest six hits agree on a different grid → re-lock at once (no slow drift)
@@ -111,7 +118,8 @@ export class BeatLock {
   tick(now, lead = 0.016) {
     let fired = false;
     if (!this.locked) return false;
-    if (now - this.lastOnset > Math.max(2.5, this.period * 5)) { this.conf = 0; this.period = 0; return false; } // silence: let go
+    // silence lets go: music may pause for a break; claps stop for good sooner
+    if (now - this.lastOnset > (this.src === 'clap' ? Math.max(1.2, this.period * 2.2) : Math.max(2.5, this.period * 5))) { this.conf = 0; this.period = 0; return false; } // silence: let go
     while (now + lead >= this.next) { this.lastBeat = this.next; this.emitted.push(this.next); if (this.emitted.length > 64) this.emitted.shift(); this.next += this.period; this.count++; fired = true; }
     return fired;
   }
@@ -123,9 +131,18 @@ export class Listener {
 
   static supported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext)); }
 
-  async start(ctx) {
-    if (this.on) return true;
-    this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  // one start at a time; a stop while the microphone permission is still open cancels it (no microphone left running)
+  start(ctx) {
+    if (this.on) return Promise.resolve(true);
+    if (this.starting) return this.starting;
+    this.cancel = false;
+    this.starting = this._start(ctx).finally(() => { this.starting = null; });
+    return this.starting;
+  }
+  async _start(ctx) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    if (this.cancel) { stream.getTracks().forEach(t => t.stop()); return false; }
+    this.stream = stream; const gen = this.gen = (this.gen || 0) + 1;
     this.ctx = ctx;
     this.src = ctx.createMediaStreamSource(this.stream);
     this.an = ctx.createAnalyser(); this.an.fftSize = 2048; this.an.smoothingTimeConstant = 0.2;
@@ -154,8 +171,8 @@ export class Listener {
         if (ev.data.peakOf != null) { if (ev.data.peakOf === this.lastLowRaw) this.lastLowE = ev.data.e; return; }
         const t = ev.data.t; this.lastLowRaw = t; this.lastLowE = ev.data.e;
         setTimeout(() => {
-          if (!this.on || (near(this.lastHitRaw, t) && this.lastHitE > this.lastLowE * 2)) return; // a clap
-          this.lastKickAt = t; this.lock.onset(t - this.inLat - LOCK_BIAS);
+          if (!this.on || this.gen !== gen || (near(this.lastHitRaw, t) && this.lastHitE > this.lastLowE * 2)) return; // a clap
+          this.lastKickAt = t; this.lock.onset(t - this.inLat - LOCK_BIAS, 'kick');
         }, 60);
       };
       // the bright band: claps and snaps light the show at once; clapped in time, they become the beat too
@@ -183,17 +200,17 @@ export class Listener {
       }
       this.anyHit = anyHit;
       this.setSensitivity(this.sensitivity || 2);
-      this.hitCount = 0; this.hitTimes = [];
+      this.hitCount = this.hitCount || 0; this.hitTimes = this.hitTimes || []; // only ever counts up (the lights compare with what they saw)
       this.hitNode.port.onmessage = (ev) => {
         if (!this.on) return;
         if (ev.data.peakOf != null) { if (ev.data.peakOf === this.lastHitRaw) this.lastHitE = ev.data.e; return; }
         const raw = ev.data.t; this.lastHitRaw = raw; this.lastHitE = ev.data.e;
         this.anyHit(raw); // the bright band is one of the three
         const t = raw - this.inLat - LOCK_BIAS * 0.5;
-        setTimeout(() => {
-          if (!this.on || (near(this.lastLowRaw, raw) && this.lastLowE * 2 >= this.lastHitE)) return; // a kick's click, not a clap
-          if (!(this.lastKickAt > raw - 3)) this.lock.onset(t); // no drum in the room: the claps keep the time
-        }, 60);
+        setTimeout(() => { // decided after the bass's own peak is known (one sound never feeds the lock twice)
+          if (!this.on || this.gen !== gen || (near(this.lastLowRaw, raw) && this.lastLowE * 2 >= this.lastHitE)) return; // a kick's click, not a clap
+          if (!(this.lastKickAt > raw - 3)) this.lock.onset(t, 'clap'); // no drum in the room: the claps keep the time
+        }, 90);
       };
     } catch { this.onsetNode = null; } // no AudioWorklet: the light still follows the (frame-timed) kicks
     this.time = new Float32Array(this.an.fftSize);
@@ -201,6 +218,7 @@ export class Listener {
     this.slow = 0.002; this.fast = 0; this.low = 0; this.lowSlow = 0.0005;
     this.sustain = 0; this.cool = 0; this.beatCool = 0; this.kind = null; this.level = 0;
     this.on = true;
+    if (this.cancel) { this.stop(); return false; } // turned off while the audio modules were loading
     return true;
   }
 
@@ -209,10 +227,19 @@ export class Listener {
     this.sensitivity = level;
     const k = level >= 3 ? 3.5 : level <= 1 ? 8 : 5, floor = level >= 3 ? 6e-7 : level <= 1 ? 2e-5 : 2e-6;
     for (const n of [this.hitNode, ...(this.bandNodes || [])]) if (n) n.port.postMessage({ k, floor });
+    if (this.onsetNode) this.onsetNode.port.postMessage({ kickFloor: floor });
   }
 
+  // after the audio clock stood still (app in the background, a call): the old beat phase means nothing any more
+  resync() { if (this.lock) this.lock.reset(); this.lastKickAt = this.lastAnyRaw = this.lastLowRaw = this.lastHitRaw = undefined; }
+
   stop() {
+    this.cancel = true; // a start still waiting for permission will not open the microphone
     if (!this.on) return;
+    this.gen = (this.gen || 0) + 1; // late decisions of this session are ignored
+    for (const n of [this.onsetNode, this.hitNode, ...(this.bandNodes || [])]) if (n) { try { n.port.postMessage({ stop: true }); n.port.onmessage = null; } catch { /* ignore */ } }
+    this.onsetNode = this.hitNode = null; this.bandNodes = [];
+    this.resync();
     try { this.src.disconnect(); } catch { /* ignore */ }
     (this.onsetChain || []).forEach(n => { try { n.disconnect(); } catch { /* ignore */ } }); this.onsetChain = null;
     if (this.lock) this.lock.reset();

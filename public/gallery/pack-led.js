@@ -90,6 +90,7 @@ export default {
         let pulse = 0;
         if (p.sound) {
           const b = host.beat() || {};
+          if (b.hits == null) hitsSeen = null; else if (hitsSeen !== null && b.hits < hitsSeen) hitsSeen = b.hits;
           if (b.hits != null) { if (hitsSeen === null) hitsSeen = b.hits; if (b.hits > hitsSeen) { hitsSeen = b.hits; flashT = t; shift += 0.17; host.ledHits = (host.ledHits || 0) + 1; } }
           if (b.live && b.count != null) { if (lastCount !== null && b.count > lastCount) { flashT = t; shift += 0.08; } lastCount = b.count; }
           pulse = Math.max(Math.exp(-Math.max(0, t - flashT) / (0.12 * p.speed)), b.live ? (b.pulse || 0) * 0.6 : 0);

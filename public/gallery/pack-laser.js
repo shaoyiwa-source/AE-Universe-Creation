@@ -57,6 +57,8 @@ export default {
           b = { pulse: Math.exp(-(t - lastBeat) / 0.11), stage: 'groove', buildProgress: 0, dropPulse: 0, sweep: t / iv, energy: 0.4 + 0.3 * Math.sin(t * 0.7) };
         }
         // a clap / snap / knock heard in the room: flash at once and turn the colours (LED-strip style)
+        if (b.hits == null) hitsSeen = null; // not listening (or our own music leads): nothing to catch up on later
+        else if (hitsSeen !== null && b.hits < hitsSeen) hitsSeen = b.hits;
         if (p.hits && b.hits != null) {
           if (hitsSeen === null) hitsSeen = b.hits;
           if (b.hits > hitsSeen) { hitsSeen = b.hits; hitT = t - Math.max(0, Math.min(0.05, b.hitAge || 0)); shift++; if (b.hits > (host.hitsFlashed || 0)) { host.hitsFlashed = b.hits; host.laserHits = (host.laserHits || 0) + 1; } beat = true; }

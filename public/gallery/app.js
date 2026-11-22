@@ -720,7 +720,7 @@ function renderSettings() {
   const inten = $('#intensity'); inten.value = S.intensity; $('#intensityOut').textContent = S.intensity;
   const it = $('#interactToggles'); it.replaceChildren();
   for (const o of OPTIONS.interact) it.appendChild(toggle(o, S.interact[o.id], () => {
-    if (o.id === 'listen') { setListen(!S.interact.listen); return; }
+    if (o.id === 'listen') { setListen(!(listenWant ?? S.interact.listen)); return; }
     S.interact[o.id] = !S.interact[o.id]; adj(); commit();
   }));
   const di = $('#displayToggles'); di.replaceChildren();
@@ -1525,9 +1525,12 @@ async function startListening(fromGesture) {
   catch (err) { if (fromGesture) toast(err && err.name === 'NotAllowedError' ? T('micDenied') : T('micUnavailable')); return false; }
 }
 function stopListening() { listener.stop(); $('#micDot').hidden = true; fx.setSound(0, null); }
+let listenWant = null; // what the visitor asked for last (the microphone may still be asking for permission)
 async function setListen(on) {
-  if (on) { const ok = await startListening(true); S.interact.listen = ok; }
+  listenWant = on;
+  if (on) { const ok = await startListening(true); if (listenWant !== true) return; S.interact.listen = ok; } // turned off meanwhile: that wins
   else { S.interact.listen = false; stopListening(); }
+  listenWant = null;
   S.adjusted = true; saveSettings(S, SKEY); renderSettings();
 }
 
@@ -1788,7 +1791,7 @@ async function requestWake() { try { if (canWake()) wakeLock = await navigator.w
 function releaseWake() { try { wakeLock?.release(); } catch { /* ignore */ } wakeLock = null; }
 document.addEventListener('visibilitychange', () => {
   if (player.hidden) return;
-  if (document.hidden) sound.suspend(); else { sound.resume(); requestWake(); musicNudged = false; }
+  if (document.hidden) sound.suspend(); else { sound.resume(); requestWake(); musicNudged = false; if (listener.on) listener.resync(); }
 });
 // the music must not quietly stop: phones interrupt web audio (calls, notifications, switching apps)
 let musicWatch = 0, musicNudged = false;

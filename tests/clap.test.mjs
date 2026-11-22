@@ -49,16 +49,19 @@ try {
       // a pure tone burst: a thump (low) or a knock (mid)
       window.__tone = (t, f, v, d) => { const o = c.createOscillator(), g = c.createGain(); g.gain.value = 0.0001; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g).connect(md); o.start(t); o.stop(t + d + 0.02); };
       // music from another speaker: kick on the beat, hi-hat on the off-beat
-      window.__band = (bpm, from, secs) => {
-        const per = 60 / bpm;
+      window.__band = (bpm, from, secs, laptop) => {
+        const per = 60 / bpm; let out = md;
+        if (laptop) { const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 200; const g0 = c.createGain(); g0.gain.value = 0.03; hp.connect(g0).connect(md); out = hp; } // a laptop mic, music at background level
+        const md0 = md; { const md = out;
         for (let t = from; t < from + secs; t += per) {
           const o = c.createOscillator(), g = c.createGain(); g.gain.value = 0.0001;
           o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
           g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.9, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
           o.connect(g).connect(md); o.start(t); o.stop(t + 0.4);
-          burst(t + per / 2, 7000, 0.7, 'highpass', 0.3, 0.04);
+          { const s2 = c.createBufferSource(); s2.buffer = noise; const f2 = c.createBiquadFilter(); f2.type = 'highpass'; f2.frequency.value = 7000; const g2 = c.createGain(); g2.gain.value = 0.0001; const th = t + per / 2; g2.gain.setValueAtTime(0.0001, th); g2.gain.linearRampToValueAtTime(0.3, th + 0.001); g2.gain.exponentialRampToValueAtTime(0.0001, th + 0.04); s2.connect(f2).connect(g2).connect(md); s2.start(th); s2.stop(th + 0.06); }
+          window.__kicks = (window.__kicks || []).concat(t);
         }
-      };
+      } };
       return md.stream;
     };
   });
@@ -124,6 +127,22 @@ try {
   await page.evaluate(() => window.__band(124, window.__ctx.currentTime + 0.4, 8)); await wait(8800);
   const s6 = await page.evaluate(() => ({ hits: window.__lumina.state.hits, lock: window.__lumina.state.lock, mode: window.__lumina.state.laserMode }));
   check('room music: kicks and hi-hats flash, and the light locks to the beat', s6.hits.flashes - f6.flashes >= 28 && Math.abs(s6.lock.bpm - 124) < 1.5 && s6.mode === 'room', `${s6.hits.flashes - f6.flashes} flashes for 33 sounds; bpm ${s6.lock.bpm}, lasers ${s6.mode}`);
+  // 7. a laptop mic with little bass, music at background level: the light locks to the kick, not the off-beat hi-hat
+  await wait(4000);
+  const t7 = await page.evaluate(() => { window.__kicks = []; const t = window.__ctx.currentTime + 0.4; window.__band(124, t, 10, true); return t; });
+  await wait(10500);
+  const s7 = await page.evaluate(() => ({ lock: window.__lumina.state.lock, kicks: window.__kicks }));
+  const em7 = s7.lock.emitted.filter(t => t > t7 + 4 && t < t7 + 10);
+  const v7 = em7.length ? stats(em7.map(t => t - nearest(t, s7.kicks))) : { worst: 9, mean: 9 };
+  check('a laptop mic with quiet music locks on the kick (not half a beat off)', Math.abs(s7.lock.bpm - 124) < 1.5 && v7.worst <= 0.03, `bpm ${s7.lock.bpm}, worst ${(v7.worst * 1000).toFixed(1)} ms over ${em7.length} beats`);
+  // 8. sound reaction off and on again: claps still flash
+  await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
+  await page.click('#interactToggles [data-opt=listen]'); await wait(500); await page.click('#interactToggles [data-opt=listen]'); await wait(1200); await page.click('#closeSettings');
+  const f8 = await page.evaluate(() => window.__lumina.state.hits);
+  await page.evaluate(() => { let t = window.__ctx.currentTime + 0.4; for (const g of [0, 0.55, 0.7, 0.45]) { t += g; window.__clap(t); } });
+  await wait(3000);
+  const s8 = await page.evaluate(() => window.__lumina.state.hits);
+  check('after turning sound reaction off and on, every clap still flashes', s8.count - f8.count === 4 && s8.flashes - f8.flashes === 4, `${s8.count - f8.count} heard, ${s8.flashes - f8.flashes} flashes`);
   check('no page errors', errs.length === 0, errs.slice(0, 2).join(' | '));
 } catch (e) { check('scenario crashed', false, String(e).split('\n').slice(0, 4).join(' / ')); }
 await browser.close(); srv.kill(); fs.rmSync(lib, { recursive: true, force: true });
