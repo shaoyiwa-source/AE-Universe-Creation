@@ -1214,7 +1214,11 @@ $('#recGo').addEventListener('click', async () => {
     const v = $('#recPreview'); v.src = URL.createObjectURL(out.blob); v.play().catch(() => {});
     $('#recInfo').textContent = `${out.width}×${out.height} · ${rec.secs}s · ${(out.blob.size / 1048576).toFixed(1)} MB · ${out.ext.toUpperCase()}`;
     const file = new File([out.blob], rec.name, { type: out.mime });
-    $('#recShare').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+    const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    $('#recShare').hidden = !canShare;
+    // on phones the photo album is what people look for: "save to Photos / share" first, the file download second
+    $('#recShare').textContent = T(IS_IOS || IS_ANDROID ? 'saveToPhotos' : 'share');
+    $('#recSave').textContent = T(IS_IOS || IS_ANDROID ? 'saveFile' : 'saveVideo');
     recPane('recResult');
     window.__lumina.lastClip = { size: out.blob.size, mime: out.mime, width: out.width, height: out.height, name: rec.name, audio: !!audioStream };
   } catch (err) {
@@ -1225,10 +1229,14 @@ $('#recGo').addEventListener('click', async () => {
     if (!player.hidden) fx.start();
   }
 });
+// where a downloaded file lands, said plainly (iPhone puts downloads in the Files app, not in Photos)
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/.test(navigator.userAgent);
 $('#recSave').addEventListener('click', () => {
   if (!rec.blob) return;
   const a = document.createElement('a'); a.href = URL.createObjectURL(rec.blob); a.download = rec.name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  toast(T(IS_IOS ? 'savedIOS' : IS_ANDROID ? 'savedAndroid' : 'savedDesktop', rec.name), 9000);
 });
 $('#recShare').addEventListener('click', async () => {
   if (!rec.blob) return;
