@@ -151,6 +151,7 @@ p{line-height:1.6;max-width:420px;margin:.4em auto;opacity:.92}
 .dc-inv{display:none;padding:6px 12px;font-size:13px;margin-left:6px}body.online .dc-inv{display:inline-block}.on-login input[type=email]{width:min(320px,80vw);padding:12px;border-radius:12px;border:1px solid #fff4;background:#ffffff12;color:#fff;font-size:16px}.on-opt{display:flex;gap:6px;align-items:center}
 .lv-back{position:fixed;left:10px;top:46px;z-index:6;background:#ffffff14;border:1px solid #ffffff33;color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;backdrop-filter:blur(6px)}#level:not(.on) .lv-back,#reward:not(.on) .lv-back{display:none}
 .dc-fast .dc-p,.dc-fast .dc-in,.dc-fast .dc-cell::before{transition:none!important}
+html,body{overscroll-behavior:none}#level.on{touch-action:none}#lvBody img,#lvBody canvas,#lvBody .dc-board{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}
 .dc-art{font-size:12px;opacity:.85;margin:4px 0 0;min-height:16px}
 .dc-p{position:absolute;left:0;top:0;width:25%;height:12.5%;transition:transform .34s cubic-bezier(.25,.8,.3,1);z-index:2;pointer-events:none}
 .dc-in{position:absolute;inset:8%;transform-style:preserve-3d;transition:transform .42s cubic-bezier(.25,.8,.3,1),opacity .4s}
@@ -379,6 +380,7 @@ const ON={sb:null,user:null,ready:false,dev:(()=>{let d=null;try{d=LS.getItem('a
 async function inviteFriend(){ON.need(async()=>{const r=await ON.createRoom('darkchess');if(!r)return;ON.room=r.id;ON.role='host';ON.roomRow={id:r.id,state:{}};const t=`來跟我下一盤暗畫棋，一起揭開一幅畫 ✦ ${r.url}`;const go=()=>{const i=LV.findIndex(l=>l.fn==='darkchess');if(i>=0)startLevel(i)};setTimeout(go,300);try{if(navigator.share){await navigator.share({text:t});return}}catch(e){}try{await navigator.clipboard.writeText(t);toast('邀請連結已複製，貼到 LINE 給朋友 ✦',2600)}catch(e){prompt('複製這個連結給朋友',r.url)}})}
 setTimeout(()=>ON.init(),800);
 const mid=u=>typeof u==='string'?u.replace(/img\/(wp\d+|wpX|bx[12])\.jpg$/,'img/$1_m.jpg'):u;
+document.addEventListener('touchmove',e=>{const lv=document.getElementById('level');if(lv&&lv.classList.contains('on')&&!e.target.closest('.lp-ov,.on-login'))e.preventDefault()},{passive:false});document.addEventListener('dragstart',e=>{if(e.target.closest&&e.target.closest('#lvBody'))e.preventDefault()});document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('#lvBody'))e.preventDefault()});
 document.addEventListener('click',e=>{if(e.target&&(e.target.id==='lvBack'||e.target.id==='rwBack')){try{clearT()}catch(_){}try{track('level_quit',{i:cur})}catch(_){}try{window.__dcUnwatch&&window.__dcUnwatch()}catch(_){}$('#lvBody').innerHTML='';renderMap();show('map')}});
 function track(ev,d){try{ON&&ON.log(ev,d)}catch(e){}try{const q=JSON.parse(LS.getItem('aeTrack2')||'[]');q.push([Date.now(),ev,d||null]);LS.setItem('aeTrack2',JSON.stringify(q.slice(-300)))}catch(e){}try{console.debug('[track]',ev,d)}catch(e){}}
 let miss=0,X={},CH=null,FAIL={},CK2=0;let BT={};try{BT=JSON.parse(LS.getItem('aeBT2')||'{}')}catch(e){}let BEST={};try{BEST=JSON.parse(LS.getItem('aeStars2')||'{}')}catch(e){}
