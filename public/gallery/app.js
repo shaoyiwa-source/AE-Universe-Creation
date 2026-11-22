@@ -37,7 +37,7 @@ const STEPS = [4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 40, 50, 60, 90,
 const fmtSec = (s) => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)} min` : '1 h';
 
 const DEFAULTS = {
-  mode: 'online', adjusted: false, transition: 'random', interval: 10,
+  mode: 'online', adjusted: false, transition: 'random', interval: 10, advance: 'auto',
   effects: { innerbloom: true, lumiere: true, echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
   interact: { alive: true, tray: true, ripple: true, chime: true, lumi: true, seeds: true, cute: false, listen: false },
   display: { intro: true, captions: true, label: true, camera: false, mat: true, drift: true, shuffle: false, loop: true },
@@ -50,7 +50,7 @@ const SKEY = ED ? 'ae-lumina-ed-' + ED.id : 'ae-lumina-settings';
 const S = loadSettings(DEFAULTS, SKEY);
 if (ED && ED.settings && lsGet(SKEY, null) === null) {
   const es = ED.settings;
-  for (const k of ['mode', 'transition', 'interval', 'music', 'volume']) if (k in es) S[k] = es[k];
+  for (const k of ['mode', 'transition', 'interval', 'music', 'volume', 'advance']) if (k in es) S[k] = es[k];
   for (const k of ['effects', 'interact', 'display']) if (es[k]) Object.assign(S[k], es[k]);
   S.selected = [];
 }
@@ -606,7 +606,7 @@ exportForm.addEventListener('submit', async (e) => {
   go.disabled = true;
   try {
     const { exportEdition } = await import('./export.js');
-    const settings = { mode: S.mode, transition: S.transition, interval: S.interval, music: String(S.music).startsWith('track:') || S.music === 'eternal' ? (modeOf(S.mode).set.music === 'eternal' ? 'pulse' : modeOf(S.mode).set.music) : S.music, volume: S.volume, effects: { ...S.effects }, interact: { ...S.interact }, display: { ...S.display } };
+    const settings = { mode: S.mode, transition: S.transition, interval: S.interval, advance: S.advance || 'auto', music: String(S.music).startsWith('track:') || S.music === 'eternal' ? (modeOf(S.mode).set.music === 'eternal' ? 'pulse' : modeOf(S.mode).set.music) : S.music, volume: S.volume, effects: { ...S.effects }, interact: { ...S.interact }, display: { ...S.display } };
     const out = await exportEdition({
       meta: { titleZh: f.titleZh.value, titleEn: f.titleEn.value, noteZh: f.noteZh.value, noteEn: f.noteEn.value, artist: f.artist.value, year: f.year.value, no: f.no.value, of: f.of.value, kind: f.kind.value, quality: f.quality.value },
       works: list, mode: S.mode, settings, packs: catalogPacks.map(pk => packSources.get(pk.src)).filter(Boolean),
@@ -695,6 +695,12 @@ function renderSettings() {
   rs.hidden = !S.adjusted;
   rs.textContent = `${T('adjusted')} · ${T('resetMode')}`;
   const adj = () => { S.adjusted = true; };
+  const ad = $('#advanceChips'); ad.replaceChildren();
+  for (const id of ['auto', 'manual']) ad.appendChild(chip(T('adv_' + id), (S.advance || 'auto') === id, false, () => {
+    S.advance = id; saveSettings(S, SKEY); renderSettings();
+    if (id === 'manual' && !player.hidden) toast(T('manualHint'), 4200);
+    if (id === 'auto') elapsed = 0;
+  }));
   const tr = $('#transitionChips'); tr.replaceChildren();
   for (const o of OPTIONS.transitions) tr.appendChild(chip(L(o), S.transition === o.id, o.ae, () => { S.transition = o.id; adj(); commit(); if (!player.hidden && shown && o.id !== 'random') { go(1); elapsed = 0; } }));
   const ef = $('#effectToggles'); ef.replaceChildren();
@@ -1522,9 +1528,11 @@ const progressBar = $('#progressBar');
 const breathEl = $('#breathGuide');
 fx.onFrame = (dt) => {
   trackFps(dt); watchMusic(dt);
+  sound.visualLead = Math.min(0.05, (sound.visualLead || 0.016) * 0.9 + dt * 0.1); // one frame ahead, averaged
   alive.frame(dt, playing);
   packs.frame(dt);
-  if (packs.cam && shown) { if (god.open) camT += dt; packs.cameraFrame(god.open ? (camT % curDur) / curDur : elapsed / curDur); }
+  // manual paging: the camera plays its move once and holds; God mode loops it; otherwise it follows the work's time
+  if (packs.cam && shown) { const manual = S.advance === 'manual'; if (god.open || (manual && playing)) camT += dt; packs.cameraFrame(god.open ? (camT % curDur) / curDur : manual ? Math.min(1, camT / curDur) : elapsed / curDur); }
   // while the camera is close or at an angle, the title steps aside (like a documentary); it returns with the whole
   const cp = packs.camPose; player.classList.toggle('cam-close', !!cp && (cp.s > 1.12 || Math.abs(cp.ry) > 6 || Math.abs(cp.rx) > 6));
   if (listener.on) {
@@ -1534,11 +1542,11 @@ fx.onFrame = (dt) => {
     if (r.beat && r.kind === 'music') fx.soundBeat(Math.max(1, r.tier));
     const md = $('#micDot'); md.style.setProperty('--lv', r.level.toFixed(2)); md.dataset.kind = r.kind || '';
   }
-  if (playing && shown && !busy && !loupeOn && !alive.pressing && !god.open) { // the work stays while someone looks closely
+  if (playing && shown && !busy && !loupeOn && !alive.pressing && !god.open && S.advance !== 'manual') { // the work stays while someone looks closely
     elapsed += dt;
     if (elapsed >= curDur) { elapsed = 0; go(1); }
   }
-  progressBar.style.width = (shown ? Math.min(100, elapsed / curDur * 100) : 0) + '%';
+  progressBar.style.width = (shown && S.advance !== 'manual' ? Math.min(100, elapsed / curDur * 100) : 0) + '%';
   if (S.effects.breath) {
     breathEl.style.setProperty('--b', (0.55 + 0.45 * fx.breath).toFixed(3));
     const txt = fx.inhaling ? T('inhale') : T('exhale');
@@ -1780,7 +1788,7 @@ function makeGrain() {
   }
   window.__lumina = {
     get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', bursts: (packs.bursts || []).length, music: sound.preset, packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
-    beat: () => sound.beat(), trackTime: () => (sound.customEl ? sound.customEl.currentTime : 0),
+    beat: () => sound.beat(), beatClock: () => sound.lastBeatClock, setLatency: (v) => { if (sound.ctx) Object.defineProperty(sound.ctx, 'outputLatency', { configurable: true, get: () => v }); }, trackTime: () => (sound.customEl ? sound.customEl.currentTime : 0),
     registerOld: () => { try { registerPack({ ...PACKS.get('firefly'), version: 1 }); } catch { /* ignore */ } return PACKS.get('firefly') ? PACKS.get('firefly').version : 0; },
     rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };

@@ -125,7 +125,11 @@ export class Sound {
   // the most recent kick drum that has actually sounded: { live, pulse, count }
   beat() {
     if (this.preset === 'eternal' && this.customEl && this.rhythm) {
-      const tt = this.customEl.currentTime || 0;
+      // the light must flash when the kick is HEARD: subtract the time the sound still needs to reach the speaker
+      // (Web Audio + device/Bluetooth output latency) and draw one frame ahead (like the homepage show)
+      const lat = this.ctx ? (this.ctx.outputLatency || 0) + (this.ctx.baseLatency || 0) : 0;
+      const tt = Math.max(0, (this.customEl.currentTime || 0) - lat + (this.visualLead || 0.016));
+      this.lastBeatClock = { media: this.customEl.currentTime || 0, lat, tt };
       const energy = energyAt(tt);
       const b = this.rhythm.update(energy, tt);
       return { live: !this.customEl.paused, energy, ...b };

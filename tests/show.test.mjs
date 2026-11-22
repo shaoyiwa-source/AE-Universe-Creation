@@ -45,6 +45,17 @@ try {
     return { live: window.__lumina.beat().live, stages: [...seen], gained: c1 - c0, maxPulse: +maxPulse.toFixed(2), t: +window.__lumina.trackTime().toFixed(1) };
   });
   check(`[${which}] lights follow the track's measured beats (≈148 BPM)`, beats.live && beats.gained >= 6 && beats.gained <= 14 && beats.maxPulse > 0.5, JSON.stringify(beats));
+  // on the beat when HEARD: simulate a device whose sound reaches the speaker 0.2 s late (Bluetooth-like)
+  const events = await page.evaluate(async () => { const t = await (await fetch('/gallery/beats-eternal.js')).text(); return JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)).events; });
+  await page.evaluate(() => window.__lumina.setLatency(0.2));
+  const sync = await page.evaluate(async (events) => {
+    const out = []; let prev = window.__lumina.beat().count;
+    await new Promise(res => { const t0 = performance.now(); const f = () => { const b = window.__lumina.beat(), c = window.__lumina.beatClock(); if (b.count > prev) { out.push({ n: b.count, heard: c.media - c.lat }); prev = b.count; } if (performance.now() - t0 < 4000) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); });
+    return out.map(o => +(o.heard - events[o.n - 1]).toFixed(3));
+  }, events);
+  const worst = Math.max(...sync.map(Math.abs));
+  check(`[${which}] lasers flash when the kick is heard (0.2 s output delay compensated)`, sync.length >= 4 && worst <= 0.06, `offsets ${JSON.stringify(sync.slice(0, 8))} s`);
+  await page.evaluate(() => window.__lumina.setLatency(0));
   check(`[${which}] the show opens at the homepage cue (build → drop)`, beats.t > 58 && beats.t < 75 && beats.stages.some(s => s === 'build' || s === 'drop'), JSON.stringify(beats));
   await page.screenshot({ path: `${out}/${which}-show-party.png` });
   // one-tap effects tray
@@ -63,6 +74,19 @@ try {
   }
   await wait(1500);
   check(`[${which}] one-tap effects end by themselves`, (await st()).bursts === 0);
+  // manual paging: the works change only when asked; music and light keep going
+  await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
+  await page.locator('#advanceChips .lw-chip').nth(1).click(); await page.click('#closeSettings');
+  await page.evaluate(() => { window.__lumina.state.settings.interval = 3; });
+  const m0 = (await st()).idx; await wait(5000);
+  const m1 = await st();
+  check(`[${which}] manual paging: the work stays until you turn the page`, m1.idx === m0 && m1.settings.advance === 'manual' && await page.evaluate(() => parseFloat(document.getElementById('progressBar').style.width) === 0), `idx ${m0} → ${m1.idx}`);
+  check(`[${which}] manual paging: music and light keep going`, m1.music === 'eternal' && m1.packs.some(p => p.id === 'laser'));
+  await page.keyboard.press('ArrowRight');
+  await page.waitForFunction((k) => window.__lumina.state.idx !== k, m0, { timeout: 8000 }).catch(() => {});
+  check(`[${which}] manual paging: › / arrow key turns the page`, (await st()).idx !== m0);
+  await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
+  await page.locator('#advanceChips .lw-chip').nth(0).click(); await page.click('#closeSettings');
   // calm modes: no tray where it does not belong
   await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
   await page.click('.lw-mode[data-mode=gallery]'); await page.click('#closeSettings'); await wait(300);
