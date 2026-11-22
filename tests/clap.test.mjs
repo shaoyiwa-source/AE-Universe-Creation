@@ -1,4 +1,4 @@
-// AE Lumina Wall — claps, finger snaps, knocks: with NO music at all, every sharp sound in the room lights the lasers
+// AE Lumina Wall — claps, finger snaps, knocks, thumps: with NO music at all, every sudden sound (any frequency) lights the lasers
 // at once (like an LED strip's sound-active mode), and claps kept in time become the beat the light locks to.
 // The "microphone" is generated in the player's own audio clock, so every clap time is known exactly.
 // Usage: node tests/clap.test.mjs <outDir>
@@ -46,6 +46,8 @@ try {
         p.connect(pg).connect(md); p.start(from); p.stop(from + secs);
         const s = c.createBufferSource(); s.buffer = noise; s.loop = true; const ng = c.createGain(); ng.gain.value = 0.0001; ng.gain.setValueAtTime(0.0001, from); ng.gain.linearRampToValueAtTime(0.01, from + 0.8); ng.gain.setValueAtTime(0.01, from + secs - 0.8); ng.gain.linearRampToValueAtTime(0.0001, from + secs); s.connect(ng).connect(md); s.start(from); s.stop(from + secs);
       };
+      // a pure tone burst: a thump (low) or a knock (mid)
+      window.__tone = (t, f, v, d) => { const o = c.createOscillator(), g = c.createGain(); g.gain.value = 0.0001; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g).connect(md); o.start(t); o.stop(t + d + 0.02); };
       // music from another speaker: kick on the beat, hi-hat on the off-beat
       window.__band = (bpm, from, secs) => {
         const per = 60 / bpm;
@@ -109,12 +111,19 @@ try {
   check('claps in time lock the tempo (100 BPM)', Math.abs((lk.lock.bpm || 0) - 100) < 1.5, `bpm ${lk.lock.bpm}`);
   check('…and the light lands on the claps', em.length >= 8 && ve.worst <= 0.025, `mean ${(ve.mean * 1000).toFixed(1)} ms, worst ${(ve.worst * 1000).toFixed(1)} ms over ${em.length} beats`);
   await page.screenshot({ path: `${out}/clap.png` });
-  // 5. music from another speaker (kick + hi-hat): the light follows the locked beat; the hi-hats do not flash it
+  // 5. low and mid sounds flash too: a thump on the table (low), a knock on wood (mid)
   await wait(3500); // the clapping lock lets go
   const f5 = await page.evaluate(() => window.__lumina.state.hits);
+  await page.evaluate(() => { let t = window.__ctx.currentTime + 0.4; for (let i = 0; i < 4; i++) { window.__tone(t, 70, 0.9, 0.12); t += 0.7; window.__tone(t, 520, 0.6, 0.05); t += 0.8; } });
+  await wait(6800);
+  const s5 = await page.evaluate(() => window.__lumina.state.hits);
+  check('low thumps and mid knocks flash as well (any frequency)', s5.count - f5.count === 8 && s5.flashes - f5.flashes === 8, `${s5.count - f5.count}/8 heard, ${s5.flashes - f5.flashes} flashes`);
+  // 6. music from another speaker (kick + hi-hat): every kick and hi-hat flashes, and the lock follows the beat
+  await wait(3000);
+  const f6 = await page.evaluate(() => window.__lumina.state.hits);
   await page.evaluate(() => window.__band(124, window.__ctx.currentTime + 0.4, 8)); await wait(8800);
-  const s5 = await page.evaluate(() => ({ hits: window.__lumina.state.hits, lock: window.__lumina.state.lock, mode: window.__lumina.state.laserMode }));
-  check('room music: hi-hats do not flash the lasers; the lock leads', s5.hits.flashes - f5.flashes <= 1 && Math.abs(s5.lock.bpm - 124) < 1.5, `${s5.hits.flashes - f5.flashes} flash(es) for ${s5.hits.count - f5.count} hi-hats heard; bpm ${s5.lock.bpm}, lasers ${s5.mode}`);
+  const s6 = await page.evaluate(() => ({ hits: window.__lumina.state.hits, lock: window.__lumina.state.lock, mode: window.__lumina.state.laserMode }));
+  check('room music: kicks and hi-hats flash, and the light locks to the beat', s6.hits.flashes - f6.flashes >= 28 && Math.abs(s6.lock.bpm - 124) < 1.5 && s6.mode === 'room', `${s6.hits.flashes - f6.flashes} flashes for 33 sounds; bpm ${s6.lock.bpm}, lasers ${s6.mode}`);
   check('no page errors', errs.length === 0, errs.slice(0, 2).join(' | '));
 } catch (e) { check('scenario crashed', false, String(e).split('\n').slice(0, 4).join(' / ')); }
 await browser.close(); srv.kill(); fs.rmSync(lib, { recursive: true, force: true });

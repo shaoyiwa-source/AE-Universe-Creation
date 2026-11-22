@@ -873,8 +873,9 @@ const packs = new PackHost(alive); // R10 God mode: effect packages drawn on the
 // otherwise none — beat-driven effects then breathe slowly instead of flashing
 const roomBeat = { count: 0, at: -9, level: 0 };
 packs.beatFn = () => {
-  // claps / snaps / knocks flash the light only when the room has no drum of its own (otherwise every hi-hat would flash)
-  const hit = () => (listener.on && !(roomBeat.kickAge < 3) ? { hits: roomBeat.hits || 0, hitAge: roomBeat.hitAge } : {});
+  // every sound the room makes — claps, snaps, knocks, a kick, a hi-hat — flashes the light at once (LED-strip style);
+  // the locked beat carries the groove on top. Our own soundtrack is not counted (it already drives the light exactly).
+  const hit = () => (listener.on ? { hits: roomBeat.hits || 0, hitAge: roomBeat.hitAge } : {});
   const b = sound.beat();
   if (b.live && !player.classList.contains('muted') && S.music !== 'none') return b;
   if (listener.on && roomBeat.locked) return { live: true, room: true, locked: true, pulse: roomBeat.pulse, count: roomBeat.lockCount, stage: 'groove', energy: roomBeat.level, bpm: roomBeat.bpm, ...hit() };

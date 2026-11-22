@@ -164,14 +164,32 @@ export class Listener {
       const mute2 = ctx.createGain(); mute2.gain.value = 0;
       this.src.connect(hb).connect(this.hitNode).connect(mute2).connect(ctx.destination);
       this.onsetChain.push(hb, this.hitNode, mute2);
+      // any sound at all — low thump, mid knock, high clap — flashes the light (like a multi-band LED controller):
+      // three bands, each with its own sense of the room's level, so a loud bass never hides the hi-hat after it.
+      // Triggers from different bands within 60 ms are one sound.
+      const anyHit = (raw) => {
+        if (!this.on || Math.abs(raw - (this.lastAnyRaw ?? -9)) < 0.06) return;
+        this.lastAnyRaw = raw; const t = raw - this.inLat - LOCK_BIAS * 0.5;
+        this.hitCount++; this.lastHit = t; this.hitTimes.push(t); if (this.hitTimes.length > 64) this.hitTimes.shift();
+      };
+      this.bandNodes = [];
+      for (const [lo, hi] of [[40, 200], [200, 1500]]) {
+        const a = ctx.createBiquadFilter(); a.type = 'highpass'; a.frequency.value = lo;
+        const b2 = ctx.createBiquadFilter(); b2.type = 'lowpass'; b2.frequency.value = hi;
+        const n = new AudioWorkletNode(ctx, 'ae-transient'), m = ctx.createGain(); m.gain.value = 0;
+        this.src.connect(a).connect(b2).connect(n).connect(m).connect(ctx.destination);
+        this.onsetChain.push(a, b2, n, m); this.bandNodes.push(n);
+        n.port.onmessage = (ev) => { if (ev.data.peakOf == null) anyHit(ev.data.t); };
+      }
+      this.anyHit = anyHit;
       this.setSensitivity(this.sensitivity || 2);
       this.hitCount = 0; this.hitTimes = [];
       this.hitNode.port.onmessage = (ev) => {
         if (!this.on) return;
         if (ev.data.peakOf != null) { if (ev.data.peakOf === this.lastHitRaw) this.lastHitE = ev.data.e; return; }
         const raw = ev.data.t; this.lastHitRaw = raw; this.lastHitE = ev.data.e;
+        this.anyHit(raw); // the bright band is one of the three
         const t = raw - this.inLat - LOCK_BIAS * 0.5;
-        this.hitCount++; this.lastHit = t; this.hitTimes.push(t); if (this.hitTimes.length > 64) this.hitTimes.shift();
         setTimeout(() => {
           if (!this.on || (near(this.lastLowRaw, raw) && this.lastLowE * 2 >= this.lastHitE)) return; // a kick's click, not a clap
           if (!(this.lastKickAt > raw - 3)) this.lock.onset(t); // no drum in the room: the claps keep the time
@@ -190,7 +208,7 @@ export class Listener {
   setSensitivity(level) {
     this.sensitivity = level;
     const k = level >= 3 ? 3.5 : level <= 1 ? 8 : 5, floor = level >= 3 ? 6e-7 : level <= 1 ? 2e-5 : 2e-6;
-    if (this.hitNode) this.hitNode.port.postMessage({ k, floor });
+    for (const n of [this.hitNode, ...(this.bandNodes || [])]) if (n) n.port.postMessage({ k, floor });
   }
 
   stop() {
