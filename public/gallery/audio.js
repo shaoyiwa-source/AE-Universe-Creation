@@ -41,7 +41,7 @@ export class Sound {
       this.sfxBus.connect(this.master);
       this.sfxBus.connect(this.reverb);
     }
-    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume().catch(() => {});
     return true;
   }
 
@@ -119,9 +119,15 @@ export class Sound {
   }
 
   suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {}); }
-  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {}); }
+  resume() { if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume().catch(() => {}); }
+  get running() { return !!this.ctx && this.ctx.state === 'running'; }
 
-  _later(fn, ms) { const id = setTimeout(fn, ms); this.timers.push(id); return id; }
+  // schedule the next phrase; while the audio is paused/interrupted, wait instead of piling phrases up
+  // (otherwise every missed bar would sound at once when the phone resumes)
+  _later(fn, ms) {
+    const run = () => { if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.timers.push(setTimeout(run, 400)); else fn(); };
+    const id = setTimeout(run, ms); this.timers.push(id); return id;
+  }
 
   _track(gain, nodes) {
     const v = { gain, stopAt: (when) => nodes.forEach(n => { try { n.stop(when); } catch { /* ignore */ } }) };
@@ -167,25 +173,31 @@ export class Sound {
     if (bus === this.musicBus) { const v = this._track(g, [o, o2]); o.onended = () => this.voices.delete(v); }
   }
 
-  // warm electric-piano voice: harmonic partials only (always in tune), a soft tine and a slow tremolo
+  // warm electric-piano voice: harmonic partials only (always in tune) with a soft tine;
+  // all keys share one bus with one slow tremolo (half the cost of a tremolo per note)
+  _keysBus() {
+    if (this.keysBus && this.keysBus.context === this.ctx) return this.keysBus;
+    const ctx = this.ctx, bus = ctx.createGain(), f = ctx.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = 2200; f.Q.value = 0.2;
+    bus.gain.value = 1;
+    const trem = ctx.createOscillator(), tg = ctx.createGain(); trem.frequency.value = 4.2; tg.gain.value = 0.1;
+    trem.connect(tg).connect(bus.gain); trem.start();
+    bus.connect(f).connect(this.musicBus);
+    return (this.keysBus = bus);
+  }
   _keys(freq, when, level = 0.03, decay = 4.5) {
-    const ctx = this.ctx;
-    const g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2200; f.Q.value = 0.2;
-    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), o3 = ctx.createOscillator();
-    const g2 = ctx.createGain(), g3 = ctx.createGain();
-    o1.type = 'sine'; o2.type = 'sine'; o3.type = 'triangle';
-    o1.frequency.value = freq; o2.frequency.value = freq * 2; o3.frequency.value = freq * 3;
-    g2.gain.setValueAtTime(0.22, when); g2.gain.exponentialRampToValueAtTime(0.02, when + 0.6);
-    g3.gain.setValueAtTime(0.05, when); g3.gain.exponentialRampToValueAtTime(0.002, when + 0.25);
-    const trem = ctx.createOscillator(), tg = ctx.createGain(); trem.frequency.value = 4.2; tg.gain.value = level * 0.12;
-    trem.connect(tg).connect(g.gain);
-    o1.connect(f); o2.connect(g2).connect(f); o3.connect(g3).connect(f); f.connect(g).connect(this.musicBus);
+    const ctx = this.ctx, bus = this._keysBus();
+    const g = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o1.type = 'sine'; o2.type = 'sine';
+    o1.frequency.value = freq; o2.frequency.value = freq * 2;
+    g2.gain.setValueAtTime(0.24, when); g2.gain.exponentialRampToValueAtTime(0.02, when + 0.6);
+    o1.connect(g); o2.connect(g2).connect(g); g.connect(bus);
     g.gain.setValueAtTime(0, when);
     g.gain.linearRampToValueAtTime(level, when + 0.012);
     g.gain.exponentialRampToValueAtTime(level * 0.35, when + 1.2);
     g.gain.exponentialRampToValueAtTime(0.0001, when + decay);
-    [o1, o2, o3, trem].forEach(o => { o.start(when); o.stop(when + decay + 0.1); });
-    const v = this._track(g, [o1, o2, o3, trem]); o1.onended = () => this.voices.delete(v);
+    [o1, o2].forEach(o => { o.start(when); o.stop(when + decay + 0.1); });
+    const v = this._track(g, [o1, o2]); o1.onended = () => this.voices.delete(v);
   }
 
   _noise(seconds = 4) {
@@ -414,7 +426,8 @@ export class Sound {
       this._pad(midi(ch[2] - 12), t + 0.2, 7.6, 0.022, 'sine', 900);
       // a gentle music box, in tune (harmonic partial), one octave lower than before, no stumbling notes
       const order = bar % 2 ? [0, 2, 1, 3, 4, 3, 2] : [0, 2, 4, 3, 1, 2];
-      order.forEach((n, k) => this._bell(midi(ch[n]), t + k * (7.6 / order.length) + (k % 2) * 0.05, 0.02, 3.4, this.musicBus, 2));
+      const lead = bar === 0 ? 2.2 : 0, step = (7.6 - lead) / order.length; // first bar: the pad blooms, then the music box joins
+      order.forEach((n, k) => this._bell(midi(ch[n]), t + lead + k * step + (k % 2) * 0.05, 0.02, 3.4, this.musicBus, 2));
       bar++;
       this._later(play, 7600);
     };
@@ -435,10 +448,11 @@ export class Sound {
     const play = () => {
       if (this.preset !== 'hearth') return;
       const t = this.ctx.currentTime + 0.05, c = prog[bar % prog.length], L = 9;
+      const lead = bar === 0 ? 2.6 : 0.08; // the very beginning: let the warm floor bloom before the first chord
       this._pad(midi(c.bass), t, L, 0.03, 'sine', 500);
       this._pad(midi(c.bass + 12), t + 0.3, L, 0.012, 'sine', 700);
       // the chord, rolled softly from the bottom like a hand on the keys
-      c.v.forEach((m, k) => this._keys(midi(m), t + 0.08 + k * 0.07 + Math.random() * 0.02, 0.022 - k * 0.002, 6));
+      c.v.forEach((m, k) => this._keys(midi(m), t + lead + k * 0.07 + Math.random() * 0.02, (0.022 - k * 0.002) * (bar === 0 ? 0.8 : 1), 6));
       // half-way: the chord again, quieter, a little higher voicing
       c.v.slice(1).forEach((m, k) => this._keys(midi(m + (k === 2 ? 12 : 0)), t + 4.4 + k * 0.09 + Math.random() * 0.03, 0.013, 4.5));
       // a few melody notes, not every bar

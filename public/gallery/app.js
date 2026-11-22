@@ -1311,7 +1311,7 @@ $('#stripBtn').addEventListener('click', () => { strip.hidden = !strip.hidden; p
 const progressBar = $('#progressBar');
 const breathEl = $('#breathGuide');
 fx.onFrame = (dt) => {
-  trackFps(dt);
+  trackFps(dt); watchMusic(dt);
   alive.frame(dt, playing);
   if (listener.on) {
     const r = listener.update(dt);
@@ -1501,8 +1501,19 @@ async function requestWake() { try { if (canWake()) wakeLock = await navigator.w
 function releaseWake() { try { wakeLock?.release(); } catch { /* ignore */ } wakeLock = null; }
 document.addEventListener('visibilitychange', () => {
   if (player.hidden) return;
-  if (document.hidden) sound.suspend(); else { sound.resume(); requestWake(); }
+  if (document.hidden) sound.suspend(); else { sound.resume(); requestWake(); musicNudged = false; }
 });
+// the music must not quietly stop: phones interrupt web audio (calls, notifications, switching apps)
+let musicWatch = 0, musicNudged = false;
+function watchMusic(dt) {
+  if ((musicWatch += dt) < 2) return;
+  musicWatch = 0;
+  if (player.hidden || !playing || document.hidden || S.music === 'none' || player.classList.contains('muted') || !sound.ctx) return;
+  if (!sound.running) {
+    sound.resume();
+    setTimeout(() => { if (!sound.running && !player.hidden && !musicNudged) { musicNudged = true; toast(T('tapForMusic'), 4200); } }, 700);
+  } else musicNudged = false;
+}
 
 // fine film grain for 絲緞光澤 (generated once, animated in CSS)
 function makeGrain() {
@@ -1535,7 +1546,7 @@ function makeGrain() {
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
+    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
     rec, enterLowPower, aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();
