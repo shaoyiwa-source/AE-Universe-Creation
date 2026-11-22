@@ -6,6 +6,7 @@ import { runTransition, resetSlide, TRANSITIONS } from './transitions.js';
 import { STR, OPTIONS } from './i18n.js';
 import { recordClip, canRecord } from './recorder.js';
 import { Listener } from './listen.js';
+import { Alive } from './alive.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -37,7 +38,7 @@ const fmtSec = (s) => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)} min` 
 const DEFAULTS = {
   mode: 'online', adjusted: false, transition: 'random', interval: 10,
   effects: { innerbloom: true, lumiere: true, echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
-  interact: { ripple: true, chime: true, lumi: true, seeds: true, cute: false, listen: false },
+  interact: { alive: true, ripple: true, chime: true, lumi: true, seeds: true, cute: false, listen: false },
   display: { intro: true, captions: true, label: true, camera: false, mat: true, drift: true, shuffle: false, loop: true },
   music: 'celestial', volume: 0.6, intensity: 3, selected: [],
 };
@@ -807,6 +808,7 @@ const slides = [$('#slideA'), $('#slideB')];
 const ambs = [$('#ambA'), $('#ambB')];
 const neon = $('#neon');
 const fx = new FX($('#fx'), { reduced });
+const alive = new Alive(); // R10: the painting itself comes alive and answers touch
 let list = [], idx = 0, cur = 0, ambCur = 0, curDur = 10, curItem = null;
 let playing = false, busy = false, pending = null, elapsed = 0, shown = false;
 let wakeLock = null, idleTimer = null, captionTimer = null, nextLumi = 0;
@@ -848,7 +850,17 @@ function placeNeon(r) { if (r) Object.assign(neon.style, { left: r.x + 'px', top
 function layout() {
   fx.resize(stage.clientWidth, stage.clientHeight);
   placeSlide(0); placeSlide(1);
-  const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); positionCaption(r); }
+  const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); positionCaption(r); if (alive.on) alive.setRect(r); }
+}
+// put the living layer on the painting now on screen (when the mode allows it)
+function wakeAlive() {
+  if (!shown || player.hidden || reduced || !S.interact.alive) { alive.detach(); return; }
+  const media = mediaOf(cur), work = list[idx];
+  if (!work || work.type === 'video' || alive.on) return;
+  if (alive.attach(slides[cur], media, slides[cur].rect, work.id)) {
+    // follow the image's own slow camera / breathing exactly
+    try { const ma = media.getAnimations()[0], ca = alive.canvas.getAnimations()[0]; if (ma && ca) ca.currentTime = ma.currentTime; } catch { /* older browsers */ }
+  }
 }
 window.addEventListener('resize', () => { if (!player.hidden) layout(); });
 window.addEventListener('orientationchange', () => setTimeout(() => { if (!player.hidden) layout(); }, 250));
@@ -988,7 +1000,7 @@ function playIntro() {
   });
 }
 function closePlayer() {
-  closeLoupe();
+  closeLoupe(); alive.detach(); player.classList.remove('alivehover');
   playing = false;
   stopListening(); toggleInfo(false);
   fx.stop(); sound.stop();
@@ -1013,6 +1025,7 @@ function startMusic() {
 
 async function show(i) {
   busy = true;
+  alive.detach();
   const work = list[i];
   const nextSlot = shown ? 1 - cur : cur;
   const incoming = slides[nextSlot];
@@ -1048,6 +1061,7 @@ async function show(i) {
   await runTransition(kind, { from, to: incoming, fromImg: fromMedia, fromRect: from ? from.rect : null, rect: r, points: pts, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, curDur / 12)) });
   if (from) { from.classList.remove('live'); from.querySelector('video').pause(); }
   cur = nextSlot; shown = true; elapsed = 0; busy = false;
+  wakeAlive();
   const nx = list[(i + 1) % list.length];
   if (nx && nx.type !== 'video') { const p = new Image(); p.decoding = 'async'; p.src = nx.src; }
   if (pending) { const p = pending; pending = null; p.to != null ? jump(p.to) : go(p.dir); }
@@ -1294,6 +1308,7 @@ const progressBar = $('#progressBar');
 const breathEl = $('#breathGuide');
 fx.onFrame = (dt) => {
   trackFps(dt);
+  alive.frame(dt, playing);
   if (listener.on) {
     const r = listener.update(dt);
     fx.setSound(r.level, r.kind);
@@ -1301,7 +1316,7 @@ fx.onFrame = (dt) => {
     if (r.beat && r.kind === 'music') fx.soundBeat(Math.max(1, r.tier));
     const md = $('#micDot'); md.style.setProperty('--lv', r.level.toFixed(2)); md.dataset.kind = r.kind || '';
   }
-  if (playing && shown && !busy && !loupeOn) { // the work stays while someone looks closely
+  if (playing && shown && !busy && !loupeOn && !alive.pressing) { // the work stays while someone looks closely
     elapsed += dt;
     if (elapsed >= curDur) { elapsed = 0; go(1); }
   }
@@ -1325,6 +1340,10 @@ function applyLive() {
   $('#fx').style.opacity = INTENSITY_ALPHA[lvl - 1];
   fx.setEffects(liveEffects());
   fx.setInteract(S.interact);
+  alive.gain = [0.6, 0.8, 1, 1.2, 1.4][lvl - 1];
+  alive.maxDpr = lowPower ? 1 : 2;
+  alive.enabled = !!S.interact.alive;
+  if (!player.hidden) { if (S.interact.alive) wakeAlive(); else alive.detach(); }
   sound.chimeOn = S.interact.chime;
   neon.classList.toggle('on', !!S.effects.neon && !S.display.camera);
   breathEl.classList.toggle('on', !!S.effects.breath);
@@ -1357,6 +1376,17 @@ function showControls() {
 }
 
 let down = null;
+// how firmly the painting is touched: pen pressure, real touch pressure (some Android), or a wider fingertip
+function forceOf(e) {
+  let f = 0;
+  if (e.pointerType === 'pen' && e.pressure > 0) f = e.pressure;
+  else if (e.pointerType === 'touch') {
+    if (e.pressure > 0 && e.pressure !== 0.5 && e.pressure !== 1) f = e.pressure;
+    const area = (e.width || 0) * (e.height || 0); // contact size in CSS px²
+    if (area > 500) f = Math.max(f, Math.min(1, (area - 500) / 1500));
+  }
+  return Math.max(0, Math.min(1, f));
+}
 const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip, .pl-info, dialog');
 // ---- magnifier (R9.1): long-press the work → a round lens; drag to look around; release to close ----
 const loupe = $('#loupe'), loupeImg = loupe.querySelector('img');
@@ -1399,7 +1429,9 @@ player.addEventListener('pointerdown', (e) => {
   const x = e.clientX - r.left, y = e.clientY - r.top;
   down = { x, y, t: performance.now(), id: e.pointerId };
   clearTimeout(loupeTimer);
-  loupeTimer = setTimeout(() => { if (down && down.id === e.pointerId) openLoupe(down.lx ?? x, down.ly ?? y, e.pointerType !== 'mouse'); }, 450);
+  // a living part of the painting → it answers the touch; anywhere else → hold to magnify
+  if (S.interact.alive && alive.aliveAt(x, y) > 0.3) { down.alive = true; alive.press(e.pointerId, x, y, forceOf(e)); }
+  else loupeTimer = setTimeout(() => { if (down && down.id === e.pointerId) openLoupe(down.lx ?? x, down.ly ?? y, e.pointerType !== 'mouse'); }, 450);
   sound.ensure();
   const hit = fx.pointerDown(x, y);
   if (hit.seed) sound.chime(x / r.width, y / r.height, true);
@@ -1411,6 +1443,8 @@ player.addEventListener('pointermove', (e) => {
   const r = player.getBoundingClientRect();
   const x = e.clientX - r.left, y = e.clientY - r.top;
   if (loupeOn) { moveLoupe(x, y); return; }
+  if (down && down.alive && down.id === e.pointerId) alive.move(e.pointerId, x, y, forceOf(e));
+  if (e.pointerType === 'mouse' && !down) player.classList.toggle('alivehover', S.interact.alive && alive.setHover(x, y) > 0.3);
   if (down && down.id === e.pointerId) {
     down.lx = x; down.ly = y;
     if (Math.hypot(x - down.x, y - down.y) > 12) { clearTimeout(loupeTimer); loupeTimer = null; } // a swipe, not a long-press
@@ -1419,6 +1453,7 @@ player.addEventListener('pointermove', (e) => {
 });
 const endPointer = (e) => {
   fx.pointerUp();
+  alive.release(e.pointerId);
   if (loupeOn) { closeLoupe(); down = null; return; } // looking closely never turns the page
   clearTimeout(loupeTimer); loupeTimer = null;
   if (!down || down.id !== e.pointerId) { down = null; return; }
@@ -1495,7 +1530,7 @@ function makeGrain() {
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length }; },
-    rec, enterLowPower, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
+    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
+    rec, enterLowPower, aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();

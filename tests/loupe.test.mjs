@@ -27,6 +27,10 @@ try {
   const css = await (await fetch(`http://localhost:${port}/gallery/gallery.css`)).text();
   check(`[${which}] iOS long-press image menu is turned off (touch-callout)`, /img,video\{-webkit-touch-callout:none\}/.test(css));
   check(`[${which}] wall images never receive a touch (nothing to save)`, await page.evaluate(() => getComputedStyle(document.querySelector('.screen img')).pointerEvents === 'none'));
+  // the magnifier lives where the painting is not "alive"; switch the living painting off to test it anywhere
+  await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])');
+  if ((await page.getAttribute('#interactToggles [data-opt=alive]', 'aria-checked')) === 'true') await page.click('#interactToggles [data-opt=alive]');
+  await page.click('#closeSettings');
   await page.click('#playBtn'); await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
   await wait(1200);
   const art = await page.evaluate(() => { const s = window.__lumina.state, el = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img'); return { x: parseFloat(el.style.left), y: parseFloat(el.style.top), w: parseFloat(el.style.width), h: parseFloat(el.style.height), pe: getComputedStyle(el).pointerEvents }; });
