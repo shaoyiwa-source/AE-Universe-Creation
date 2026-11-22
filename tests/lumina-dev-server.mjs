@@ -14,7 +14,7 @@ const handler = require(path.join(root, 'api', 'lumina.js'));
 const port = Number(process.argv[2] || 8766);
 if (!process.env.LUMINA_FS_DIR) { console.error('Set LUMINA_FS_DIR'); process.exit(1); }
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.mp4': 'video/mp4' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.mp4': 'video/mp4', '.m4a': 'audio/mp4' };
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
@@ -37,5 +37,13 @@ http.createServer(async (req, res) => {
   const file = path.join(pub, p);
   if (!file.startsWith(pub) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; return res.end('not found'); }
   res.setHeader('Content-Type', TYPES[path.extname(file)] || 'application/octet-stream');
+  res.setHeader('Accept-Ranges', 'bytes');
+  const size = fs.statSync(file).size, m = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || ''));
+  if (m) { // media seeking (like the real host)
+    const start = m[1] === '' ? size - Number(m[2]) : Number(m[1]), end = m[1] !== '' && m[2] !== '' ? Math.min(size - 1, Number(m[2])) : size - 1;
+    res.statusCode = 206; res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`); res.setHeader('Content-Length', String(end - start + 1));
+    return fs.createReadStream(file, { start, end }).pipe(res);
+  }
+  res.setHeader('Content-Length', String(size));
   fs.createReadStream(file).pipe(res);
 }).listen(port, () => console.log(`lumina dev server on http://localhost:${port}`));

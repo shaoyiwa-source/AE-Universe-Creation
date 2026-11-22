@@ -25,11 +25,11 @@ const MODES = ['gallery', 'healing', 'hotel', 'residence', 'party', 'dream', 'ki
 const TRANSITIONS = ['random', 'innerbloom', 'dissolve', 'bloom', 'rings', 'ink', 'silk', 'stardust', 'bubbles'];
 const MIME = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif',
-  mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+  mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', js: 'text/javascript',
   mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', ogg: 'audio/ogg', wav: 'audio/wav',
 };
 const EXT_BY_MIME = Object.fromEntries(Object.entries(MIME).map(([k, v]) => [v, k]));
-EXT_BY_MIME['image/jpeg'] = 'jpg'; EXT_BY_MIME['audio/x-m4a'] = 'm4a'; EXT_BY_MIME['audio/mp3'] = 'mp3'; EXT_BY_MIME['audio/x-wav'] = 'wav';
+EXT_BY_MIME['application/javascript'] = 'js'; EXT_BY_MIME['image/jpeg'] = 'jpg'; EXT_BY_MIME['audio/x-m4a'] = 'm4a'; EXT_BY_MIME['audio/mp3'] = 'mp3'; EXT_BY_MIME['audio/x-wav'] = 'wav';
 
 const BUILTIN = [
   ['Eternal Sun', '盛明', 'assets/4e0991885a9649ea.webp'], ['Infinity Core', '', 'assets/b46ca2328e93f1f4.webp'],
@@ -164,7 +164,7 @@ async function rawBody(req) {
 const rid = (p) => p + Date.now().toString(36) + crypto.randomBytes(3).toString('hex');
 const str = (v, max = 200) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
 const bi = (v, max) => ({ en: str(v && v.en, max), zh: str(v && v.zh, max) });
-const mediaPath = (p) => /^media\/[a-z0-9-]+\.(jpg|jpeg|png|webp|gif|avif|mp4|webm|mov|mp3|m4a|aac|ogg|wav)$/.test(p) ? `${ROOT}/${p}` : null;
+const mediaPath = (p) => /^media\/[a-z0-9-]+\.(jpg|jpeg|png|webp|gif|avif|mp4|webm|mov|mp3|m4a|aac|ogg|wav|js)$/.test(p) ? `${ROOT}/${p}` : null;
 const mediaUrl = (rel) => `/api/lumina?a=media&p=${encodeURIComponent(rel)}`;
 function relOf(url) { const m = /[?&]p=([^&]+)/.exec(String(url || '')); return m ? decodeURIComponent(m[1]) : null; }
 
@@ -174,6 +174,7 @@ function publicView(c, studio) {
     works: studio ? c.works : c.works.filter(w => !w.hidden),
     exhibitions: c.exhibitions.map(e => ({ ...e, items: e.items.filter(it => studio || c.works.some(w => w.id === it.id && !w.hidden)) })),
     tracks: c.tracks,
+    packs: Array.isArray(c.packs) ? c.packs : [],
   };
 }
 
@@ -286,6 +287,21 @@ module.exports = async function handler(req, res) {
         await writeCatalog(store, c);
         return res.status(200).json({ work: w });
       }
+      if (kind === 'pack') {
+        // God mode package (AE's own code, AE Studio only): one file per package id; a newer version replaces it
+        if (!/^(text|application)\/javascript$/.test(ctype) || buf.length > 200 * 1024) return res.status(415).json({ error: 'UNSUPPORTED_TYPE' });
+        const id = String(req.query.id || ''), type = String(req.query.ptype || ''), version = Math.max(1, Math.min(9999, Math.floor(Number(req.query.version) || 1)));
+        if (!/^[a-z0-9-]{1,40}$/.test(id) || !['effect', 'transition', 'camera', 'burst'].includes(type)) return res.status(400).json({ error: 'BAD_PACKAGE' });
+        const rel = `media/pack-${id}-v${version}-${rid('p')}.js`;
+        await store.put(`${ROOT}/${rel}`, buf, 'text/javascript');
+        c.packs = Array.isArray(c.packs) ? c.packs : [];
+        const old = c.packs.find(x => x.id === id);
+        const pk = { id, type, version, name: bi((() => { try { return JSON.parse(String(req.query.name || '{}')); } catch { return {}; } })(), 60), src: mediaUrl(rel), added: Date.now() };
+        c.packs = c.packs.filter(x => x.id !== id).concat(pk);
+        if (old) { const r = relOf(old.src); const p = r && mediaPath(r); if (p) await store.del(p); }
+        await writeCatalog(store, c);
+        return res.status(200).json({ pack: pk });
+      }
       if (kind === 'track') {
         if (!ctype.startsWith('audio/')) return res.status(415).json({ error: 'UNSUPPORTED_TYPE' });
         const id = rid('t');
@@ -329,6 +345,15 @@ module.exports = async function handler(req, res) {
       }
       await writeCatalog(store, c);
       return res.status(200).json({ ok: true, hidden: !!w.builtin });
+    }
+    if (a === 'pack-delete') {
+      c.packs = Array.isArray(c.packs) ? c.packs : [];
+      const pk = c.packs.find(x => x.id === body.id);
+      if (!pk) return res.status(404).json({ error: 'NOT_FOUND' });
+      const r = relOf(pk.src); const p = r && mediaPath(r); if (p) await store.del(p);
+      c.packs = c.packs.filter(x => x.id !== pk.id);
+      await writeCatalog(store, c);
+      return res.status(200).json({ ok: true });
     }
     if (a === 'track-delete') {
       const t = c.tracks.find(x => x.id === body.id);

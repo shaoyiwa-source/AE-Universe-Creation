@@ -15,17 +15,35 @@ import camTour from './pack-cam-tour.js';
 import camOrbit from './pack-cam-orbit.js';
 import camDocumentary from './pack-cam-documentary.js';
 import camGaze from './pack-cam-gaze.js';
+import glow from './pack-glow.js';
+import coins from './pack-coins.js';
+import sweep from './pack-sweep.js';
 
 export const PACKS = new Map();
+export const TYPES = ['effect', 'transition', 'camera', 'burst'];
 export function registerPack(pk) {
-  if (!pk || !/^[a-z0-9-]{1,40}$/.test(pk.id || '') || !['effect', 'transition', 'camera'].includes(pk.type)) throw new Error('bad package');
+  if (!pk || !/^[a-z0-9-]{1,40}$/.test(pk.id || '') || !TYPES.includes(pk.type)) throw new Error('bad package');
   if (pk.type === 'effect' && typeof pk.create !== 'function') throw new Error('effect needs create()');
   if (pk.type === 'transition' && typeof pk.run !== 'function') throw new Error('transition needs run()');
-  if (pk.type === 'camera' && typeof pk.create !== 'function') throw new Error('camera needs create()');
+  if ((pk.type === 'camera' || pk.type === 'burst') && typeof pk.create !== 'function') throw new Error(pk.type + ' needs create()');
+  if (!pk.name || typeof pk.name.zh !== 'string' || !Array.isArray(pk.params || [])) throw new Error('package needs a name and params');
+  // versions: a package with the same id replaces the current one only if it is newer (or the same version re-imported)
+  const cur = PACKS.get(pk.id);
+  if (cur && (Number(pk.version) || 1) < (Number(cur.version) || 1)) return cur;
   PACKS.set(pk.id, pk);
   return pk;
 }
-[wind, light, ribbons, laser, fly, flip, zoom, curtain, camGaze, camApproach, camTour, camOrbit, camDocumentary].forEach(registerPack);
+[wind, light, ribbons, laser, fly, flip, zoom, curtain, camGaze, camApproach, camTour, camOrbit, camDocumentary, glow, coins, sweep].forEach(registerPack);
+export const BUILTIN = new Set(PACKS.keys());
+
+// a package file (self-contained module text with `export default { … }`) → the package object
+// (packages come only from AE Studio; they are code, so nothing else may ever be loaded this way)
+export function packFromSource(code) {
+  const body = String(code).replace(/^\s*export\s+default\s+/m, 'return ');
+  if (/^\s*(import|export)\s/m.test(body)) throw new Error('a package must be self-contained (no import / export besides export default)');
+  const pk = new Function(body)();
+  return pk;
+}
 
 export const packsOf = (type) => [...PACKS.values()].filter(p => p.type === type);
 // parameters: defaults merged with saved values, every value checked against its definition
@@ -62,6 +80,12 @@ export class PackHost {
   colorAt(x, y) { return this.alive.colorOf(x, y); }
   flowAt(x, y) { return this.alive.dirAt(x, y); }
   livingPoint() { return this.alive.livingPoint(); }
+  chime(kind, i = 0) { try { this.chimeFn && this.chimeFn(kind, i); } catch { /* sound is optional */ } }
+  // one-tap effects (burst packages): play once and end
+  fire(id) {
+    const pk = PACKS.get(id); if (!pk || pk.type !== 'burst' || !this.rect) return false;
+    try { this.bursts = (this.bursts || []).concat({ id, inst: pk.create(this, paramsFor(pk)) }).slice(-6); return true; } catch (err) { console.warn('burst', id, err); return false; }
+  }
   // the beat of the music (set by the player); { live, pulse 0…1, count }
   beat() { return this.beatFn ? this.beatFn() : { live: false, pulse: 0, count: 0 }; }
   // the painting's richest places (strong, living brushwork), well apart, in 0…1 painting coordinates
@@ -137,6 +161,10 @@ export class PackHost {
   current() { return this.active.filter(a => !a.out).map(a => ({ id: a.pk.id, p: { ...a.p } })); }
   clear(now = false) { if (now) { this.active.forEach(a => a.inst.dispose && a.inst.dispose()); this.active = []; this.wind.x = this.wind.y = 0; } else this.active.forEach(a => { a.out = true; }); }
   frame(dt) {
+    if (this.bursts && this.bursts.length && this.alive.W) {
+      this.bursts = this.bursts.filter(b => { try { return b.inst.frame(dt) !== false; } catch { return false; } });
+      const fc = this.front; if (fc) { fc.globalAlpha = 1; fc.globalCompositeOperation = 'source-over'; }
+    }
     if (!this.alive.W || !this.active.length) return;
     for (const a of this.active) {
       a.k += ((a.out ? 0 : 1) - a.k) * Math.min(1, dt * 1.6);

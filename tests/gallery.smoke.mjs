@@ -70,7 +70,7 @@ async function scenario(label, ctxOpts, port) {
   // settings: modes + frame interval + camera
   await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])'); await wait(500);
   check(`[${label}] 9 scene modes grouped in 2 arenas (on-site / online)`, (await page.locator('#modeCards .lw-mode').count()) === 9 && (await page.locator('#modeCards .lw-arena').count()) === 2);
-  const expect = { gallery: [20, 'hall'], healing: [16, 'nature'], hotel: [12, 'lounge'], residence: [18, 'hearth'], party: [6, 'pulse'], dream: [12, 'celestial'], kids: [8, 'dawn'], cinema: [12, 'celestial'], online: [10, 'celestial'] };
+  const expect = { gallery: [20, 'hall'], healing: [16, 'nature'], hotel: [12, 'lounge'], residence: [18, 'hearth'], party: [6, 'eternal'], dream: [12, 'celestial'], kids: [8, 'dawn'], cinema: [12, 'celestial'], online: [10, 'celestial'] };
   let modesOk = true;
   for (const [id, [iv, mu]] of Object.entries(expect)) {
     await page.click(`.lw-mode[data-mode=${id}]`);

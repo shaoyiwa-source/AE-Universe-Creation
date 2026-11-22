@@ -1,3 +1,4 @@
+import { ETERNAL } from './beats-eternal.js';
 // AE Lumina Wall — generative healing soundscapes + touch chimes (Web Audio, no external files)
 // Everything is tuned to C major pentatonic so music and touch chimes are always consonant.
 
@@ -94,6 +95,7 @@ export class Sound {
     else if (preset === 'ocean') this._ocean();
     else if (preset === 'dawn') this._dawn();
     else if (preset === 'hearth') this._hearth();
+    else if (preset === 'eternal') this._eternal();
     else if (preset === 'custom') this._custom();
   }
 
@@ -122,6 +124,12 @@ export class Sound {
   resume() { if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume().catch(() => {}); }
   // the most recent kick drum that has actually sounded: { live, pulse, count }
   beat() {
+    if (this.preset === 'eternal' && this.customEl && this.rhythm) {
+      const tt = this.customEl.currentTime || 0;
+      const energy = energyAt(tt);
+      const b = this.rhythm.update(energy, tt);
+      return { live: !this.customEl.paused, energy, ...b };
+    }
     if (!this.ctx || this.preset !== 'pulse' || !this.kickTimes || !this.kickTimes.length) return { live: false, pulse: 0, count: 0 };
     const now = this.ctx.currentTime; let last = -1, n = 0;
     for (const k of this.kickTimes) if (k <= now) { last = k; n++; }
@@ -472,6 +480,17 @@ export class Sound {
     play();
   }
 
+  // 盛明電音 — the homepage show's own track (Aurelia Techno Eternal, 148 BPM). It opens at the homepage's cue
+  // (mid-build, the drop arrives within seconds), then loops; lights follow its measured beat timeline.
+  _eternal() {
+    this.setCustom(ETERNAL_URL);
+    this._custom();
+    const el = this.customEl; if (!el) return;
+    const cue = () => { try { if (el.currentTime < 1) el.currentTime = ETERNAL.cue || 0; } catch { /* ignore */ } };
+    if (el.readyState >= 1) cue(); else el.addEventListener('loadedmetadata', cue, { once: true });
+    this.rhythm = createRhythm(ETERNAL.events, ETERNAL.accents, ETERNAL.sections);
+  }
+
   _custom() {
     if (!this.customUrl) return;
     if (!this.customEl) {
@@ -484,6 +503,32 @@ export class Sound {
     if (this.customEl.src !== abs) this.customEl.src = abs;
     this.customEl.volume = 1;
     this.customEl.play().catch(() => {});
+  }
+
+  // ---- one-tap effect sounds (homepage chime family) ----
+  _partial(t, freq, peak, decay, type = 'sine', detune = 0) {
+    const ctx = this.ctx, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t); if (detune) o.detune.setValueAtTime(detune, t);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    o.connect(g).connect(this.sfxBus); o.start(t); o.stop(t + decay + 0.05);
+  }
+  glowChime() {
+    if (!this.ensure()) return; const t = this.ctx.currentTime, notes = [523.25, 659.25, 783.99, 987.77, 1318.5];
+    notes.forEach((f, i) => { this._partial(t + i * 0.07, f, 0.09, 1.6 - i * 0.12); this._partial(t + i * 0.07, f * 2, 0.024, 0.7, 'sine', 6); });
+    for (let i = 0; i < 6; i++) this._partial(t + 0.2 + i * 0.09, 2093 * 2 ** ((i % 3) * 4 / 12), 0.016, 0.5, 'sine', i % 2 ? 8 : -8);
+  }
+  coinChime(i = 0) {
+    if (!this.ensure()) return; const t = this.ctx.currentTime, f = 1900 + ((i * 137) % 9) * 130;
+    this._partial(t, f, 0.08, 0.28); this._partial(t, f * 2.76, 0.032, 0.16); this._partial(t + 0.045, f * 1.5, 0.036, 0.2);
+  }
+  zapChime(i = 0) {
+    if (!this.ensure()) return;
+    const ctx = this.ctx, t = ctx.currentTime, o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), start = 1700 + (i % 4) * 220;
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(start, t); o.frequency.exponentialRampToValueAtTime(140, t + 0.24);
+    f.type = 'lowpass'; f.frequency.setValueAtTime(4200, t); f.frequency.exponentialRampToValueAtTime(600, t + 0.24); f.Q.value = 6;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+    o.connect(f).connect(g).connect(this.sfxBus); o.start(t); o.stop(t + 0.3);
+    this._partial(t, start / 2, 0.024, 0.12, 'triangle');
   }
 
   // Touch chime: x (0..1) picks pentatonic degree, y (0..1) picks octave
@@ -499,4 +544,34 @@ export class Sound {
       this._bell(midi(m + 12), t + 0.18, 0.06, 3.6, this.sfxBus);
     }
   }
+}
+
+export const ETERNAL_URL = 'media/aurelia-techno-eternal-148bpm.m4a';
+// pre-measured 40–180 Hz energy of the track (no live analyser needed)
+function energyAt(time) {
+  const e = ETERNAL.energy; if (!e || !e.data) return 0;
+  const i = Math.floor(time / e.hop); if (i < 0 || i >= e.data.length) return 0;
+  const c = e.data.charCodeAt(i); return (c < 58 ? c - 48 : c - 87) / 35;
+}
+// the homepage show's rhythm: kicks, accents and the build → drop sections of the track
+function createRhythm(events, accents = [], sections = []) {
+  let last = -10, count = 0, interval = 60 / 148, accentCount = 0, lastTime = -10;
+  const passed = (list, time) => { let lo = 0, hi = list.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (list[mid] <= time) lo = mid + 1; else hi = mid; } return lo; };
+  return {
+    update(level, time) {
+      if (time < lastTime) { count = accentCount = 0; } lastTime = time;
+      const nextCount = passed(events, time), beat = nextCount > count; count = nextCount; last = count ? events[count - 1] : -10;
+      if (count > 1) { const gap = last - events[count - 2]; if (gap > 0.24 && gap < 0.9) interval = gap; }
+      const nextAccent = passed(accents, time), accentBeat = nextAccent > accentCount; accentCount = nextAccent;
+      const accentTime = accentCount ? accents[accentCount - 1] : -10;
+      const accentPulse = accentCount ? Math.exp(-Math.max(0, time - accentTime) / 0.04) : 0;
+      const section = sections.find(x => time >= x.start && time < x.end);
+      const stage = section ? (time < section.drop ? 'build' : 'drop') : 'groove';
+      const buildProgress = stage === 'build' ? (time - section.start) / (section.drop - section.start) : 0;
+      const dropPulse = stage === 'drop' ? Math.exp(-(time - section.drop) / 0.55) : 0;
+      const kickPulse = count ? Math.exp(-Math.max(0, time - last) / 0.095) : 0;
+      const pulse = stage === 'build' ? Math.max(kickPulse * 0.45, accentPulse * (0.8 + buildProgress * 0.15)) : Math.max(kickPulse, dropPulse);
+      return { beat, count, interval, pulse, phase: count ? Math.min(1, Math.max(0, time - last) / interval) : 0, accentBeat, accentCount, accentPulse, stage, buildProgress, dropPulse, sweep: time / (60 / 148), level };
+    },
+  };
 }

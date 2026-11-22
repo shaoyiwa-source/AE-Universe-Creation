@@ -7,7 +7,7 @@ import { STR, OPTIONS } from './i18n.js';
 import { recordClip, canRecord } from './recorder.js';
 import { Listener } from './listen.js';
 import { Alive } from './alive.js';
-import { PackHost, PACKS, packsOf, paramsFor, transitionPack } from './packs.js';
+import { PackHost, PACKS, packsOf, paramsFor, transitionPack, registerPack, packFromSource, BUILTIN } from './packs.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -39,7 +39,7 @@ const fmtSec = (s) => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)} min` 
 const DEFAULTS = {
   mode: 'online', adjusted: false, transition: 'random', interval: 10,
   effects: { innerbloom: true, lumiere: true, echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
-  interact: { alive: true, ripple: true, chime: true, lumi: true, seeds: true, cute: false, listen: false },
+  interact: { alive: true, tray: true, ripple: true, chime: true, lumi: true, seeds: true, cute: false, listen: false },
   display: { intro: true, captions: true, label: true, camera: false, mat: true, drift: true, shuffle: false, loop: true },
   music: 'celestial', volume: 0.6, intensity: 3, selected: [],
 };
@@ -100,8 +100,21 @@ const normWork = (w, i) => ({
   title: typeof w.title === 'object' && w.title ? w.title : { en: w.title || '', zh: '' },
   statement: w.statement || { en: '', zh: '' },
 });
+// packages AE imported in God mode (their code lives in the cloud library); loaded once per version
+let catalogPacks = [];
+const packSources = new Map();
+async function loadPackages(list) {
+  for (const pk of list || []) {
+    try {
+      if (!packSources.has(pk.src)) packSources.set(pk.src, await (await fetch(pk.src)).text());
+      registerPack(packFromSource(packSources.get(pk.src)));
+    } catch (err) { console.warn('package', pk.id, err); }
+  }
+}
 async function loadCatalog() {
   if (ED) {
+    for (const code of ED.packs || []) { try { registerPack(packFromSource(code)); } catch (err) { console.warn('package', err); } }
+    if (S.music === 'eternal') S.music = 'pulse'; // the show track is not inside player files
     works = ED.works.map(normWork); tracks = []; cloud = 'edition';
     exhibitions = [{ id: 'xedition', title: ED.title, note: ED.note, mode: ED.mode, items: ED.works.map(w => ({ id: w.id, ...(w.duration ? { duration: w.duration } : {}), ...(w.transition ? { transition: w.transition } : {}), ...(w.fx ? { fx: w.fx } : {}), ...(w.tr ? { tr: w.tr } : {}), ...(w.cam ? { cam: w.cam } : {}) })) }];
     view = 'xedition';
@@ -112,6 +125,7 @@ async function loadCatalog() {
   try {
     const d = await api('catalog');
     works = d.works.map(normWork); exhibitions = d.exhibitions || []; tracks = d.tracks || []; cloud = d.storage || 'none';
+    catalogPacks = d.packs || []; await loadPackages(catalogPacks);
   } catch {
     works = FALLBACK.map(normWork); exhibitions = []; tracks = []; cloud = 'offline';
   }
@@ -592,10 +606,10 @@ exportForm.addEventListener('submit', async (e) => {
   go.disabled = true;
   try {
     const { exportEdition } = await import('./export.js');
-    const settings = { mode: S.mode, transition: S.transition, interval: S.interval, music: String(S.music).startsWith('track:') ? modeOf(S.mode).set.music : S.music, volume: S.volume, effects: { ...S.effects }, interact: { ...S.interact }, display: { ...S.display } };
+    const settings = { mode: S.mode, transition: S.transition, interval: S.interval, music: String(S.music).startsWith('track:') || S.music === 'eternal' ? (modeOf(S.mode).set.music === 'eternal' ? 'pulse' : modeOf(S.mode).set.music) : S.music, volume: S.volume, effects: { ...S.effects }, interact: { ...S.interact }, display: { ...S.display } };
     const out = await exportEdition({
       meta: { titleZh: f.titleZh.value, titleEn: f.titleEn.value, noteZh: f.noteZh.value, noteEn: f.noteEn.value, artist: f.artist.value, year: f.year.value, no: f.no.value, of: f.of.value, kind: f.kind.value, quality: f.quality.value },
-      works: list, mode: S.mode, settings,
+      works: list, mode: S.mode, settings, packs: catalogPacks.map(pk => packSources.get(pk.src)).filter(Boolean),
       onProgress: (m) => { status.textContent = T('exporting', m); },
     });
     const a = document.createElement('a'); a.href = URL.createObjectURL(out.blob); a.download = out.filename;
@@ -819,6 +833,7 @@ const fx = new FX($('#fx'), { reduced });
 const alive = new Alive(); // R10: the painting itself comes alive and answers touch
 const packs = new PackHost(alive); // R10 God mode: effect packages drawn on the same light layers
 packs.beatFn = () => sound.beat(); // lasers and other beat-driven light follow the music's kick drum
+packs.chimeFn = (k, i) => (k === 'glow' ? sound.glowChime() : k === 'coin' ? sound.coinChime(i) : sound.zapChime(i)); // one-tap effect sounds
 let camT = 0; // camera clock while arranging in God mode (loops the work's duration)
 let list = [], idx = 0, cur = 0, ambCur = 0, curDur = 10, curItem = null;
 let playing = false, busy = false, pending = null, elapsed = 0, shown = false;
@@ -978,6 +993,14 @@ function renderGod(keepScroll) {
   const n = list.length; const f = $('#godFrom'), t = $('#godTo');
   f.max = t.max = n; if (!f.value) f.value = idx + 1; if (!t.value) t.value = Math.min(n, idx + 3);
   $('#godNeedShow').hidden = !!sh; $('#godNeedShow').textContent = T('godNeedShow');
+  // the packages this studio has: built-in and imported (with versions)
+  const pl = $('#godPackList'); pl.replaceChildren();
+  for (const pk of PACKS.values()) {
+    const li = document.createElement('li'); li.innerHTML = '<span><b></b> <small></small></span><span></span>';
+    li.querySelector('b').textContent = L(pk.name); li.querySelector('small').textContent = pk.type;
+    li.lastChild.textContent = BUILTIN.has(pk.id) && !catalogPacks.some(c => c.id === pk.id) ? `v${pk.version || 1} · ${T('godBuiltin')}` : `v${pk.version || 1}`;
+    pl.appendChild(li);
+  }
   $('#godSave').disabled = !sh;
 }
 function openGod() {
@@ -1004,6 +1027,17 @@ $('#godPreview').addEventListener('click', () => {
   god.previewTr = null; jump(back);
   const wait = () => { if (busy) return setTimeout(wait, 120); god.previewTr = keepTr; jump(target); const w2 = () => { if (busy || idx !== target) return setTimeout(w2, 120); god.fx = keepFx; god.tr = keepTr; godApply(); }; setTimeout(w2, 200); };
   setTimeout(wait, 300);
+});
+$('#godPackInput').addEventListener('change', async (e) => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const code = await f.text();
+    const pk = packFromSource(code); registerPack(pk); // checked before it is stored
+    const { pack } = await api('upload', { method: 'POST', query: { kind: 'pack', id: pk.id, ptype: pk.type, version: String(pk.version || 1), name: JSON.stringify(pk.name || {}) }, raw: new Blob([code], { type: 'text/javascript' }), type: 'text/javascript' });
+    packSources.set(pack.src, code);
+    await loadCatalog(); renderGod(true);
+    toast(T('godImported', `${L(pk.name)} v${pk.version || 1}`));
+  } catch (err) { if (err && err.code) studioError(err); else toast(T('godImportBad')); }
 });
 $('#godSave').addEventListener('click', async () => {
   const sh = currentShow(); if (!sh) return;
@@ -1167,7 +1201,7 @@ function playIntro() {
   });
 }
 function closePlayer() {
-  closeLoupe(); closeGod(); packs.clear(true); packs.resetCamera(); slides.forEach(sl => { const m = sl.querySelector('img'); m.style.transform = ''; m.style.animation = ''; }); alive.clear(); player.classList.remove('alivehover');
+  closeLoupe(); closeGod(); setTrayOpen(false); packs.clear(true); packs.resetCamera(); slides.forEach(sl => { const m = sl.querySelector('img'); m.style.transform = ''; m.style.animation = ''; }); alive.clear(); player.classList.remove('alivehover');
   playing = false;
   stopListening(); toggleInfo(false);
   fx.stop(); sound.stop();
@@ -1528,6 +1562,7 @@ function applyLive() {
   alive.maxDpr = lowPower ? 0.6 : 1; alive.quality = lowPower ? 0.5 : 1;
   alive.enabled = !!S.interact.alive;
   alive.rich = !!modeOf(S.mode).set.rich;
+  syncTray();
   if (!player.hidden) { if (S.interact.alive) wakeAlive(); else alive.detach(); }
   sound.chimeOn = S.interact.chime;
   neon.classList.toggle('on', !!S.effects.neon && !S.display.camera);
@@ -1562,6 +1597,21 @@ function showControls() {
 }
 
 let down = null;
+// one-tap effects tray (homepage show): Glow, Gold coins, Laser
+const tray = $('#fxTray'), trayBtn = $('#trayBtn');
+function renderTray() {
+  tray.replaceChildren();
+  for (const pk of packsOf('burst')) {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.burst = pk.id;
+    b.innerHTML = `<i class="i-${pk.icon || pk.id}" aria-hidden="true"></i><span></span>`; b.querySelector('span').textContent = L(pk.name);
+    b.addEventListener('click', (e) => { e.stopPropagation(); sound.ensure(); packs.fire(pk.id); showControls(); });
+    tray.appendChild(b);
+  }
+}
+function syncTray() { const on = !!S.interact.tray && !reduced; trayBtn.hidden = !on; if (!on) setTrayOpen(false); }
+function setTrayOpen(open) { tray.hidden = !open; trayBtn.setAttribute('aria-expanded', String(open)); if (open) renderTray(); }
+trayBtn.addEventListener('click', () => setTrayOpen(tray.hidden));
+
 // how firmly the painting is touched: pen pressure, real touch pressure (some Android), or a wider fingertip
 function forceOf(e) {
   let f = 0;
@@ -1573,7 +1623,7 @@ function forceOf(e) {
   }
   return Math.max(0, Math.min(1, f));
 }
-const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip, .pl-info, dialog');
+const isUi = (el) => el.closest('.pl-controls, .lw-sheet, .pl-strip, .pl-info, .pl-tray, dialog');
 // ---- magnifier (R9.1): long-press the work → a round lens; drag to look around; release to close ----
 const loupe = $('#loupe'), loupeImg = loupe.querySelector('img');
 const LOUPE_ZOOM = 2.6;
@@ -1729,7 +1779,9 @@ function makeGrain() {
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
+    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', bursts: (packs.bursts || []).length, music: sound.preset, packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
+    beat: () => sound.beat(), trackTime: () => (sound.customEl ? sound.customEl.currentTime : 0),
+    registerOld: () => { try { registerPack({ ...PACKS.get('firefly'), version: 1 }); } catch { /* ignore */ } return PACKS.get('firefly') ? PACKS.get('firefly').version : 0; },
     rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();
