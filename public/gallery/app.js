@@ -850,17 +850,14 @@ function placeNeon(r) { if (r) Object.assign(neon.style, { left: r.x + 'px', top
 function layout() {
   fx.resize(stage.clientWidth, stage.clientHeight);
   placeSlide(0); placeSlide(1);
-  const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); positionCaption(r); if (alive.on) alive.setRect(r); }
+  const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); positionCaption(r); alive.setRect(r); }
 }
 // put the living layer on the painting now on screen (when the mode allows it)
 function wakeAlive() {
   if (!shown || player.hidden || reduced || !S.interact.alive) { alive.detach(); return; }
   const media = mediaOf(cur), work = list[idx];
   if (!work || work.type === 'video' || alive.on) return;
-  if (alive.attach(slides[cur], media, slides[cur].rect, work.id)) {
-    // follow the image's own slow camera / breathing exactly
-    try { const ma = media.getAnimations()[0], ca = alive.canvas.getAnimations()[0]; if (ma && ca) ca.currentTime = ma.currentTime; } catch { /* older browsers */ }
-  }
+  alive.attach(slides[cur], media, slides[cur].rect, work.id, paletteCache.get(work.id));
 }
 window.addEventListener('resize', () => { if (!player.hidden) layout(); });
 window.addEventListener('orientationchange', () => setTimeout(() => { if (!player.hidden) layout(); }, 250));
@@ -1000,7 +997,7 @@ function playIntro() {
   });
 }
 function closePlayer() {
-  closeLoupe(); alive.detach(); player.classList.remove('alivehover');
+  closeLoupe(); alive.clear(); player.classList.remove('alivehover');
   playing = false;
   stopListening(); toggleInfo(false);
   fx.stop(); sound.stop();
@@ -1341,7 +1338,7 @@ function applyLive() {
   fx.setEffects(liveEffects());
   fx.setInteract(S.interact);
   alive.gain = [0.6, 0.8, 1, 1.2, 1.4][lvl - 1];
-  alive.maxDpr = lowPower ? 1 : 2;
+  alive.maxDpr = lowPower ? 1 : 1.5; alive.quality = lowPower ? 0.5 : 1;
   alive.enabled = !!S.interact.alive;
   if (!player.hidden) { if (S.interact.alive) wakeAlive(); else alive.detach(); }
   sound.chimeOn = S.interact.chime;
@@ -1442,6 +1439,7 @@ player.addEventListener('pointermove', (e) => {
   if (isUi(e.target)) return;
   const r = player.getBoundingClientRect();
   const x = e.clientX - r.left, y = e.clientY - r.top;
+  alive.look(x, y);
   if (loupeOn) { moveLoupe(x, y); return; }
   if (down && down.alive && down.id === e.pointerId) alive.move(e.pointerId, x, y, forceOf(e));
   if (e.pointerType === 'mouse' && !down) player.classList.toggle('alivehover', S.interact.alive && alive.setHover(x, y) > 0.3);
@@ -1530,7 +1528,7 @@ function makeGrain() {
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
+    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
     rec, enterLowPower, aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();

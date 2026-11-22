@@ -1,4 +1,4 @@
-// AE Lumina Wall — R10 step 1 "Living painting": still at first, then alive; touch answers; hold = bigger; elsewhere = magnifier.
+// AE Lumina Wall — R10 step 1 "Living painting" (v2: light is added around the work; the painting itself is never altered).
 // Usage: node tests/alive.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';
@@ -38,14 +38,20 @@ try {
   await page.evaluate(() => { window.__lumina.state.settings.interval = 120; });
   await wait(400);
   const s0 = (await st()).alive;
-  check(`[${which}] the painting comes alive on screen (WebGL layer)`, s0.ok && s0.on, JSON.stringify(s0));
-  check(`[${which}] it starts completely still`, s0.amb === 0, `amb ${s0.amb}`);
+  check(`[${which}] the painting is read and the light layers are ready`, s0.ok && s0.on, JSON.stringify(s0));
+  check(`[${which}] it starts completely still (no light yet)`, s0.amb === 0 && s0.counts.motes === 0, `amb ${s0.amb}, motes ${s0.counts.motes}`);
   await wait(6000);
   const s1 = (await st()).alive;
-  check(`[${which}] a few seconds later its strokes move by themselves`, s1.amb >= 0.9, `amb ${s1.amb}`);
-  // living layer sits exactly on the work (never crops / shifts it)
-  const fit = await page.evaluate(() => { const s = window.__lumina.state, sl = document.querySelectorAll('.pl-slide')[s.cur], m = sl.querySelector('img'), c = sl.querySelector('.pl-alive'); return c && ['left', 'top', 'width', 'height'].every(k => Math.abs(parseFloat(c.style[k]) - parseFloat(m.style[k])) < 0.5); });
-  check(`[${which}] the living layer sits exactly on the painting`, fit);
+  check(`[${which}] a few seconds later light lives in and around it`, s1.amb >= 0.9 && s1.counts.motes > 5 && s1.counts.dust > 3, JSON.stringify(s1.counts));
+  check(`[${which}] the light also lives outside the frame (one space with the surroundings)`, s1.counts.outside > 3, `outside ${s1.counts.outside}`);
+  // the painting itself is untouched: an ordinary image between a back layer and a front layer of light
+  const layers = await page.evaluate(() => {
+    const stage = document.getElementById('stage'), kids = [...stage.children];
+    const back = stage.querySelector('.pl-alive-back'), front = stage.querySelector('.pl-alive'), slide = document.querySelector('.pl-slide');
+    const s = window.__lumina.state, img = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img');
+    return { order: kids.indexOf(back) < kids.indexOf(slide) && kids.indexOf(front) > kids.indexOf(slide), passive: getComputedStyle(front).pointerEvents === 'none' && getComputedStyle(back).pointerEvents === 'none', img: getComputedStyle(img).visibility === 'visible' && !img.style.filter, inSlide: !document.querySelector('.pl-slide canvas') };
+  });
+  check(`[${which}] the painting is never altered (light layers behind and in front of it)`, layers.order && layers.passive && layers.img && layers.inSlide, JSON.stringify(layers));
   // find living and still spots
   const r = await page.evaluate(() => window.__lumina.aliveRect());
   const pts = [];
@@ -54,15 +60,19 @@ try {
   const A = pts[0];
   check(`[${which}] the painting is read: it has living parts`, A.a > 0.5, `best ${A.a.toFixed(2)}, ${pts.filter(p => p.a > 0.3).length}/${pts.length} living`);
   // tap → a clear answer
+  const sp0 = (await st()).alive.stats.spawned;
   await page.mouse.click(A.x, A.y); await wait(120);
   const tap = (await st()).alive;
-  check(`[${which}] a tap on a living part makes it answer`, tap.strength > 0.5 && tap.stats.taps >= 1, `strength ${tap.strength}`);
+  check(`[${which}] a tap on a living part makes light rise from it`, tap.strength > 0.5 && tap.stats.taps >= 1 && tap.stats.spawned - sp0 >= 15, `strength ${tap.strength}, +${tap.stats.spawned - sp0} lights`);
   await wait(3000);
   // hold → grows with time
   const idx0 = (await st()).idx;
-  await page.mouse.move(A.x, A.y); await page.mouse.down(); await wait(350);
-  const h1 = (await st()).alive.strength; await wait(1700);
-  const h2 = (await st()).alive.strength;
+  await page.mouse.move(A.x, A.y); await page.mouse.down();
+  const q0 = (await st()).alive.stats.spawned; await wait(350);
+  const hs1 = (await st()).alive, h1 = hs1.strength, q1 = hs1.stats.spawned; await wait(1400);
+  const q2a = (await st()).alive.stats.spawned; await wait(350);
+  const hs2 = (await st()).alive, h2 = hs2.strength, q2 = hs2.stats.spawned;
+  check(`[${which}] holding keeps light rising, faster the longer you hold`, (q2 - q2a) > (q1 - q0) * 1.5, `first 0.35 s: ${q1 - q0}, after 1.75 s: ${q2 - q2a}`);
   await page.screenshot({ path: `${out}/${which}-alive-hold.png` });
   check(`[${which}] the longer the press, the bigger the answer`, h2 > h1 + 0.4, `${h1} → ${h2}`);
   check(`[${which}] holding a living part does not open the magnifier`, !(await st()).loupe);
@@ -81,8 +91,8 @@ try {
   // switching it off removes the layer; the static image remains
   await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
   await page.click('#interactToggles [data-opt=alive]'); await page.click('#closeSettings'); await wait(300);
-  const off = (await st()).alive;
-  check(`[${which}] turning Living Painting off returns the still painting`, !off.on && await page.evaluate(() => !document.querySelector('.pl-alive') || !document.querySelector('.pl-alive').isConnected));
+  const off1 = (await st()).alive; await wait(1500); const off2 = (await st()).alive;
+  check(`[${which}] turning Living Painting off: no new light, the painting stays as it is`, !off1.on && off2.stats.spawned === off1.stats.spawned, `${off1.stats.spawned} → ${off2.stats.spawned}`);
   check(`[${which}] no page errors`, errs.length === 0, errs.slice(0, 2).join(' | '));
 } catch (e) { check(`[${which}] scenario crashed`, false, String(e).split('\n').slice(0, 4).join(' / ')); }
 await browser.close(); srv.kill(); fs.rmSync(lib, { recursive: true, force: true });
