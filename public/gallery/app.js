@@ -1820,11 +1820,18 @@ function deviceId() {
   return d;
 }
 const licKey = () => 'ae-lic-' + LIC_ID;
+// this launch's own id: if the computer is copied, the copies share the device id but never a running session
+const LIC_SID = (() => { const b = new Uint8Array(12); crypto.getRandomValues(b); return [...b].map(x => x.toString(16).padStart(2, '0')).join(''); })();
+// the last confirmed licence, kept on this machine so a restart without internet still plays (within the offline days AE allows)
+const licCacheKey = () => 'ae-lic-cache-' + LIC_ID;
+const licCached = () => { try { const c = JSON.parse(localStorage.getItem(licCacheKey()) || 'null'); return c && c.config && c.okAt ? c : null; } catch { return null; } };
+const offlineLimit = (cfg) => Math.max(1, Math.min(30, Number(cfg && cfg.offlineDays) || 3)) * 86400e3;
 const licToken = () => { try { return JSON.parse(localStorage.getItem(licKey()) || 'null'); } catch { return null; } };
-function showLicGate(msg, { form = true, err = false, title } = {}) {
+function showLicGate(msg, { form = true, err = false, title, claim = false } = {}) {
   licGate.hidden = false; $('#startGate').hidden = true;
   $('#licTitle').textContent = title || T('licTitle');
   const m = $('#licMsg'); m.textContent = msg || ''; m.classList.toggle('err', err);
+  $('#licClaim').hidden = !claim;
   $('#licForm').hidden = !form; $('.lw-lic-help').hidden = !form;
   if (form) setTimeout(() => $('#licCode').focus(), 50);
 }
@@ -1836,10 +1843,12 @@ function showStartGate() {
   gate.hidden = false;
   $('#gateBtn').onclick = () => { gate.hidden = true; openPlayer(null); };
 }
-let licOkAt = 0, licTimer = null, licBlocked = '';
-async function useLicence(cfg, { autoplay = false } = {}) {
+let licOkAt = 0, licTimer = null, licBlocked = '', licOffline = false;
+async function useLicence(cfg, { autoplay = false, okAt = 0 } = {}) {
   const changed = !LIC || LIC.version !== cfg.version;
-  LIC = cfg; licOkAt = Date.now();
+  LIC = cfg; licOkAt = okAt || Date.now();
+  if (!okAt) { try { localStorage.setItem(licCacheKey(), JSON.stringify({ config: cfg, okAt: licOkAt })); } catch { /* storage full: online checks still work */ } }
+  precacheForOffline();
   if (changed) {
     if (!LIC.modes.includes(S.mode)) applyMode(modeOf(LIC.defaultMode), { quiet: true });
     await loadCatalog(); renderAll(); renderSettings();
@@ -1848,37 +1857,59 @@ async function useLicence(cfg, { autoplay = false } = {}) {
   if (player.hidden && licGate.hidden === false) showStartGate();
 }
 function licenceProblem(code) {
-  const known = ['WRONG_CODE', 'DEVICE_TAKEN', 'DEVICE_CHANGED', 'PAUSED', 'REVOKED', 'EXPIRED', 'NOT_STARTED', 'NOT_FOUND'];
+  const known = ['WRONG_CODE', 'DEVICE_TAKEN', 'DEVICE_CHANGED', 'PAUSED', 'REVOKED', 'EXPIRED', 'NOT_STARTED', 'NOT_FOUND', 'SUPERSEDED'];
   return known.includes(code) ? code : null;
 }
-async function checkLicence() {
+async function checkLicence({ claim = false } = {}) {
   const t = licToken(); if (!t) return;
+  if (licBlocked === 'SUPERSEDED' && !claim) return; // stays stopped until someone chooses to play here
   try {
-    const { config } = await api('license-config', { method: 'POST', body: { token: t.token, device: deviceId() } });
+    const { config } = await api('license-config', { method: 'POST', body: { token: t.token, device: deviceId(), sid: LIC_SID, claim } });
+    licOffline = false;
     await useLicence(config, { autoplay: true });
   } catch (err) {
     const p = licenceProblem(err.code) || (err.code === 'BAD_TOKEN' ? 'DEVICE_CHANGED' : null);
     if (p) {
       licBlocked = p;
       if (!player.hidden) closePlayer();
-      if (p === 'DEVICE_CHANGED' || p === 'NOT_FOUND') { try { localStorage.removeItem(licKey()); } catch { /* ignore */ } }
-      showLicGate(T('lic_' + p), { form: p === 'DEVICE_CHANGED' || p === 'NOT_FOUND', err: true });
-    } else if (Date.now() - licOkAt > 72 * 3600e3) { // offline for 3 days: stop politely; otherwise keep the show going
+      if (p === 'DEVICE_CHANGED' || p === 'NOT_FOUND') { try { localStorage.removeItem(licKey()); localStorage.removeItem(licCacheKey()); } catch { /* ignore */ } }
+      if (p !== 'SUPERSEDED') { try { localStorage.removeItem(licCacheKey()); } catch { /* ignore */ } } // paused / revoked / expired: no offline play either
+      showLicGate(T('lic_' + p), { form: p === 'DEVICE_CHANGED' || p === 'NOT_FOUND', err: true, claim: p === 'SUPERSEDED' });
+    } else if (!LIC) { // no internet at start-up: play from the last confirmed licence if it is recent enough
+      const c = licCached();
+      if (c && Date.now() - c.okAt < offlineLimit(c.config)) { await useLicence(c.config, { okAt: c.okAt }); licOffline = true; }
+      else showLicGate(T('lic_OFFLINE'), { form: false, err: true });
+    } else if (Date.now() - licOkAt > offlineLimit(LIC)) { // offline longer than AE allows: stop politely; otherwise keep the show going
       if (!player.hidden) closePlayer();
       showLicGate(T('lic_OFFLINE'), { form: false, err: true });
     }
   }
 }
+// keep the program, the works and the music on this machine, so a restart without internet still plays
+let swReady = null;
+function precacheForOffline() {
+  if (!('serviceWorker' in navigator) || !LIC) return;
+  swReady = swReady || navigator.serviceWorker.register('/lumina-sw.js').then(() => navigator.serviceWorker.ready).catch(() => null);
+  swReady.then((reg) => {
+    if (!reg || !reg.active) return;
+    const urls = new Set(performance.getEntriesByType('resource').map(e => e.name).filter(u => u.startsWith(location.origin) && !/\/api\/lumina\?a=(?!media)/.test(u)));
+    urls.add(location.origin + '/gallery.html'); urls.add(location.href.split('#')[0]);
+    for (const w of LIC.works || []) for (const u of [w.src, w.thumb, w.poster]) if (u) urls.add(new URL(u, location.href).href);
+    for (const pk of LIC.packs || []) if (pk.src) urls.add(new URL(pk.src, location.href).href);
+    reg.active.postMessage({ type: 'precache', urls: [...urls] });
+  });
+}
 async function licenceBoot() {
   document.documentElement.classList.add('licensed');
   const q = new URLSearchParams(location.search);
   if (q.get('code')) $('#licCode').value = q.get('code');
+  $('#licClaim').addEventListener('click', async () => { licBlocked = ''; await checkLicence({ claim: true }); if (LIC && !licBlocked && player.hidden) showStartGate(); });
   $('#licForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const code = $('#licCode').value.trim(); if (!code) return;
     $('#licGo').disabled = true; $('#licMsg').textContent = T('licChecking'); $('#licMsg').classList.remove('err');
     try {
-      const r = await api('license-activate', { method: 'POST', body: { license: LIC_ID, code, device: deviceId() } });
+      const r = await api('license-activate', { method: 'POST', body: { license: LIC_ID, code, device: deviceId(), sid: LIC_SID } });
       try { localStorage.setItem(licKey(), JSON.stringify({ token: r.token })); } catch { /* ignore */ }
       licBlocked = '';
       await useLicence(r.config); showStartGate();
@@ -1889,7 +1920,7 @@ async function licenceBoot() {
   clearInterval(licTimer); licTimer = setInterval(checkLicence, every);
   if (licToken()) {
     showLicGate(T('licChecking'), { form: false });
-    await checkLicence();
+    await checkLicence({ claim: true }); // starting up: this screen takes the licence
     if (LIC && !licBlocked) showStartGate();
   } else showLicGate(T('licWelcome', ''));
 }
@@ -1935,7 +1966,7 @@ async function editLicence(l) {
   chipSet($('#licModes'), OPTIONS.modes.map(m => m.id), l ? l.modes : [sh ? sh.mode : 'online'], (id) => L(modeOf(id)));
   syncDefaultMode(); if (l) f.defaultMode.value = l.defaultMode;
   chipSet($('#licControls'), ['modes', 'intensity', 'volume', 'music', 'advance', 'listen', 'record'], l ? l.controls : ['modes', 'intensity', 'volume'], (id) => T('ctl_' + id));
-  f.starts.value = l ? l.starts || '' : todayStr(); f.expires.value = l ? l.expires || '' : addMonths(todayStr(), 12); f.note.value = l ? l.note || '' : '';
+  f.starts.value = l ? l.starts || '' : todayStr(); f.expires.value = l ? l.expires || '' : addMonths(todayStr(), 12); f.note.value = l ? l.note || '' : ''; f.offlineDays.value = String((l && l.offlineDays) || 3);
   const term = $('#licTerm'); term.replaceChildren(...[1, 3, 6, 12].map(m => chip(T('licTerm', m), false, false, () => { f.expires.value = addMonths(f.starts.value || todayStr(), m); })));
   $('#licSave').textContent = T(l ? 'licUpdate' : 'licSave');
   const out = $('#licOut'); out.hidden = !l;
@@ -1954,7 +1985,7 @@ licForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!exhibitions.length) { toast(T('licNeedShow'), 5000); return; }
   const f = licForm.elements;
-  await saveLicence({ id: f.id.value || undefined, customer: { name: f.name.value, email: f.email.value, venue: f.venue.value }, exhibitionId: f.exhibition.value, modes: chosen($('#licModes')), defaultMode: f.defaultMode.value, controls: chosen($('#licControls')), starts: f.starts.value, expires: f.expires.value, note: f.note.value });
+  await saveLicence({ id: f.id.value || undefined, customer: { name: f.name.value, email: f.email.value, venue: f.venue.value }, exhibitionId: f.exhibition.value, modes: chosen($('#licModes')), defaultMode: f.defaultMode.value, controls: chosen($('#licControls')), starts: f.starts.value, expires: f.expires.value, offlineDays: Number(f.offlineDays.value) || 3, note: f.note.value });
 });
 $('#openLicenses').addEventListener('click', async () => { if (!studio) return; licDialog.showModal(); try { await refreshLicences(); } catch (err) { studioError(err); } editLicence(licences[0] || null); });
 $('#licNew').addEventListener('click', () => editLicence(null));
@@ -2005,6 +2036,6 @@ function exposeHooks() {
     get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', laserMode: packs.laserMode || null, hits: { count: listener.hitCount || 0, times: listener.hitTimes ? listener.hitTimes.slice(-24) : [], flashes: packs.laserHits || 0 }, lock: { locked: !!roomBeat.locked, bpm: +(roomBeat.bpm || 0).toFixed(1), beats: roomBeat.lockCount || 0, emitted: listener.lock ? listener.lock.emitted.slice(-24) : [], onsets: listener.lock ? listener.lock.onsets.slice(-16) : [] }, bursts: (packs.bursts || []).length, music: sound.preset, packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
     beat: () => sound.beat(), beatClock: () => sound.lastBeatClock, setLatency: (v) => { if (sound.ctx) Object.defineProperty(sound.ctx, 'outputLatency', { configurable: true, get: () => v }); }, trackTime: () => (sound.customEl ? sound.customEl.currentTime : 0),
     registerOld: () => { try { registerPack({ ...PACKS.get('firefly'), version: 1 }); } catch { /* ignore */ } return PACKS.get('firefly') ? PACKS.get('firefly').version : 0; },
-    rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); }, checkLicence, licence: () => LIC,
+    rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); }, checkLicence, licence: () => LIC, licState: () => ({ offline: licOffline, blocked: licBlocked, okAt: licOkAt }),
   };
 }

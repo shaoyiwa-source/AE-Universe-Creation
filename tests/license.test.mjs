@@ -104,6 +104,45 @@ try {
   const r = await (await fetch(base + '/api/lumina?a=license-activate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ license: old.id, code: old.code, device: 'a'.repeat(32) }) })).json();
   check('an expired licence cannot be activated', r.error === 'EXPIRED', JSON.stringify(r));
   await s1.screenshot({ path: `${out}/license-client.png` });
+  // ---- a venue with unreliable internet: AE allows 7 offline days; the screen restarts with no internet ----
+  const l3 = (await studio('license-save', { license: { customer: { name: '山上美術館' }, exhibitionId: ex.id, modes: ['hotel'], offlineDays: 7 } })).json.license;
+  check('AE can set how long a screen may play without internet', l3.offlineDays === 7);
+  const c3 = await browser.newContext(view); const s3 = await c3.newPage(); const e3 = []; s3.on('pageerror', e => e3.push(String(e)));
+  await s3.goto(`${base}/gallery?license=${l3.id}&hb=2`, { waitUntil: 'networkidle' }); await s3.waitForSelector('#licGate:not([hidden])');
+  await s3.fill('#licCode', l3.code); await s3.click('#licGo'); await s3.waitForSelector('#startGate:not([hidden])', { timeout: 8000 });
+  await s3.click('#gateBtn'); await s3.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
+  // the program and the works are saved on this machine
+  const srcs3 = await s3.evaluate(() => window.__lumina.licence().works.map(w => w.src)); let saved = 0;
+  for (let i = 0; i < 40 && !saved; i++) { saved = await s3.evaluate(async (srcs) => { const c = await caches.open('lumina-offline-v1'); const keys = (await c.keys()).map(r => r.url); return srcs.every(u => keys.includes(new URL(u, location.href).href)) && keys.some(k => k.includes('/gallery/app.js')) ? keys.length : 0; }, srcs3); if (!saved) await wait(500); }
+  check('the program and every licensed work are kept on the machine', saved > 0, `${saved} files saved`);
+  await c3.setOffline(true);
+  await s3.reload({ waitUntil: 'load' }).catch(() => {});
+  await s3.waitForSelector('#startGate:not([hidden])', { timeout: 15000 }).catch(() => {});
+  check('restart with no internet: it still opens (last confirmed licence)', await s3.evaluate(() => !document.getElementById('startGate').hidden && window.__lumina.licState().offline).catch(() => false));
+  await s3.click('#gateBtn').catch(() => {}); await s3.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 }).catch(() => {});
+  const offImg = await s3.evaluate(() => { const im = [...document.querySelectorAll('#player img')].filter(i => i.complete && i.naturalWidth > 0); return im.length; }).catch(() => 0);
+  check('…and plays the works from the machine', offImg > 0, `${offImg} works drawn offline`);
+  // beyond the allowed offline days it stops politely
+  await s3.evaluate(() => { const k = Object.keys(localStorage).find(k => k.startsWith('ae-lic-cache-')); const c = JSON.parse(localStorage.getItem(k)); c.okAt = Date.now() - 8 * 86400e3; localStorage.setItem(k, JSON.stringify(c)); });
+  await s3.reload({ waitUntil: 'load' }).catch(() => {}); await wait(2500);
+  check('offline longer than AE allows (8 > 7 days): it stops and asks for internet', await s3.evaluate(() => /無法連線|cannot be checked/.test(document.getElementById('licMsg').textContent) && document.getElementById('startGate').hidden).catch(() => false));
+  await c3.setOffline(false);
+  await s3.reload({ waitUntil: 'networkidle' }); await s3.waitForSelector('#startGate:not([hidden])', { timeout: 10000 }).catch(() => {});
+  check('internet back: it continues by itself, no code needed', await s3.evaluate(() => !document.getElementById('startGate').hidden && !window.__lumina.licState().offline));
+  await s3.click('#gateBtn'); await s3.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
+  // ---- the computer is copied (same saved data): only one copy plays at a time ----
+  const c4 = await browser.newContext({ ...view, storageState: await c3.storageState() }); const s4 = await c4.newPage();
+  await s4.goto(`${base}/gallery?license=${l3.id}&hb=2`, { waitUntil: 'networkidle' });
+  await s4.waitForSelector('#startGate:not([hidden])', { timeout: 10000 }).catch(() => {});
+  check('a copy of the computer opens (it carries the same saved device)…', await s4.evaluate(() => !document.getElementById('startGate').hidden));
+  await s3.waitForSelector('#licGate:not([hidden])', { timeout: 10000 }).catch(() => {});
+  check('…and the other copy stops at its next check (one screen at a time)', await s3.evaluate(() => document.getElementById('player').hidden && !document.getElementById('licClaim').hidden && /另一台|another screen/.test(document.getElementById('licMsg').textContent)), await s3.textContent('#licMsg'));
+  await wait(4500);
+  check('the stopped copy stays stopped (no ping-pong)', await s3.evaluate(() => document.getElementById('player').hidden && window.__lumina.licState().blocked === 'SUPERSEDED'));
+  await s3.click('#licClaim'); await s3.waitForSelector('#startGate:not([hidden])', { timeout: 8000 }).catch(() => {});
+  await s4.click('#gateBtn').catch(() => {}); await s4.waitForSelector('#licGate:not([hidden])', { timeout: 10000 }).catch(() => {});
+  check('"play on this screen" takes it back; the copy stops', await s3.evaluate(() => !document.getElementById('startGate').hidden) && await s4.evaluate(() => !document.getElementById('licGate').hidden && window.__lumina.licState().blocked === 'SUPERSEDED'));
+  check('no page errors on the venue screens', e3.length === 0, e3.slice(0, 2).join(' | '));
   check('no page errors', errs.length === 0 && e1.length === 0, errs.concat(e1).slice(0, 3).join(' | '));
 } catch (e) { check('scenario crashed', false, String(e).split('\n').slice(0, 4).join(' / ')); }
 await browser.close(); srv.kill(); fs.rmSync(lib, { recursive: true, force: true });

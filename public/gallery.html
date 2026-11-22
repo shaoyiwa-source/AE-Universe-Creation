@@ -93,6 +93,7 @@
     <input id="licCode" name="code" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX" maxlength="20" aria-label="Activation code">
     <button type="submit" class="lw-btn primary" id="licGo" data-i18n="licGo">啟用</button>
   </form>
+  <button type="button" class="lw-btn primary" id="licClaim" data-i18n="licClaim" hidden>在這台播放</button>
   <p class="lw-lic-help" data-i18n="licHelp">啟動碼在 AE Universe Creation 寄給您的信件與啟用說明中。一個授權綁定一台螢幕。</p>
 </div>
 
@@ -117,6 +118,7 @@
         <label><span data-i18n="licStarts">開始</span><input name="starts" type="date"></label>
         <label><span data-i18n="licExpires">到期</span><input name="expires" type="date"></label>
         <div class="wide lw-chips" id="licTerm"></div>
+        <label class="wide"><span data-i18n="licOfflineDays">沒有網路時可播放（天）</span><select name="offlineDays"><option value="1">1</option><option value="3">3</option><option value="7">7</option><option value="14">14</option><option value="30">30</option></select></label>
         <label class="wide"><span data-i18n="licNote">備註</span><input name="note" maxlength="400"></label>
       </div>
       <div class="lw-lic-out" id="licOut" hidden>

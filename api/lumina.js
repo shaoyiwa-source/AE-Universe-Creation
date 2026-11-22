@@ -261,6 +261,8 @@ function sanitizeLicense(x, old, c) {
   if ('expires' in x) l.expires = dayOk(x.expires) ? x.expires : null;
   if ('plan' in x) l.plan = str(x.plan, 40);
   if ('note' in x) l.note = str(x.note, 400);
+  if ('offlineDays' in x) l.offlineDays = [1, 3, 7, 14, 30].includes(Number(x.offlineDays)) ? Number(x.offlineDays) : 3; // how long a screen may play without internet
+  if (!l.offlineDays) l.offlineDays = 3;
   if ('status' in x && ['active', 'paused', 'revoked'].includes(x.status)) l.status = x.status;
   l.updated = Date.now();
   return l;
@@ -289,7 +291,7 @@ function licenceConfig(l, c) {
   const items = e ? e.items.filter(it => works.some(w => w.id === it.id)) : [];
   return {
     id: l.id, state: licenceState(l), customer: { name: (l.customer && l.customer.name) || '', venue: (l.customer && l.customer.venue) || '' },
-    modes: l.modes, defaultMode: l.defaultMode, controls: l.controls, expires: l.expires || null,
+    modes: l.modes, defaultMode: l.defaultMode, controls: l.controls, expires: l.expires || null, offlineDays: l.offlineDays || 3,
     exhibition: e ? { id: e.id, title: e.title, note: e.note, mode: e.mode, items } : null, works, packs: Array.isArray(c.packs) ? c.packs : [],
     version: Math.max(l.updated || 0, c.updatedAt || 0),
   };
@@ -334,6 +336,9 @@ module.exports = async function handler(req, res) {
       const st = storage(); if (!st) return res.status(503).json({ error: 'STORAGE_NOT_READY' });
       const b = jsonBody(req);
       const did = str(b.device, 64);
+      // one running copy at a time: every launch has its own session id; the newest launch plays, an older copy stops
+      // (a cloned computer carries the same device id, but not the same running session)
+      const sid = /^[a-f0-9]{16,32}$/.test(String(b.sid || '')) ? String(b.sid) : '';
       if (!/^[a-f0-9]{32}$/.test(did)) return res.status(400).json({ error: 'BAD_DEVICE' });
       try {
       const C = await readCatalogCached(st);
@@ -344,7 +349,8 @@ module.exports = async function handler(req, res) {
         if (!l) { await new Promise(r => setTimeout(r, 700)); return res.status(404).json({ error: 'WRONG_CODE' }); }
         const state = licenceState(l); if (state !== 'OK') return res.status(403).json({ error: state });
         if (l.device && l.device.id !== did) return res.status(409).json({ error: 'DEVICE_TAKEN' }); // one licence, one screen
-        if (!l.device) { l.device = { id: did, at: Date.now(), last: Date.now(), ua: str(req.headers['user-agent'], 160) }; await writeLic(st, l); }
+        if (!l.device) { l.device = { id: did, at: Date.now(), last: Date.now(), ua: str(req.headers['user-agent'], 160), sid, sidAt: Date.now() }; await writeLic(st, l); }
+        else if (sid && l.device.sid !== sid) { l.device.sid = sid; l.device.sidAt = Date.now(); await writeLic(st, l); }
         return res.status(200).json({ token: signDevice(l.id, did), config: licenceConfig(l, C) });
       }
       const t = readDevice(b.token);
@@ -353,6 +359,16 @@ module.exports = async function handler(req, res) {
       if (!l) return res.status(404).json({ error: 'NOT_FOUND' });
       if (!l.device || l.device.id !== did) return res.status(409).json({ error: 'DEVICE_CHANGED' });
       const state = licenceState(l); if (state !== 'OK') return res.status(403).json({ error: state });
+      if (sid && l.device.sid && l.device.sid !== sid) {
+        if (!b.claim) { // confirm on fresh data (another server instance may hold an older copy) before stopping a screen
+          const f = await readLic(st, l.id, true);
+          if (f && f.device && f.device.sid && f.device.sid !== sid) return res.status(409).json({ error: 'SUPERSEDED' }); // a newer launch (or a copy) is playing
+        }
+      }
+      if (sid && (b.claim || !l.device.sid) && l.device.sid !== sid) {
+        const f = await readLic(st, l.id, true);
+        if (f && f.device && f.device.id === did) { f.device.sid = sid; f.device.sidAt = Date.now(); f.device.last = Date.now(); await writeLic(st, f); return res.status(200).json({ config: licenceConfig(f, C) }); }
+      }
       if (Date.now() - (l.device.last || 0) > 30 * 60e3) { try { const f = await readLic(st, l.id, true); if (f && f.device && f.device.id === did) { f.device.last = Date.now(); await writeLic(st, f); } } catch { /* last-seen is best effort */ } }
       return res.status(200).json({ config: licenceConfig(l, C) });
       } catch (e) { if (e.code === 'STORAGE_DOWN') return res.status(503).json({ error: 'STORAGE_DOWN' }); throw e; }
