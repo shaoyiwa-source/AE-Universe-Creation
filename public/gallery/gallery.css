@@ -586,3 +586,27 @@ body.no-scroll .lw-toast{bottom:auto;top:calc(22px + env(safe-area-inset-top))}
 .lw-god-packs{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px;font-size:13px;color:var(--muted)}
 .lw-god-packs li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:4px 0}
 .lw-god-packs b{color:var(--ink);font-weight:500}
+
+/* licensed player (R11) */
+html.licensed main,html.licensed .lw-header,html.licensed .lw-footer{display:none}
+html.licensed body{background:#050806}
+.lw-lic{position:fixed;inset:0;z-index:160;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center;background:radial-gradient(ellipse at center,#141c18,#050806 70%)}
+.lw-lic h2{font-family:var(--display);font-weight:500;font-size:clamp(26px,4vw,40px);margin:0;color:var(--ink)}
+.lw-lic-msg{max-width:520px;color:var(--muted);line-height:1.7;margin:0;min-height:1.7em}
+.lw-lic-msg.err{color:#f0b9a8}
+.lw-lic form{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.lw-lic input{width:min(320px,80vw);padding:14px 16px;font-size:20px;letter-spacing:.18em;text-align:center;background:rgba(255,255,255,.04);border:1px solid var(--gold-soft);color:var(--ink);font-family:ui-monospace,Menlo,monospace}
+.lw-lic-help{font-size:13px;color:var(--muted);max-width:440px;line-height:1.7}
+.lw-licdlg{width:min(1060px,96vw)}
+.lw-lic-cols{display:grid;grid-template-columns:280px 1fr;gap:24px}
+@media (max-width:760px){.lw-lic-cols{grid-template-columns:1fr}}
+.lw-lic-list{list-style:none;margin:10px 0;padding:0;display:grid;gap:6px;max-height:60vh;overflow:auto}
+.lw-lic-list button{width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);background:rgba(255,255,255,.02);display:grid;gap:2px}
+.lw-lic-list button[aria-current=true]{border-color:var(--gold)}
+.lw-lic-list b{font-weight:500;color:var(--ink)}
+.lw-lic-list small{color:var(--muted);font-size:12px}
+.lw-lic-list .st-paused small,.lw-lic-list .st-revoked small{color:#f0b9a8}
+.lw-lic-out{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;margin:14px 0;padding:14px;border:1px solid var(--gold-soft);background:rgba(201,165,92,.06)}
+.lw-lic-qr svg{display:block;width:150px;height:150px;background:#fff}
+.lw-lic-out code{font-size:18px;letter-spacing:.14em;color:var(--gold)}
+.lw-lic-url{word-break:break-all;font-size:12px;color:var(--muted)}

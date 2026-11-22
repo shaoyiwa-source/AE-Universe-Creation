@@ -46,6 +46,9 @@ const DEFAULTS = {
 
 // Edition (exported 客戶版 / NFT 版): everything comes from the embedded manifest; no server, no studio
 const ED = window.__AE_EDITION__ || null;
+// licensed player (R11): /gallery?license=<id> — a client's own arranged exhibition, bound to one screen
+const LIC_ID = (() => { try { const v = new URLSearchParams(location.search).get('license'); return !ED && /^l[a-z0-9]{6,40}$/.test(v || '') ? v : null; } catch { return null; } })();
+let LIC = null;
 const SKEY = ED ? 'ae-lumina-ed-' + ED.id : 'ae-lumina-settings';
 const S = loadSettings(DEFAULTS, SKEY);
 if (ED && ED.settings && lsGet(SKEY, null) === null) {
@@ -112,6 +115,14 @@ async function loadPackages(list) {
   }
 }
 async function loadCatalog() {
+  if (LIC) {
+    works = (LIC.works || []).map(normWork); tracks = []; cloud = 'licensed';
+    exhibitions = LIC.exhibition ? [{ ...LIC.exhibition, id: 'xlic' }] : [];
+    view = exhibitions.length ? 'xlic' : 'all';
+    catalogPacks = LIC.packs || []; await loadPackages(catalogPacks);
+    if (S.music === 'eternal' || String(S.music).startsWith('track:')) { /* the show track streams from the site */ }
+    return;
+  }
   if (ED) {
     for (const code of ED.packs || []) { try { registerPack(packFromSource(code)); } catch (err) { console.warn('package', err); } }
     if (S.music === 'eternal') S.music = 'pulse'; // the show track is not inside player files
@@ -366,7 +377,7 @@ async function enterStudio() {
   }
 }
 (() => {
-  if (ED) return;
+  if (ED || LIC_ID) return;
   const mark = $('.lw-wordmark');
   let timer = null, fired = false;
   const cancel = () => { clearTimeout(timer); timer = null; mark.classList.remove('pressing'); };
@@ -481,7 +492,7 @@ function openEdit(id) {
   f.titleZh.value = w.title.zh || ''; f.titleEn.value = w.title.en || '';
   f.year.value = w.year || ''; f.medium.value = w.medium || ''; f.size.value = w.size || '';
   f.stZh.value = w.statement?.zh || ''; f.stEn.value = w.statement?.en || '';
-  f.hidden.checked = !!w.hidden;
+  f.hidden.checked = !!w.hidden; f.private.checked = !!w.private;
   const it = itemOf(id);
   $('#inShow').hidden = !it;
   const sel = f.transition; sel.replaceChildren();
@@ -496,7 +507,7 @@ editForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = editForm.elements, w = editing; if (!w) return;
   const patch = { title: { zh: f.titleZh.value, en: f.titleEn.value }, year: f.year.value, medium: f.medium.value, size: f.size.value,
-    statement: { zh: f.stZh.value, en: f.stEn.value }, hidden: f.hidden.checked };
+    statement: { zh: f.stZh.value, en: f.stEn.value }, hidden: f.hidden.checked, private: f.private.checked };
   try {
     await api('update', { method: 'POST', body: { id: w.id, patch } });
     const sh = currentShow();
@@ -675,6 +686,7 @@ function renderSettings() {
   const modes = $('#modeCards'); modes.replaceChildren();
   let lastArena = '';
   for (const m of OPTIONS.modes) {
+    if (LIC && !LIC.modes.includes(m.id)) continue; // a licence offers only the modes AE chose
     if (m.arena !== lastArena) {
       lastArena = m.arena;
       const ar = OPTIONS.arenas.find(a => a.id === m.arena);
@@ -730,6 +742,25 @@ function renderSettings() {
   iv.value = STEPS.reduce((bi, v, i) => Math.abs(v - S.interval) < Math.abs(STEPS[bi] - S.interval) ? i : bi, 0);
   $('#intervalOut').textContent = fmtSec(S.interval);
   const vo = $('#volume'); vo.value = S.volume; $('#volumeOut').textContent = Math.round(S.volume * 100) + '%';
+  licenceControls();
+}
+// a licensed player shows only the adjustments AE opened for this client
+function licenceControls() {
+  if (!LIC) return;
+  const c = new Set(LIC.controls || []), sec = (id) => $('#' + id).closest('section');
+  const show = (el, on) => { if (el) el.hidden = !on; };
+  show(sec('modeCards'), c.has('modes') && LIC.modes.length > 1); show($('#resetMode'), false);
+  const ts = sec('transitionChips'); show(ts, c.has('advance'));
+  ts.querySelectorAll('h3, #transitionChips, .lw-range').forEach(el => show(el, false));
+  const es = sec('effectToggles'); show(es, c.has('intensity')); show($('#effectToggles'), false);
+  const is = sec('interactToggles'); show(is, c.has('listen'));
+  is.querySelectorAll('.lw-toggle').forEach(b => show(b, b.dataset.opt === 'listen'));
+  const ms = sec('musicChips'); show(ms, c.has('music') || c.has('volume'));
+  show($('#musicChips'), c.has('music')); show(ms.querySelector('h3'), c.has('music')); show($('#volume').closest('label'), c.has('volume'));
+  ms.querySelectorAll('.lw-music-upload, #musicNote').forEach(el => show(el, false));
+  show(sec('displayToggles'), false); show($('.lw-tune-head'), false);
+  $('#recBtn').hidden = !c.has('record') || !canRecord();
+  $('#fxBtn').hidden = !['modes', 'intensity', 'volume', 'music', 'advance', 'listen'].some(k => c.has(k));
 }
 function applyMode(m, { quiet = false } = {}) {
   const set = m.set;
@@ -1227,6 +1258,7 @@ function closePlayer() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   releaseWake(); closeSheet();
   $('#playBtn').focus();
+  if (LIC_ID && LIC && $('#licGate').hidden) showStartGate();
 }
 function startMusic() {
   if (S.music === 'none') { sound.stop(); player.classList.add('muted'); return; }
@@ -1778,11 +1810,178 @@ function makeGrain() {
   } catch { /* optional */ }
 }
 
+// ---------- licensed player (R11) ----------
+const licGate = $('#licGate');
+function deviceId() {
+  let d = null; try { d = localStorage.getItem('ae-device'); } catch { /* private mode */ }
+  if (!/^[a-f0-9]{32}$/.test(d || '')) { const b = new Uint8Array(16); crypto.getRandomValues(b); d = [...b].map(x => x.toString(16).padStart(2, '0')).join(''); try { localStorage.setItem('ae-device', d); } catch { /* ignore */ } }
+  return d;
+}
+const licKey = () => 'ae-lic-' + LIC_ID;
+const licToken = () => { try { return JSON.parse(localStorage.getItem(licKey()) || 'null'); } catch { return null; } };
+function showLicGate(msg, { form = true, err = false, title } = {}) {
+  licGate.hidden = false; $('#startGate').hidden = true;
+  $('#licTitle').textContent = title || T('licTitle');
+  const m = $('#licMsg'); m.textContent = msg || ''; m.classList.toggle('err', err);
+  $('#licForm').hidden = !form; $('.lw-lic-help').hidden = !form;
+  if (form) setTimeout(() => $('#licCode').focus(), 50);
+}
+function showStartGate() {
+  licGate.hidden = true;
+  const gate = $('#startGate');
+  $('#gateShow').textContent = currentShow() ? showTitle(currentShow()) : 'AE Universe Creation';
+  const ge = $('#gateEdition'); ge.hidden = !LIC || !LIC.customer || !LIC.customer.name; if (LIC && LIC.customer) ge.textContent = [LIC.customer.name, LIC.customer.venue].filter(Boolean).join(' · ');
+  gate.hidden = false;
+  $('#gateBtn').onclick = () => { gate.hidden = true; openPlayer(null); };
+}
+let licOkAt = 0, licTimer = null, licBlocked = '';
+async function useLicence(cfg, { autoplay = false } = {}) {
+  const changed = !LIC || LIC.version !== cfg.version;
+  LIC = cfg; licOkAt = Date.now();
+  if (changed) {
+    if (!LIC.modes.includes(S.mode)) applyMode(modeOf(LIC.defaultMode), { quiet: true });
+    await loadCatalog(); renderAll(); renderSettings();
+  }
+  if (licBlocked) { licBlocked = ''; if (autoplay && player.hidden) { licGate.hidden = true; openPlayer(null); return; } }
+  if (player.hidden && licGate.hidden === false) showStartGate();
+}
+function licenceProblem(code) {
+  const known = ['WRONG_CODE', 'DEVICE_TAKEN', 'DEVICE_CHANGED', 'PAUSED', 'REVOKED', 'EXPIRED', 'NOT_STARTED', 'NOT_FOUND'];
+  return known.includes(code) ? code : null;
+}
+async function checkLicence() {
+  const t = licToken(); if (!t) return;
+  try {
+    const { config } = await api('license-config', { method: 'POST', body: { token: t.token, device: deviceId() } });
+    await useLicence(config, { autoplay: true });
+  } catch (err) {
+    const p = licenceProblem(err.code) || (err.code === 'BAD_TOKEN' ? 'DEVICE_CHANGED' : null);
+    if (p) {
+      licBlocked = p;
+      if (!player.hidden) closePlayer();
+      if (p === 'DEVICE_CHANGED' || p === 'NOT_FOUND') { try { localStorage.removeItem(licKey()); } catch { /* ignore */ } }
+      showLicGate(T('lic_' + p), { form: p === 'DEVICE_CHANGED' || p === 'NOT_FOUND', err: true });
+    } else if (Date.now() - licOkAt > 72 * 3600e3) { // offline for 3 days: stop politely; otherwise keep the show going
+      if (!player.hidden) closePlayer();
+      showLicGate(T('lic_OFFLINE'), { form: false, err: true });
+    }
+  }
+}
+async function licenceBoot() {
+  document.documentElement.classList.add('licensed');
+  const q = new URLSearchParams(location.search);
+  if (q.get('code')) $('#licCode').value = q.get('code');
+  $('#licForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = $('#licCode').value.trim(); if (!code) return;
+    $('#licGo').disabled = true; $('#licMsg').textContent = T('licChecking'); $('#licMsg').classList.remove('err');
+    try {
+      const r = await api('license-activate', { method: 'POST', body: { license: LIC_ID, code, device: deviceId() } });
+      try { localStorage.setItem(licKey(), JSON.stringify({ token: r.token })); } catch { /* ignore */ }
+      licBlocked = '';
+      await useLicence(r.config); showStartGate();
+    } catch (err) { showLicGate(T('lic_' + (licenceProblem(err.code) || 'WRONG_CODE')), { err: true }); }
+    finally { $('#licGo').disabled = false; }
+  });
+  const every = Math.max(2, Math.min(600, Number(q.get('hb')) || 60)) * 1000; // the minute check (shorter only in tests)
+  clearInterval(licTimer); licTimer = setInterval(checkLicence, every);
+  if (licToken()) {
+    showLicGate(T('licChecking'), { form: false });
+    await checkLicence();
+    if (LIC && !licBlocked) showStartGate();
+  } else showLicGate(T('licWelcome', ''));
+}
+
+// ---------- client licences (AE Studio) ----------
+const licDialog = $('#licDialog'), licForm = $('#licEdit');
+let licences = [], licCur = null;
+const licUrl = (l) => `${location.origin}/gallery?license=${l.id}`;
+const addMonths = (d, m) => { const x = new Date(d + 'T00:00:00'); x.setMonth(x.getMonth() + m); return x.toISOString().slice(0, 10); };
+const todayStr = () => new Date().toISOString().slice(0, 10);
+async function refreshLicences() { const d = await api('license-list', { method: 'POST', body: {} }); licences = (d.licenses || []).sort((a, b) => b.created - a.created); renderLicList(); }
+function renderLicList() {
+  const ul = $('#licList'); ul.replaceChildren();
+  for (const l of licences) {
+    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button';
+    b.className = 'st-' + l.status; b.setAttribute('aria-current', String(!!licCur && licCur.id === l.id)); b.dataset.lic = l.id;
+    const sh = exhibitions.find(e => e.id === l.exhibitionId);
+    b.innerHTML = '<b></b><small></small>'; b.querySelector('b').textContent = (l.customer && l.customer.name) || l.id;
+    b.querySelector('small').textContent = `${sh ? showTitle(sh) : '—'} · ${T('lic_status_' + l.status)}${l.expires ? ' · ' + l.expires : ''}`;
+    b.addEventListener('click', () => editLicence(l)); li.appendChild(b); ul.appendChild(li);
+  }
+}
+function chipSet(box, items, selected, label) {
+  box.replaceChildren();
+  for (const id of items) {
+    const b = chip(label(id), selected.includes(id), false, () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', String(on)); if (box.id === 'licModes') syncDefaultMode(); });
+    b.dataset.v = id; box.appendChild(b);
+  }
+}
+const chosen = (box) => [...box.querySelectorAll('.lw-chip')].filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.v);
+function syncDefaultMode() {
+  const sel = licForm.elements.defaultMode, keep = sel.value, ms = chosen($('#licModes'));
+  sel.replaceChildren(...ms.map(id => { const o = document.createElement('option'); o.value = id; o.textContent = L(modeOf(id)); return o; }));
+  sel.value = ms.includes(keep) ? keep : ms[0] || '';
+}
+async function editLicence(l) {
+  licCur = l; renderLicList();
+  const f = licForm.elements;
+  f.id.value = l ? l.id : ''; f.name.value = l ? (l.customer || {}).name || '' : ''; f.email.value = l ? (l.customer || {}).email || '' : ''; f.venue.value = l ? (l.customer || {}).venue || '' : '';
+  f.exhibition.replaceChildren(...exhibitions.map(e => { const o = document.createElement('option'); o.value = e.id; o.textContent = showTitle(e); return o; }));
+  f.exhibition.value = l ? l.exhibitionId || '' : (currentShow() ? currentShow().id : (exhibitions[0] || {}).id || '');
+  const sh = exhibitions.find(e => e.id === f.exhibition.value);
+  chipSet($('#licModes'), OPTIONS.modes.map(m => m.id), l ? l.modes : [sh ? sh.mode : 'online'], (id) => L(modeOf(id)));
+  syncDefaultMode(); if (l) f.defaultMode.value = l.defaultMode;
+  chipSet($('#licControls'), ['modes', 'intensity', 'volume', 'music', 'advance', 'listen', 'record'], l ? l.controls : ['modes', 'intensity', 'volume'], (id) => T('ctl_' + id));
+  f.starts.value = l ? l.starts || '' : todayStr(); f.expires.value = l ? l.expires || '' : addMonths(todayStr(), 12); f.note.value = l ? l.note || '' : '';
+  const term = $('#licTerm'); term.replaceChildren(...[1, 3, 6, 12].map(m => chip(T('licTerm', m), false, false, () => { f.expires.value = addMonths(f.starts.value || todayStr(), m); })));
+  $('#licSave').textContent = T(l ? 'licUpdate' : 'licSave');
+  const out = $('#licOut'); out.hidden = !l;
+  if (l) {
+    $('#licOutCode').textContent = l.code; $('#licOutUrl').textContent = licUrl(l);
+    const dev = l.device ? T('licDevOn', new Date(l.device.last || l.device.at).toLocaleString()) : T('licDevNone');
+    $('#licOutState').textContent = T('licState', T('lic_status_' + l.status), dev);
+    $('#licPause').textContent = T(l.status === 'paused' ? 'licResumeBtn' : 'licPauseBtn'); $('#licPause').hidden = l.status === 'revoked'; $('#licRevoke').hidden = l.status === 'revoked';
+    try { const { qrSvg } = await import('./qr.js'); $('#licQr').innerHTML = qrSvg(`${licUrl(l)}&code=${encodeURIComponent(l.code)}`, 4); } catch { $('#licQr').textContent = ''; }
+  }
+}
+async function saveLicence(patch) {
+  try { const { license } = await api('license-save', { method: 'POST', body: { license: patch } }); await refreshLicences(); await editLicence(license); toast(T('licSaved')); return license; } catch (err) { studioError(err); return null; }
+}
+licForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!exhibitions.length) { toast(T('licNeedShow'), 5000); return; }
+  const f = licForm.elements;
+  await saveLicence({ id: f.id.value || undefined, customer: { name: f.name.value, email: f.email.value, venue: f.venue.value }, exhibitionId: f.exhibition.value, modes: chosen($('#licModes')), defaultMode: f.defaultMode.value, controls: chosen($('#licControls')), starts: f.starts.value, expires: f.expires.value, note: f.note.value });
+});
+$('#openLicenses').addEventListener('click', async () => { if (!studio) return; licDialog.showModal(); try { await refreshLicences(); } catch (err) { studioError(err); } editLicence(licences[0] || null); });
+$('#licNew').addEventListener('click', () => editLicence(null));
+$('#licClose').addEventListener('click', () => licDialog.close());
+$('#licPause').addEventListener('click', () => licCur && saveLicence({ id: licCur.id, status: licCur.status === 'paused' ? 'active' : 'paused' }));
+$('#licRevoke').addEventListener('click', () => licCur && confirm(T('licRevoke') + '?') && saveLicence({ id: licCur.id, status: 'revoked' }));
+$('#licReset').addEventListener('click', async () => { if (!licCur) return; try { await api('license-reset-device', { method: 'POST', body: { id: licCur.id } }); await refreshLicences(); editLicence(licences.find(x => x.id === licCur.id)); toast(T('licSaved')); } catch (err) { studioError(err); } });
+const licText = (l) => {
+  const sh = exhibitions.find(e => e.id === l.exhibitionId);
+  return lang === 'zh'
+    ? `${(l.customer || {}).name || ''} 您好：\n\n感謝您選擇 AE Universe Creation。您的展演「${sh ? showTitle(sh) : ''}」已準備好。\n\n1. 在要播放的螢幕（電視、電腦或平板）打開：\n${licUrl(l)}\n2. 輸入啟動碼：${l.code}\n3. 輕觸「開始展演」。\n\n一個授權綁定一台螢幕。授權期間：${l.starts || ''} 至 ${l.expires || ''}。\n如需更換螢幕，請回覆這封信。\n\nAE Universe Creation\n外在沉靜，內在綻放`
+    : `Dear ${(l.customer || {}).name || ''},\n\nThank you for choosing AE Universe Creation. Your exhibition “${sh ? showTitle(sh) : ''}” is ready.\n\n1. On the screen that will play it (TV, computer or tablet) open:\n${licUrl(l)}\n2. Enter the activation code: ${l.code}\n3. Tap “Begin”.\n\nOne licence plays on one screen. Licence period: ${l.starts || ''} to ${l.expires || ''}.\nTo move to another screen, just reply to this email.\n\nAE Universe Creation\nOuter Calm · Inner Bloom`;
+};
+$('#licCopy').addEventListener('click', async () => { if (!licCur) return; try { await navigator.clipboard.writeText(`${licUrl(licCur)}\n${T('licCodeLabel')}: ${licCur.code}`); toast(T('licCopied')); } catch { toast(licCur.code, 6000); } });
+$('#licMail').addEventListener('click', () => { if (!licCur) return; const subj = lang === 'zh' ? 'AE Universe Creation｜您的展演啟用資訊' : 'AE Universe Creation — your exhibition'; location.href = `mailto:${encodeURIComponent((licCur.customer || {}).email || '')}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(licText(licCur))}`; });
+$('#licPrint').addEventListener('click', () => {
+  if (!licCur) return;
+  const w = window.open('', '_blank'); if (!w) return;
+  const esc = (x) => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>AE Universe Creation · ${esc(licCur.code)}</title><style>body{font-family:"Noto Serif TC",Georgia,serif;max-width:640px;margin:48px auto;color:#1b1f1c;line-height:1.8}h1{font-weight:500;letter-spacing:.06em}code{font-size:22px;letter-spacing:.16em}.qr svg{width:180px;height:180px}small{color:#666}</style><h1>AE Universe Creation</h1><p>外在沉靜，內在綻放 · Outer Calm · Inner Bloom</p><div class="qr">${$('#licQr').innerHTML}</div><p><b>${esc(T('licCodeLabel'))}</b><br><code>${esc(licCur.code)}</code></p><pre style="white-space:pre-wrap;font-family:inherit">${esc(licText(licCur))}</pre><small>${esc(licUrl(licCur))}</small><script>setTimeout(()=>print(),300)<\/script>`);
+  w.document.close();
+});
+
 // ---------- boot (+ kiosk / shared links: ?show=&mode=&autoplay=1&lang=) ----------
 (async function boot() {
   const q = new URLSearchParams(location.search);
   if (q.get('lang') === 'en' || q.get('lang') === 'zh') lang = q.get('lang');
-  setStudio(studio);
+  setStudio(studio && !LIC_ID);
+  if (LIC_ID) { makeGrain(); applyLang(); await licenceBoot(); exposeHooks(); return; }
   await loadCatalog();
   if (q.get('show') && exhibitions.some(e => e.id === q.get('show'))) setView(q.get('show'), { applyShowMode: !q.get('mode') });
   if (q.get('mode') && OPTIONS.modes.some(m => m.id === q.get('mode'))) applyMode(modeOf(q.get('mode')), { quiet: true });
@@ -1797,10 +1996,13 @@ function makeGrain() {
     gate.hidden = false;
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
+  exposeHooks();
+})();
+function exposeHooks() {
   window.__lumina = {
     get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', laserMode: packs.laserMode || null, lock: { locked: !!roomBeat.locked, bpm: +(roomBeat.bpm || 0).toFixed(1), beats: roomBeat.lockCount || 0, emitted: listener.lock ? listener.lock.emitted.slice(-24) : [], onsets: listener.lock ? listener.lock.onsets.slice(-16) : [] }, bursts: (packs.bursts || []).length, music: sound.preset, packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
     beat: () => sound.beat(), beatClock: () => sound.lastBeatClock, setLatency: (v) => { if (sound.ctx) Object.defineProperty(sound.ctx, 'outputLatency', { configurable: true, get: () => v }); }, trackTime: () => (sound.customEl ? sound.customEl.currentTime : 0),
     registerOld: () => { try { registerPack({ ...PACKS.get('firefly'), version: 1 }); } catch { /* ignore */ } return PACKS.get('firefly') ? PACKS.get('firefly').version : 0; },
-    rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
+    rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); }, checkLicence, licence: () => LIC,
   };
-})();
+}

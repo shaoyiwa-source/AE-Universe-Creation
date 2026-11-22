@@ -48,6 +48,7 @@
           <input type="file" id="fileInput" accept="image/*,video/mp4,video/webm,video/quicktime" multiple>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="addWorks">加入作品</span>
         </label>
+        <button type="button" class="lw-btn ghost" id="openLicenses" data-studio hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 11h5M8 14h8"/><circle cx="17" cy="10" r="1.2"/></svg><span data-i18n="licManage">客戶授權</span></button>
         <button type="button" class="lw-btn ghost" id="openSettings" aria-controls="settings">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span data-i18n="settings">展演設定</span>
         </button>
@@ -81,6 +82,55 @@
 </footer>
 
 <div class="lw-drop" id="dropZone" hidden><div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><p data-i18n="dropHere">放開以加入作品</p></div></div>
+
+<!-- Licensed player (R11): activation / notice screen -->
+<div class="lw-lic" id="licGate" hidden>
+  <img src="assets/ae-three-rings-transparent.webp" alt="" width="96" height="48">
+  <p class="lw-eyebrow">AE Universe Creation</p>
+  <h2 id="licTitle" data-i18n="licTitle">啟用您的展演</h2>
+  <p class="lw-lic-msg" id="licMsg"></p>
+  <form id="licForm" autocomplete="off">
+    <input id="licCode" name="code" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX" maxlength="20" aria-label="Activation code">
+    <button type="submit" class="lw-btn primary" id="licGo" data-i18n="licGo">啟用</button>
+  </form>
+  <p class="lw-lic-help" data-i18n="licHelp">啟動碼在 AE Universe Creation 寄給您的信件與啟用說明中。一個授權綁定一台螢幕。</p>
+</div>
+
+<!-- Licences (AE Studio): create a client licence, see and manage them -->
+<dialog class="lw-dialog lw-licdlg" id="licDialog">
+  <div class="lw-lic-cols">
+    <section>
+      <p class="lw-eyebrow" data-i18n="licManage">客戶授權</p>
+      <ul class="lw-lic-list" id="licList"></ul>
+      <button type="button" class="lw-btn ghost" id="licNew" data-i18n="licNew">新增授權</button>
+    </section>
+    <form id="licEdit" class="lw-lic-form">
+      <input type="hidden" name="id">
+      <div class="lw-form-grid">
+        <label><span data-i18n="licCustomer">客戶名稱</span><input name="name" maxlength="80" required></label>
+        <label><span>Email</span><input name="email" type="email" maxlength="120"></label>
+        <label class="wide"><span data-i18n="licVenue">場地</span><input name="venue" maxlength="120"></label>
+        <label class="wide"><span data-i18n="licShow">展覽（作品與編排）</span><select name="exhibition"></select></label>
+        <div class="wide"><span class="lw-param-label" data-i18n="licModes">開放的模式</span><div class="lw-chips" id="licModes"></div></div>
+        <label class="wide"><span data-i18n="licDefault">一開始的模式</span><select name="defaultMode"></select></label>
+        <div class="wide"><span class="lw-param-label" data-i18n="licControls">開放給客戶的調整</span><div class="lw-chips" id="licControls"></div></div>
+        <label><span data-i18n="licStarts">開始</span><input name="starts" type="date"></label>
+        <label><span data-i18n="licExpires">到期</span><input name="expires" type="date"></label>
+        <div class="wide lw-chips" id="licTerm"></div>
+        <label class="wide"><span data-i18n="licNote">備註</span><input name="note" maxlength="400"></label>
+      </div>
+      <div class="lw-lic-out" id="licOut" hidden>
+        <div class="lw-lic-qr" id="licQr"></div>
+        <div><p><b data-i18n="licCodeLabel">啟動碼</b> <code id="licOutCode"></code></p><p class="lw-lic-url" id="licOutUrl"></p>
+          <p id="licOutState"></p>
+          <div class="lw-chips"><button type="button" class="lw-chip" id="licCopy" data-i18n="licCopy">複製連結與啟動碼</button><button type="button" class="lw-chip" id="licMail" data-i18n="licMail">Email 草稿</button><button type="button" class="lw-chip" id="licPrint" data-i18n="licPrint">列印啟用說明</button></div>
+          <div class="lw-chips"><button type="button" class="lw-chip" id="licPause"></button><button type="button" class="lw-chip" id="licReset" data-i18n="licReset">重設裝置（換螢幕）</button><button type="button" class="lw-chip" id="licRevoke" data-i18n="licRevoke">撤銷授權</button></div>
+        </div>
+      </div>
+      <div class="lw-dialog-actions"><span></span><button type="button" class="lw-btn ghost" id="licClose" data-i18n="close">關閉</button><button type="submit" class="lw-btn primary" id="licSave" data-i18n="licSave">產生授權</button></div>
+    </form>
+  </div>
+</dialog>
 
 <!-- God mode (AE Studio only): summon effects, choose the transition, save the choreography -->
 <aside class="lw-sheet lw-god" id="godPanel" hidden aria-label="God mode">
@@ -256,6 +306,7 @@
       <label class="wide"><span data-i18n="f_stZh">作品說明（中文）</span><textarea name="stZh" rows="3" maxlength="1200"></textarea></label>
       <label class="wide"><span data-i18n="f_stEn">Statement（English）</span><textarea name="stEn" rows="3" maxlength="1200"></textarea></label>
       <label class="wide lw-check"><input type="checkbox" name="hidden"><span data-i18n="f_hidden">對客戶隱藏</span></label>
+      <label class="wide lw-check"><input type="checkbox" name="private"><span data-i18n="f_private">客戶專屬作品（不公開，只放進該客戶的授權）</span></label>
     </div>
     <fieldset class="lw-inshow" id="inShow" hidden>
       <legend data-i18n="f_inShow">在此展覽中</legend>

@@ -115,7 +115,13 @@ async function readCatalog(store) {
     return c;
   } catch { throw storageDown('catalog unreadable'); }
 }
+let catCache = null;
+async function readCatalogCached(store) { // licensed players' minute checks share one recent copy (≤ 20 s old)
+  if (catCache && Date.now() - catCache.at < 20000) return catCache.c;
+  const c = await readCatalog(store); catCache = { at: Date.now(), c }; return c;
+}
 async function writeCatalog(store, c) {
+  catCache = null;
   c.updatedAt = Date.now();
   await store.put(CATALOG, Buffer.from(JSON.stringify(c)), 'application/json');
 }
@@ -171,8 +177,8 @@ function relOf(url) { const m = /[?&]p=([^&]+)/.exec(String(url || '')); return 
 function publicView(c, studio) {
   return {
     v: c.v, updatedAt: c.updatedAt,
-    works: studio ? c.works : c.works.filter(w => !w.hidden),
-    exhibitions: c.exhibitions.map(e => ({ ...e, items: e.items.filter(it => studio || c.works.some(w => w.id === it.id && !w.hidden)) })),
+    works: studio ? c.works : c.works.filter(w => !w.hidden && !w.private),
+    exhibitions: studio ? c.exhibitions : c.exhibitions.filter(e => !e.private).map(e => ({ ...e, items: e.items.filter(it => c.works.some(w => w.id === it.id && !w.hidden && !w.private)) })),
     tracks: c.tracks,
     packs: Array.isArray(c.packs) ? c.packs : [],
   };
@@ -207,11 +213,80 @@ function sanitizeExhibition(e, c) {
     title: bi(e.title, 80),
     note: bi(e.note, 600),
     mode: MODES.includes(e.mode) ? e.mode : 'online',
+    private: !!e.private, // made for one client: not on the public wall
     items,
   };
 }
 
 // ---------- handler ----------
+// ---------- licences (R11): one licence = one client, one screen, one arranged exhibition ----------
+// Stored next to the catalog. Visitors' players check their licence every minute; those checks are answered from a
+// short in-memory copy, so the cloud store is read at most every 20 s per server instance (and written only when a
+// licence is created / changed / activated, or a device was last seen more than 30 min ago).
+const LICENSES = `${ROOT}/licenses.json`;
+const CONTROLS = ['modes', 'intensity', 'volume', 'music', 'advance', 'listen', 'record'];
+let licCache = null;
+async function readLicenses(store, fresh = false) {
+  if (!fresh && licCache && Date.now() - licCache.at < 20000) return licCache.data;
+  const buf = await store.get(LICENSES);
+  let data = { v: 1, licenses: [] };
+  if (buf) { try { data = JSON.parse(buf.toString('utf8')); if (!Array.isArray(data.licenses)) data.licenses = []; } catch { throw storageDown('licences unreadable'); } }
+  licCache = { at: Date.now(), data };
+  return data;
+}
+async function writeLicenses(store, data) { data.updatedAt = Date.now(); await store.put(LICENSES, Buffer.from(JSON.stringify(data)), 'application/json'); licCache = { at: Date.now(), data }; }
+const CODE_ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+function newCode() { const b = crypto.randomBytes(12); let s = ''; for (let i = 0; i < 12; i++) s += CODE_ALPHA[b[i] % CODE_ALPHA.length]; return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`; }
+const normCode = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const dayOk = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
+function sanitizeLicense(x, old, c) {
+  const l = old ? { ...old } : { id: rid('l'), code: newCode(), created: Date.now(), status: 'active', device: null, transfers: 0 };
+  if (x.customer) l.customer = { name: str(x.customer.name, 80), email: str(x.customer.email, 120), venue: str(x.customer.venue, 120) };
+  if ('exhibitionId' in x) l.exhibitionId = c.exhibitions.some(e => e.id === x.exhibitionId) ? x.exhibitionId : null;
+  if (Array.isArray(x.modes)) l.modes = x.modes.filter(m => MODES.includes(m)).slice(0, 9);
+  if (!l.modes || !l.modes.length) l.modes = ['online'];
+  if ('defaultMode' in x) l.defaultMode = MODES.includes(x.defaultMode) ? x.defaultMode : null;
+  if (!l.modes.includes(l.defaultMode)) l.defaultMode = l.modes[0];
+  if (Array.isArray(x.controls)) l.controls = x.controls.filter(k => CONTROLS.includes(k));
+  if (!l.controls) l.controls = ['modes', 'intensity', 'volume'];
+  if ('starts' in x) l.starts = dayOk(x.starts) ? x.starts : null;
+  if ('expires' in x) l.expires = dayOk(x.expires) ? x.expires : null;
+  if ('plan' in x) l.plan = str(x.plan, 40);
+  if ('note' in x) l.note = str(x.note, 400);
+  if ('status' in x && ['active', 'paused', 'revoked'].includes(x.status)) l.status = x.status;
+  l.updated = Date.now();
+  return l;
+}
+const today = () => new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10); // Taipei date
+function licenceState(l) {
+  if (!l) return 'NOT_FOUND';
+  if (l.status === 'revoked') return 'REVOKED';
+  if (l.status === 'paused') return 'PAUSED';
+  if (l.starts && today() < l.starts) return 'NOT_STARTED';
+  if (l.expires && today() > l.expires) return 'EXPIRED';
+  return 'OK';
+}
+function signDevice(lid, did) { const body = Buffer.from(JSON.stringify({ l: lid, d: did })).toString('base64url'); return `${body}.${crypto.createHmac('sha256', secret()).update('lic:' + body).digest('base64url')}`; }
+function readDevice(tok) {
+  const [body, mac] = String(tok || '').split('.'); if (!body || !mac) return null;
+  const want = crypto.createHmac('sha256', secret()).update('lic:' + body).digest('base64url');
+  if (want.length !== mac.length || !crypto.timingSafeEqual(Buffer.from(want), Buffer.from(mac))) return null;
+  try { return JSON.parse(Buffer.from(body, 'base64url').toString()); } catch { return null; }
+}
+// what a licensed player receives: the arranged exhibition and only the works in it (including the client's own)
+function licenceConfig(l, c) {
+  const e = c.exhibitions.find(x => x.id === l.exhibitionId) || null;
+  const ids = new Set(e ? e.items.map(it => it.id) : []);
+  const works = c.works.filter(w => ids.has(w.id) && !w.hidden);
+  const items = e ? e.items.filter(it => works.some(w => w.id === it.id)) : [];
+  return {
+    id: l.id, state: licenceState(l), customer: { name: (l.customer && l.customer.name) || '', venue: (l.customer && l.customer.venue) || '' },
+    modes: l.modes, defaultMode: l.defaultMode, controls: l.controls, expires: l.expires || null,
+    exhibition: e ? { id: e.id, title: e.title, note: e.note, mode: e.mode, items } : null, works, packs: Array.isArray(c.packs) ? c.packs : [],
+    version: Math.max(l.updated || 0, c.updatedAt || 0),
+  };
+}
+
 module.exports = async function handler(req, res) {
   const a = String((req.query && req.query.a) || '');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -244,6 +319,33 @@ module.exports = async function handler(req, res) {
         return res.status(401).json({ error: 'WRONG_PASSWORD' });
       }
       return res.status(200).json(signToken());
+    }
+
+    // ---- licensed players (public, but every answer depends on the activation code or a device token) ----
+    if (a === 'license-activate' || a === 'license-config') {
+      const st = storage(); if (!st) return res.status(503).json({ error: 'STORAGE_NOT_READY' });
+      const b = jsonBody(req);
+      let L, C;
+      try { L = await readLicenses(st, a === 'license-activate'); C = await readCatalogCached(st); } catch (e) { if (e.code === 'STORAGE_DOWN') return res.status(503).json({ error: 'STORAGE_DOWN' }); throw e; }
+      const did = str(b.device, 64);
+      if (!/^[a-f0-9]{32}$/.test(did)) return res.status(400).json({ error: 'BAD_DEVICE' });
+      if (a === 'license-activate') {
+        const l = L.licenses.find(x => normCode(x.code) === normCode(b.code) && x.id === String(b.license || x.id));
+        if (!l) { await new Promise(r => setTimeout(r, 700)); return res.status(404).json({ error: 'WRONG_CODE' }); }
+        const state = licenceState(l); if (state !== 'OK') return res.status(403).json({ error: state });
+        if (l.device && l.device.id !== did) return res.status(409).json({ error: 'DEVICE_TAKEN' }); // one licence, one screen
+        if (!l.device) l.device = { id: did, at: Date.now(), last: Date.now(), ua: str(req.headers['user-agent'], 160) };
+        await writeLicenses(st, L);
+        return res.status(200).json({ token: signDevice(l.id, did), config: licenceConfig(l, C) });
+      }
+      const t = readDevice(b.token);
+      if (!t || t.d !== did) return res.status(401).json({ error: 'BAD_TOKEN' });
+      const l = L.licenses.find(x => x.id === t.l);
+      if (!l) return res.status(404).json({ error: 'NOT_FOUND' });
+      if (!l.device || l.device.id !== did) return res.status(409).json({ error: 'DEVICE_CHANGED' });
+      const state = licenceState(l); if (state !== 'OK') return res.status(403).json({ error: state });
+      if (Date.now() - (l.device.last || 0) > 30 * 60e3) { l.device.last = Date.now(); try { await writeLicenses(st, await readLicenses(st, true).then(d => { const x = d.licenses.find(y => y.id === l.id); if (x && x.device) x.device.last = Date.now(); return d; })); } catch { /* last-seen is best effort */ } }
+      return res.status(200).json({ config: licenceConfig(l, C) });
     }
 
     if (!isStudio(req)) return res.status(401).json({ error: 'STUDIO_ONLY' });
@@ -324,6 +426,7 @@ module.exports = async function handler(req, res) {
       if (p.statement) w.statement = bi(p.statement, 1200);
       for (const k of ['year', 'medium', 'size']) if (k in p) w[k] = str(p[k], 120);
       if ('hidden' in p) w.hidden = !!p.hidden;
+      if ('private' in p) w.private = !!p.private; // a client's own work: never public, only in their licence
       await writeCatalog(store, c);
       return res.status(200).json({ work: w });
     }
@@ -345,6 +448,24 @@ module.exports = async function handler(req, res) {
       }
       await writeCatalog(store, c);
       return res.status(200).json({ ok: true, hidden: !!w.builtin });
+    }
+    if (a === 'license-list') { const L = await readLicenses(store, true); return res.status(200).json({ licenses: L.licenses }); }
+    if (a === 'license-save') {
+      const L = await readLicenses(store, true);
+      const x = body.license || {};
+      const old = x.id ? L.licenses.find(y => y.id === x.id) : null;
+      if (x.id && !old) return res.status(404).json({ error: 'NOT_FOUND' });
+      const l = sanitizeLicense(x, old, c);
+      L.licenses = L.licenses.filter(y => y.id !== l.id).concat(l);
+      await writeLicenses(store, L);
+      return res.status(200).json({ license: l });
+    }
+    if (a === 'license-reset-device') { // the client moves to another screen: the old one stops at its next check
+      const L = await readLicenses(store, true);
+      const l = L.licenses.find(y => y.id === body.id); if (!l) return res.status(404).json({ error: 'NOT_FOUND' });
+      l.device = null; l.transfers = (l.transfers || 0) + 1; l.updated = Date.now();
+      await writeLicenses(store, L);
+      return res.status(200).json({ license: l });
     }
     if (a === 'pack-delete') {
       c.packs = Array.isArray(c.packs) ? c.packs : [];
