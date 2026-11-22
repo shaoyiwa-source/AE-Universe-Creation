@@ -149,7 +149,7 @@ p{line-height:1.6;max-width:420px;margin:.4em auto;opacity:.92}
 .dc-cell{position:absolute;width:25%;height:12.5%;box-shadow:inset 0 0 0 .6px #5a321488}.dc-cell::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(92deg,#0000 0 7px,#5a33140f 7px 9px,#0000 9px 15px,#ffffff0a 15px 16px),linear-gradient(180deg,#d4a265,#c08a50);transition:opacity .9s ease}.dc-cell.dc-open::before{opacity:0}.dc-cell.dc-open{box-shadow:inset 0 0 0 .5px #ffffff22}
 .alb .bcard.lock img{display:none}.alb .bcard.lock::before{content:'？';display:flex;align-items:center;justify-content:center;aspect-ratio:3/4;border-radius:8px;font:900 22px serif;color:#5a3214;background:repeating-linear-gradient(92deg,#0000 0 7px,#5a33140f 7px 9px),linear-gradient(180deg,#d4a265,#c08a50)}.alb.bgrid{grid-template-columns:repeat(4,1fr);gap:8px}.alb .bcard img{aspect-ratio:3/4;object-fit:cover}.alb .bcard div{font-size:11px}
 .dc-inv{display:none;padding:6px 12px;font-size:13px;margin-left:6px}body.online .dc-inv{display:inline-block}.on-login input[type=email]{width:min(320px,80vw);padding:12px;border-radius:12px;border:1px solid #fff4;background:#ffffff12;color:#fff;font-size:16px}.on-opt{display:flex;gap:6px;align-items:center}
-.lv-back{position:fixed;left:10px;top:46px;z-index:6;background:#ffffff14;border:1px solid #ffffff33;color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;backdrop-filter:blur(6px)}#level:not(.on) .lv-back{display:none}
+.lv-back{position:fixed;left:10px;top:46px;z-index:6;background:#ffffff14;border:1px solid #ffffff33;color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;backdrop-filter:blur(6px)}#level:not(.on) .lv-back,#reward:not(.on) .lv-back{display:none}
 .dc-art{font-size:12px;opacity:.85;margin:4px 0 0;min-height:16px}
 .dc-p{position:absolute;left:0;top:0;width:25%;height:12.5%;transition:transform .34s cubic-bezier(.25,.8,.3,1);z-index:2;pointer-events:none}
 .dc-in{position:absolute;inset:8%;transform-style:preserve-3d;transition:transform .42s cubic-bezier(.25,.8,.3,1),opacity .4s}
@@ -234,6 +234,7 @@ p{line-height:1.6;max-width:420px;margin:.4em auto;opacity:.92}
 
 <!-- reward -->
 <section class="screen" id="reward">
+  <button id="rwBack" class="lv-back" aria-label="回地圖">← 地圖</button>
   <div id="rwStars"></div>
   <div class="small" id="rwRule"></div>
   <div class="small">你找回了</div>
@@ -377,7 +378,7 @@ const ON={sb:null,user:null,ready:false,dev:(()=>{let d=null;try{d=LS.getItem('a
 async function inviteFriend(){ON.need(async()=>{const r=await ON.createRoom('darkchess');if(!r)return;ON.room=r.id;ON.role='host';ON.roomRow={id:r.id,state:{}};const t=`來跟我下一盤暗畫棋，一起揭開一幅畫 ✦ ${r.url}`;const go=()=>{const i=LV.findIndex(l=>l.fn==='darkchess');if(i>=0)startLevel(i)};setTimeout(go,300);try{if(navigator.share){await navigator.share({text:t});return}}catch(e){}try{await navigator.clipboard.writeText(t);toast('邀請連結已複製，貼到 LINE 給朋友 ✦',2600)}catch(e){prompt('複製這個連結給朋友',r.url)}})}
 setTimeout(()=>ON.init(),800);
 const mid=u=>typeof u==='string'?u.replace(/img\/(wp\d+|wpX|bx[12])\.jpg$/,'img/$1_m.jpg'):u;
-document.addEventListener('click',e=>{if(e.target&&e.target.id==='lvBack'){try{clearT()}catch(_){}try{track('level_quit',{i:cur})}catch(_){}try{window.__dcUnwatch&&window.__dcUnwatch()}catch(_){}$('#lvBody').innerHTML='';renderMap();show('map')}});
+document.addEventListener('click',e=>{if(e.target&&(e.target.id==='lvBack'||e.target.id==='rwBack')){try{clearT()}catch(_){}try{track('level_quit',{i:cur})}catch(_){}try{window.__dcUnwatch&&window.__dcUnwatch()}catch(_){}$('#lvBody').innerHTML='';renderMap();show('map')}});
 function track(ev,d){try{ON&&ON.log(ev,d)}catch(e){}try{const q=JSON.parse(LS.getItem('aeTrack2')||'[]');q.push([Date.now(),ev,d||null]);LS.setItem('aeTrack2',JSON.stringify(q.slice(-300)))}catch(e){}try{console.debug('[track]',ev,d)}catch(e){}}
 let miss=0,X={},CH=null,FAIL={},CK2=0;let BT={};try{BT=JSON.parse(LS.getItem('aeBT2')||'{}')}catch(e){}let BEST={};try{BEST=JSON.parse(LS.getItem('aeStars2')||'{}')}catch(e){}
 const GES=[["scrub", "左右來回刮"], ["tap", "點下面那張圖的不同處"], ["tap", "點兩塊交換"], ["tap", "快點彩色光點"], ["tap", "點顏料罐"], ["tap", "光點碰到線時點"], ["tap", "點牌翻開"], ["tap", "點碎片旋轉"]];let TUT={};try{TUT=JSON.parse(LS.getItem('aeTut2')||'{}')}catch(e){}
