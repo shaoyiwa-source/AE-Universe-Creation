@@ -71,6 +71,12 @@ function fsStore(dir) {
     },
     async put(p, buf) { fs.mkdirSync(path.dirname(full(p)), { recursive: true }); fs.writeFileSync(full(p), buf); },
     async del(p) { try { fs.unlinkSync(full(p)); } catch { /* ignore */ } },
+    async list(prefix) { // every stored path starting with prefix
+      if (fs.existsSync(path.join(dir, '.down'))) throw storageDown('simulated outage');
+      const base = path.dirname(full(prefix + 'x')), out = [];
+      const walk = (d) => { let es = []; try { es = fs.readdirSync(d, { withFileTypes: true }); } catch { return; } for (const e of es) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else { const rel = path.relative(dir, f).split(path.sep).join('/'); if (rel.startsWith(prefix)) out.push(rel); } } };
+      walk(base); return out;
+    },
   };
 }
 function storageDown(why) { const e = new Error('STORAGE_DOWN: ' + (why || '')); e.code = 'STORAGE_DOWN'; return e; }
@@ -97,6 +103,13 @@ function blobStore() {
       await put(p, buf, { access: 'private', addRandomSuffix: false, allowOverwrite: true, contentType });
     },
     async del(p) { try { const { del } = await sdk(); await del(p); } catch { /* ignore */ } },
+    async list(prefix) {
+      try {
+        const { list } = await sdk(); const out = []; let cursor;
+        do { const r = await list({ prefix, cursor, limit: 1000 }); for (const b of r.blobs) out.push(b.pathname); cursor = r.hasMore ? r.cursor : undefined; } while (cursor);
+        return out;
+      } catch (e) { throw storageDown(e && e.message); }
+    },
   };
 }
 function storage() {
@@ -228,6 +241,32 @@ const LIC_INDEX = `${LIC_DIR}/index.json`;
 const CONTROLS = ['modes', 'intensity', 'volume', 'music', 'advance', 'listen', 'record'];
 const licCache = new Map();
 const licPath = (id) => /^l[a-z0-9]{6,40}$/.test(id) ? `${LIC_DIR}/${id}.json` : null;
+// three kinds of small files, so nothing is ever overwritten by a different writer:
+//   licenses/<id>.json          what AE decides (status, period, modes…) — written only by AE Studio
+//   licenses/devices/<id>.json  the screen bound to it (device, running session) — written only by that screen's checks
+//   licenses/codes/<CODE>.json  activation code → licence id — written once when the licence is created
+const devPath = (id) => /^l[a-z0-9]{6,40}$/.test(id) ? `${LIC_DIR}/devices/${id}.json` : null;
+const codePath = (code) => /^[A-Z0-9]{12}$/.test(code) ? `${LIC_DIR}/codes/${code}.json` : null;
+const devCache = new Map();
+async function readDev(store, l, fresh = false) { // the bound screen, or null; a record from before the last "reset device" does not count
+  if (!l) return null;
+  const c = devCache.get(l.id); let d;
+  if (!fresh && c && Date.now() - c.at < 20000) d = c.d;
+  else { d = await readJson(store, devPath(l.id), null); devCache.set(l.id, { at: Date.now(), d }); }
+  if (!d && l.device && l.device.id) d = { ...l.device, gen: l.transfers || 0 }; // stored the older way (inside the licence)
+  return d && d.id && (d.gen || 0) === (l.transfers || 0) ? d : null;
+}
+async function writeDev(store, l, d) { d.gen = l.transfers || 0; await store.put(devPath(l.id), Buffer.from(JSON.stringify(d)), 'application/json'); devCache.set(l.id, { at: Date.now(), d }); }
+async function licIdForCode(store, code) {
+  const n = normCode(code), p = codePath(n); if (!p) return null;
+  const x = await readJson(store, p, null); if (x && x.id) return x.id;
+  return (await readIndex(store)).codes[n] || null; // licences created before code files
+}
+async function listLicIds(store) {
+  const ids = new Set((await store.list(`${LIC_DIR}/l`)).map(p => (/^.*\/licenses\/(l[a-z0-9]{6,40})\.json$/.exec(p) || [])[1]).filter(Boolean));
+  for (const id of Object.values((await readIndex(store)).codes)) ids.add(id);
+  return [...ids];
+}
 async function readJson(store, p, empty) {
   const buf = await store.get(p);
   if (!buf) return empty;
@@ -276,10 +315,12 @@ function licenceState(l) {
   if (l.expires && today() > l.expires) return 'EXPIRED';
   return 'OK';
 }
-function signDevice(lid, did) { const body = Buffer.from(JSON.stringify({ l: lid, d: did })).toString('base64url'); return `${body}.${crypto.createHmac('sha256', secret()).update('lic:' + body).digest('base64url')}`; }
+// device tokens use their own key when LUMINA_LICENSE_SECRET is set, so changing the studio password never stops venue screens
+const licSecret = () => process.env.LUMINA_LICENSE_SECRET || secret();
+function signDevice(lid, did) { const body = Buffer.from(JSON.stringify({ l: lid, d: did })).toString('base64url'); return `${body}.${crypto.createHmac('sha256', licSecret()).update('lic:' + body).digest('base64url')}`; }
 function readDevice(tok) {
   const [body, mac] = String(tok || '').split('.'); if (!body || !mac) return null;
-  const want = crypto.createHmac('sha256', secret()).update('lic:' + body).digest('base64url');
+  const want = crypto.createHmac('sha256', licSecret()).update('lic:' + body).digest('base64url');
   if (want.length !== mac.length || !crypto.timingSafeEqual(Buffer.from(want), Buffer.from(mac))) return null;
   try { return JSON.parse(Buffer.from(body, 'base64url').toString()); } catch { return null; }
 }
@@ -314,8 +355,9 @@ module.exports = async function handler(req, res) {
       // visitors share one copy cached at the edge for a minute, so page views do not each read the cloud library;
       // AE Studio always reads fresh (separate URL + authorization)
       // browsers always ask again (no stale copies on screen); only Vercel's edge keeps the shared copy
-      res.setHeader('Cache-Control', studio ? 'private, no-store' : 'public, max-age=0, must-revalidate');
-      if (!studio) res.setHeader('Vercel-CDN-Cache-Control', kind === 'degraded' ? 'max-age=30' : 'max-age=60, stale-while-revalidate=86400, stale-if-error=86400');
+      const studioUrl = req.query && req.query.studio === '1'; // the studio's address is never cached at the edge, even for a visitor who calls it
+      res.setHeader('Cache-Control', studio || studioUrl ? 'private, no-store' : 'public, max-age=0, must-revalidate');
+      if (!studio && !studioUrl) res.setHeader('Vercel-CDN-Cache-Control', kind === 'degraded' ? 'max-age=30' : 'max-age=60, stale-while-revalidate=86400, stale-if-error=86400');
       return res.status(200).json({ ...publicView(c, studio), studio, storage: kind });
     }
     if (req.method !== 'POST') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
@@ -342,34 +384,37 @@ module.exports = async function handler(req, res) {
       if (!/^[a-f0-9]{32}$/.test(did)) return res.status(400).json({ error: 'BAD_DEVICE' });
       try {
       const C = await readCatalogCached(st);
+      if (!sid) return res.status(400).json({ error: 'BAD_SID' }); // every running copy must say which launch it is
       if (a === 'license-activate') {
-        const idx = await readIndex(st);
-        const id = idx.codes[normCode(b.code)];
+        const id = await licIdForCode(st, b.code);
         const l = id && (!b.license || b.license === id) ? await readLic(st, id, true) : null;
         if (!l) { await new Promise(r => setTimeout(r, 700)); return res.status(404).json({ error: 'WRONG_CODE' }); }
         const state = licenceState(l); if (state !== 'OK') return res.status(403).json({ error: state });
-        if (l.device && l.device.id !== did) return res.status(409).json({ error: 'DEVICE_TAKEN' }); // one licence, one screen
-        if (!l.device) { l.device = { id: did, at: Date.now(), last: Date.now(), ua: str(req.headers['user-agent'], 160), sid, sidAt: Date.now() }; await writeLic(st, l); }
-        else if (sid && l.device.sid !== sid) { l.device.sid = sid; l.device.sidAt = Date.now(); await writeLic(st, l); }
+        const d = await readDev(st, l, true);
+        if (d && d.id !== did) return res.status(409).json({ error: 'DEVICE_TAKEN' }); // one licence, one screen
+        const nd = d ? { ...d, sid, sidAt: Date.now(), last: Date.now(), switches: (d.switches || 0) + (d.sid && d.sid !== sid ? 1 : 0) }
+          : { id: did, at: Date.now(), last: Date.now(), ua: str(req.headers['user-agent'], 160), sid, sidAt: Date.now(), switches: 0 };
+        await writeDev(st, l, nd);
         return res.status(200).json({ token: signDevice(l.id, did), config: licenceConfig(l, C) });
       }
       const t = readDevice(b.token);
       if (!t || t.d !== did) return res.status(401).json({ error: 'BAD_TOKEN' });
       const l = await readLic(st, t.l);
       if (!l) return res.status(404).json({ error: 'NOT_FOUND' });
-      if (!l.device || l.device.id !== did) return res.status(409).json({ error: 'DEVICE_CHANGED' });
+      let d = await readDev(st, l);
+      if (!d || d.id !== did) { d = await readDev(st, l, true); if (!d || d.id !== did) return res.status(409).json({ error: 'DEVICE_CHANGED' }); }
       const state = licenceState(l); if (state !== 'OK') return res.status(403).json({ error: state });
-      if (sid && l.device.sid && l.device.sid !== sid) {
-        if (!b.claim) { // confirm on fresh data (another server instance may hold an older copy) before stopping a screen
-          const f = await readLic(st, l.id, true);
-          if (f && f.device && f.device.sid && f.device.sid !== sid) return res.status(409).json({ error: 'SUPERSEDED' }); // a newer launch (or a copy) is playing
+      if (d.sid !== sid) {
+        const f = await readDev(st, l, true); // decide on fresh data (another server instance may hold an older copy)
+        if (!f || f.id !== did) return res.status(409).json({ error: 'DEVICE_CHANGED' });
+        if (f.sid !== sid) {
+          if (!b.claim && f.sid) return res.status(409).json({ error: 'SUPERSEDED' }); // a newer launch (or a copy) is playing
+          await writeDev(st, l, { ...f, sid, sidAt: Date.now(), last: Date.now(), switches: (f.switches || 0) + (f.sid ? 1 : 0) });
+          return res.status(200).json({ config: licenceConfig(l, C) });
         }
+        d = f;
       }
-      if (sid && (b.claim || !l.device.sid) && l.device.sid !== sid) {
-        const f = await readLic(st, l.id, true);
-        if (f && f.device && f.device.id === did) { f.device.sid = sid; f.device.sidAt = Date.now(); f.device.last = Date.now(); await writeLic(st, f); return res.status(200).json({ config: licenceConfig(f, C) }); }
-      }
-      if (Date.now() - (l.device.last || 0) > 30 * 60e3) { try { const f = await readLic(st, l.id, true); if (f && f.device && f.device.id === did) { f.device.last = Date.now(); await writeLic(st, f); } } catch { /* last-seen is best effort */ } }
+      if (Date.now() - (d.last || 0) > 30 * 60e3) { try { await writeDev(st, l, { ...d, last: Date.now() }); } catch { /* last-seen is best effort */ } }
       return res.status(200).json({ config: licenceConfig(l, C) });
       } catch (e) { if (e.code === 'STORAGE_DOWN') return res.status(503).json({ error: 'STORAGE_DOWN' }); throw e; }
     }
@@ -476,8 +521,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, hidden: !!w.builtin });
     }
     if (a === 'license-list') {
-      const idx = await readIndex(store);
-      const ls = (await Promise.all([...new Set(Object.values(idx.codes))].map(id => readLic(store, id, true)))).filter(Boolean);
+      const ls = (await Promise.all((await listLicIds(store)).map(async (id) => { const l = await readLic(store, id, true); if (!l) return null; const d = await readDev(store, l, true); return { ...l, device: d ? { id: d.id, at: d.at, last: d.last, ua: d.ua, switches: d.switches || 0 } : null }; }))).filter(Boolean);
       return res.status(200).json({ licenses: ls });
     }
     if (a === 'license-save') {
@@ -485,15 +529,18 @@ module.exports = async function handler(req, res) {
       const old = x.id ? await readLic(store, x.id, true) : null;
       if (x.id && !old) return res.status(404).json({ error: 'NOT_FOUND' });
       const l = sanitizeLicense(x, old, c);
+      if (!old) await store.put(codePath(normCode(l.code)), Buffer.from(JSON.stringify({ id: l.id })), 'application/json'); // the code first: a licence is never unreachable
+      if (old && old.device && old.device.id && !(await readJson(store, devPath(old.id), null))) await writeDev(store, old, { ...old.device }); // move a screen stored the older way
+      delete l.device; // the bound screen lives in its own file
       await writeLic(store, l);
-      if (!old) { const idx = await readIndex(store); idx.codes[normCode(l.code)] = l.id; await writeIndex(store, idx); }
-      return res.status(200).json({ license: l });
+      const d = await readDev(store, l, true);
+      return res.status(200).json({ license: { ...l, device: d ? { id: d.id, at: d.at, last: d.last, ua: d.ua, switches: d.switches || 0 } : null } });
     }
     if (a === 'license-reset-device') { // the client moves to another screen: the old one stops at its next check
       const l = await readLic(store, body.id, true); if (!l) return res.status(404).json({ error: 'NOT_FOUND' });
-      l.device = null; l.transfers = (l.transfers || 0) + 1; l.updated = Date.now();
-      await writeLic(store, l);
-      return res.status(200).json({ license: l });
+      delete l.device; l.transfers = (l.transfers || 0) + 1; l.updated = Date.now(); // older device records no longer count
+      await writeLic(store, l); await store.del(devPath(l.id)); devCache.delete(l.id);
+      return res.status(200).json({ license: { ...l, device: null } });
     }
     if (a === 'pack-delete') {
       c.packs = Array.isArray(c.packs) ? c.packs : [];

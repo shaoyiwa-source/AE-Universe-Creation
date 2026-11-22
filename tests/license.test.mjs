@@ -101,7 +101,7 @@ try {
   await s2.waitForSelector('#licGate:not([hidden])', { timeout: 10000 }).catch(() => {});
   check('revoking stops the screen', /停止|ended/.test(await s2.textContent('#licMsg')));
   const old = (await studio('license-save', { license: { customer: { name: '過期測試' }, exhibitionId: ex.id, modes: ['online'], starts: '2025-01-01', expires: '2025-12-31' } })).json.license;
-  const r = await (await fetch(base + '/api/lumina?a=license-activate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ license: old.id, code: old.code, device: 'a'.repeat(32) }) })).json();
+  const r = await (await fetch(base + '/api/lumina?a=license-activate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ license: old.id, code: old.code, device: 'a'.repeat(32), sid: 'd'.repeat(24) }) })).json();
   check('an expired licence cannot be activated', r.error === 'EXPIRED', JSON.stringify(r));
   await s1.screenshot({ path: `${out}/license-client.png` });
   // ---- a venue with unreliable internet: AE allows 7 offline days; the screen restarts with no internet ----
@@ -113,7 +113,7 @@ try {
   await s3.click('#gateBtn'); await s3.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
   // the program and the works are saved on this machine
   const srcs3 = await s3.evaluate(() => window.__lumina.licence().works.map(w => w.src)); let saved = 0;
-  for (let i = 0; i < 40 && !saved; i++) { saved = await s3.evaluate(async (srcs) => { const c = await caches.open('lumina-offline-v1'); const keys = (await c.keys()).map(r => r.url); return srcs.every(u => keys.includes(new URL(u, location.href).href)) && keys.some(k => k.includes('/gallery/app.js')) ? keys.length : 0; }, srcs3); if (!saved) await wait(500); }
+  for (let i = 0; i < 40 && !saved; i++) { saved = await s3.evaluate(async (srcs) => { const c = await caches.open('lumina-offline-v2'); const keys = (await c.keys()).map(r => r.url); return srcs.every(u => keys.includes(new URL(u, location.href).href)) && keys.some(k => k.includes('/gallery/app.js')) ? keys.length : 0; }, srcs3); if (!saved) await wait(500); }
   check('the program and every licensed work are kept on the machine', saved > 0, `${saved} files saved`);
   await c3.setOffline(true);
   await s3.reload({ waitUntil: 'load' }).catch(() => {});
@@ -142,6 +142,46 @@ try {
   await s3.click('#licClaim'); await s3.waitForSelector('#startGate:not([hidden])', { timeout: 8000 }).catch(() => {});
   await s4.click('#gateBtn').catch(() => {}); await s4.waitForSelector('#licGate:not([hidden])', { timeout: 10000 }).catch(() => {});
   check('"play on this screen" takes it back; the copy stops', await s3.evaluate(() => !document.getElementById('startGate').hidden) && await s4.evaluate(() => !document.getElementById('licGate').hidden && window.__lumina.licState().blocked === 'SUPERSEDED'));
+  // ---- reviewer's attacks, kept as regression checks ----
+  const tamper = async (fn) => { await c3.setOffline(true); await s3.evaluate(fn); await s3.reload({ waitUntil: 'load' }).catch(() => {}); await wait(2500); const ok = await s3.evaluate(() => !document.getElementById('startGate').hidden).catch(() => false); return ok; };
+  await s3.click('#licClaim').catch(() => {}); await wait(1500); // s3 owns the licence again
+  const key3 = await s3.evaluate(() => Object.keys(localStorage).find(k => k.startsWith('ae-lic-cache-')));
+  const fresh = await s3.evaluate((k) => localStorage.getItem(k), key3);
+  const opens = [];
+  opens.push(await tamper(() => { const k = Object.keys(localStorage).find(k => k.startsWith('ae-lic-cache-')); const c = JSON.parse(localStorage.getItem(k)); c.okAt = Date.now() + 365 * 86400e3; localStorage.setItem(k, JSON.stringify(c)); }));
+  await s3.evaluate(([k, v]) => localStorage.setItem(k, v), [key3, fresh]);
+  opens.push(await tamper(() => { const k = Object.keys(localStorage).find(k => k.startsWith('ae-lic-cache-')); const c = JSON.parse(localStorage.getItem(k)); c.config.expires = '2020-01-01'; localStorage.setItem(k, JSON.stringify(c)); }));
+  await s3.evaluate(([k, v]) => localStorage.setItem(k, v), [key3, fresh]);
+  opens.push(await tamper(() => { const k = Object.keys(localStorage).find(k => k.startsWith('ae-lic-cache-')); const c = JSON.parse(localStorage.getItem(k)); c.seen = Date.now() + 5 * 86400e3; localStorage.setItem(k, JSON.stringify(c)); })); // the clock was turned back 5 days
+  await s3.evaluate(([k, v]) => localStorage.setItem(k, v), [key3, fresh]);
+  const honest = await tamper(() => {});
+  check('offline: a saved time in the future, a past end date, or a clock turned back do not play; the honest copy does', opens.every(x => !x) && honest, JSON.stringify({ tampered: opens, honest }));
+  await c3.setOffline(false);
+  // a launch that does not say which launch it is, is refused
+  const tok3 = await s3.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => /^ae-lic-l/.test(k)))).token);
+  const dev3 = await s3.evaluate(() => localStorage.getItem('ae-device'));
+  const nosid = await fetch(base + '/api/lumina?a=license-config', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: tok3, device: dev3 }) });
+  check('a check without a launch id is refused', nosid.status === 400);
+  // a broken device token (e.g. the server key changed) heals itself with the saved code — no visit needed
+  await s3.reload({ waitUntil: 'networkidle' }); await s3.waitForSelector('#startGate:not([hidden])', { timeout: 10000 }).catch(() => {});
+  await s3.click('#gateBtn').catch(() => {}); await s3.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 }).catch(() => {});
+  await s3.evaluate(() => { const k = Object.keys(localStorage).find(k => /^ae-lic-l/.test(k)); const t = JSON.parse(localStorage.getItem(k)); t.token = t.token.replace(/.$/, c => c === 'A' ? 'B' : 'A'); localStorage.setItem(k, JSON.stringify(t)); });
+  await wait(5000);
+  check('a broken device token heals itself and the show keeps playing', await s3.evaluate(() => !document.getElementById('player').hidden && !window.__lumina.licState().blocked));
+  // two licences created at the same moment: both are listed and both codes work
+  const [n1, n2] = await Promise.all(['同時一', '同時二'].map(name => studio('license-save', { license: { customer: { name }, exhibitionId: ex.id, modes: ['hotel'] } })));
+  const listed = (await studio('license-list', {})).json.licenses.map(l => l.id);
+  const act = await Promise.all([n1, n2].map(n => fetch(base + '/api/lumina?a=license-activate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: n.json.license.code, device: 'b'.repeat(32), sid: 'c'.repeat(24) }) }).then(r => r.status)));
+  check('two licences created at the same moment: both listed, both codes work', listed.includes(n1.json.license.id) && listed.includes(n2.json.license.id) && act.every(x => x === 200), JSON.stringify(act));
+  // the offline copy does not touch the rest of the public site
+  await s3.goto(base + '/index.html', { waitUntil: 'networkidle' }).catch(() => {});
+  const siteCached = await s3.evaluate(async () => (await (await caches.open('lumina-offline-v2')).keys()).map(r => r.url).filter(u => /\/index\.html|site\.(js|css)/.test(u)));
+  check('the offline copy leaves the rest of the site alone', siteCached.length === 0, JSON.stringify(siteCached));
+  // ?code= in a link leaves the address bar
+  const c5 = await browser.newContext(view); const s5 = await c5.newPage();
+  await s5.goto(`${base}/gallery?license=${n1.json.license.id}&code=${encodeURIComponent(n1.json.license.code)}`, { waitUntil: 'networkidle' });
+  check('a code in the link is filled in and removed from the address bar', !/code=/.test(s5.url()) && (await s5.inputValue('#licCode')) === n1.json.license.code);
+  await c5.close();
   check('no page errors on the venue screens', e3.length === 0, e3.slice(0, 2).join(' | '));
   check('no page errors', errs.length === 0 && e1.length === 0, errs.concat(e1).slice(0, 3).join(' | '));
 } catch (e) { check('scenario crashed', false, String(e).split('\n').slice(0, 4).join(' / ')); }

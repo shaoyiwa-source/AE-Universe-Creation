@@ -1827,6 +1827,21 @@ const LIC_SID = (() => { const b = new Uint8Array(12); crypto.getRandomValues(b)
 const licCacheKey = () => 'ae-lic-cache-' + LIC_ID;
 const licCached = () => { try { const c = JSON.parse(localStorage.getItem(licCacheKey()) || 'null'); return c && c.config && c.okAt ? c : null; } catch { return null; } };
 const offlineLimit = (cfg) => Math.max(1, Math.min(30, Number(cfg && cfg.offlineDays) || 3)) * 86400e3;
+const taipeiDay = (ms) => new Date(ms + 8 * 3600e3).toISOString().slice(0, 10);
+// may this machine play offline from the saved licence? Not past the licence's end date, not longer than AE allows,
+// and not by turning the clock back (the latest time this machine has ever seen is remembered)
+function offlineOk(c) {
+  if (!c || !c.config) return false;
+  const now = Date.now(), seen = Math.max(c.seen || 0, c.okAt || 0);
+  if (c.okAt > now + 10 * 60e3 || now < seen - 10 * 60e3) return false; // a clock moved back, or a saved time in the future
+  if (c.config.expires && taipeiDay(Math.max(now, seen)) > c.config.expires) return false;
+  return Math.max(now, seen) - c.okAt < offlineLimit(c.config);
+}
+function markSeen() { const c = licCached(); if (!c) return; c.seen = Math.max(c.seen || 0, Date.now()); try { localStorage.setItem(licCacheKey(), JSON.stringify(c)); } catch { /* ignore */ } }
+async function forgetOffline() { // revoked / moved / not found: nothing of this licence stays on the machine
+  try { localStorage.removeItem(licCacheKey()); } catch { /* ignore */ }
+  try { const regs = await navigator.serviceWorker?.getRegistrations?.() || []; for (const r of regs) await r.unregister(); for (const k of await caches.keys()) if (k.startsWith('lumina-offline')) await caches.delete(k); } catch { /* ignore */ }
+}
 const licToken = () => { try { return JSON.parse(localStorage.getItem(licKey()) || 'null'); } catch { return null; } };
 function showLicGate(msg, { form = true, err = false, title, claim = false } = {}) {
   licGate.hidden = false; $('#startGate').hidden = true;
@@ -1848,7 +1863,7 @@ let licOkAt = 0, licTimer = null, licBlocked = '', licOffline = false;
 async function useLicence(cfg, { autoplay = false, okAt = 0 } = {}) {
   const changed = !LIC || LIC.version !== cfg.version;
   LIC = cfg; licOkAt = okAt || Date.now();
-  if (!okAt) { try { localStorage.setItem(licCacheKey(), JSON.stringify({ config: cfg, okAt: licOkAt })); } catch { /* storage full: online checks still work */ } }
+  if (!okAt) { try { localStorage.setItem(licCacheKey(), JSON.stringify({ config: cfg, okAt: licOkAt, seen: licOkAt })); } catch { /* storage full: online checks still work */ } }
   precacheForOffline();
   if (changed) {
     if (!LIC.modes.includes(S.mode)) applyMode(modeOf(LIC.defaultMode), { quiet: true });
@@ -1869,20 +1884,27 @@ async function checkLicence({ claim = false } = {}) {
     licOffline = false;
     await useLicence(config, { autoplay: true });
   } catch (err) {
-    const p = licenceProblem(err.code) || (err.code === 'BAD_TOKEN' ? 'DEVICE_CHANGED' : null);
+    if (err.code === 'BAD_TOKEN' && t.code && !claim) { // the token's key changed (e.g. a new server secret): quietly sign in again with the saved code
+      try { const r = await api('license-activate', { method: 'POST', body: { license: LIC_ID, code: t.code, device: deviceId(), sid: LIC_SID } }); try { localStorage.setItem(licKey(), JSON.stringify({ token: r.token, code: t.code })); } catch { /* ignore */ } return checkLicence({ claim: true }); } catch (e2) { err = e2; }
+    }
+    const p = licenceProblem(err.code) || (err.code === 'BAD_TOKEN' ? 'CONTACT' : null);
     if (p) {
       licBlocked = p;
       if (!player.hidden) closePlayer();
-      if (p === 'DEVICE_CHANGED' || p === 'NOT_FOUND') { try { localStorage.removeItem(licKey()); localStorage.removeItem(licCacheKey()); } catch { /* ignore */ } }
-      if (p !== 'SUPERSEDED') { try { localStorage.removeItem(licCacheKey()); } catch { /* ignore */ } } // paused / revoked / expired: no offline play either
+      if (p === 'DEVICE_CHANGED' || p === 'NOT_FOUND' || p === 'REVOKED') { try { localStorage.removeItem(licKey()); } catch { /* ignore */ } forgetOffline(); }
+      else if (p === 'PAUSED' || p === 'EXPIRED' || p === 'NOT_STARTED') { try { localStorage.removeItem(licCacheKey()); } catch { /* ignore */ } } // no offline play while it is not allowed
       showLicGate(T('lic_' + p), { form: p === 'DEVICE_CHANGED' || p === 'NOT_FOUND', err: true, claim: p === 'SUPERSEDED' });
-    } else if (!LIC) { // no internet at start-up: play from the last confirmed licence if it is recent enough
-      const c = licCached();
-      if (c && Date.now() - c.okAt < offlineLimit(c.config)) { await useLicence(c.config, { okAt: c.okAt }); licOffline = true; }
-      else showLicGate(T('lic_OFFLINE'), { form: false, err: true });
-    } else if (Date.now() - licOkAt > offlineLimit(LIC)) { // offline longer than AE allows: stop politely; otherwise keep the show going
+      return;
+    }
+    // no answer (no internet, or the service is briefly unavailable): play from the saved licence while it is allowed
+    const c = licCached(); markSeen();
+    if (!LIC) {
+      if (offlineOk(c)) { await useLicence(c.config, { okAt: c.okAt }); licOffline = true; }
+      else showLicGate(T(err.status >= 500 ? 'lic_SERVICE' : 'lic_OFFLINE'), { form: false, err: true });
+    } else if (!offlineOk(c || { config: LIC, okAt: licOkAt })) { // offline longer than AE allows (or past the end date): stop politely
+      licBlocked = 'OFFLINE'; // when the internet is back it plays again by itself
       if (!player.hidden) closePlayer();
-      showLicGate(T('lic_OFFLINE'), { form: false, err: true });
+      showLicGate(T(err.status >= 500 ? 'lic_SERVICE' : 'lic_OFFLINE'), { form: false, err: true });
     }
   }
 }
@@ -1903,7 +1925,7 @@ function precacheForOffline() {
 async function licenceBoot() {
   document.documentElement.classList.add('licensed');
   const q = new URLSearchParams(location.search);
-  if (q.get('code')) $('#licCode').value = q.get('code');
+  if (q.get('code')) { $('#licCode').value = q.get('code'); q.delete('code'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
   $('#licClaim').addEventListener('click', async () => { licBlocked = ''; await checkLicence({ claim: true }); if (LIC && !licBlocked && player.hidden) showStartGate(); });
   $('#licForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1911,13 +1933,14 @@ async function licenceBoot() {
     $('#licGo').disabled = true; $('#licMsg').textContent = T('licChecking'); $('#licMsg').classList.remove('err');
     try {
       const r = await api('license-activate', { method: 'POST', body: { license: LIC_ID, code, device: deviceId(), sid: LIC_SID } });
-      try { localStorage.setItem(licKey(), JSON.stringify({ token: r.token })); } catch { /* ignore */ }
+      try { localStorage.setItem(licKey(), JSON.stringify({ token: r.token, code })); } catch { /* ignore */ }
       licBlocked = '';
       await useLicence(r.config); showStartGate();
-    } catch (err) { showLicGate(T('lic_' + (licenceProblem(err.code) || 'WRONG_CODE')), { err: true }); }
+    } catch (err) { showLicGate(T('lic_' + (licenceProblem(err.code) || (err.status >= 500 || !err.status ? 'SERVICE' : 'WRONG_CODE'))), { err: true }); }
     finally { $('#licGo').disabled = false; }
   });
-  const every = Math.max(2, Math.min(600, Number(q.get('hb')) || 60)) * 1000; // the minute check (shorter only in tests)
+  const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const every = (local ? Math.max(2, Math.min(600, Number(q.get('hb')) || 60)) : 60) * 1000; // the minute check (shorter only on a test machine)
   clearInterval(licTimer); licTimer = setInterval(checkLicence, every);
   if (licToken()) {
     showLicGate(T('licChecking'), { form: false });
@@ -1979,8 +2002,11 @@ async function editLicence(l) {
     try { const { qrSvg } = await import('./qr.js'); $('#licQr').innerHTML = qrSvg(`${licUrl(l)}&code=${encodeURIComponent(l.code)}`, 4); } catch { $('#licQr').textContent = ''; }
   }
 }
+let licSaving = false;
 async function saveLicence(patch) {
+  if (licSaving) return null; licSaving = true; $('#licSave').disabled = true;
   try { const { license } = await api('license-save', { method: 'POST', body: { license: patch } }); await refreshLicences(); await editLicence(license); toast(T('licSaved')); return license; } catch (err) { studioError(err); return null; }
+  finally { licSaving = false; $('#licSave').disabled = false; }
 }
 licForm.addEventListener('submit', async (e) => {
   e.preventDefault();
