@@ -80,6 +80,7 @@ function toast(msg, ms = 3400) {
 // ---------- API ----------
 async function api(action, { method = 'GET', body, query = {}, raw, type } = {}) {
   const qs = new URLSearchParams({ a: action, ...query });
+  if (token && action === 'catalog') qs.set('studio', '1'); // studio reads never share the visitors' edge-cached copy
   const headers = {};
   if (token) headers.authorization = 'Bearer ' + token;
   let payload;
@@ -343,7 +344,7 @@ async function enterStudio() {
     const t = await api('login', { method: 'POST', body: { password: pw.trim() } });
     setStudio(true, t);
     await loadCatalog(); renderAll(); renderSettings();
-    toast(T('studioOn'));
+    toast(cloud === 'degraded' ? T('storageDown') : T('studioOn'), cloud === 'degraded' ? 7000 : undefined);
   } catch (err) {
     toast(err.code === 'STUDIO_NOT_CONFIGURED' ? T('studioNotConfigured') : err.code === 'WRONG_PASSWORD' ? T('studioWrong') : T('offline'));
   }
@@ -365,6 +366,7 @@ $('#studioLock').addEventListener('click', async () => { setStudio(false); await
 
 function studioError(err) {
   if (err.code === 'STORAGE_NOT_READY') toast(T('storageNotReady'), 6000);
+  else if (err.code === 'STORAGE_DOWN') toast(T('storageDown'), 7000);
   else if (err.code === 'TOO_LARGE') toast(T('tooLarge', ''), 5000);
   else if (err.status !== 401) toast(T('addFailed'));
 }
@@ -431,6 +433,7 @@ async function addFiles(files) {
     } catch (err) {
       if (err.code === 'TOO_LARGE') toast(T('tooLarge', f.name), 5000);
       else if (err.code === 'STORAGE_NOT_READY') { toast(T('storageNotReady'), 6000); break; }
+      else if (err.code === 'STORAGE_DOWN') { toast(T('storageDown'), 7000); break; }
       else if (err.status === 401) break;
       else toast(T('addFailed'), 4000);
     }
@@ -815,7 +818,21 @@ const dims = (el) => el.tagName === 'VIDEO' ? [el.videoWidth, el.videoHeight] : 
 function fitRect(nw, nh) {
   const W = stage.clientWidth, H = stage.clientHeight;
   const pad = S.display.mat ? Math.max(12, Math.min(64, Math.min(W, H) * (Math.min(W, H) < 600 ? 0.035 : 0.05))) : 0;
-  const s = Math.min((W - pad * 2) / nw, (H - pad * 2) / nh);
+  let s = Math.min((W - pad * 2) / nw, (H - pad * 2) / nh);
+  // R9: a wide work on a wide screen leaves no room beside or below it, so the title would sit on the painting.
+  // Give up a little size (at most ~16%) to free a calm strip below for the title; otherwise keep the full size.
+  if (S.display.captions) {
+    // a fixed strip (title + subtitle + label below the work), not the caption's current height: that still belongs to the previous work
+    const reserve = W < 760 ? 88 + 8 + 82 : 22 + 8 + 114;
+    const below = (H - nh * s) / 2, side = (W - nw * s) / 2;
+    if (below < reserve && side < 250) {
+      const s2 = Math.min((W - pad * 2) / nw, (H - pad - reserve) / nh);
+      if (s2 >= s * 0.84) {
+        const w = nw * s2, h = nh * s2;
+        return { x: (W - w) / 2, y: Math.max(pad * 0.6, (H - reserve - h) / 2), w, h };
+      }
+    }
+  }
   const w = nw * s, h = nh * s;
   return { x: (W - w) / 2, y: (H - h) / 2, w, h };
 }
@@ -1314,6 +1331,7 @@ function applyLive() {
   player.classList.toggle('camera', !!S.display.camera && !reduced);
   player.classList.toggle('grain', !!S.effects.lumiere);
   if (!S.display.captions) $('#caption').classList.add('off');
+  if (!player.hidden && slides[cur] && slides[cur].rect) layout(); // the title strip may come or go
 }
 
 // controls

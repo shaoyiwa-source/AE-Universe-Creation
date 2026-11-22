@@ -65,11 +65,15 @@ function fsStore(dir) {
   const full = (p) => path.join(dir, p);
   return {
     kind: 'fs',
-    async get(p) { try { return fs.readFileSync(full(p)); } catch { return null; } },
+    async get(p) {
+      if (fs.existsSync(path.join(dir, '.down'))) throw storageDown('simulated outage'); // tests: simulate a suspended store
+      try { return fs.readFileSync(full(p)); } catch { return null; }
+    },
     async put(p, buf) { fs.mkdirSync(path.dirname(full(p)), { recursive: true }); fs.writeFileSync(full(p), buf); },
     async del(p) { try { fs.unlinkSync(full(p)); } catch { /* ignore */ } },
   };
 }
+function storageDown(why) { const e = new Error('STORAGE_DOWN: ' + (why || '')); e.code = 'STORAGE_DOWN'; return e; }
 function blobStore() {
   const sdk = () => import('@vercel/blob');
   return {
@@ -78,9 +82,15 @@ function blobStore() {
       try {
         const { get } = await sdk();
         const r = await get(p, { access: 'private', useCache: false });
-        if (!r || r.statusCode !== 200) return null;
+        if (!r || r.statusCode === 404) return null;
+        if (r.statusCode !== 200) throw storageDown(`status ${r.statusCode}`);
         return Buffer.from(await new Response(r.stream).arrayBuffer());
-      } catch { return null; }
+      } catch (e) {
+        // "not found" is a normal answer; anything else (suspended store, quota, network) must never look like an empty library
+        if (e && (e.code === 'STORAGE_DOWN')) throw e;
+        if (e && /not.?found/i.test(String(e.name || '') + ' ' + String(e.message || ''))) return null;
+        throw storageDown(e && e.message);
+      }
     },
     async put(p, buf, contentType) {
       const { put } = await sdk();
@@ -103,7 +113,7 @@ async function readCatalog(store) {
     const c = JSON.parse(buf.toString('utf8'));
     c.works = Array.isArray(c.works) ? c.works : []; c.exhibitions = Array.isArray(c.exhibitions) ? c.exhibitions : []; c.tracks = Array.isArray(c.tracks) ? c.tracks : [];
     return c;
-  } catch { return seedCatalog(); }
+  } catch { throw storageDown('catalog unreadable'); }
 }
 async function writeCatalog(store, c) {
   c.updatedAt = Date.now();
@@ -195,9 +205,15 @@ module.exports = async function handler(req, res) {
       if (req.method !== 'GET') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
       const store = storage();
       const studio = isStudio(req);
-      const c = await readCatalog(store);
-      res.setHeader('Cache-Control', 'no-store');
-      return res.status(200).json({ ...publicView(c, studio), studio, storage: store ? store.kind : 'none' });
+      let c, kind = store ? store.kind : 'none';
+      try { c = await readCatalog(store); } catch (e) {
+        if (e.code !== 'STORAGE_DOWN') throw e;
+        c = seedCatalog(); kind = 'degraded'; // the cloud library is unreachable: keep the wall playing with the built-in works
+      }
+      // visitors share one copy cached at the edge for a minute, so page views do not each read the cloud library;
+      // AE Studio always reads fresh (separate URL + authorization)
+      res.setHeader('Cache-Control', studio ? 'private, no-store' : (kind === 'degraded' ? 'public, max-age=0, s-maxage=30' : 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400, stale-if-error=86400'));
+      return res.status(200).json({ ...publicView(c, studio), studio, storage: kind });
     }
     if (req.method !== 'POST') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
     res.setHeader('Cache-Control', 'no-store');
@@ -215,7 +231,11 @@ module.exports = async function handler(req, res) {
     if (!isStudio(req)) return res.status(401).json({ error: 'STUDIO_ONLY' });
     const store = storage();
     if (!store) return res.status(503).json({ error: 'STORAGE_NOT_READY' });
-    const c = await readCatalog(store);
+    let c;
+    try { c = await readCatalog(store); } catch (e) {
+      if (e.code === 'STORAGE_DOWN') return res.status(503).json({ error: 'STORAGE_DOWN' }); // never overwrite the library from a failed read
+      throw e;
+    }
 
     if (a === 'upload') {
       const kind = String(req.query.kind || 'work');
@@ -241,9 +261,11 @@ module.exports = async function handler(req, res) {
       if (kind === 'thumb') {
         const w = c.works.find(x => x.id === req.query.id && !x.builtin);
         if (!w || !ctype.startsWith('image/')) return res.status(404).json({ error: 'NOT_FOUND' });
-        const rel = `media/${w.id}-thumb.${ext}`;
+        const rel = `media/${w.id}-thumb-${rid('v')}.${ext}`; // a new name per upload, so cached copies never go stale
         await store.put(`${ROOT}/${rel}`, buf, ctype);
+        const old = relOf(w.thumb), oldP = old && old !== relOf(w.src) && mediaPath(old);
         w.thumb = mediaUrl(rel);
+        if (oldP) await store.del(oldP);
         await writeCatalog(store, c);
         return res.status(200).json({ work: w });
       }
@@ -325,13 +347,15 @@ async function media(req, res) {
   const p = mediaPath(rel);
   const store = storage();
   if (!p || !store) return res.status(404).send('Not found');
-  const buf = await store.get(p);
-  if (!buf) return res.status(404).send('Not found');
+  let buf;
+  try { buf = await store.get(p); } catch (e) { if (e.code === 'STORAGE_DOWN') { res.setHeader('Cache-Control', 'no-store'); return res.status(503).send('Storage unavailable'); } throw e; }
+  if (!buf) { res.setHeader('Cache-Control', 'no-store'); return res.status(404).send('Not found'); }
   const ext = rel.split('.').pop();
   res.setHeader('Content-Type', MIME[ext] || 'application/octet-stream');
   res.setHeader('Accept-Ranges', 'bytes');
   // R3: works are public art previews; R4 (membership) will gate this behind an entitlement check.
-  res.setHeader('Cache-Control', 'public, max-age=86400');
+  // every media file has a unique, never-reused name: cache it for a year at the edge and in the browser (one cloud read per file)
+  res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
   const range = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || ''));
   if (range) {
     let start = range[1] === '' ? buf.length - Number(range[2]) : Number(range[1]);
