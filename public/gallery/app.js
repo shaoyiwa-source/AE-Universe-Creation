@@ -625,8 +625,15 @@ function renderEdition() {
 
 // ---------- settings sheet ----------
 const sheet = $('#settings'), scrim = $('#scrim');
-function openSheet() { renderSettings(); sheet.hidden = false; scrim.hidden = false; $('#closeSettings').focus(); showControls(); }
-function closeSheet() { const had = !sheet.hidden; sheet.hidden = true; scrim.hidden = true; if (had && !player.hidden) player.focus({ preventScroll: true }); }
+// opened during a presentation: "adjust while watching" — the painting moves aside (never covered, never dimmed)
+// and keeps playing and answering touch, so every setting can be seen as it is changed
+function setTuning(on) {
+  const was = player.classList.contains('tuning');
+  document.body.classList.toggle('tuning', on); player.classList.toggle('tuning', on);
+  if (was !== on && !player.hidden) requestAnimationFrame(() => layout());
+}
+function openSheet() { renderSettings(); sheet.hidden = false; scrim.hidden = false; setTuning(!player.hidden); $('#closeSettings').focus({ preventScroll: true }); showControls(); }
+function closeSheet() { const had = !sheet.hidden; sheet.hidden = true; scrim.hidden = true; setTuning(false); if (had && !player.hidden) player.focus({ preventScroll: true }); }
 $('#openSettings').addEventListener('click', openSheet);
 $('#closeSettings').addEventListener('click', closeSheet);
 scrim.addEventListener('click', closeSheet);
@@ -674,7 +681,7 @@ function renderSettings() {
   rs.textContent = `${T('adjusted')} · ${T('resetMode')}`;
   const adj = () => { S.adjusted = true; };
   const tr = $('#transitionChips'); tr.replaceChildren();
-  for (const o of OPTIONS.transitions) tr.appendChild(chip(L(o), S.transition === o.id, o.ae, () => { S.transition = o.id; adj(); commit(); }));
+  for (const o of OPTIONS.transitions) tr.appendChild(chip(L(o), S.transition === o.id, o.ae, () => { S.transition = o.id; adj(); commit(); if (!player.hidden && shown && o.id !== 'random') { go(1); elapsed = 0; } }));
   const ef = $('#effectToggles'); ef.replaceChildren();
   for (const o of OPTIONS.effects) { if (o.partyOnly && S.mode !== 'party') continue; ef.appendChild(toggle(o, S.effects[o.id], () => { S.effects[o.id] = !S.effects[o.id]; adj(); commit(); })); }
   const inten = $('#intensity'); inten.value = S.intensity; $('#intensityOut').textContent = S.intensity;

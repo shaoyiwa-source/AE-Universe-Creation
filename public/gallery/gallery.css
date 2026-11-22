@@ -536,3 +536,16 @@ img,video{-webkit-touch-callout:none}
 .lw-player.alivehover{cursor:grab}
 .lw-player.alivehover:active{cursor:grabbing}
 @media (prefers-reduced-motion:reduce){.pl-stage .pl-alive,.pl-stage .pl-alive-back{display:none}}
+
+/* adjust while watching (settings opened during a presentation) */
+body.tuning .lw-scrim{background:transparent;pointer-events:none}
+.lw-player.tuning .pl-hint{display:none}
+@media (min-width:761px){
+  .lw-player.tuning .pl-stage,.lw-player.tuning .pl-fx{right:min(420px,100%);width:auto}
+  .lw-player.tuning .pl-controls{left:calc((100% - 420px)/2)}
+}
+@media (max-width:760px){
+  body.tuning .lw-sheet{max-height:50dvh}
+  .lw-player.tuning .pl-stage,.lw-player.tuning .pl-fx{bottom:50dvh;height:auto}
+  .lw-player.tuning .pl-caption,.lw-player.tuning .pl-controls,.lw-player.tuning .pl-breath{display:none}
+}
