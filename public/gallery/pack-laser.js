@@ -14,15 +14,16 @@ export default {
     { id: 'sync', type: 'choice', default: 'music', options: [{ id: 'music', zh: '跟著音樂', en: 'With the music' }, { id: 'tempo', zh: '固定節拍', en: 'Fixed tempo' }], label: { zh: '節奏', en: 'Rhythm' } },
     { id: 'bpm', type: 'range', min: 60, max: 160, step: 1, default: 148, label: { zh: '節拍（BPM）', en: 'Tempo (BPM)' } },
     { id: 'bolts', type: 'toggle', default: true, label: { zh: '鼓點飛入的流星雷射', en: 'Streaks on the beat' } },
+    { id: 'hits', type: 'toggle', default: true, label: { zh: '聲響觸發（拍手、彈指、敲擊立刻閃）', en: 'Sound hits (claps, snaps, knocks flash at once)' } },
     { id: 'pools', type: 'toggle', default: true, label: { zh: '照亮落點（光照在畫上）', en: 'Light pools on the painting' } },
     { id: 'sun', type: 'toggle', default: true, label: { zh: '畫中心的呼吸光', en: 'Breathing sun glow' } },
   ],
   create(host, p) {
     const PRISM = [[255, 65, 109], [87, 255, 160], [255, 226, 141], [101, 219, 255], [201, 135, 255], [255, 172, 104]];
-    let t = 0, lastBeat = -9, count = 0, own = 0, energy = 0, bolts = [], sparks = [];
+    let t = 0, lastBeat = -9, count = 0, own = 0, energy = 0, bolts = [], sparks = [], hitsSeen = null, hitT = -9, shift = 0;
     const sun = host.focalPoints(1)[0] || [0.5, 0.45];
     const rnd = (s) => { const n = Math.sin(s * 12.9898 + 78.233) * 43758.5453; return n - Math.floor(n); };
-    const col = (i, x, y) => p.colors === 'gold' ? [236, 205, 140] : p.colors === 'painting' ? host.colorAt(x, y) : PRISM[i % PRISM.length];
+    const col = (i, x, y) => p.colors === 'gold' ? [236, 205, 140] : p.colors === 'painting' ? host.colorAt(x, y) : PRISM[(i + shift) % PRISM.length];
     const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${Math.max(0, Math.min(1, a))})`;
     const origin = (r, i, seed = 0) => {
       const side = i % 3;
@@ -48,14 +49,20 @@ export default {
           // no music playing: the beams do not flash; they breathe slowly (6 breaths a minute) and drift
           host.laserMode = 'calm';
           const br = 0.5 - 0.5 * Math.cos(t * Math.PI * 2 / 10);
-          b = { pulse: br * 0.28, stage: 'calm', buildProgress: 0, dropPulse: 0, sweep: t * 0.35, energy: 0.15 + br * 0.15 };
+          b = { pulse: br * 0.28, stage: 'calm', buildProgress: 0, dropPulse: 0, sweep: t * 0.35, energy: 0.15 + br * 0.15, hits: b && b.hits, hitAge: b && b.hitAge };
         }
         else {
           host.laserMode = 'tempo';
           own += dt; const iv = 60 / p.bpm; if (own >= iv) { own -= iv; count++; beat = true; lastBeat = t; }
           b = { pulse: Math.exp(-(t - lastBeat) / 0.11), stage: 'groove', buildProgress: 0, dropPulse: 0, sweep: t / iv, energy: 0.4 + 0.3 * Math.sin(t * 0.7) };
         }
-        const stage = b.stage || 'groove', pulse = b.pulse || 0, drop = b.dropPulse || 0, bp = b.buildProgress || 0;
+        // a clap / snap / knock heard in the room: flash at once and turn the colours (LED-strip style)
+        if (p.hits && b.hits != null) {
+          if (hitsSeen === null) hitsSeen = b.hits;
+          if (b.hits > hitsSeen) { hitsSeen = b.hits; hitT = t - Math.max(0, Math.min(0.05, b.hitAge || 0)); shift++; if (b.hits > (host.hitsFlashed || 0)) { host.hitsFlashed = b.hits; host.laserHits = (host.laserHits || 0) + 1; } beat = true; }
+        }
+        const hitPulse = Math.exp(-Math.max(0, t - hitT) / 0.09);
+        const stage = hitPulse > 0.3 && b.stage === 'calm' ? 'groove' : (b.stage || 'groove'), pulse = Math.max(b.pulse || 0, hitPulse), drop = b.dropPulse || 0, bp = b.buildProgress || 0;
         energy = Math.max(b.energy ?? b.level ?? 0, energy * 0.84);
         const sweep = b.sweep != null ? b.sweep : t * 2.4, group = Math.floor(count / 4);
         const impact = Math.min(1, drop * 1.8);
