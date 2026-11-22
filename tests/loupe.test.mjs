@@ -57,6 +57,13 @@ try {
   await page.screenshot({ path: `${out}/${which}-loupe-2.png` });
   check(`[${which}] dragging moves the lens and its view`, Math.abs(b.l.x - a.l.x) > 40 && a.t !== b.t && a.src, `${a.t} → ${b.t}`);
   check(`[${which}] lens stays on screen`, b.l.x >= 0 && b.l.y >= 0 && b.l.right <= page.viewportSize().width && b.l.bottom <= page.viewportSize().height);
+  // moving the finger up towards the top: the lens follows continuously, never jumps to the other side
+  const ys = [];
+  for (let k = 0; k <= 30; k++) { const yy = cy - (cy - art.y - 4) * k / 30; await page.mouse.move(cx, yy); await wait(25); ys.push({ f: yy, l: (await pos()).l.y }); }
+  let jump = 0; for (let k = 1; k < ys.length; k++) jump = Math.max(jump, Math.abs(ys[k].l - ys[k - 1].l));
+  const stepF = (cy - art.y) / 30;
+  check(`[${which}] the lens moves smoothly to the top edge (no jump)`, jump <= stepF * 1.6 + 1 && ys.every(p => p.l <= p.f + 1), `largest jump ${jump.toFixed(1)} px for a ${stepF.toFixed(1)} px finger step`);
+  check(`[${which}] the lens marks the exact point under the finger`, await page.evaluate(() => getComputedStyle(document.getElementById('loupe'), '::before').content !== 'none'));
   // the slide does not change while looking closely, even past its time
   await page.evaluate(() => { window.__lumina.state; });
   await wait(1500);

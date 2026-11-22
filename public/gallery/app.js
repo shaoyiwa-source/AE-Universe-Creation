@@ -1420,8 +1420,8 @@ function moveLoupe(x, y) {
   const r = slides[cur].rect, L = loupeOn.L, W = player.clientWidth, H = player.clientHeight;
   const px = Math.max(0, Math.min(r.w, x - r.x)), py = Math.max(0, Math.min(r.h, y - r.y));
   // keep the lens above the finger so the finger never covers what is being looked at
+  // always above the finger; near the top edge it simply rests against the edge (never flips below: no jumps)
   let lx = x - L / 2, ly = loupeOn.touch ? y - L - 28 : y - L / 2;
-  if (ly < 8) ly = loupeOn.touch ? Math.min(H - L - 8, y + 36) : 8;
   lx = Math.max(8, Math.min(W - L - 8, lx)); ly = Math.max(8, Math.min(H - L - 8, ly));
   loupe.style.left = lx + 'px'; loupe.style.top = ly + 'px';
   loupeImg.style.transform = `translate(${(L / 2 - px * LOUPE_ZOOM).toFixed(1)}px, ${(L / 2 - py * LOUPE_ZOOM).toFixed(1)}px)`;
