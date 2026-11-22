@@ -93,6 +93,18 @@ try {
   await page.click('#interactToggles [data-opt=alive]'); await page.click('#closeSettings'); await wait(300);
   const off1 = (await st()).alive; await wait(1500); const off2 = (await st()).alive;
   check(`[${which}] turning Living Painting off: no new light, the painting stays as it is`, !off1.on && off2.stats.spawned === off1.stats.spawned, `${off1.stats.spawned} → ${off2.stats.spawned}`);
+  // Dreamscape: alive from the very first second, and richer
+  await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
+  await page.click('.lw-mode[data-mode=dream]'); await page.click('#closeSettings');
+  await page.evaluate(() => window.__lumina.go(1));
+  await page.waitForFunction(() => !window.__lumina.state.busy && window.__lumina.state.alive.on, null, { timeout: 15000 });
+  await wait(1500);
+  const d1 = (await st()).alive;
+  check(`[${which}] Dreamscape: light moves from the first second`, d1.amb > 0.7 && d1.counts.motes > 3, `after 1.5 s: amb ${d1.amb}, ${d1.counts.motes} lights`);
+  await wait(5000);
+  const d2 = (await st()).alive.counts;
+  check(`[${which}] Dreamscape: richer than the calm modes`, d2.motes > s1.counts.motes * 1.3 && d2.veils >= 5, `${d2.motes} vs ${s1.counts.motes} lights, ${d2.veils} veils`);
+  await page.screenshot({ path: `${out}/${which}-dreamscape.png` });
   check(`[${which}] no page errors`, errs.length === 0, errs.slice(0, 2).join(' | '));
 } catch (e) { check(`[${which}] scenario crashed`, false, String(e).split('\n').slice(0, 4).join(' / ')); }
 await browser.close(); srv.kill(); fs.rmSync(lib, { recursive: true, force: true });

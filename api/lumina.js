@@ -21,7 +21,7 @@ const path = require('path');
 const ROOT = 'ae-lumina';
 const CATALOG = `${ROOT}/catalog.json`;
 const MAX_UPLOAD = Math.floor(4.3 * 1024 * 1024);
-const MODES = ['gallery', 'healing', 'hotel', 'residence', 'party', 'kids', 'online', 'cinema'];
+const MODES = ['gallery', 'healing', 'hotel', 'residence', 'party', 'dream', 'kids', 'online', 'cinema'];
 const TRANSITIONS = ['random', 'innerbloom', 'dissolve', 'bloom', 'rings', 'ink', 'silk', 'stardust', 'bubbles'];
 const MIME = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif',

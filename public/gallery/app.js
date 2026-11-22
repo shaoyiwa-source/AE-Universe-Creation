@@ -1355,6 +1355,7 @@ function applyLive() {
   alive.gain = [0.6, 0.8, 1, 1.2, 1.4][lvl - 1];
   alive.maxDpr = lowPower ? 0.6 : 1; alive.quality = lowPower ? 0.5 : 1;
   alive.enabled = !!S.interact.alive;
+  alive.rich = !!modeOf(S.mode).set.rich;
   if (!player.hidden) { if (S.interact.alive) wakeAlive(); else alive.detach(); }
   sound.chimeOn = S.interact.chime;
   neon.classList.toggle('on', !!S.effects.neon && !S.display.camera);

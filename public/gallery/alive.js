@@ -118,7 +118,7 @@ export class Alive {
     for (const c of [this.back, this.front]) c.setAttribute('aria-hidden', 'true');
     this.bx = this.back.getContext('2d'); this.fx = this.front.getContext('2d');
     this.canvas = this.front;
-    this.enabled = true; this.gain = 1; this.maxDpr = 1; this.quality = 1; // soft light needs no retina resolution
+    this.enabled = true; this.rich = false; this.gain = 1; this.maxDpr = 1; this.quality = 1; // soft light needs no retina resolution
     this.motes = []; this.threads = []; this.dust = []; this.bokeh = []; this.veils = []; this.emitters = []; this.feathers = [];
     this.map = null; this.rect = null; this.W = 0; this.H = 0; this.t = 0; this.since = 0; this.on = false; this.amb = 0;
     this.par = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -203,7 +203,7 @@ export class Alive {
 
   // ---- births ----
   _mote(x, y, opt = {}) {
-    if (this.motes.length > 260 * this.quality) return;
+    if (this.motes.length > 260 * this.quality * (this.rich ? 1.6 : 1)) return;
     const z = opt.z ?? (0.75 + Math.random() * 0.6);
     const a = Math.random() * TAU, sp = opt.speed ?? 0;
     this.motes.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (opt.rise || 0), life: 0, max: opt.life ?? (3.5 + Math.random() * 3.5),
@@ -214,7 +214,7 @@ export class Alive {
     for (let i = 0; i < n; i++) this._mote(x + (Math.random() - 0.5) * 10, y + (Math.random() - 0.5) * 10, { speed: 30 + Math.random() * 60 * k, rise: 14 * k, life: 2.2 + Math.random() * 2.4, size: 1.4 + Math.random() * 2.6 });
   }
   _thread() {
-    const m = this.map, r = this.rect; if (!m || !m.spawn.length || this.threads.length >= 4 * this.quality) return;
+    const m = this.map, r = this.rect; if (!m || !m.spawn.length || this.threads.length >= (this.rich ? 7 : 4) * this.quality) return;
     const c = m.spawn[(Math.random() * m.spawn.length) | 0];
     const x = r.x + ((c % m.gw) + Math.random()) / m.gw * r.w, y = r.y + (Math.floor(c / m.gw) + Math.random()) / m.gh * r.h;
     this.threads.push({ x, y, pts: [[x, y]], life: 0, max: 5 + Math.random() * 4, rgb: this._colorAt(x, y), sign: Math.random() < 0.5 ? -1 : 1, w: 0.7 + Math.random() * 0.8 });
@@ -235,9 +235,10 @@ export class Alive {
     this.t += dt;
     if (this.on) this.since = (performance.now() - this.t0) / 1000;
     // still at first, then the light starts to live
-    const target = this.on ? Math.max(0, Math.min(1, (this.since - 2.2) / 2.8)) * (playing ? 1 : 0.7) : 0;
+    const still = this.rich ? 0 : 2.2, ramp = this.rich ? 0.8 : 2.8; // Dreamscape: alive from the first second
+    const target = this.on ? Math.max(0, Math.min(1, (this.since - still) / ramp)) * (playing ? 1 : 0.7) : 0;
     this.amb += (target - this.amb) * Math.min(1, dt * 2);
-    const g = this.gain, q = this.quality, r = this.rect, m = this.map, t = this.t;
+    const g = this.gain, q = this.quality * (this.rich ? 1.7 : 1), r = this.rect, m = this.map, t = this.t;
     this.par.x += (this.par.tx - this.par.x) * Math.min(1, dt * 2.5); this.par.y += (this.par.ty - this.par.y) * Math.min(1, dt * 2.5);
 
     // births: motes from the living parts, threads, dust from above, near bokeh, veils in the empty space
@@ -249,7 +250,7 @@ export class Alive {
         const x = r.x + ((c % m.gw) + Math.random()) / m.gw * r.w, y = r.y + (Math.floor(c / m.gw) + Math.random()) / m.gh * r.h;
         this._mote(x, y, { rgb: q8(m.col[c]) });
       }
-      if (this.amb > 0.5 && Math.random() < dt * 0.5 * g) this._thread();
+      if (this.amb > 0.5 && Math.random() < dt * (this.rich ? 1.1 : 0.5) * g) this._thread();
     }
     this._dacc = (this._dacc || 0) + dt * 4 * this.amb * q;
     while (this._dacc >= 1) {
@@ -258,7 +259,7 @@ export class Alive {
       this.dust.push({ x: Math.random() * this.W, y: -12, z, vy: (7 + Math.random() * 10) * z, ph: Math.random() * TAU, rgb: Math.random() < 0.55 ? GOLD : this.palette[(Math.random() * this.palette.length) | 0], life: 0, size: (0.9 + Math.random() * 1.9) * z });
     }
     // feathers of light descending from above: slow, turning, a few at a time
-    if (this.amb > 0.4 && this.feathers.length < Math.round(6 * q) && Math.random() < dt * 0.55 * g) {
+    if (this.amb > 0.4 && this.feathers.length < Math.round(6 * q) && Math.random() < dt * (this.rich ? 1.2 : 0.55) * g) {
       const z = 0.8 + Math.random() * 0.7;
       this.feathers.push({ x: Math.random() * this.W, y: -20, z, vy: (9 + Math.random() * 8) * z, ph: Math.random() * TAU, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 0.7, len: (16 + Math.random() * 16) * z, rgb: Math.random() < 0.5 ? GOLD : this.palette[(Math.random() * this.palette.length) | 0], life: 0 });
     }
@@ -266,7 +267,7 @@ export class Alive {
       const z = 1.6 + Math.random() * 0.9;
       this.bokeh.push({ x: Math.random() * this.W, y: this.H * (0.2 + Math.random() * 0.8), z, r: 26 + Math.random() * 40, vx: (Math.random() - 0.5) * 5, vy: -2 - Math.random() * 4, rgb: this.palette[(Math.random() * this.palette.length) | 0], life: 0, max: 14 + Math.random() * 10 });
     }
-    while (this.veils.length < 4 && this.amb > 0.1) {
+    while (this.veils.length < (this.rich ? 6 : 4) && this.amb > 0.1) {
       this.veils.push({ x: Math.random() * this.W, y: Math.random() * this.H, r: Math.max(this.W, this.H) * (0.25 + Math.random() * 0.25), vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 4, rgb: this.palette[(Math.random() * this.palette.length) | 0], life: 0, max: 18 + Math.random() * 14 });
     }
 

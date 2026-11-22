@@ -69,8 +69,8 @@ async function scenario(label, ctxOpts, port) {
 
   // settings: modes + frame interval + camera
   await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])'); await wait(500);
-  check(`[${label}] 8 scene modes grouped in 2 arenas (on-site / online)`, (await page.locator('#modeCards .lw-mode').count()) === 8 && (await page.locator('#modeCards .lw-arena').count()) === 2);
-  const expect = { gallery: [20, 'hall'], healing: [16, 'nature'], hotel: [12, 'lounge'], residence: [18, 'hearth'], party: [6, 'pulse'], kids: [8, 'dawn'], cinema: [12, 'celestial'], online: [10, 'celestial'] };
+  check(`[${label}] 9 scene modes grouped in 2 arenas (on-site / online)`, (await page.locator('#modeCards .lw-mode').count()) === 9 && (await page.locator('#modeCards .lw-arena').count()) === 2);
+  const expect = { gallery: [20, 'hall'], healing: [16, 'nature'], hotel: [12, 'lounge'], residence: [18, 'hearth'], party: [6, 'pulse'], dream: [12, 'celestial'], kids: [8, 'dawn'], cinema: [12, 'celestial'], online: [10, 'celestial'] };
   let modesOk = true;
   for (const [id, [iv, mu]] of Object.entries(expect)) {
     await page.click(`.lw-mode[data-mode=${id}]`);
@@ -144,7 +144,7 @@ async function scenario(label, ctxOpts, port) {
   await ui('#stripBtn');
   // camera drift + every mode in the player
   let modesPlay = true;
-  for (const id of ['gallery', 'healing', 'hotel', 'residence', 'party', 'kids', 'cinema', 'online']) {
+  for (const id of ['gallery', 'healing', 'hotel', 'residence', 'party', 'dream', 'kids', 'cinema', 'online']) {
     await ui('#fxBtn');
     await page.click(`.lw-mode[data-mode=${id}]`);
     await page.click('#closeSettings');
@@ -155,7 +155,7 @@ async function scenario(label, ctxOpts, port) {
     await page.waitForFunction(() => !window.__lumina.state.busy, null, { timeout: 9000 }).catch(() => { modesPlay = false; });
     if (id === 'residence' && !(await page.evaluate(() => document.getElementById('player').classList.contains('camera')))) modesPlay = false;
   }
-  check(`[${label}] all 8 modes play (camera drift in Residence, cute pops in Little Ones)`, modesPlay);
+  check(`[${label}] all 9 modes play (camera drift in Residence, cute pops in Little Ones)`, modesPlay);
   const shift = await page.evaluate(() => { const p = document.getElementById('player'), s = document.getElementById('stage'); return p.scrollTop + p.scrollLeft + s.scrollTop + s.scrollLeft + Math.abs(s.getBoundingClientRect().left) + Math.abs(s.getBoundingClientRect().top); });
   check(`[${label}] stage stays perfectly in place (no scroll drift)`, shift === 0, 'offset=' + shift);
   await page.keyboard.press(' ');
