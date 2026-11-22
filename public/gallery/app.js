@@ -838,7 +838,15 @@ const neon = $('#neon');
 const fx = new FX($('#fx'), { reduced });
 const alive = new Alive(); // R10: the painting itself comes alive and answers touch
 const packs = new PackHost(alive); // R10 God mode: effect packages drawn on the same light layers
-packs.beatFn = () => sound.beat(); // lasers and other beat-driven light follow the music's kick drum
+// the beat for beat-driven light: our music's kick; with our music off but the microphone on, the room's own music;
+// otherwise none — beat-driven effects then breathe slowly instead of flashing
+const roomBeat = { count: 0, at: -9, level: 0 };
+packs.beatFn = () => {
+  const b = sound.beat();
+  if (b.live && !player.classList.contains('muted') && S.music !== 'none') return b;
+  if (listener.on && performance.now() / 1000 - roomBeat.at < 2.5) return { live: true, room: true, pulse: Math.exp(-(performance.now() / 1000 - roomBeat.at) / 0.11), count: roomBeat.count, stage: 'groove', energy: roomBeat.level };
+  return { live: false, quiet: true, pulse: 0, count: 0 };
+};
 packs.chimeFn = (k, i) => (k === 'glow' ? sound.glowChime() : k === 'coin' ? sound.coinChime(i) : sound.zapChime(i)); // one-tap effect sounds
 let camT = 0; // camera clock while arranging in God mode (loops the work's duration)
 let list = [], idx = 0, cur = 0, ambCur = 0, curDur = 10, curItem = null;
@@ -1539,7 +1547,7 @@ fx.onFrame = (dt) => {
     const r = listener.update(dt);
     fx.setSound(r.level, r.kind);
     if (r.clap) fx.soundClap(Math.max(1, r.tier));
-    if (r.beat && r.kind === 'music') fx.soundBeat(Math.max(1, r.tier));
+    if (r.beat && r.kind === 'music') { fx.soundBeat(Math.max(1, r.tier)); roomBeat.count++; roomBeat.at = performance.now() / 1000; roomBeat.level = r.level; }
     const md = $('#micDot'); md.style.setProperty('--lv', r.level.toFixed(2)); md.dataset.kind = r.kind || '';
   }
   if (playing && shown && !busy && !loupeOn && !alive.pressing && !god.open && S.advance !== 'manual') { // the work stays while someone looks closely
@@ -1787,7 +1795,7 @@ function makeGrain() {
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', bursts: (packs.bursts || []).length, music: sound.preset, packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
+    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', laserMode: packs.laserMode || null, bursts: (packs.bursts || []).length, music: sound.preset, packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
     beat: () => sound.beat(), beatClock: () => sound.lastBeatClock, setLatency: (v) => { if (sound.ctx) Object.defineProperty(sound.ctx, 'outputLatency', { configurable: true, get: () => v }); }, trackTime: () => (sound.customEl ? sound.customEl.currentTime : 0),
     registerOld: () => { try { registerPack({ ...PACKS.get('firefly'), version: 1 }); } catch { /* ignore */ } return PACKS.get('firefly') ? PACKS.get('firefly').version : 0; },
     rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },

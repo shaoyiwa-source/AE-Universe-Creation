@@ -74,6 +74,12 @@ try {
   }
   await wait(1500);
   check(`[${which}] one-tap effects end by themselves`, (await st()).bursts === 0);
+  // music off: beat-driven light stops flashing and breathes slowly; on again: back on the beat
+  await page.evaluate(() => document.getElementById('musicBtn').click()); await wait(1500);
+  const q1 = await st();
+  check(`[${which}] music off: lasers breathe slowly instead of flashing`, q1.laserMode === 'calm', String(q1.laserMode));
+  await page.evaluate(() => document.getElementById('musicBtn').click()); await wait(2500);
+  check(`[${which}] music on again: lasers follow the beat again`, (await st()).laserMode === 'music', String((await st()).laserMode));
   // manual paging: the works change only when asked; music and light keep going
   await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
   await page.locator('#advanceChips .lw-chip').nth(1).click(); await page.click('#closeSettings');

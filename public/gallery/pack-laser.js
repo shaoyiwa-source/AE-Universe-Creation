@@ -43,8 +43,15 @@ export default {
         // the beat: the show track's measured timeline, the music's kick, or our own steady tempo
         let b = p.sync === 'music' ? host.beat() : null;
         let beat = false;
-        if (b && b.live) { if (b.count !== count) { beat = b.count > count; count = b.count; } }
+        if (b && b.live) { if (b.count !== count) { beat = b.count > count; count = b.count; } host.laserMode = b.room ? 'room' : 'music'; }
+        else if (p.sync === 'music') {
+          // no music playing: the beams do not flash; they breathe slowly (6 breaths a minute) and drift
+          host.laserMode = 'calm';
+          const br = 0.5 - 0.5 * Math.cos(t * Math.PI * 2 / 10);
+          b = { pulse: br * 0.28, stage: 'calm', buildProgress: 0, dropPulse: 0, sweep: t * 0.35, energy: 0.15 + br * 0.15 };
+        }
         else {
+          host.laserMode = 'tempo';
           own += dt; const iv = 60 / p.bpm; if (own >= iv) { own -= iv; count++; beat = true; lastBeat = t; }
           b = { pulse: Math.exp(-(t - lastBeat) / 0.11), stage: 'groove', buildProgress: 0, dropPulse: 0, sweep: t / iv, energy: 0.4 + 0.3 * Math.sin(t * 0.7) };
         }
@@ -52,6 +59,7 @@ export default {
         energy = Math.max(b.energy ?? b.level ?? 0, energy * 0.84);
         const sweep = b.sweep != null ? b.sweep : t * 2.4, group = Math.floor(count / 4);
         const impact = Math.min(1, drop * 1.8);
+        const calm = stage === 'calm' ? 0.6 : 1;
         const n = stage === 'build' ? (bp > 0.7 ? Math.min(5, p.beams) : Math.min(3, p.beams)) : Math.round(p.beams);
         const ctx = host.front; ctx.save(); ctx.lineCap = 'round';
         // the sun glow breathing with the bass
@@ -63,14 +71,14 @@ export default {
           ctx.fillStyle = g; ctx.fillRect(sx - R, sy - R, R * 2, R * 2);
         }
         // on the kick: streak-lasers fly in, gold sparks mark three hits
-        if (beat && (stage !== 'build' || b.accentBeat)) {
+        if (beat && stage !== 'calm' && (stage !== 'build' || b.accentBeat)) {
           if (p.bolts && stage !== 'build') for (let i = 0; i < (stage === 'drop' ? 6 : 2); i++) { const [ox, oy] = origin(r, i, count); const [x, y] = target(r, i, sweep, group, impact); bolts.push({ ox, oy, x, y, age: 0, life: 0.18, c: col(i, x, y) }); }
           for (let i = 0; i < 3; i++) { const [x, y] = target(r, i * 2, sweep, group, impact); sparks.push({ x, y, age: 0, life: stage === 'build' ? 0.09 : 0.15 }); }
           if (bolts.length > 36) bolts.splice(0, bolts.length - 36); if (sparks.length > 9) sparks.splice(0, sparks.length - 9);
         }
         for (let i = 0; i < n; i++) {
           const [ox, oy] = origin(r, i), [tx, ty] = target(r, i, sweep, group, impact), c = col(i, tx, ty);
-          const power = Math.min(1, (stage === 'build' ? 0.06 + bp * 0.06 : 0.07) + energy * 0.035 + pulse * 0.85 + drop * 0.12 + 0.12) * p.power * k;
+          const power = Math.min(1, (stage === 'build' ? 0.06 + bp * 0.06 : 0.07) + energy * 0.035 + pulse * 0.85 + drop * 0.12 + 0.12) * p.power * k * calm;
           // the beam: real colour that shows even on a light painting, then a glowing pale core
           ctx.globalCompositeOperation = 'source-over';
           ctx.strokeStyle = rgba(c, power * 0.22); ctx.lineWidth = 6 + pulse * 7;
