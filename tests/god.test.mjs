@@ -29,7 +29,7 @@ try {
   await page.goto(base + '/gallery.html', { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
   const st = () => page.evaluate(() => window.__lumina.state);
-  check(`[${which}] packages are registered (4 effects, 4 transitions, 5 camera moves)`, await page.evaluate(() => { const l = window.__lumina.packsList(); return l.filter(p => p.type === 'effect').length === 4 && l.filter(p => p.type === 'transition').length === 4 && l.filter(p => p.type === 'camera').length === 5; }));
+  check(`[${which}] packages are registered (5 effects, 4 transitions, 5 camera moves)`, await page.evaluate(() => { const l = window.__lumina.packsList(); return l.filter(p => p.type === 'effect').length === 5 && l.filter(p => p.type === 'transition').length === 4 && l.filter(p => p.type === 'camera').length === 5; }));
   check(`[${which}] visitors never see God mode`, (await page.evaluate(() => document.getElementById('godBtn').hidden)));
   // AE Studio + an exhibition of six works
   const box = await page.locator('.lw-wordmark').boundingBox();

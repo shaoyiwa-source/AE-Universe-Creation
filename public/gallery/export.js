@@ -1,6 +1,6 @@
 // AE Lumina Wall — export an exhibition as a single, self-contained player file (客戶版 / NFT 版).
 // Studio-only: loaded with import() from app.js. The output needs no server and makes no network requests.
-const MODULES = ['store', 'beats-eternal', 'audio', 'fx', 'transitions', 'i18n', 'recorder', 'listen', 'alive', 'pack-wind', 'pack-light', 'pack-ribbons', 'pack-fly', 'pack-flip', 'pack-zoom', 'pack-curtain', 'pack-laser', 'pack-cam-approach', 'pack-cam-tour', 'pack-cam-orbit', 'pack-cam-documentary', 'pack-cam-gaze', 'pack-glow', 'pack-coins', 'pack-sweep', 'packs', 'app']; // dependency order
+const MODULES = ['store', 'beats-eternal', 'audio', 'fx', 'transitions', 'i18n', 'recorder', 'listen', 'alive', 'pack-wind', 'pack-light', 'pack-ribbons', 'pack-fly', 'pack-flip', 'pack-zoom', 'pack-curtain', 'pack-laser', 'pack-led', 'pack-cam-approach', 'pack-cam-tour', 'pack-cam-orbit', 'pack-cam-documentary', 'pack-cam-gaze', 'pack-glow', 'pack-coins', 'pack-sweep', 'packs', 'app']; // dependency order
 
 const timeout = (ms) => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined);
 async function text(url, ms = 20000) { const r = await fetch(url, { cache: 'no-store', signal: timeout(ms) }); if (!r.ok) throw new Error(`${url} ${r.status}`); return r.text(); }
