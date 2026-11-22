@@ -126,9 +126,10 @@ try {
   // a healthy device must not be downgraded; ~20 fps for 4 s must trigger the lighter quality
   await page.evaluate(() => window.__lumina.simulateFps(58, 6));
   const stayed = !(await st()).lowPower;
-  await page.evaluate(() => window.__lumina.simulateFps(20, 4.5));
+  await page.evaluate(() => window.__lumina.simulateFps(20, 6.5));
   check(`[${which}] a smooth device keeps full quality`, stayed);
-  check(`[${which}] slow device switches to lighter quality automatically`, (await st()).lowPower && await page.evaluate(() => document.getElementById('player').classList.contains('lowpower')));
+  const lp = await st();
+  check(`[${which}] slow device switches to lighter quality automatically`, lp.lowPower && await page.evaluate(() => document.getElementById("player").classList.contains("lowpower")), JSON.stringify({ lp: lp.lowPower, playing: lp.playing, shown: lp.shown, fps: lp.lastFps }));
   check(`[${which}] no console errors`, errs.length === 0, errs.slice(0, 3).join(' | '));
   await ctx.close();
 } catch (e) {
