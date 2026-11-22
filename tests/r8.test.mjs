@@ -125,7 +125,7 @@ try {
   await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 20000 });
   // a healthy device must not be downgraded; ~20 fps for 4 s must trigger the lighter quality
   await page.evaluate(() => window.__lumina.simulateFps(58, 6));
-  const stayed = !(await st()).lowPower;
+  const pre = await st(); const stayed = !pre.lowPower; console.log("diag", JSON.stringify({ lowPower: pre.lowPower, fps: pre.lastFps, alive: pre.alive.counts }));
   await page.evaluate(() => window.__lumina.simulateFps(20, 6.5));
   check(`[${which}] a smooth device keeps full quality`, stayed);
   const lp = await st();

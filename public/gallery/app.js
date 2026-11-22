@@ -1338,7 +1338,7 @@ function applyLive() {
   fx.setEffects(liveEffects());
   fx.setInteract(S.interact);
   alive.gain = [0.6, 0.8, 1, 1.2, 1.4][lvl - 1];
-  alive.maxDpr = lowPower ? 1 : 1.5; alive.quality = lowPower ? 0.5 : 1;
+  alive.maxDpr = lowPower ? 0.6 : 1; alive.quality = lowPower ? 0.5 : 1;
   alive.enabled = !!S.interact.alive;
   if (!player.hidden) { if (S.interact.alive) wakeAlive(); else alive.detach(); }
   sound.chimeOn = S.interact.chime;

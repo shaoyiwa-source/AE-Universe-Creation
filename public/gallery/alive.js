@@ -118,7 +118,7 @@ export class Alive {
     for (const c of [this.back, this.front]) c.setAttribute('aria-hidden', 'true');
     this.bx = this.back.getContext('2d'); this.fx = this.front.getContext('2d');
     this.canvas = this.front;
-    this.enabled = true; this.gain = 1; this.maxDpr = 1.5; this.quality = 1;
+    this.enabled = true; this.gain = 1; this.maxDpr = 1; this.quality = 1; // soft light needs no retina resolution
     this.motes = []; this.threads = []; this.dust = []; this.bokeh = []; this.veils = []; this.emitters = []; this.feathers = [];
     this.map = null; this.rect = null; this.W = 0; this.H = 0; this.t = 0; this.since = 0; this.on = false; this.amb = 0;
     this.par = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -135,10 +135,11 @@ export class Alive {
   resize(W, H) {
     this.W = W; this.H = H;
     const dpr = Math.min(this.maxDpr, window.devicePixelRatio || 1);
-    for (const [c, x] of [[this.back, this.bx], [this.front, this.fx]]) {
-      const w = Math.round(W * dpr), h = Math.round(H * dpr);
+    // the back layer is far, soft light: half resolution is invisible to the eye and much cheaper
+    for (const [c, x, k] of [[this.back, this.bx, dpr * 0.5], [this.front, this.fx, dpr]]) {
+      const w = Math.round(W * k), h = Math.round(H * k);
       if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
-      x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      x.setTransform(k, 0, 0, k, 0, 0);
     }
   }
 
