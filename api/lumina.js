@@ -184,6 +184,20 @@ function sanitizeExhibition(e, c) {
     const d = Number(it.duration);
     if (Number.isFinite(d) && d >= 3 && d <= 3600) o.duration = Math.round(d);
     if (TRANSITIONS.includes(it.transition) && it.transition !== 'random') o.transition = it.transition;
+    // God mode choreography: effect packages and the transition package into this work (ids + plain parameters)
+    const pack = (x) => {
+      if (!x || !/^[a-z0-9-]{1,40}$/.test(String(x.id || ''))) return null;
+      const p = {};
+      for (const [k, v] of Object.entries(x.p && typeof x.p === 'object' ? x.p : {}).slice(0, 24)) {
+        if (!/^[a-zA-Z0-9_-]{1,32}$/.test(k)) continue;
+        if (typeof v === 'number' && Number.isFinite(v)) p[k] = v;
+        else if (typeof v === 'boolean') p[k] = v;
+        else if (typeof v === 'string' && v.length <= 40) p[k] = v;
+      }
+      return { id: x.id, p };
+    };
+    if (Array.isArray(it.fx)) { const fx = it.fx.map(pack).filter(Boolean).slice(0, 4); if (fx.length) o.fx = fx; }
+    const tr = pack(it.tr); if (tr) o.tr = tr;
     return o;
   });
   return {

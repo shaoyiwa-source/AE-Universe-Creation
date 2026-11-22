@@ -553,3 +553,20 @@ body.tuning .lw-scrim{background:transparent;pointer-events:none}
 }
 /* during a presentation, messages appear at the top so they never cover the control bar */
 body.no-scroll .lw-toast{bottom:auto;top:calc(22px + env(safe-area-inset-top))}
+
+/* God mode panel (AE Studio) */
+.pl-god{color:var(--gold)}
+.lw-god-work{margin-top:4px;font-family:var(--display);font-size:18px;color:var(--ink)}
+.lw-god-summons{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.lw-god-summon{display:flex;flex-direction:column;gap:4px;text-align:left;padding:12px 14px;border:1px solid var(--line-strong);background:rgba(255,255,255,.02);transition:border-color .3s,background .3s}
+.lw-god-summon b{font-family:var(--display);font-size:18px;font-weight:500;color:var(--ink)}
+.lw-god-summon small{font-size:12px;line-height:1.5;color:var(--muted)}
+.lw-god-summon[aria-pressed=true]{border-color:var(--gold);background:rgba(201,165,92,.12);box-shadow:inset 0 0 0 1px rgba(201,165,92,.35)}
+.lw-god-params{border-top:1px solid var(--line);padding-top:12px;margin-top:6px}
+.lw-param-head{font-size:12px;letter-spacing:.18em;color:var(--gold);margin:0 0 8px}
+.lw-param{margin-bottom:10px}
+.lw-param-label{font-size:13px;color:var(--muted);margin:0 0 6px}
+.lw-god-range{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:13px;color:var(--muted)}
+.lw-god-range input{width:64px;margin-left:6px;padding:6px 8px;background:transparent;border:1px solid var(--line-strong);color:var(--ink)}
+#godPreview{margin-top:10px}
+#godSave{margin-top:12px;width:100%}

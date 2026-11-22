@@ -122,6 +122,7 @@ export class Alive {
     this.motes = []; this.threads = []; this.dust = []; this.bokeh = []; this.veils = []; this.emitters = []; this.feathers = [];
     this.map = null; this.rect = null; this.W = 0; this.H = 0; this.t = 0; this.since = 0; this.on = false; this.amb = 0;
     this.par = { x: 0, y: 0, tx: 0, ty: 0 };
+    this.wind = { x: 0, y: 0 }; this.readingMap = null; // shared with the packages (God mode)
     this.hover = null;
     this.stats = { presses: 0, taps: 0, frames: 0, spawned: 0 };
     this.palette = [GOLD];
@@ -143,22 +144,45 @@ export class Alive {
     }
   }
 
-  // a painting has just appeared
-  attach(slide, media, rect, id, palette) {
-    if (!this.ok || !media || media.tagName !== 'IMG' || !media.naturalWidth) { this.detach(); return false; }
-    this.cache = this.cache || new Map();
-    let map = this.cache.get(id);
-    if (!map) { map = analysePainting(media); if (!map) { this.detach(); return false; } this.cache.set(id, map); }
+  // read a painting that has just appeared (the layers and the reading are shared with the packages,
+  // even when the living light itself is switched off)
+  read(slide, media, rect, id, palette) {
+    if (!this.ok) return null;
     this.mount(slide.parentNode);
-    this.map = map; this.on = true; this.t0 = performance.now(); this.since = 0;
     this.palette = (palette && palette.length ? palette : [GOLD]).map(c => q8(c));
     this.setRect(rect);
+    if (!media || media.tagName !== 'IMG' || !media.naturalWidth) { this.readingMap = null; return null; }
+    this.cache = this.cache || new Map();
+    let map = this.cache.get(id);
+    if (!map) { map = analysePainting(media); if (map) this.cache.set(id, map); }
+    this.readingMap = map || null;
+    return map;
+  }
+  // a painting has just appeared: the living light starts on it
+  attach(slide, media, rect, id, palette) {
+    const map = this.read(slide, media, rect, id, palette);
+    if (!map) { this.detach(); return false; }
+    this.map = map; this.on = true; this.t0 = performance.now(); this.since = 0;
     return true;
+  }
+  // ---- helpers for the packages ----
+  spriteOf(rgb, soft) { return sprite(q8(rgb.map(v => Math.max(0, Math.min(255, v | 0)))), soft ? 1 : 0); }
+  _cellOf(x, y) {
+    const r = this.rect, m = this.readingMap;
+    if (!r || !m || x < r.x || y < r.y || x > r.x + r.w || y > r.y + r.h) return -1;
+    return Math.min(m.gw - 1, Math.floor((x - r.x) / r.w * m.gw)) + Math.min(m.gh - 1, Math.floor((y - r.y) / r.h * m.gh)) * m.gw;
+  }
+  colorOf(x, y) { const c = this._cellOf(x, y); return c >= 0 ? this.readingMap.col[c] : this.palette[(Math.random() * this.palette.length) | 0]; }
+  dirAt(x, y) { const c = this._cellOf(x, y); return c >= 0 ? [this.readingMap.dirx[c], this.readingMap.diry[c]] : [0, -0.35]; }
+  livingPoint() {
+    const m = this.readingMap, r = this.rect; if (!m || !r || !m.spawn.length) return null;
+    const c = m.spawn[(Math.random() * m.spawn.length) | 0];
+    return [r.x + ((c % m.gw) + Math.random()) / m.gw * r.w, r.y + (Math.floor(c / m.gw) + Math.random()) / m.gh * r.h];
   }
   // the painting leaves: nothing new is born, what is in the air drifts on and fades (no hard cut between works)
   detach() { this.on = false; this.map = null; this.emitters = []; }
   // the player closes: clear everything
-  clear() { this.detach(); this.feathers = []; this.motes = []; this.threads = []; this.dust = []; this.bokeh = []; this.veils = []; this.amb = 0; if (this.W) { this.bx.clearRect(0, 0, this.W, this.H); this.fx.clearRect(0, 0, this.W, this.H); } }
+  clear() { this.detach(); this.readingMap = null; this.feathers = []; this.motes = []; this.threads = []; this.dust = []; this.bokeh = []; this.veils = []; this.amb = 0; if (this.W) { this.bx.clearRect(0, 0, this.W, this.H); this.fx.clearRect(0, 0, this.W, this.H); } }
   setRect(r) {
     if (!r) return;
     this.rect = r;
@@ -224,9 +248,10 @@ export class Alive {
   _flow(x, y, t, sign) {
     const c = this._cellAt(x, y);
     const nx = Math.sin(y * 0.011 + t * 0.35) + Math.sin(x * 0.007 - t * 0.27), ny = Math.cos(x * 0.009 + t * 0.31) - Math.sin(y * 0.006 + t * 0.21);
-    if (c < 0) return [nx * 6, -9 + ny * 5];
+    const wx = this.wind.x, wy = this.wind.y; // God mode: the wind carries the living light too
+    if (c < 0) return [nx * 6 + wx, -9 + ny * 5 + wy];
     const m = this.map;
-    return [m.dirx[c] * 20 * sign + nx * 4, m.diry[c] * 20 * sign + ny * 4 - 4];
+    return [m.dirx[c] * 20 * sign + nx * 4 + wx, m.diry[c] * 20 * sign + ny * 4 - 4 + wy];
   }
 
   frame(dt, playing) {

@@ -7,6 +7,7 @@ import { STR, OPTIONS } from './i18n.js';
 import { recordClip, canRecord } from './recorder.js';
 import { Listener } from './listen.js';
 import { Alive } from './alive.js';
+import { PackHost, PACKS, packsOf, paramsFor, transitionPack } from './packs.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -102,7 +103,7 @@ const normWork = (w, i) => ({
 async function loadCatalog() {
   if (ED) {
     works = ED.works.map(normWork); tracks = []; cloud = 'edition';
-    exhibitions = [{ id: 'xedition', title: ED.title, note: ED.note, mode: ED.mode, items: ED.works.map(w => ({ id: w.id, ...(w.duration ? { duration: w.duration } : {}), ...(w.transition ? { transition: w.transition } : {}) })) }];
+    exhibitions = [{ id: 'xedition', title: ED.title, note: ED.note, mode: ED.mode, items: ED.works.map(w => ({ id: w.id, ...(w.duration ? { duration: w.duration } : {}), ...(w.transition ? { transition: w.transition } : {}), ...(w.fx ? { fx: w.fx } : {}), ...(w.tr ? { tr: w.tr } : {}) })) }];
     view = 'xedition';
     const ids = new Set(works.map(w => w.id)); S.selected = S.selected.filter(id => ids.has(id));
     if (String(S.music).startsWith('track:') || !OPTIONS.music.some(o => o.id === S.music)) S.music = modeOf(S.mode).set.music;
@@ -632,7 +633,7 @@ function setTuning(on) {
   document.body.classList.toggle('tuning', on); player.classList.toggle('tuning', on);
   if (was !== on && !player.hidden) requestAnimationFrame(() => layout());
 }
-function openSheet() { renderSettings(); sheet.hidden = false; scrim.hidden = false; setTuning(!player.hidden); $('#closeSettings').focus({ preventScroll: true }); showControls(); }
+function openSheet() { closeGod(); renderSettings(); sheet.hidden = false; scrim.hidden = false; setTuning(!player.hidden); $('#closeSettings').focus({ preventScroll: true }); showControls(); }
 function closeSheet() { const had = !sheet.hidden; sheet.hidden = true; scrim.hidden = true; setTuning(false); if (had && !player.hidden) player.focus({ preventScroll: true }); }
 $('#openSettings').addEventListener('click', openSheet);
 $('#closeSettings').addEventListener('click', closeSheet);
@@ -816,6 +817,7 @@ const ambs = [$('#ambA'), $('#ambB')];
 const neon = $('#neon');
 const fx = new FX($('#fx'), { reduced });
 const alive = new Alive(); // R10: the painting itself comes alive and answers touch
+const packs = new PackHost(alive); // R10 God mode: effect packages drawn on the same light layers
 let list = [], idx = 0, cur = 0, ambCur = 0, curDur = 10, curItem = null;
 let playing = false, busy = false, pending = null, elapsed = 0, shown = false;
 let wakeLock = null, idleTimer = null, captionTimer = null, nextLumi = 0;
@@ -861,11 +863,154 @@ function layout() {
 }
 // put the living layer on the painting now on screen (when the mode allows it)
 function wakeAlive() {
-  if (!shown || player.hidden || reduced || !S.interact.alive) { alive.detach(); return; }
+  if (!shown || player.hidden) { alive.detach(); return; }
   const media = mediaOf(cur), work = list[idx];
-  if (!work || work.type === 'video' || alive.on) return;
+  if (!work) return;
+  if (reduced || !S.interact.alive || work.type === 'video') { alive.detach(); alive.read(slides[cur], media, slides[cur].rect, work.id, paletteCache.get(work.id)); return; }
+  if (alive.on) return;
   alive.attach(slides[cur], media, slides[cur].rect, work.id, paletteCache.get(work.id));
 }
+// the choreography of the work on screen: its effect packages (God mode: what AE arranged for it)
+function applyChoreo() {
+  if (reduced || player.hidden || !shown) { packs.setEffects([]); return; }
+  const it = curItem || {};
+  packs.setEffects(god.open ? god.fx : (it.fx || []));
+}
+
+// ---------- God mode (AE Studio only) ----------
+// Summon effect packages on the work on screen, tune them with the controls each package brings, choose the
+// transition into it, then save it to this work, a run of works, or the whole exhibition. Customers' players
+// simply follow what is saved (they never see this panel).
+const god = { open: false, fx: [], tr: null, scope: 'this', sel: null, previewTr: null };
+const godPanel = $('#godPanel');
+const clone = (o) => JSON.parse(JSON.stringify(o));
+function ctrlFor(d, value, onChange) {
+  const wrap = document.createElement('div'); wrap.className = 'lw-param';
+  const lab = L(d.label);
+  if (d.type === 'range') {
+    wrap.innerHTML = `<label class="lw-range"><span></span><input type="range"><output></output></label>`;
+    const i = wrap.querySelector('input'), out = wrap.querySelector('output');
+    wrap.querySelector('span').textContent = lab;
+    Object.assign(i, { min: d.min, max: d.max, step: d.step || 0.01, value });
+    const fmt = (v) => (Math.abs(v) >= 10 || Number.isInteger(+d.step) ? Math.round(v) : (+v).toFixed(2)) + (d.unit || '');
+    out.textContent = fmt(value);
+    i.addEventListener('input', () => { out.textContent = fmt(i.value); onChange(+i.value); });
+  } else if (d.type === 'choice') {
+    wrap.innerHTML = `<p class="lw-param-label"></p><div class="lw-chips"></div>`;
+    wrap.querySelector('p').textContent = lab;
+    const box = wrap.querySelector('.lw-chips');
+    for (const o of d.options) {
+      const b = chip(L(o), value === o.id, false, () => { box.querySelectorAll('.lw-chip').forEach(x => x.setAttribute('aria-pressed', String(x === b))); onChange(o.id); });
+      box.appendChild(b);
+    }
+  } else if (d.type === 'toggle') {
+    const b = toggle({ id: d.id, zh: d.label.zh, en: d.label.en, dzh: '', den: '' }, value, () => { const on = b.getAttribute('aria-checked') !== 'true'; b.setAttribute('aria-checked', String(on)); onChange(on); });
+    wrap.appendChild(b);
+  } else if (d.type === 'color') {
+    wrap.innerHTML = `<label class="lw-range"><span></span><input type="color"></label>`;
+    wrap.querySelector('span').textContent = lab;
+    const i = wrap.querySelector('input'); i.value = value; i.addEventListener('input', () => onChange(i.value));
+  }
+  return wrap;
+}
+function godLoad() { // the panel shows what is arranged for the work now on screen
+  const it = curItem || {};
+  god.fx = clone(it.fx || []); god.tr = it.tr ? clone(it.tr) : null;
+  renderGod(); packs.setEffects(god.fx);
+}
+function godApply() { packs.setEffects(god.fx); renderGod(true); }
+function renderGod(keepScroll) {
+  const w = list[idx]; $('#godWork').textContent = w ? `${String(idx + 1).padStart(2, '0')} · ${titleOf(w)}` : '';
+  // summon: one button per effect package; active ones show their own controls
+  const sm = $('#godSummons'); sm.replaceChildren();
+  for (const pk of packsOf('effect')) {
+    const on = god.fx.some(e => e.id === pk.id);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'lw-god-summon'; b.dataset.pack = pk.id; b.setAttribute('aria-pressed', String(on));
+    b.innerHTML = '<b></b><small></small>'; b.querySelector('b').textContent = L(pk.name); b.querySelector('small').textContent = L(pk.desc);
+    b.addEventListener('click', () => {
+      if (on) god.fx = god.fx.filter(e => e.id !== pk.id);
+      else if (god.fx.length < 4) god.fx.push({ id: pk.id, p: paramsFor(pk) });
+      godApply();
+    });
+    sm.appendChild(b);
+  }
+  const pp = $('#godParams'); pp.replaceChildren();
+  for (const e of god.fx) {
+    const pk = PACKS.get(e.id); if (!pk) continue;
+    const box = document.createElement('div'); box.className = 'lw-god-params'; box.dataset.pack = pk.id;
+    const h = document.createElement('p'); h.className = 'lw-param-head'; h.textContent = L(pk.name); box.appendChild(h);
+    const p = e.p = paramsFor(pk, e.p);
+    for (const d of pk.params) box.appendChild(ctrlFor(d, p[d.id], (v) => { p[d.id] = v; packs.setEffects(god.fx); }));
+    pp.appendChild(box);
+  }
+  // transition into this work
+  const tc = $('#godTrans'); tc.replaceChildren();
+  tc.appendChild(chip(T('godFollow'), !god.tr, false, () => { god.tr = null; renderGod(true); }));
+  for (const pk of packsOf('transition')) tc.appendChild(chip(L(pk.name), !!god.tr && god.tr.id === pk.id, true, () => { god.tr = { id: pk.id, p: paramsFor(pk) }; renderGod(true); }));
+  const tp = $('#godTransParams'); tp.replaceChildren();
+  if (god.tr && PACKS.get(god.tr.id)) {
+    const pk = PACKS.get(god.tr.id), p = god.tr.p = paramsFor(pk, god.tr.p);
+    for (const d of pk.params) tp.appendChild(ctrlFor(d, p[d.id], (v) => { p[d.id] = v; }));
+  }
+  $('#godPreview').disabled = list.length < 2;
+  // where to save it
+  const sh = currentShow();
+  const sc = $('#godScope'); sc.replaceChildren();
+  for (const id of ['this', 'range', 'all']) sc.appendChild(chip(T('godScope_' + id), god.scope === id, false, () => { god.scope = id; renderGod(true); }));
+  $('#godRange').hidden = god.scope !== 'range';
+  const n = list.length; const f = $('#godFrom'), t = $('#godTo');
+  f.max = t.max = n; if (!f.value) f.value = idx + 1; if (!t.value) t.value = Math.min(n, idx + 3);
+  $('#godNeedShow').hidden = !!sh; $('#godNeedShow').textContent = T('godNeedShow');
+  $('#godSave').disabled = !sh;
+}
+function openGod() {
+  if (!studio || ED || player.hidden) return;
+  closeSheet();
+  god.open = true; godPanel.hidden = false; scrim.hidden = false; setTuning(true);
+  $('#godFrom').value = ''; $('#godTo').value = '';
+  godLoad(); showControls();
+}
+function closeGod() {
+  if (!god.open) return;
+  god.open = false; godPanel.hidden = true; scrim.hidden = true; setTuning(false);
+  applyChoreo(); // back to what is saved
+}
+$('#godBtn').addEventListener('click', () => (god.open ? closeGod() : openGod()));
+$('#godClose').addEventListener('click', closeGod);
+$('#godPreview').addEventListener('click', () => {
+  if (list.length < 2 || busy) return;
+  // replay the arrival of this work from the previous one, with the transition chosen here
+  god.previewTr = god.tr ? clone(god.tr) : null;
+  const target = idx, keepFx = clone(god.fx), keepTr = god.tr ? clone(god.tr) : null;
+  const back = (target - 1 + list.length) % list.length;
+  god.replay = { target, keepFx, keepTr };
+  god.previewTr = null; jump(back);
+  const wait = () => { if (busy) return setTimeout(wait, 120); god.previewTr = keepTr; jump(target); const w2 = () => { if (busy || idx !== target) return setTimeout(w2, 120); god.fx = keepFx; god.tr = keepTr; godApply(); }; setTimeout(w2, 200); };
+  setTimeout(wait, 300);
+});
+$('#godSave').addEventListener('click', async () => {
+  const sh = currentShow(); if (!sh) return;
+  const n = list.length;
+  let from = idx, to = idx;
+  if (god.scope === 'all') { from = 0; to = n - 1; }
+  else if (god.scope === 'range') { from = Math.max(0, Math.min(n - 1, (+$('#godFrom').value || 1) - 1)); to = Math.max(from, Math.min(n - 1, (+$('#godTo').value || from + 1) - 1)); }
+  const ids = new Set(list.slice(from, to + 1).map(w => w.id));
+  const copy = clone(sh);
+  copy.items = copy.items.map(it => {
+    if (!ids.has(it.id)) return it;
+    const o = { ...it, fx: clone(god.fx) };
+    if (god.tr) o.tr = clone(god.tr); else delete o.tr;
+    return o;
+  });
+  const saved = await saveShow(copy, { silent: true });
+  if (saved) {
+    // keep playing the same works with the saved choreography
+    const keep = list.map(w => w.id);
+    curItem = itemOf(list[idx].id);
+    toast(T('godSaved', to - from + 1), 3600);
+    void keep;
+  }
+});
 window.addEventListener('resize', () => { if (!player.hidden) layout(); });
 window.addEventListener('orientationchange', () => setTimeout(() => { if (!player.hidden) layout(); }, 250));
 
@@ -1004,7 +1149,7 @@ function playIntro() {
   });
 }
 function closePlayer() {
-  closeLoupe(); alive.clear(); player.classList.remove('alivehover');
+  closeLoupe(); closeGod(); packs.clear(true); alive.clear(); player.classList.remove('alivehover');
   playing = false;
   stopListening(); toggleInfo(false);
   fx.stop(); sound.stop();
@@ -1029,7 +1174,7 @@ function startMusic() {
 
 async function show(i) {
   busy = true;
-  alive.detach();
+  alive.detach(); packs.clear();
   const work = list[i];
   const nextSlot = shown ? 1 - cur : cur;
   const incoming = slides[nextSlot];
@@ -1062,10 +1207,14 @@ async function show(i) {
   media.style.setProperty('--kb-dur', `${curDur + 4}s`);
   incoming.classList.add('live');
   fx.setArtRect(r); placeNeon(r);
-  await runTransition(kind, { from, to: incoming, fromImg: fromMedia, fromRect: from ? from.rect : null, rect: r, points: pts, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, curDur / 12)) });
+  // a transition package chosen in God mode (or a one-off preview) takes the place of the built-in one
+  const trSet = god.previewTr || (curItem && curItem.tr) || null; god.previewTr = null;
+  const tpk = trSet && transitionPack(trSet.id);
+  await runTransition(kind, { from, to: incoming, fromImg: fromMedia, fromRect: from ? from.rect : null, rect: r, points: pts, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, curDur / 12)), pack: tpk, params: tpk ? paramsFor(tpk, trSet.p) : null });
   if (from) { from.classList.remove('live'); from.querySelector('video').pause(); }
   cur = nextSlot; shown = true; elapsed = 0; busy = false;
   wakeAlive();
+  if (god.open) godLoad(); else applyChoreo();
   const nx = list[(i + 1) % list.length];
   if (nx && nx.type !== 'video') { const p = new Image(); p.decoding = 'async'; p.src = nx.src; }
   if (pending) { const p = pending; pending = null; p.to != null ? jump(p.to) : go(p.dir); }
@@ -1321,6 +1470,7 @@ const breathEl = $('#breathGuide');
 fx.onFrame = (dt) => {
   trackFps(dt); watchMusic(dt);
   alive.frame(dt, playing);
+  packs.frame(dt);
   if (listener.on) {
     const r = listener.update(dt);
     fx.setSound(r.level, r.kind);
@@ -1328,7 +1478,7 @@ fx.onFrame = (dt) => {
     if (r.beat && r.kind === 'music') fx.soundBeat(Math.max(1, r.tier));
     const md = $('#micDot'); md.style.setProperty('--lv', r.level.toFixed(2)); md.dataset.kind = r.kind || '';
   }
-  if (playing && shown && !busy && !loupeOn && !alive.pressing) { // the work stays while someone looks closely
+  if (playing && shown && !busy && !loupeOn && !alive.pressing && !god.open) { // the work stays while someone looks closely
     elapsed += dt;
     if (elapsed >= curDur) { elapsed = 0; go(1); }
   }
@@ -1490,6 +1640,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (player.hidden) { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); return; }
+  if (god.open && e.target.closest?.('#godPanel')) { if (e.key === 'Escape') closeGod(); return; }
   if (!sheet.hidden && e.target.closest?.('.lw-sheet')) { if (e.key === 'Escape') closeSheet(); return; }
   showControls();
   switch (e.key) {
@@ -1501,7 +1652,7 @@ document.addEventListener('keydown', (e) => {
     case 't': case 'T': $('#stripBtn').click(); break;
     case 'r': case 'R': openRecord(); break;
     case 'i': case 'I': toggleInfo(); break;
-    case 'Escape': if (!sheet.hidden) closeSheet(); else if (!strip.hidden) $('#stripBtn').click(); else if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else closePlayer(); break;
+    case 'Escape': if (god.open) closeGod(); else if (!sheet.hidden) closeSheet(); else if (!strip.hidden) $('#stripBtn').click(); else if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else closePlayer(); break;
   }
 });
 
@@ -1555,7 +1706,7 @@ function makeGrain() {
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
-    rec, enterLowPower, aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
+    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', packs: packs.current(), god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
+    rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();

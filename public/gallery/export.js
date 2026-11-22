@@ -1,6 +1,6 @@
 // AE Lumina Wall — export an exhibition as a single, self-contained player file (客戶版 / NFT 版).
 // Studio-only: loaded with import() from app.js. The output needs no server and makes no network requests.
-const MODULES = ['store', 'audio', 'fx', 'transitions', 'i18n', 'recorder', 'listen', 'alive', 'app']; // dependency order
+const MODULES = ['store', 'audio', 'fx', 'transitions', 'i18n', 'recorder', 'listen', 'alive', 'pack-wind', 'pack-light', 'pack-ribbons', 'pack-fly', 'pack-flip', 'pack-zoom', 'pack-curtain', 'packs', 'app']; // dependency order
 
 const timeout = (ms) => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined);
 async function text(url, ms = 20000) { const r = await fetch(url, { cache: 'no-store', signal: timeout(ms) }); if (!r.ok) throw new Error(`${url} ${r.status}`); return r.text(); }
@@ -24,9 +24,14 @@ export function bundleModules(sources) {
   let out = '';
   for (const { name, code } of sources) {
     const exports = [];
-    let c = code.replace(/^import\s*\{([^}]+)\}\s*from\s*'\.\/([\w-]+)\.js';?[ \t]*$/gm, (_, names, mod) => `const {${names}} = __ae_${mod};`);
+    const v = (m) => '__ae_' + m.replace(/-/g, '_');
+    let c = code.replace(/^import\s*\{([^}]+)\}\s*from\s*'\.\/([\w-]+)\.js';?[ \t]*$/gm, (_, names, mod) => `const {${names}} = ${v(mod)};`);
+    c = c.replace(/^import\s+([A-Za-z_$][\w$]*)\s+from\s*'\.\/([\w-]+)\.js';?[ \t]*$/gm, (_, id, mod) => `const ${id} = ${v(mod)}.default;`);
     c = c.replace(/^export\s+(async\s+function|function|class|const|let)\s+([A-Za-z_$][\w$]*)/gm, (_, kw, id) => { exports.push(id); return `${kw} ${id}`; });
-    out += `const __ae_${name} = (() => {\n${c}\nreturn { ${exports.join(', ')} };\n})();\n`;
+    let hasDefault = false;
+    c = c.replace(/^export\s+default\s+/m, () => { hasDefault = true; return 'const __default = '; });
+    if (hasDefault) exports.push('default: __default');
+    out += `const ${v(name)} = (() => {\n${c}\nreturn { ${exports.join(', ')} };\n})();\n`;
   }
   return out.replace(/<\/script/gi, '<\\/script');
 }
@@ -93,6 +98,7 @@ export async function exportEdition(o) {
       id: w.id, no: i + 1, type: w.type || 'image', src, thumb,
       title: w.title, year: w.year || '', medium: w.medium || '', size: w.size || '', statement: w.statement || { zh: '', en: '' },
       ...(w.duration ? { duration: w.duration } : {}), ...(w.transition ? { transition: w.transition } : {}),
+      ...(w.fx ? { fx: w.fx } : {}), ...(w.tr ? { tr: w.tr } : {}),
     });
   }
 

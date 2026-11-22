@@ -50,8 +50,15 @@ export async function runTransition(kind, o) {
   const maxR = Math.hypot(W, H);
   to.style.opacity = '0';
   if (!from) kind = 'first';
+  // a transition package (God mode) runs with the same helpers as the built-in transitions
+  if (o.pack && from) {
+    await o.pack.run(o, { animate, ease: { inOut: easeInOut, out: easeOut, back: easeOutBack }, setMask, clamp01, seg }, o.params || {});
+    kind = 'package-done';
+  }
 
   switch (kind) {
+    case 'package-done': break;
+
     case 'first':
       await animate(2200, (p) => {
         const e = easeInOut(p);
