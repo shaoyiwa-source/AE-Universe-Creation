@@ -570,3 +570,6 @@ body.no-scroll .lw-toast{bottom:auto;top:calc(22px + env(safe-area-inset-top))}
 .lw-god-range input{width:64px;margin-left:6px;padding:6px 8px;background:transparent;border:1px solid var(--line-strong);color:var(--ink)}
 #godPreview{margin-top:10px}
 #godSave{margin-top:12px;width:100%}
+
+/* the title steps aside while the camera is close or at an angle */
+.lw-player.cam-close .pl-caption{opacity:0}

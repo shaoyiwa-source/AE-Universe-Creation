@@ -1491,6 +1491,8 @@ fx.onFrame = (dt) => {
   alive.frame(dt, playing);
   packs.frame(dt);
   if (packs.cam && shown) { if (god.open) camT += dt; packs.cameraFrame(god.open ? (camT % curDur) / curDur : elapsed / curDur); }
+  // while the camera is close or at an angle, the title steps aside (like a documentary); it returns with the whole
+  const cp = packs.camPose; player.classList.toggle('cam-close', !!cp && (cp.s > 1.12 || Math.abs(cp.ry) > 6 || Math.abs(cp.rx) > 6));
   if (listener.on) {
     const r = listener.update(dt);
     fx.setSound(r.level, r.kind);
