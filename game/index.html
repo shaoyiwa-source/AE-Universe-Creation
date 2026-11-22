@@ -480,8 +480,8 @@ function darkchess(l){const W=4,H=8;const NAMES={r:['','兵','炮','傌','俥','
  const bar=document.createElement('div');bar.className='dc-bar';bar.innerHTML='<span class="dc-stat"></span><button class="dc-re">🔄 重新開局</button>';box.insertBefore(bar,st);const sb=bar.querySelector('.dc-stat');{const ib=document.createElement('button');ib.className='btn ghost dc-inv';ib.textContent='邀請朋友';ib.onclick=inviteFriend;bar.appendChild(ib)}bar.querySelector('.dc-re').onclick=()=>{if(busy)return;try{LS.removeItem('aeDcSave2')}catch(e){}tone(500,.1);startLevel(cur)};
  const bd=document.createElement('div');bd.className='dc-board';box.appendChild(bd);
  const tray=document.createElement('div');tray.className='dc-tray';tray.innerHTML='<div class="dc-t1"></div><div class="dc-t2"></div>';box.appendChild(tray);
- const NET=(typeof ON!=='undefined'&&ON.net)?ON.net():null;const role=NET?NET.role:null;let netRow=NET?NET.row:null,unwatch=null,applied=0,remoteNow=false,netQ=Promise.resolve();
- if(NET){bar.querySelector('.dc-re').style.display='none';bar.querySelector('.dc-inv').style.display='none'}
+ const NET=(typeof ON!=='undefined'&&ON.net)?ON.net():null;const role=NET?NET.role:null;let netRow=NET?NET.row:null,unwatch=null,applied=0,sent=new Set(),remoteNow=false,netQ=Promise.resolve();
+ if(NET){bar.querySelector('.dc-re').style.display='none';bar.querySelector('.dc-inv').style.display='none';setTimeout(()=>{const h=$('#lvHint');if(h)h.textContent='台灣暗棋：翻棋、大吃小、兵吃帥、炮隔子打。和朋友輪流下，把對方的棋吃光！'},0)}
  const SK='aeDcSave2';let saved=null;if(!NET){try{saved=JSON.parse(LS.getItem(SK)||'null')}catch(e){}}if(saved&&(!saved.B||saved.B.length!==W*H))saved=null;
  const ARTS=Object.keys(CONFIG.art).filter(k=>/^wp\d+$/.test(k));let artK=NET&&netRow.state&&netRow.state.art?netRow.state.art:saved&&CONFIG.art[saved.art]?saved.art:null;if(!artK){let last=null;try{last=LS.getItem('aeDcArt2')}catch(e){}const pool=ARTS.filter(k=>k!==last);artK=pool[Math.random()*pool.length|0]||ARTS[0];try{LS.setItem('aeDcArt2',artK)}catch(e){}}
  const A=CONFIG.art[artK];bd.style.setProperty('--bg',`url(${A.board||A.wallpaper})`);l.wp=A.wallpaper;l.title=A.title;l.story=artStory(A);
@@ -545,10 +545,10 @@ function darkchess(l){const W=4,H=8;const NAMES={r:['','兵','炮','傌','俥','
   if(p&&p.up&&p.c===me){clearSel();const ms=moves(i);if(!ms.length){wood(600,.15);toast('這顆現在不能動',900);return}sel=i;p.el.classList.add('dc-sel');sfx.pick();
    ms.forEach(m=>{const d=document.createElement('div');d.className='dc-dot'+(m.cap?' dc-capdot':'');d.style.left=(m.t%W)*25+'%';d.style.top=(m.t/W|0)*12.5+'%';bd.appendChild(d)});return}
   clearSel()};
- function netSend(mv){const st=netRow.state||{};const ms=(st.moves||[]).concat([{...mv,by:role}]);applied=ms.length;netRow.state={...st,moves:ms};NET.push(netRow.state)}
- async function netApply(row){netRow={...netRow,...row};const ms=(row.state&&row.state.moves)||[];while(applied<ms.length){const mv=ms[applied++];if(mv.by===role)continue;remoteNow=true;const m=mv.flip!==undefined?{flip:mv.flip}:{f:mv.f,t:mv.t,cap:B[mv.t]||null};await play(m);remoteNow=false;turn='me';upd();if(checkEnd())return}upd()}
+ function netSend(mv){const st=netRow.state||{};const ms=(st.moves||[]).concat([{...mv,by:role}]);sent.add(ms.length-1);applied=ms.length;netRow.state={...st,moves:ms};NET.push(netRow.state)}
+ async function netApply(row){netRow={...netRow,...row};const ms=(row.state&&row.state.moves)||[];while(applied<ms.length){const idx=applied++,mv=ms[idx];if(sent.has(idx))continue;const mine=mv.by===role;remoteNow=!mine;const m=mv.flip!==undefined?{flip:mv.flip}:{f:mv.f,t:mv.t,cap:B[mv.t]||null};await play(m);remoteNow=false;turn=mine?'ai':'me';upd();if(checkEnd())return}upd()}
  if(NET){try{window.__dcUnwatch&&window.__dcUnwatch()}catch(e){}unwatch=NET.watch(row=>{netQ=netQ.then(()=>netApply(row)).catch(()=>{})});if(netRow.state&&netRow.state.moves&&netRow.state.moves.length){netQ=netQ.then(()=>netApply(netRow))}window.__dcUnwatch=unwatch}
- window.__dc={auto:async()=>{if(busy||over||turn!=='me')return false;const m=aiPick(me||'r');if(!m)return false;await play(m);turn='ai';if(!checkEnd())await aiTurn();return true},endWin:()=>{if(!over){if(!me){me='r';ai='b'}finish(true)}},state:()=>({over,turn,me,role,applied})};
+ window.__dc={auto:async()=>{if(busy||over||turn!=='me')return false;const m=aiPick(me||'r');if(!m)return false;await play(m);turn='ai';if(!checkEnd())await aiTurn();return true},endWin:()=>{if(!over){if(!me){me='r';ai='b'}finish(true)}},state:()=>({over,turn,me,role,applied}),legal:()=>me?allMoves(me).filter(m=>m.f!==undefined).map(m=>({f:m.f,t:m.t,cap:!!m.cap})):[]};
  upd();drawTray();reveal();if(saved&&!NET){toast('接著上一盤繼續 ✦',1400);if(turn==='ai')timers.push(setTimeout(aiTurn,700))}hintIdle()}
 
 // 彈弓射星
