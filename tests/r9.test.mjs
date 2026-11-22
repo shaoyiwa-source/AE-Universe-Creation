@@ -114,8 +114,9 @@ try {
     fs.unlinkSync(path.join(lib, '.down'));
 
     // ---- 3. caching ----
-    const pc = (await api('a=catalog')).headers.get('cache-control') || '';
-    check('[cache] visitors share an edge copy of the catalog (≤ 60 s old)', /s-maxage=60/.test(pc) && /public/.test(pc), pc);
+    const pr = await api('a=catalog'), pc = pr.headers.get('cache-control') || '', ec = pr.headers.get('vercel-cdn-cache-control') || '';
+    check('[cache] visitors share an edge copy of the catalog (≤ 60 s old)', /max-age=60/.test(ec), ec);
+    check('[cache] browsers never show a stale catalog', /max-age=0/.test(pc) && /must-revalidate/.test(pc) && !/stale/.test(pc), pc);
     const sc = (await api('a=catalog&studio=1', { headers: auth })).headers.get('cache-control') || '';
     check('[cache] AE Studio always reads fresh', /no-store/.test(sc) && /private/.test(sc), sc);
     const mc = (await api('a=media&p=' + encodeURIComponent(new URL(up.work.src, base).searchParams.get('p')))).headers.get('cache-control') || '';

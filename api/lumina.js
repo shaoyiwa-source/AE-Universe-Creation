@@ -212,7 +212,9 @@ module.exports = async function handler(req, res) {
       }
       // visitors share one copy cached at the edge for a minute, so page views do not each read the cloud library;
       // AE Studio always reads fresh (separate URL + authorization)
-      res.setHeader('Cache-Control', studio ? 'private, no-store' : (kind === 'degraded' ? 'public, max-age=0, s-maxage=30' : 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400, stale-if-error=86400'));
+      // browsers always ask again (no stale copies on screen); only Vercel's edge keeps the shared copy
+      res.setHeader('Cache-Control', studio ? 'private, no-store' : 'public, max-age=0, must-revalidate');
+      if (!studio) res.setHeader('Vercel-CDN-Cache-Control', kind === 'degraded' ? 'max-age=30' : 'max-age=60, stale-while-revalidate=86400, stale-if-error=86400');
       return res.status(200).json({ ...publicView(c, studio), studio, storage: kind });
     }
     if (req.method !== 'POST') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
