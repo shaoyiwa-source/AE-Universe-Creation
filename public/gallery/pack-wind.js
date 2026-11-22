@@ -28,7 +28,7 @@ export default {
       const [x, y] = anywhere ? [Math.random() * host.W, Math.random() * host.H] : spawnPoint();
       return { x, y, pts: [], life: 0, max: 5 + Math.random() * 5, w: 0.8 + Math.random() * 1.8, ph: Math.random() * TAU, sp: 0.7 + Math.random() * 0.6, rgb: colour(host.W / 2, host.H / 2) };
     };
-    const newPetal = (anywhere) => { const [x, y] = anywhere ? [Math.random() * host.W, Math.random() * host.H] : spawnPoint(); return { x, y, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 3, s: 10 + Math.random() * 14, ph: Math.random() * TAU, rgb: host.palette[(Math.random() * host.palette.length) | 0] }; };
+    const newPetal = (anywhere) => { const [x, y] = anywhere ? [Math.random() * host.W, Math.random() * host.H] : spawnPoint(); return { x, y, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 3, s: 6 + Math.random() * 9, ph: Math.random() * TAU, rgb: host.palette[(Math.random() * host.palette.length) | 0] }; };
     return {
       set(np) { Object.assign(p, np); },
       frame(dt, k) {
@@ -69,12 +69,12 @@ export default {
           q.rot += q.vr * dt * (0.6 + gust);
           q.x += (dx * speed * 0.55 + Math.sin(t + q.ph) * 14) * dt; q.y += (dy * speed * 0.55 + Math.cos(t * 0.8 + q.ph) * 12 + 6) * dt;
           if (q.x < -60 || q.x > W + 60 || q.y < -60 || q.y > H + 60) Object.assign(q, newPetal(false));
-          const ctx2 = q.s > 17 ? ctx : back; // big ones pass in front, small ones behind: depth
+          const ctx2 = q.s > 11 ? ctx : back; // big ones pass in front, small ones behind: depth
           ctx2.save(); ctx2.translate(q.x, q.y); ctx2.rotate(q.rot); ctx2.scale(1, 0.42 + 0.3 * Math.sin(q.rot * 2));
           // a soft petal of light: a tinted glow with a faint warm heart (never a hard white blob)
-          ctx2.globalAlpha = 0.5 * k; ctx2.globalCompositeOperation = 'lighter';
+          ctx2.globalAlpha = 0.34 * k; ctx2.globalCompositeOperation = 'lighter';
           ctx2.drawImage(host.sprite(q.rgb, true), -q.s, -q.s, q.s * 2, q.s * 2);
-          ctx2.globalAlpha = 0.22 * k; const c = q.s * 0.45; ctx2.drawImage(host.sprite(q.rgb), -c, -c, c * 2, c * 2);
+          ctx2.globalAlpha = 0.14 * k; const c = q.s * 0.45; ctx2.drawImage(host.sprite(q.rgb), -c, -c, c * 2, c * 2);
           ctx2.restore();
         }
         ctx.globalAlpha = 1;

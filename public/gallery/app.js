@@ -103,7 +103,7 @@ const normWork = (w, i) => ({
 async function loadCatalog() {
   if (ED) {
     works = ED.works.map(normWork); tracks = []; cloud = 'edition';
-    exhibitions = [{ id: 'xedition', title: ED.title, note: ED.note, mode: ED.mode, items: ED.works.map(w => ({ id: w.id, ...(w.duration ? { duration: w.duration } : {}), ...(w.transition ? { transition: w.transition } : {}), ...(w.fx ? { fx: w.fx } : {}), ...(w.tr ? { tr: w.tr } : {}) })) }];
+    exhibitions = [{ id: 'xedition', title: ED.title, note: ED.note, mode: ED.mode, items: ED.works.map(w => ({ id: w.id, ...(w.duration ? { duration: w.duration } : {}), ...(w.transition ? { transition: w.transition } : {}), ...(w.fx ? { fx: w.fx } : {}), ...(w.tr ? { tr: w.tr } : {}), ...(w.cam ? { cam: w.cam } : {}) })) }];
     view = 'xedition';
     const ids = new Set(works.map(w => w.id)); S.selected = S.selected.filter(id => ids.has(id));
     if (String(S.music).startsWith('track:') || !OPTIONS.music.some(o => o.id === S.music)) S.music = modeOf(S.mode).set.music;
@@ -818,6 +818,8 @@ const neon = $('#neon');
 const fx = new FX($('#fx'), { reduced });
 const alive = new Alive(); // R10: the painting itself comes alive and answers touch
 const packs = new PackHost(alive); // R10 God mode: effect packages drawn on the same light layers
+packs.beatFn = () => sound.beat(); // lasers and other beat-driven light follow the music's kick drum
+let camT = 0; // camera clock while arranging in God mode (loops the work's duration)
 let list = [], idx = 0, cur = 0, ambCur = 0, curDur = 10, curItem = null;
 let playing = false, busy = false, pending = null, elapsed = 0, shown = false;
 let wakeLock = null, idleTimer = null, captionTimer = null, nextLumi = 0;
@@ -859,7 +861,7 @@ function placeNeon(r) { if (r) Object.assign(neon.style, { left: r.x + 'px', top
 function layout() {
   fx.resize(stage.clientWidth, stage.clientHeight);
   placeSlide(0); placeSlide(1);
-  const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); positionCaption(r); alive.setRect(r); }
+  const r = slides[cur].rect; if (r) { fx.setArtRect(r); placeNeon(r); positionCaption(r); alive.setRect(r); if (packs.cam) { packs.cam.r = r; packs.cam.maxZoom = packs.maxZoomFor(packs.cam.media, r); } }
 }
 // put the living layer on the painting now on screen (when the mode allows it)
 function wakeAlive() {
@@ -874,14 +876,16 @@ function wakeAlive() {
 function applyChoreo() {
   if (reduced || player.hidden || !shown) { packs.setEffects([]); return; }
   const it = curItem || {};
-  packs.setEffects(god.open ? god.fx : (it.fx || []));
+  packs.setEffects(god.open ? god.fx : (it.fx || modeFx()));
 }
+// what a scene mode brings by itself when nothing is arranged: Night Party's prism lasers land on the painting
+function modeFx() { return S.mode === 'party' && S.effects.lasers ? [{ id: 'laser', p: {} }] : []; }
 
 // ---------- God mode (AE Studio only) ----------
 // Summon effect packages on the work on screen, tune them with the controls each package brings, choose the
 // transition into it, then save it to this work, a run of works, or the whole exhibition. Customers' players
 // simply follow what is saved (they never see this panel).
-const god = { open: false, fx: [], tr: null, scope: 'this', sel: null, previewTr: null };
+const god = { open: false, fx: [], tr: null, cam: null, scope: 'this', sel: null, previewTr: null };
 const godPanel = $('#godPanel');
 const clone = (o) => JSON.parse(JSON.stringify(o));
 function ctrlFor(d, value, onChange) {
@@ -915,10 +919,11 @@ function ctrlFor(d, value, onChange) {
 }
 function godLoad() { // the panel shows what is arranged for the work now on screen
   const it = curItem || {};
-  god.fx = clone(it.fx || []); god.tr = it.tr ? clone(it.tr) : null;
-  renderGod(); packs.setEffects(god.fx);
+  god.fx = clone(it.fx || []); god.tr = it.tr ? clone(it.tr) : null; god.cam = it.cam ? clone(it.cam) : null;
+  renderGod(); packs.setEffects(god.fx); godCamera();
 }
 function godApply() { packs.setEffects(god.fx); renderGod(true); }
+function godCamera() { if (!shown) return; packs.setCamera(god.cam, mediaOf(cur), slides[cur].rect, neon); camT = 0; }
 function renderGod(keepScroll) {
   const w = list[idx]; $('#godWork').textContent = w ? `${String(idx + 1).padStart(2, '0')} · ${titleOf(w)}` : '';
   // summon: one button per effect package; active ones show their own controls
@@ -953,6 +958,18 @@ function renderGod(keepScroll) {
     for (const d of pk.params) tp.appendChild(ctrlFor(d, p[d.id], (v) => { p[d.id] = v; }));
   }
   $('#godPreview').disabled = list.length < 2;
+  // camera: how the work is looked at (whole, from afar, a detail tour, a drone orbit, a film angle)
+  const cc = $('#godCams'); cc.replaceChildren();
+  cc.appendChild(chip(T('godNoCam'), !god.cam, false, () => { god.cam = null; godCamera(); renderGod(true); }));
+  for (const pk of packsOf('camera')) cc.appendChild(chip(L(pk.name), !!god.cam && god.cam.id === pk.id, true, () => { god.cam = { id: pk.id, p: paramsFor(pk) }; godCamera(); renderGod(true); }));
+  const cp = $('#godCamParams'); cp.replaceChildren();
+  if (god.cam && PACKS.get(god.cam.id)) {
+    const pk = PACKS.get(god.cam.id), p = god.cam.p = paramsFor(pk, god.cam.p);
+    const d0 = document.createElement('p'); d0.className = 'lw-note'; d0.textContent = L(pk.desc); cp.appendChild(d0);
+    for (const d of pk.params) cp.appendChild(ctrlFor(d, p[d.id], (v) => { p[d.id] = v; packs.cameraSet(p); camT = 0; }));
+  }
+  const mz = shown ? packs.maxZoomFor(mediaOf(cur), slides[cur].rect) : 1;
+  $('#godZoomNote').textContent = T('godMaxZoom', mz.toFixed(1));
   // where to save it
   const sh = currentShow();
   const sc = $('#godScope'); sc.replaceChildren();
@@ -1000,6 +1017,7 @@ $('#godSave').addEventListener('click', async () => {
     if (!ids.has(it.id)) return it;
     const o = { ...it, fx: clone(god.fx) };
     if (god.tr) o.tr = clone(god.tr); else delete o.tr;
+    if (god.cam) o.cam = clone(god.cam); else delete o.cam;
     return o;
   });
   const saved = await saveShow(copy, { silent: true });
@@ -1149,7 +1167,7 @@ function playIntro() {
   });
 }
 function closePlayer() {
-  closeLoupe(); closeGod(); packs.clear(true); alive.clear(); player.classList.remove('alivehover');
+  closeLoupe(); closeGod(); packs.clear(true); packs.resetCamera(); slides.forEach(sl => { const m = sl.querySelector('img'); m.style.transform = ''; m.style.animation = ''; }); alive.clear(); player.classList.remove('alivehover');
   playing = false;
   stopListening(); toggleInfo(false);
   fx.stop(); sound.stop();
@@ -1209,9 +1227,10 @@ async function show(i) {
   fx.setArtRect(r); placeNeon(r);
   // a transition package chosen in God mode (or a one-off preview) takes the place of the built-in one
   const trSet = god.previewTr || (curItem && curItem.tr) || null; god.previewTr = null;
+  packs.setCamera(god.open ? god.cam : (curItem && curItem.cam) || null, media, r, neon); camT = 0;
   const tpk = trSet && transitionPack(trSet.id);
   await runTransition(kind, { from, to: incoming, fromImg: fromMedia, fromRect: from ? from.rect : null, rect: r, points: pts, W: stage.clientWidth, H: stage.clientHeight, fx, speed: Math.max(0.5, Math.min(1.3, curDur / 12)), pack: tpk, params: tpk ? paramsFor(tpk, trSet.p) : null });
-  if (from) { from.classList.remove('live'); from.querySelector('video').pause(); }
+  if (from) { from.classList.remove('live'); from.querySelector('video').pause(); if (fromMedia) { fromMedia.style.transform = ''; fromMedia.style.animation = ''; } }
   cur = nextSlot; shown = true; elapsed = 0; busy = false;
   wakeAlive();
   if (god.open) godLoad(); else applyChoreo();
@@ -1471,6 +1490,7 @@ fx.onFrame = (dt) => {
   trackFps(dt); watchMusic(dt);
   alive.frame(dt, playing);
   packs.frame(dt);
+  if (packs.cam && shown) { if (god.open) camT += dt; packs.cameraFrame(god.open ? (camT % curDur) / curDur : elapsed / curDur); }
   if (listener.on) {
     const r = listener.update(dt);
     fx.setSound(r.level, r.kind);
@@ -1494,7 +1514,7 @@ fx.onFrame = (dt) => {
   }
 };
 const INTENSITY_ALPHA = [0.55, 0.72, 0.88, 1, 1], INTENSITY_DENSITY = [0.6, 0.8, 1, 1.15, 1.3];
-const liveEffects = () => ({ ...S.effects, lasers: !!S.effects.lasers && S.mode === 'party' }); // lasers belong to Night Party only
+const liveEffects = () => ({ ...S.effects, lasers: false }); // lasers are the prism laser package now (Night Party), landing on the painting
 function applyLive() {
   fx.tempo = modeOf(S.mode).set.tempo || 1;
   const lvl = Math.max(1, Math.min(5, S.intensity || 3));
@@ -1515,6 +1535,7 @@ function applyLive() {
   player.classList.toggle('grain', !!S.effects.lumiere);
   if (!S.display.captions) $('#caption').classList.add('off');
   if (!player.hidden && slides[cur] && slides[cur].rect) layout(); // the title strip may come or go
+  if (!player.hidden && shown && !god.open) applyChoreo(); // a scene mode can bring its own packages (Night Party lasers)
 }
 
 // controls
@@ -1706,7 +1727,7 @@ function makeGrain() {
     $('#gateBtn').addEventListener('click', () => { gate.hidden = true; openPlayer(null); }, { once: true });
   }
   window.__lumina = {
-    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', packs: packs.current(), god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
+    get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
     rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); },
   };
 })();

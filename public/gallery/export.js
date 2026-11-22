@@ -1,6 +1,6 @@
 // AE Lumina Wall — export an exhibition as a single, self-contained player file (客戶版 / NFT 版).
 // Studio-only: loaded with import() from app.js. The output needs no server and makes no network requests.
-const MODULES = ['store', 'audio', 'fx', 'transitions', 'i18n', 'recorder', 'listen', 'alive', 'pack-wind', 'pack-light', 'pack-ribbons', 'pack-fly', 'pack-flip', 'pack-zoom', 'pack-curtain', 'packs', 'app']; // dependency order
+const MODULES = ['store', 'audio', 'fx', 'transitions', 'i18n', 'recorder', 'listen', 'alive', 'pack-wind', 'pack-light', 'pack-ribbons', 'pack-fly', 'pack-flip', 'pack-zoom', 'pack-curtain', 'pack-laser', 'pack-cam-approach', 'pack-cam-tour', 'pack-cam-orbit', 'pack-cam-documentary', 'pack-cam-gaze', 'packs', 'app']; // dependency order
 
 const timeout = (ms) => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined);
 async function text(url, ms = 20000) { const r = await fetch(url, { cache: 'no-store', signal: timeout(ms) }); if (!r.ok) throw new Error(`${url} ${r.status}`); return r.text(); }
@@ -98,7 +98,7 @@ export async function exportEdition(o) {
       id: w.id, no: i + 1, type: w.type || 'image', src, thumb,
       title: w.title, year: w.year || '', medium: w.medium || '', size: w.size || '', statement: w.statement || { zh: '', en: '' },
       ...(w.duration ? { duration: w.duration } : {}), ...(w.transition ? { transition: w.transition } : {}),
-      ...(w.fx ? { fx: w.fx } : {}), ...(w.tr ? { tr: w.tr } : {}),
+      ...(w.fx ? { fx: w.fx } : {}), ...(w.tr ? { tr: w.tr } : {}), ...(w.cam ? { cam: w.cam } : {}),
     });
   }
 

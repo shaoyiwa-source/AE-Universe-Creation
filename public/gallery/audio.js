@@ -120,6 +120,14 @@ export class Sound {
 
   suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {}); }
   resume() { if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume().catch(() => {}); }
+  // the most recent kick drum that has actually sounded: { live, pulse, count }
+  beat() {
+    if (!this.ctx || this.preset !== 'pulse' || !this.kickTimes || !this.kickTimes.length) return { live: false, pulse: 0, count: 0 };
+    const now = this.ctx.currentTime; let last = -1, n = 0;
+    for (const k of this.kickTimes) if (k <= now) { last = k; n++; }
+    this.kickCount = (this.kickCount || 0); if (last > 0 && last !== this._lastKickSeen) { this._lastKickSeen = last; this.kickCount++; }
+    return { live: last > 0, pulse: last > 0 ? Math.exp(-(now - last) / 0.11) : 0, count: this.kickCount };
+  }
   get running() { return !!this.ctx && this.ctx.state === 'running'; }
 
   // schedule the next phrase; while the audio is paused/interrupted, wait instead of piling phrases up
@@ -313,6 +321,7 @@ export class Sound {
 
   // 夜光派對 Night Pulse — 116 BPM soft-house groove, still consonant with the touch chimes
   _kick(t) {
+    (this.kickTimes = this.kickTimes || []).push(t); if (this.kickTimes.length > 16) this.kickTimes.shift(); // for light that follows the beat
     const ctx = this.ctx, o = ctx.createOscillator(), g = ctx.createGain();
     o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.42, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);

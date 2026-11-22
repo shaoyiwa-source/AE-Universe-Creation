@@ -198,6 +198,7 @@ function sanitizeExhibition(e, c) {
     };
     if (Array.isArray(it.fx)) { const fx = it.fx.map(pack).filter(Boolean).slice(0, 4); if (fx.length) o.fx = fx; }
     const tr = pack(it.tr); if (tr) o.tr = tr;
+    const cam = pack(it.cam); if (cam) o.cam = cam;
     return o;
   });
   return {

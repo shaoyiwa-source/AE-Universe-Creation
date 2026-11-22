@@ -29,7 +29,7 @@ try {
   await page.goto(base + '/gallery.html', { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
   const st = () => page.evaluate(() => window.__lumina.state);
-  check(`[${which}] packages are registered (3 effects, 4 transitions)`, await page.evaluate(() => { const l = window.__lumina.packsList(); return l.filter(p => p.type === 'effect').length === 3 && l.filter(p => p.type === 'transition').length === 4; }));
+  check(`[${which}] packages are registered (4 effects, 4 transitions, 5 camera moves)`, await page.evaluate(() => { const l = window.__lumina.packsList(); return l.filter(p => p.type === 'effect').length === 4 && l.filter(p => p.type === 'transition').length === 4 && l.filter(p => p.type === 'camera').length === 5; }));
   check(`[${which}] visitors never see God mode`, (await page.evaluate(() => document.getElementById('godBtn').hidden)));
   // AE Studio + an exhibition of six works
   const box = await page.locator('.lw-wordmark').boundingBox();
@@ -69,13 +69,33 @@ try {
   check(`[${which}] tuning a control changes the effect live`, (await st()).packs.find(p => p.id === 'wind').p.direction === 180);
   await wait(400);
   check(`[${which}] auto-advance stays paused while arranging`, (await st()).idx === idx0);
+  // camera: from afar, then closer (一花一世界) — never closer than the photo's resolution allows
+  await page.locator('#godCams .lw-chip', { hasText: '由遠而近' }).click();
+  await wait(400);
+  const c0 = (await st()).camPose;
+  await wait(4000);
+  const c1 = (await st()).camPose;
+  check(`[${which}] the camera starts from afar and moves`, (await st()).cam === 'cam-approach' && c0 && c0.s < 0.95 && c1 && c1.s !== c0.s, JSON.stringify({ c0, c1 }));
+  const camLayers = await page.evaluate(() => { const s = window.__lumina.state, m = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img'), f = document.querySelector('.pl-alive'); return m.style.transform === f.style.transform && /scale/.test(m.style.transform); });
+  check(`[${which}] the light layers move with the painting (one camera)`, camLayers);
+  let maxSeen = 0, cap = 9;
+  await page.locator('#godCams .lw-chip', { hasText: '細節巡禮' }).click();
+  const z = page.locator('#godCamParams input[type=range]').nth(1); await z.fill('3');
+  for (let k = 0; k < 20; k++) { const cp = (await st()).camPose; if (cp) { maxSeen = Math.max(maxSeen, cp.s); cap = cp.max; } await wait(250); }
+  check(`[${which}] zoom never goes beyond the photo's resolution`, maxSeen <= cap + 0.01 && cap >= 1, `max ${maxSeen} (limit ${cap})`);
+  check(`[${which}] the panel tells how close this photo allows`, /\d/.test(await page.textContent('#godZoomNote')));
+  await page.locator('#godCams .lw-chip', { hasText: '空拍環繞' }).click();
+  await wait(2500);
+  const orb = (await st()).camPose;
+  check(`[${which}] drone orbit views the work at an angle`, orb && (Math.abs(orb.ry) > 1 || Math.abs(orb.rx) > 1), JSON.stringify(orb));
+  await page.screenshot({ path: `${out}/${which}-god-orbit.png` });
   // transition package + scope: works 1–3
   await page.locator('#godTrans .lw-chip', { hasText: '立體翻轉' }).click().catch(async () => { await page.locator('#godTrans .lw-chip').nth(2).click(); });
   await page.locator('#godScope .lw-chip').nth(1).click();
   await page.fill('#godFrom', '1'); await page.fill('#godTo', '3');
   await page.click('#godSave'); await wait(1500);
   const saved = await page.evaluate(async (id) => { const tok = JSON.parse(sessionStorage.getItem('ae-studio-token')).token; const r = await fetch('/api/lumina?a=catalog&studio=1', { headers: { authorization: 'Bearer ' + tok } }); return (await r.json()).exhibitions.find(e => e.id === id).items; }, showId);
-  check(`[${which}] the choreography is saved for works 1–3 only`, [0, 1, 2].every(i => saved[i].fx && saved[i].fx.length === 3 && saved[i].tr && saved[i].tr.id === 'flip') && !saved[3].fx && !saved[3].tr && saved[0].fx.find(f => f.id === 'wind').p.direction === 180, JSON.stringify(saved.map(i => [i.fx ? i.fx.length : 0, i.tr ? i.tr.id : ''])));
+  check(`[${which}] the choreography is saved for works 1–3 only`, [0, 1, 2].every(i => saved[i].fx && saved[i].fx.length === 3 && saved[i].tr && saved[i].tr.id === 'flip' && saved[i].cam && saved[i].cam.id === 'cam-orbit') && !saved[3].fx && !saved[3].tr && saved[0].fx.find(f => f.id === 'wind').p.direction === 180, JSON.stringify(saved.map(i => [i.fx ? i.fx.length : 0, i.tr ? i.tr.id : ''])));
   await page.click('#godClose'); await wait(400);
   check(`[${which}] closing God mode keeps the saved arrangement on screen`, (await st()).packs.length === 3 && !(await st()).god);
   // the flip transition package runs between work 1 and 2
@@ -92,6 +112,18 @@ try {
   const slideClean = await page.evaluate(() => { const s = document.querySelectorAll('.pl-slide')[window.__lumina.state.cur]; return !s.style.transform && (s.style.opacity === '1'); });
   check(`[${which}] after a package transition the slide is left clean`, slideClean);
 
+  // Night Party: the prism lasers land on the painting (not just beside it)
+  await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
+  await page.click('.lw-mode[data-mode=party]'); await page.click('#closeSettings'); await wait(2500);
+  const lz = await page.evaluate(() => {
+    const s = window.__lumina.state, c = document.querySelector('.pl-alive'), x = c.getContext('2d'), r = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img').getBoundingClientRect();
+    const k = c.width / c.clientWidth, d = x.getImageData(Math.round(r.x * k), Math.round(r.y * k), Math.round(r.width * k), Math.round(r.height * k)).data;
+    let lit = 0; for (let i = 3; i < d.length; i += 16) if (d[i] > 30) lit++;
+    return { packs: s.packs.map(p => p.id), lit };
+  });
+  check(`[${which}] a work without a camera move has no leftover pose (neon frame aligned)`, await page.evaluate(() => !document.getElementById('neon').style.transform));
+  check(`[${which}] Night Party: lasers land on the painting and light it`, lz.packs.includes('laser') && lz.lit > 200, JSON.stringify(lz));
+  await page.screenshot({ path: `${out}/${which}-party-laser.png` });
   // a visitor sees exactly what was arranged
   const v = await browser.newContext(ctxOpts); const vp = await v.newPage(); const verr = []; vp.on('pageerror', e => verr.push(String(e)));
   await vp.goto(base + '/gallery.html', { waitUntil: 'networkidle' }); await vp.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);

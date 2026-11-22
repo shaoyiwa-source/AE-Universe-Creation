@@ -9,16 +9,23 @@ import fly from './pack-fly.js';
 import flip from './pack-flip.js';
 import zoom from './pack-zoom.js';
 import curtain from './pack-curtain.js';
+import laser from './pack-laser.js';
+import camApproach from './pack-cam-approach.js';
+import camTour from './pack-cam-tour.js';
+import camOrbit from './pack-cam-orbit.js';
+import camDocumentary from './pack-cam-documentary.js';
+import camGaze from './pack-cam-gaze.js';
 
 export const PACKS = new Map();
 export function registerPack(pk) {
-  if (!pk || !/^[a-z0-9-]{1,40}$/.test(pk.id || '') || !['effect', 'transition'].includes(pk.type)) throw new Error('bad package');
+  if (!pk || !/^[a-z0-9-]{1,40}$/.test(pk.id || '') || !['effect', 'transition', 'camera'].includes(pk.type)) throw new Error('bad package');
   if (pk.type === 'effect' && typeof pk.create !== 'function') throw new Error('effect needs create()');
   if (pk.type === 'transition' && typeof pk.run !== 'function') throw new Error('transition needs run()');
+  if (pk.type === 'camera' && typeof pk.create !== 'function') throw new Error('camera needs create()');
   PACKS.set(pk.id, pk);
   return pk;
 }
-[wind, light, ribbons, fly, flip, zoom, curtain].forEach(registerPack);
+[wind, light, ribbons, laser, fly, flip, zoom, curtain, camGaze, camApproach, camTour, camOrbit, camDocumentary].forEach(registerPack);
 
 export const packsOf = (type) => [...PACKS.values()].filter(p => p.type === type);
 // parameters: defaults merged with saved values, every value checked against its definition
@@ -55,6 +62,66 @@ export class PackHost {
   colorAt(x, y) { return this.alive.colorOf(x, y); }
   flowAt(x, y) { return this.alive.dirAt(x, y); }
   livingPoint() { return this.alive.livingPoint(); }
+  // the beat of the music (set by the player); { live, pulse 0…1, count }
+  beat() { return this.beatFn ? this.beatFn() : { live: false, pulse: 0, count: 0 }; }
+  // the painting's richest places (strong, living brushwork), well apart, in 0…1 painting coordinates
+  focalPoints(n = 3) {
+    const m = this.alive.readingMap; if (!m) return [[0.5, 0.5]];
+    const cells = [];
+    for (let c = 0; c < m.gw * m.gh; c++) {
+      const x = ((c % m.gw) + 0.5) / m.gw, y = (Math.floor(c / m.gw) + 0.5) / m.gh;
+      if (x < 0.18 || x > 0.82 || y < 0.18 || y > 0.82) continue; // keep details away from the edges
+      cells.push({ x, y, a: m.alive[c] });
+    }
+    cells.sort((p, q) => q.a - p.a);
+    const out = [];
+    for (const c of cells) { if (out.length >= n) break; if (out.every(([x, y]) => Math.hypot(x - c.x, y - c.y) > 0.28)) out.push([c.x, c.y]); }
+    return out.length ? out : [[0.5, 0.5]];
+  }
+  // how close the camera may come without showing pixels: never beyond the photo's own resolution (+20%)
+  maxZoomFor(media, r) {
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    const nw = media && media.naturalWidth || 0;
+    if (!nw || !r || !r.w) return 1;
+    return Math.max(1, Math.min(3, (nw / (r.w * dpr)) * 1.2));
+  }
+
+  // ---- camera (one at a time): moves the painting and its light layers together, like a film camera ----
+  setCamera(spec, media, r, neon) {
+    // the previous work keeps its last camera pose through the transition (the player clears it afterwards)
+    for (const el of [this.alive.back, this.alive.front]) el.style.transform = '';
+    if (neon) neon.style.transform = ''; // the neon frame belongs to the new work (no leftover pose)
+    this.cam = null; this.camPose = null;
+    const pk = spec && PACKS.get(spec.id);
+    if (!pk || pk.type !== 'camera' || !media || !r) { this.cam = null; return; }
+    const p = paramsFor(pk, spec.p);
+    try { this.cam = { pk, p, inst: pk.create(this, p), media, r, neon, maxZoom: this.maxZoomFor(media, r) }; } catch (err) { console.warn('camera', spec.id, err); this.cam = null; return; }
+    media.style.animation = 'none';
+    this.cameraFrame(0);
+  }
+  cameraSet(p) { if (this.cam) { Object.assign(this.cam.p, p); this.cam.inst.set && this.cam.inst.set(this.cam.p); } }
+  cameraFrame(q) {
+    const c = this.cam; if (!c) return;
+    let pose; try { pose = c.inst.pose(Math.max(0, Math.min(1, q))); } catch { return; }
+    const r = c.r, W = this.alive.W || r.x * 2 + r.w, H = this.alive.H || r.y * 2 + r.h;
+    const s = Math.max(0.3, Math.min(c.maxZoom, pose.s || 1)), pull = Math.max(0, Math.min(1, pose.pull || 0));
+    const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+    const dx = ((pose.x ?? 0.5) - 0.5) * r.w, dy = ((pose.y ?? 0.5) - 0.5) * r.h;
+    // the focal point is drawn towards the centre of the screen as the camera moves in
+    const tx = (W / 2 - (cx + dx * s)) * pull, ty = (H / 2 - (cy + dy * s)) * pull;
+    const tf = `perspective(1600px) translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) rotateX(${(pose.rx || 0).toFixed(2)}deg) rotateY(${(pose.ry || 0).toFixed(2)}deg) scale(${s.toFixed(4)})`;
+    c.media.style.transformOrigin = '50% 50%'; c.media.style.transform = tf;
+    // only the light over the work moves with it; the far layer (rays, veils, distant dust) stays in the room
+    this.alive.front.style.transformOrigin = `${cx}px ${cy}px`; this.alive.front.style.transform = tf;
+    if (c.neon) { c.neon.style.transformOrigin = '50% 50%'; c.neon.style.transform = tf; }
+    this.camPose = { s: +s.toFixed(3), tx: Math.round(tx), ty: Math.round(ty), rx: +(pose.rx || 0).toFixed(1), ry: +(pose.ry || 0).toFixed(1), max: +c.maxZoom.toFixed(2) };
+  }
+  resetCamera() {
+    const c = this.cam;
+    if (c) { c.media.style.transform = ''; c.media.style.animation = ''; c.media.style.transformOrigin = ''; if (c.neon) c.neon.style.transform = ''; }
+    for (const el of [this.alive.back, this.alive.front]) { el.style.transform = ''; }
+    this.cam = null; this.camPose = null;
+  }
 
   // the effects of the work now on screen: [{ id, p }]
   setEffects(list) {
