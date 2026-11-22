@@ -220,21 +220,29 @@ function sanitizeExhibition(e, c) {
 
 // ---------- handler ----------
 // ---------- licences (R11): one licence = one client, one screen, one arranged exhibition ----------
-// Stored next to the catalog. Visitors' players check their licence every minute; those checks are answered from a
-// short in-memory copy, so the cloud store is read at most every 20 s per server instance (and written only when a
-// licence is created / changed / activated, or a device was last seen more than 30 min ago).
-const LICENSES = `${ROOT}/licenses.json`;
+// One file per licence (so two screens activating at the same moment never overwrite each other) plus a small
+// index (activation code → licence). Players' minute checks read only their own licence, from a 20 s in-memory copy;
+// writes happen only when a licence is created / changed / activated, or a device was last seen > 30 min ago.
+const LIC_DIR = `${ROOT}/licenses`;
+const LIC_INDEX = `${LIC_DIR}/index.json`;
 const CONTROLS = ['modes', 'intensity', 'volume', 'music', 'advance', 'listen', 'record'];
-let licCache = null;
-async function readLicenses(store, fresh = false) {
-  if (!fresh && licCache && Date.now() - licCache.at < 20000) return licCache.data;
-  const buf = await store.get(LICENSES);
-  let data = { v: 1, licenses: [] };
-  if (buf) { try { data = JSON.parse(buf.toString('utf8')); if (!Array.isArray(data.licenses)) data.licenses = []; } catch { throw storageDown('licences unreadable'); } }
-  licCache = { at: Date.now(), data };
-  return data;
+const licCache = new Map();
+const licPath = (id) => /^l[a-z0-9]{6,40}$/.test(id) ? `${LIC_DIR}/${id}.json` : null;
+async function readJson(store, p, empty) {
+  const buf = await store.get(p);
+  if (!buf) return empty;
+  try { return JSON.parse(buf.toString('utf8')); } catch { throw storageDown('unreadable ' + p); }
 }
-async function writeLicenses(store, data) { data.updatedAt = Date.now(); await store.put(LICENSES, Buffer.from(JSON.stringify(data)), 'application/json'); licCache = { at: Date.now(), data }; }
+async function readIndex(store) { const x = await readJson(store, LIC_INDEX, { v: 1, codes: {} }); if (!x.codes) x.codes = {}; return x; }
+async function writeIndex(store, x) { await store.put(LIC_INDEX, Buffer.from(JSON.stringify(x)), 'application/json'); }
+async function readLic(store, id, fresh = false) {
+  const p = licPath(String(id || '')); if (!p) return null;
+  const c = licCache.get(id);
+  if (!fresh && c && Date.now() - c.at < 20000) return c.l;
+  const l = await readJson(store, p, null);
+  licCache.set(id, { at: Date.now(), l }); return l;
+}
+async function writeLic(store, l) { await store.put(licPath(l.id), Buffer.from(JSON.stringify(l)), 'application/json'); licCache.set(l.id, { at: Date.now(), l }); }
 const CODE_ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
 function newCode() { const b = crypto.randomBytes(12); let s = ''; for (let i = 0; i < 12; i++) s += CODE_ALPHA[b[i] % CODE_ALPHA.length]; return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`; }
 const normCode = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -325,27 +333,29 @@ module.exports = async function handler(req, res) {
     if (a === 'license-activate' || a === 'license-config') {
       const st = storage(); if (!st) return res.status(503).json({ error: 'STORAGE_NOT_READY' });
       const b = jsonBody(req);
-      let L, C;
-      try { L = await readLicenses(st, a === 'license-activate'); C = await readCatalogCached(st); } catch (e) { if (e.code === 'STORAGE_DOWN') return res.status(503).json({ error: 'STORAGE_DOWN' }); throw e; }
       const did = str(b.device, 64);
       if (!/^[a-f0-9]{32}$/.test(did)) return res.status(400).json({ error: 'BAD_DEVICE' });
+      try {
+      const C = await readCatalogCached(st);
       if (a === 'license-activate') {
-        const l = L.licenses.find(x => normCode(x.code) === normCode(b.code) && x.id === String(b.license || x.id));
+        const idx = await readIndex(st);
+        const id = idx.codes[normCode(b.code)];
+        const l = id && (!b.license || b.license === id) ? await readLic(st, id, true) : null;
         if (!l) { await new Promise(r => setTimeout(r, 700)); return res.status(404).json({ error: 'WRONG_CODE' }); }
         const state = licenceState(l); if (state !== 'OK') return res.status(403).json({ error: state });
         if (l.device && l.device.id !== did) return res.status(409).json({ error: 'DEVICE_TAKEN' }); // one licence, one screen
-        if (!l.device) l.device = { id: did, at: Date.now(), last: Date.now(), ua: str(req.headers['user-agent'], 160) };
-        await writeLicenses(st, L);
+        if (!l.device) { l.device = { id: did, at: Date.now(), last: Date.now(), ua: str(req.headers['user-agent'], 160) }; await writeLic(st, l); }
         return res.status(200).json({ token: signDevice(l.id, did), config: licenceConfig(l, C) });
       }
       const t = readDevice(b.token);
       if (!t || t.d !== did) return res.status(401).json({ error: 'BAD_TOKEN' });
-      const l = L.licenses.find(x => x.id === t.l);
+      const l = await readLic(st, t.l);
       if (!l) return res.status(404).json({ error: 'NOT_FOUND' });
       if (!l.device || l.device.id !== did) return res.status(409).json({ error: 'DEVICE_CHANGED' });
       const state = licenceState(l); if (state !== 'OK') return res.status(403).json({ error: state });
-      if (Date.now() - (l.device.last || 0) > 30 * 60e3) { l.device.last = Date.now(); try { await writeLicenses(st, await readLicenses(st, true).then(d => { const x = d.licenses.find(y => y.id === l.id); if (x && x.device) x.device.last = Date.now(); return d; })); } catch { /* last-seen is best effort */ } }
+      if (Date.now() - (l.device.last || 0) > 30 * 60e3) { try { const f = await readLic(st, l.id, true); if (f && f.device && f.device.id === did) { f.device.last = Date.now(); await writeLic(st, f); } } catch { /* last-seen is best effort */ } }
       return res.status(200).json({ config: licenceConfig(l, C) });
+      } catch (e) { if (e.code === 'STORAGE_DOWN') return res.status(503).json({ error: 'STORAGE_DOWN' }); throw e; }
     }
 
     if (!isStudio(req)) return res.status(401).json({ error: 'STUDIO_ONLY' });
@@ -449,22 +459,24 @@ module.exports = async function handler(req, res) {
       await writeCatalog(store, c);
       return res.status(200).json({ ok: true, hidden: !!w.builtin });
     }
-    if (a === 'license-list') { const L = await readLicenses(store, true); return res.status(200).json({ licenses: L.licenses }); }
+    if (a === 'license-list') {
+      const idx = await readIndex(store);
+      const ls = (await Promise.all([...new Set(Object.values(idx.codes))].map(id => readLic(store, id, true)))).filter(Boolean);
+      return res.status(200).json({ licenses: ls });
+    }
     if (a === 'license-save') {
-      const L = await readLicenses(store, true);
       const x = body.license || {};
-      const old = x.id ? L.licenses.find(y => y.id === x.id) : null;
+      const old = x.id ? await readLic(store, x.id, true) : null;
       if (x.id && !old) return res.status(404).json({ error: 'NOT_FOUND' });
       const l = sanitizeLicense(x, old, c);
-      L.licenses = L.licenses.filter(y => y.id !== l.id).concat(l);
-      await writeLicenses(store, L);
+      await writeLic(store, l);
+      if (!old) { const idx = await readIndex(store); idx.codes[normCode(l.code)] = l.id; await writeIndex(store, idx); }
       return res.status(200).json({ license: l });
     }
     if (a === 'license-reset-device') { // the client moves to another screen: the old one stops at its next check
-      const L = await readLicenses(store, true);
-      const l = L.licenses.find(y => y.id === body.id); if (!l) return res.status(404).json({ error: 'NOT_FOUND' });
+      const l = await readLic(store, body.id, true); if (!l) return res.status(404).json({ error: 'NOT_FOUND' });
       l.device = null; l.transfers = (l.transfers || 0) + 1; l.updated = Date.now();
-      await writeLicenses(store, L);
+      await writeLic(store, l);
       return res.status(200).json({ license: l });
     }
     if (a === 'pack-delete') {
