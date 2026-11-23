@@ -1,4 +1,4 @@
-// AE Lumina Wall — music keeps playing: resumes after an interruption, no pile-up of missed phrases, gentle start.
+// AE Shinity — music keeps playing: resumes after an interruption, no pile-up of missed phrases, gentle start.
 // Usage: node tests/music.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';

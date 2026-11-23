@@ -1,4 +1,4 @@
-// AE Lumina Wall — R6 acceptance: record clips through the UI and inspect the produced video files.
+// AE Shinity — R6 acceptance: record clips through the UI and inspect the produced video files.
 // Usage: node tests/record.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';

@@ -1,4 +1,4 @@
-// AE Lumina Wall — export an exhibition as a single, self-contained player file (客戶版 / NFT 版).
+// AE Shinity — export an exhibition as a single, self-contained player file (客戶版 / NFT 版).
 // Studio-only: loaded with import() from app.js. The output needs no server and makes no network requests.
 const MODULES = ['store', 'beats-eternal', 'audio', 'fx', 'transitions', 'i18n', 'recorder', 'listen', 'alive', 'pack-wind', 'pack-light', 'pack-ribbons', 'pack-fly', 'pack-flip', 'pack-zoom', 'pack-curtain', 'pack-laser', 'pack-led', 'pack-depth', 'pack-frame', 'pack-cam-approach', 'pack-cam-tour', 'pack-cam-orbit', 'pack-cam-documentary', 'pack-cam-gaze', 'pack-glow', 'pack-coins', 'pack-sweep', 'packs', 'app']; // dependency order
 

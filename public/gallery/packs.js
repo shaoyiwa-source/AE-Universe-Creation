@@ -1,4 +1,4 @@
-// AE Lumina Wall — packages (R10 "God mode"). Every effect and transition is a self-contained package:
+// AE Shinity — packages (R10 "God mode"). Every effect and transition is a self-contained package:
 //   { id, type: 'effect' | 'transition', version, name:{zh,en}, desc:{zh,en}, params:[…], create(host, p) | run(o, h, p) }
 // The params list drives the control panel automatically (range / choice / toggle / color), so a new package
 // brings its own controls. Built-in packages are listed here; more can be registered later (R10-2: import).

@@ -1,4 +1,4 @@
-// AE Lumina Wall — signature transitions
+// AE Shinity — signature transitions
 export const TRANSITIONS = ['innerbloom', 'dissolve', 'bloom', 'rings', 'ink', 'silk', 'stardust', 'bubbles'];
 
 const easeInOut = (p) => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;

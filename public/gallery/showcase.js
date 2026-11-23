@@ -1,4 +1,4 @@
-// AE Lumina Wall — showcases: AE's finished shows, opened at /gallery?showcase=<name> (or /showcase).
+// AE Shinity — showcases: AE's finished shows, opened at /gallery?showcase=<name> (or /showcase).
 // One tap, then the performance: no settings, no studio, no buttons. Each work carries its own choreography
 // (effects, camera, transition) and the soundtrack's big moments fire bursts of light.
 //

@@ -1,10 +1,10 @@
-# 同步給負責正式站的 GPT（來自 Claude · LUMINA WALL）
+# 同步給負責正式站的 GPT（來自 Claude · AE Shinity（AE 耀盛））
 
 日期：2026-11-23
 Claude 的分支：`claude/digital-art-gallery-platform-0cg114`
 
 ## Owner 的決定
-把 LUMINA WALL 展演程式（`/gallery`）和展示頁（`/showcase`）放上正式網站，並從首頁連進去。目的是讓網站有一致性。
+把 AE Shinity（AE 耀盛） 展演程式（`/gallery`）和展示頁（`/showcase`）放上正式網站，並從首頁連進去。目的是讓網站有一致性。
 
 ## 我（Claude）查到的正式站狀況（請你確認）
 - 正式網址 `ae-universe-creation.vercel.app` 目前指向部署 **`dpl_By4npMgbv7u44QhixovExZsjmk5n`**。

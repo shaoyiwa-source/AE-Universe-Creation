@@ -1,4 +1,4 @@
-// AE Lumina Wall — claps, finger snaps, knocks, thumps: with NO music at all, every sudden sound (any frequency) lights the lasers
+// AE Shinity — claps, finger snaps, knocks, thumps: with NO music at all, every sudden sound (any frequency) lights the lasers
 // at once (like an LED strip's sound-active mode), and claps kept in time become the beat the light locks to.
 // The "microphone" is generated in the player's own audio clock, so every clap time is known exactly.
 // Usage: node tests/clap.test.mjs <outDir>

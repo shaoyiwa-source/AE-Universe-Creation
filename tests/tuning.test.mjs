@@ -1,4 +1,4 @@
-// AE Lumina Wall — adjust while watching: settings opened during a presentation never cover or dim the painting.
+// AE Shinity — adjust while watching: settings opened during a presentation never cover or dim the painting.
 // Usage: node tests/tuning.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';

@@ -1,4 +1,4 @@
-// AE Lumina Wall — bilingual copy (繁中 / English)
+// AE Shinity — bilingual copy (繁中 / English)
 export const STR = {
   zh: {
     micDenied: '沒有取得麥克風權限，聲音互動已關閉', micUnavailable: '這個環境無法使用麥克風', listening: '聲音互動中', infoEmpty: '這件作品的介紹即將補上。',

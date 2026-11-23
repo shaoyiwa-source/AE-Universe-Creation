@@ -1,4 +1,4 @@
-// AE Lumina Wall — cloud library API (single Vercel function; routes by ?a=)
+// AE Shinity — cloud library API (single Vercel function; routes by ?a=)
 //
 // Environment (Vercel → Project → Settings → Environment Variables):
 //   LUMINA_STUDIO_PASSWORD   AE Studio password (required for any curator action)

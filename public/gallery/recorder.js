@@ -1,4 +1,4 @@
-// AE Lumina Wall — clip recorder (R6): renders a short film of the show onto one canvas and records it.
+// AE Shinity — clip recorder (R6): renders a short film of the show onto one canvas and records it.
 // Everything a viewer sees is composed here (works, signature transitions, light effects, title card,
 // captions, watermark), so the result looks the same on every device and in every aspect ratio.
 import { FX } from './fx.js';

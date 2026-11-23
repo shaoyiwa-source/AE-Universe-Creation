@@ -1,4 +1,4 @@
-// AE Lumina Wall — R9.1: long-press magnifier + no system image menu. Usage: node tests/loupe.test.mjs <desktop|phone> <outDir>
+// AE Shinity — R9.1: long-press magnifier + no system image menu. Usage: node tests/loupe.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';
 import fs from 'fs';

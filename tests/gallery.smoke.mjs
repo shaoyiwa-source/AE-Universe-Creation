@@ -1,4 +1,4 @@
-// AE Lumina Wall — acceptance test (Playwright). Self-contained: starts the local API server
+// AE Shinity — acceptance test (Playwright). Self-contained: starts the local API server
 // (tests/lumina-dev-server.mjs) with a fresh library and a throw-away studio password.
 // Usage: node tests/gallery.smoke.mjs <desktop|phone|tv|all> <shotDir>
 import { createRequire } from 'module';

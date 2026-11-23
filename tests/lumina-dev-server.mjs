@@ -1,4 +1,4 @@
-// Local dev/test server for AE Lumina Wall: serves ./public and runs api/lumina.js with a
+// Local dev/test server for AE Shinity: serves ./public and runs api/lumina.js with a
 // Vercel-like req/res, storing data in LUMINA_FS_DIR instead of Vercel Blob.
 // Usage: LUMINA_FS_DIR=/tmp/lumina LUMINA_STUDIO_PASSWORD=... node tests/lumina-dev-server.mjs [port]
 import http from 'http';

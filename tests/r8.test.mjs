@@ -1,4 +1,4 @@
-// AE Lumina Wall — R8 acceptance: stability items + sound reaction (fake microphone fed with a generated sound file).
+// AE Shinity — R8 acceptance: stability items + sound reaction (fake microphone fed with a generated sound file).
 // Usage: node tests/r8.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';

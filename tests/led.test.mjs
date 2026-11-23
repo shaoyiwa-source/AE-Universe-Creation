@@ -1,4 +1,4 @@
-// AE Lumina Wall — LED 燈條 package: AE (or a light artist) lays LED strips on the screen, picks the pattern and colours,
+// AE Shinity — LED 燈條 package: AE (or a light artist) lays LED strips on the screen, picks the pattern and colours,
 // can dim the painting or go fully dark (pure light art), and the strip flashes with claps and music.
 // Usage: node tests/led.test.mjs <outDir>
 import { createRequire } from 'module';

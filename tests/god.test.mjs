@@ -1,4 +1,4 @@
-// AE Lumina Wall — R10-1 God mode: summon effect packages, tune them, choose a transition package,
+// AE Shinity — R10-1 God mode: summon effect packages, tune them, choose a transition package,
 // save the choreography for a run of works; visitors (and client players) see exactly what was arranged.
 // Usage: node tests/god.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';

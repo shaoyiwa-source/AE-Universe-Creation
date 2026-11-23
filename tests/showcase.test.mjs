@@ -1,4 +1,4 @@
-// AE Lumina Wall — showcase (/showcase): one tap, then the finished show. Act 1: the room's sound plays the painting
+// AE Shinity — showcase (/showcase): one tap, then the finished show. Act 1: the room's sound plays the painting
 // (dim → bright, saturated, contrasty; bursts, lasers, LED meter). Act 2: the theme track and the stage show.
 // The "microphone" is generated in the player's own audio clock. Usage: node tests/showcase.test.mjs <outDir> [phone]
 import { createRequire } from 'module';

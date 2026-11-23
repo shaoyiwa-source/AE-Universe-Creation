@@ -1,4 +1,4 @@
-# LUMINA WALL 測試案例（依 Owner 提出過的疑慮整理）
+# AE Shinity（AE 耀盛） 測試案例（依 Owner 提出過的疑慮整理）
 
 版本：2026-11-22，分支 `claude/digital-art-gallery-platform-0cg114`
 用途：內部驗收、實機測試、交給外部 AI（Gemini / GPT / Grok）做獨立測試時的共同基準。

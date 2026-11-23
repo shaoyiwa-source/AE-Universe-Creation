@@ -1,4 +1,4 @@
-// AE Lumina Wall — room music leads the light: with our music off and Sound reaction on, the prism lasers follow
+// AE Shinity — room music leads the light: with our music off and Sound reaction on, the prism lasers follow
 // the kicks the microphone hears (fake microphone playing 120 BPM). Usage: node tests/room.test.mjs <outDir>
 import { createRequire } from 'module'; import { spawn } from 'child_process'; import fs from 'fs';
 const require = createRequire(process.cwd() + '/'); const { chromium } = require('playwright');

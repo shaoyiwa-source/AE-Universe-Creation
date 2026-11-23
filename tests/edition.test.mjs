@@ -1,4 +1,4 @@
-// AE Lumina Wall — R5 acceptance: export an edition in AE Studio, then run the exported single file
+// AE Shinity — R5 acceptance: export an edition in AE Studio, then run the exported single file
 // (1) inside an NFT-marketplace-style sandboxed iframe with every network request blocked, and
 // (2) opened directly from disk (offline client edition).
 // Usage: node tests/edition.test.mjs <desktop|phone> <outDir>

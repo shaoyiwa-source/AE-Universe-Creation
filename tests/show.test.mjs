@@ -1,4 +1,4 @@
-// AE Lumina Wall — R10-2: the homepage sound & light show inside the player, one-tap effects, package import.
+// AE Shinity — R10-2: the homepage sound & light show inside the player, one-tap effects, package import.
 // Usage: node tests/show.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';

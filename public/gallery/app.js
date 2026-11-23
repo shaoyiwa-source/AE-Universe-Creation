@@ -1,4 +1,4 @@
-// AE Lumina Wall — application controller (r3: cloud library + full exhibition features)
+// AE Shinity — application controller (r3: cloud library + full exhibition features)
 import { loadSettings, saveSettings, lsGet, lsSet } from './store.js';
 import { Sound } from './audio.js';
 import { FX } from './fx.js';
@@ -1502,7 +1502,7 @@ $('#recGo').addEventListener('click', async () => {
       onProgress: (t, total) => { $('#recStatus').textContent = T('recording', Math.floor(t), total); $('#recBar').style.width = (t / total * 100) + '%'; },
     });
     rec.blob = out.blob;
-    const slug = (sh ? (sh.title.en || 'exhibition') : 'lumina').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'lumina';
+    const slug = (sh ? (sh.title.en || 'exhibition') : 'ae-shinity').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'ae-shinity';
     rec.name = `AE-Universe-Creation-${slug}-${rec.format}-${rec.secs}s.${out.ext}`;
     const v = $('#recPreview'); v.src = URL.createObjectURL(out.blob); v.play().catch(() => {});
     $('#recInfo').textContent = `${out.width}×${out.height} · ${rec.secs}s · ${(out.blob.size / 1048576).toFixed(1)} MB · ${out.ext.toUpperCase()}`;

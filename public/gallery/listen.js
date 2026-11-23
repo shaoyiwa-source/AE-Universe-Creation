@@ -1,4 +1,4 @@
-// AE Lumina Wall — sound reaction (R8). Listens through the microphone and reacts with champagne-gold light.
+// AE Shinity — sound reaction (R8). Listens through the microphone and reacts with champagne-gold light.
 // Privacy: audio is analysed on this device only, frame by frame; nothing is recorded, stored or uploaded.
 //   clap  → a sharp, broadband transient          → gold burst + ring
 //   voice → sustained, tonal, mid-frequency sound  → the work's inner light rises with the voice

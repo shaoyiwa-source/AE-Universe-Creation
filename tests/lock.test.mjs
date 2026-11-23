@@ -1,4 +1,4 @@
-// AE Lumina Wall — beat lock: the room's music is heard through the microphone, the tempo and phase are locked and
+// AE Shinity — beat lock: the room's music is heard through the microphone, the tempo and phase are locked and
 // the light fires ON the predicted beat. The "microphone" here is a generated kick track with sample-exact kick times
 // (120 BPM, then a new song at 128 BPM, then silence). Usage: node tests/lock.test.mjs <outDir>
 import { createRequire } from 'module';

@@ -1,4 +1,4 @@
-// AE Lumina Wall — R10 step 1 "Living painting" (v2: light is added around the work; the painting itself is never altered).
+// AE Shinity — R10 step 1 "Living painting" (v2: light is added around the work; the painting itself is never altered).
 // Usage: node tests/alive.test.mjs <desktop|phone> <outDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';

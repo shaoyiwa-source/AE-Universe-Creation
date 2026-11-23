@@ -1,4 +1,4 @@
-// AE Lumina Wall — offline copy for licensed screens. Registered only by a licensed player (/gallery?license=…).
+// AE Shinity — offline copy for licensed screens. Registered only by a licensed player (/gallery?license=…).
 // The program, the works and the music are kept on this machine, so a restart without internet still plays.
 // It only ever answers the gallery player (its pages and what they load); every other page of the site goes to the
 // network untouched.

@@ -1,5 +1,5 @@
 import { ETERNAL } from './beats-eternal.js';
-// AE Lumina Wall — generative healing soundscapes + touch chimes (Web Audio, no external files)
+// AE Shinity — generative healing soundscapes + touch chimes (Web Audio, no external files)
 // Everything is tuned to C major pentatonic so music and touch chimes are always consonant.
 
 const PENTA = [0, 2, 4, 7, 9]; // C D E G A

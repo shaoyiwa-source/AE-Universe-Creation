@@ -1,4 +1,4 @@
-// AE Lumina Wall — local persistence (IndexedDB for blobs, localStorage for settings)
+// AE Shinity — local persistence (IndexedDB for blobs, localStorage for settings)
 const DB_NAME = 'ae-lumina';
 const DB_VER = 1;
 let dbPromise = null;

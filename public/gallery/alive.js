@@ -1,4 +1,4 @@
-// AE Lumina Wall — "Living painting" (R10, v2). The painting itself is never changed or distorted.
+// AE Shinity — "Living painting" (R10, v2). The painting itself is never changed or distorted.
 // Life is ADDED around it, in its own colours, on two depths:
 //   back layer  (behind the work)  : far star-dust and soft veils of light filling the empty space around it
 //   front layer (over the work)    : motes and silk threads of light that rise from the painting and travel along

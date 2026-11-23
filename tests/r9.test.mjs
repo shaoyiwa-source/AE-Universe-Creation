@@ -1,4 +1,4 @@
-// AE Lumina Wall — R9 acceptance: launch readiness.
+// AE Shinity — R9 acceptance: launch readiness.
 //  1. titles never sit on a painting (every work, wide and tall screens)
 //  2. a cloud outage never wipes the library and never stops the wall
 //  3. caching: visitors share an edge copy; studio reads fresh; media cached for a year

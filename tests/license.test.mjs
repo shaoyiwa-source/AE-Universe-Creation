@@ -1,4 +1,4 @@
-// AE Lumina Wall — R11 licences: AE creates a licence for a client (works + choreography, modes, what the client may
+// AE Shinity — R11 licences: AE creates a licence for a client (works + choreography, modes, what the client may
 // adjust, period); the client activates it with the code on ONE screen; pause / resume / revoke / move screen / expiry
 // take effect at the next minute check; a client's own works never appear publicly.
 // Usage: node tests/license.test.mjs <outDir>

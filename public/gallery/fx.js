@@ -1,4 +1,4 @@
-// AE Lumina Wall — light-effects engine (single canvas, additive light, palette-aware)
+// AE Shinity — light-effects engine (single canvas, additive light, palette-aware)
 const TAU = Math.PI * 2;
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
