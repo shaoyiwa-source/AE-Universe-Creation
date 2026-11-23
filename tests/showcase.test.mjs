@@ -64,7 +64,7 @@ try {
   await page.waitForFunction(() => window.__lumina.state.music === 'eternal', null, { timeout: 45000 }).catch(() => {});
   await wait(1500);
   const a2 = await page.evaluate(() => ({ music: window.__lumina.state.music, cur: window.__lumina.state.curId, b: getComputedStyle(document.querySelector('.pl-slide.live .pl-media')).filter, controls: getComputedStyle(document.getElementById('controls')).display, t: window.__lumina.trackTime() }));
-  check('act 2: the theme track begins at the build, the painting at full light, still no buttons', a2.music === 'eternal' && a2.cur === 'ae16' && (a2.b === 'none' || a2.b === '') && a2.controls === 'none', JSON.stringify(a2));
+  check('act 2: the theme track begins at the build, the painting at full light, still no buttons', a2.music === 'eternal' && a2.cur === 'sc-infinity-nature' && (a2.b === 'none' || a2.b === '') && a2.controls === 'none', JSON.stringify(a2));
   await page.waitForFunction(() => window.__lumina.trackTime() > 66, null, { timeout: 20000 }).catch(() => {});
   await wait(600);
   const drop = await page.evaluate(() => ({ cur: window.__lumina.state.curId, laser: window.__lumina.state.laserMode, packs: window.__lumina.state.packs.map(p => p.id), t: +window.__lumina.trackTime().toFixed(2) }));

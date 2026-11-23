@@ -11,11 +11,11 @@
 // The track starts at its cue (58.3 s, like the homepage show): the title card, the end of the first build, and the
 // first drop about 6 seconds into act 2; then the whole arc follows and loops.
 //   0:00 intro: the signature work wakes up in heavenly light, the camera walks in from afar
-//   0:52 the first build: lasers gather on Marvellous Energy World
+//   0:52 the first build: lasers gather on the eyes of Infinity Nature
 //   1:05 drop: the dark works glow like neon — lasers on the brushwork, LED light around the painting, an orbiting camera
-//   1:38 a breath: love, soft light and ribbons
+//   1:38 a breath: Infinity Core, soft light and ribbons
 //   1:57 the second build, 2:09 the second drop
-//   2:40 the close: Love Embrace in calm light; then it begins again
+//   2:40 the close: Eternal Sunshine in calm golden light; then it begins again
 const DARK_LED = { layout: 'frame', around: 'work', pattern: 'rainbow', colors: 'painting', count: 46, size: 5, glow: 0.55, speed: 0.7, bright: 0.8, sound: true, stage: 'with' };
 
 export const SHOWCASES = {
@@ -25,17 +25,27 @@ export const SHOWCASES = {
     note: { zh: '外在沉靜，內在綻放', en: 'Outer Calm · Inner Bloom' },
     settings: {
       mode: 'dream', music: 'eternal', volume: 0.85, intensity: 4, advance: 'auto', transition: 'random', interval: 14,
-      effects: { innerbloom: true, lumiere: true, echo: true, breath: false, stardust: true, aurora: true, petals: false, lasers: false, neon: false },
+      effects: { innerbloom: true, lumiere: true, echo: true, breath: false, stardust: true, aurora: false, petals: false, lasers: false, neon: false },
       interact: { alive: true, tray: false, ripple: true, chime: false, lumi: false, seeds: true, cute: false, listen: false },
       display: { intro: true, captions: true, label: false, camera: false, mat: false, drift: false, shuffle: false, loop: true },
     },
+    // works chosen for this show (13th Aurelia), beside the built-in ones
+    works: [
+      { id: 'sc-heart', src: 'assets/showcase/heart.webp', title: { en: '', zh: '' } },
+      { id: 'sc-abundant-number', src: 'assets/showcase/abundant-number.webp', title: { en: 'Abundant Number', zh: '' } },
+      { id: 'sc-infinity-nature', src: 'assets/showcase/infinity-nature.webp', title: { en: 'Infinity Nature', zh: '' } },
+      { id: 'sc-infinity-core-flower', src: 'assets/showcase/infinity-core-flower.webp', title: { en: 'Infinity Core', zh: '' } },
+      { id: 'sc-love-energy', src: 'assets/showcase/love-energy.webp', title: { en: 'Love Energy', zh: '' } },
+      { id: 'sc-infinity-core-ribbons', src: 'assets/showcase/infinity-core-ribbons.webp', title: { en: 'Infinity Core', zh: '' } },
+      { id: 'sc-eternal-sunshine', src: 'assets/showcase/eternal-sunshine.webp', title: { en: 'Eternal Sunshine', zh: '' } },
+    ],
     // act 1: the room's sound plays the painting
     intro: {
       seconds: 40,
       hint: { zh: '對它說話、拍手、彈指 — 看它回應你', en: 'Speak, clap, snap — and watch it answer' },
       items: [
-        { id: 'ae07', duration: 20, fx: [{ id: 'laser', p: { colors: 'prism', hits: true, sun: true, bolts: true } }, { id: 'led', p: { layout: 'frame', around: 'work', pattern: 'meter', colors: 'rainbow', count: 40, size: 6, glow: 0.7, speed: 1, bright: 0.95, sound: true, stage: 'with' } }, { id: 'ribbons', p: { count: 4, color: 'rainbow' } }] },
-        { id: 'ae09', duration: 20, fx: [{ id: 'laser', p: { colors: 'prism', hits: true, sun: true, bolts: true } }, { id: 'led', p: { layout: 'frame', around: 'work', pattern: 'meter', colors: 'rainbow', count: 40, size: 6, glow: 0.7, speed: 1, bright: 0.95, sound: true, stage: 'with' } }, { id: 'wind', p: { strength: 0.6, petals: 14, color: 'painting' } }],
+        { id: 'sc-heart', duration: 20, fx: [{ id: 'laser', p: { colors: 'prism', hits: true, sun: true, bolts: true } }, { id: 'led', p: { layout: 'frame', around: 'work', pattern: 'meter', colors: 'rainbow', count: 40, size: 6, glow: 0.7, speed: 1, bright: 0.95, sound: true, stage: 'with' } }, { id: 'ribbons', p: { count: 4, color: 'rainbow' } }] },
+        { id: 'sc-abundant-number', duration: 20, fx: [{ id: 'laser', p: { colors: 'prism', hits: true, sun: true, bolts: true } }, { id: 'led', p: { layout: 'frame', around: 'work', pattern: 'meter', colors: 'rainbow', count: 40, size: 6, glow: 0.7, speed: 1, bright: 0.95, sound: true, stage: 'with' } }, { id: 'wind', p: { strength: 0.6, petals: 14, color: 'painting' } }],
           tr: { id: 'zoom', p: { glow: true } } },
       ],
     },
@@ -50,12 +60,12 @@ export const SHOWCASES = {
       // ---- intro ----
       { id: 'ae01', at: 0, fx: [{ id: 'light', p: { intensity: 0.75, rays: 6, tone: 'gold', sweep: true, every: 8 } }, { id: 'wind', p: { strength: 0.35, petals: 12, color: 'painting' } }],
         cam: { id: 'cam-approach', p: {} } },
-      { id: 'ae02', at: 17, fx: [{ id: 'ribbons', p: { count: 5, opacity: 0.8, color: 'painting' } }, { id: 'light', p: { intensity: 0.5, tone: 'white' } }],
+      { id: 'sc-infinity-core-flower', at: 17, fx: [{ id: 'ribbons', p: { count: 5, opacity: 0.8, color: 'painting' } }, { id: 'light', p: { intensity: 0.5, tone: 'white' } }],
         tr: { id: 'zoom', p: { glow: true } }, cam: { id: 'cam-gaze', p: {} } },
-      { id: 'ae20', at: 33, fx: [{ id: 'wind', p: { strength: 0.6, petals: 16, color: 'painting' } }, { id: 'ribbons', p: { count: 4, color: 'painting' } }],
+      { id: 'sc-love-energy', at: 33, fx: [{ id: 'wind', p: { strength: 0.6, petals: 16, color: 'painting' } }, { id: 'ribbons', p: { count: 4, color: 'painting' } }],
         tr: { id: 'fly', p: { depth: true } }, cam: { id: 'cam-tour', p: {} } },
       // ---- first build ----
-      { id: 'ae16', at: 51, fx: [{ id: 'laser', p: { colors: 'prism', sun: true } }, { id: 'light', p: { intensity: 0.45, sweep: true, every: 5 } }],
+      { id: 'sc-infinity-nature', at: 51, fx: [{ id: 'laser', p: { colors: 'prism', sun: true } }, { id: 'light', p: { intensity: 0.45, sweep: true, every: 5 } }],
         tr: { id: 'curtain', p: {} }, cam: { id: 'cam-gaze', p: {} } },
       // ---- first drop: the dark works glow ----
       { id: 'ae14', at: 61.2, fx: [{ id: 'laser', p: { colors: 'prism', sun: true, bolts: true, pools: true, beams: 8, power: 1 } }, { id: 'led', p: DARK_LED }, { id: 'ribbons', p: { count: 3, color: 'painting' } }],
@@ -63,7 +73,7 @@ export const SHOWCASES = {
       { id: 'ae22', at: 80, fx: [{ id: 'laser', p: { colors: 'prism', bolts: true } }, { id: 'led', p: { ...DARK_LED, pattern: 'chase' } }, { id: 'wind', p: { strength: 0.7, color: 'painting' } }],
         tr: { id: 'flip', p: {} }, cam: { id: 'cam-documentary', p: {} } },
       // ---- a breath ----
-      { id: 'ae12', at: 97, fx: [{ id: 'light', p: { intensity: 0.6, tone: 'gold', sweep: true } }, { id: 'ribbons', p: { count: 4, color: 'painting' } }],
+      { id: 'sc-infinity-core-ribbons', at: 97, fx: [{ id: 'light', p: { intensity: 0.6, tone: 'gold', sweep: true } }, { id: 'ribbons', p: { count: 4, color: 'painting' } }],
         tr: { id: 'fly', p: {} }, cam: { id: 'cam-approach', p: {} } },
       // ---- second build ----
       { id: 'ae08', at: 116, fx: [{ id: 'laser', p: { colors: 'prism', sun: true } }, { id: 'led', p: { ...DARK_LED, pattern: 'twinkle' } }],
@@ -74,7 +84,7 @@ export const SHOWCASES = {
       { id: 'ae13', at: 145, fx: [{ id: 'laser', p: { colors: 'painting', bolts: true } }, { id: 'ribbons', p: { count: 5, color: 'painting' } }],
         tr: { id: 'flip', p: {} }, cam: { id: 'cam-documentary', p: {} } },
       // ---- the close ----
-      { id: 'ae11', at: 161, fx: [{ id: 'light', p: { intensity: 0.7, tone: 'gold', rays: 7, sweep: true, every: 10 } }, { id: 'wind', p: { strength: 0.3, petals: 12, color: 'painting' } }],
+      { id: 'sc-eternal-sunshine', at: 161, fx: [{ id: 'light', p: { intensity: 0.7, tone: 'gold', rays: 7, sweep: true, every: 10 } }, { id: 'wind', p: { strength: 0.3, petals: 12, color: 'painting' } }],
         tr: { id: 'fly', p: { depth: true } }, cam: { id: 'cam-gaze', p: {} } },
     ],
   },

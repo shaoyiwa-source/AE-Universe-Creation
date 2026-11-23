@@ -120,7 +120,9 @@ async function loadPackages(list) {
 }
 async function loadCatalog() {
   if (SC) {
-    const byId = new Map(FALLBACK.map(w => [w.id, w]));
+    // the built-in works plus the works this showcase brings with it
+    const own = (SC.works || []).map((w, i) => ({ id: w.id, no: 100 + i, builtin: true, type: 'image', src: w.src, thumb: w.src, title: w.title || { en: '', zh: '' }, notitle: !(w.title && (w.title.en || w.title.zh)) }));
+    const byId = new Map([...FALLBACK, ...own].map(w => [w.id, w]));
     const all = [...(SC.intro ? SC.intro.items : []), ...SC.items];
     works = [...new Set(all.map(it => it.id))].map(id => byId.get(id)).filter(Boolean).map(normWork); tracks = []; cloud = 'showcase';
     const act = (scAct === 0 && SC.intro ? SC.intro.items : SC.items).map((it, i, a) => (it.at != null ? { ...it, duration: Math.max(4, ((a[i + 1] && a[i + 1].at != null ? a[i + 1].at : SC.trackLength || 180) - it.at) + 3) } : it));
@@ -1381,7 +1383,7 @@ function setCaption(work, i, rect) {
   const cap = $('#caption');
   cap.classList.add('off');
   clearTimeout(captionTimer);
-  if (!S.display.captions) return;
+  if (!S.display.captions || work.notitle) return; // a work without a title shows no caption (never a placeholder name)
   captionTimer = setTimeout(() => {
     $('#capTitle').textContent = titleOf(work);
     $('#capSub').textContent = subtitleOf(work);
