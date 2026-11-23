@@ -277,8 +277,8 @@ p{color:var(--quiet);opacity:1}
 .btn.ghost{background:transparent;color:var(--gold);border:1px solid #edcd7599}
 #bookBtn,#shopBtn,.lv-back{background:#090b0acc;border:1px solid #edcd7566;color:var(--gold);font-family:var(--fs-ui);letter-spacing:.06em;backdrop-filter:blur(8px)}
 #hud{background:linear-gradient(#090b0af2,#090b0a00)}
-.vi-brand img{height:26px;display:block}
-.vi-logo{width:min(220px,56vw);height:auto;margin:auto auto 6px!important;filter:drop-shadow(0 6px 22px #edcd7522)}
+.vi-brand img{height:20px;display:block}
+.vi-logo{width:min(120px,30vw);height:auto;margin:auto auto 6px!important;filter:drop-shadow(0 6px 22px #edcd7522)}
 #intro>.small:first-of-type{letter-spacing:.28em;font-size:11px}
 #snd{color:var(--gold)}
 
@@ -314,6 +314,7 @@ body.dc-on #level .bar{display:none}
 .dc-end-box{display:flex;flex-direction:column;gap:12px;align-items:stretch;width:min(300px,82vw);padding:22px 20px;border:1px solid #edcd7555;border-radius:16px;background:#12100c}
 .dc-end-box b{text-align:center;font:500 19px 'Cormorant Garamond','Noto Serif TC',serif;letter-spacing:.2em;color:#edcd75;margin-bottom:4px}
 .dc-end-box .btn{margin:0;width:100%}
+.dc-end-2{display:flex;gap:10px}.dc-end-2 .btn{flex:1;padding:11px 0}
 .dc-end-x{background:none;border:0;color:#f4f0e7aa;font-size:14px;padding:6px;letter-spacing:.1em}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap&text=%E5%B8%A5%E4%BB%95%E7%9B%B8%E4%BF%A5%E5%82%8C%E7%82%AE%E5%85%B5%E5%B0%87%E5%A3%AB%E8%B1%A1%E8%BB%8A%E9%A6%AC%E5%8C%85%E5%8D%92">
@@ -631,13 +632,13 @@ function scratchcard(l){const N=4;const wrap=document.createElement('div');wrap.
 function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮','傌','俥','相','仕','帥'],b:['','卒','包','馬','車','象','士','將']};const VAL=[0,6,15,8,12,20,30,60];
  const box=document.createElement('div');box.className='dc-wrap';$('#lvBody').appendChild(box);
  const st=document.createElement('div');st.className='dc-status';box.appendChild(st);
- const bar=document.createElement('div');bar.className='dc-bar';bar.innerHTML='<span class="dc-stat"></span><button class="dc-re">結束／重開</button>';box.insertBefore(bar,st);const sb=bar.querySelector('.dc-stat');{const lv=document.createElement('div');lv.className='dc-lvl';let won=0;try{won=+(LS.getItem('aeDcWinN2')||0)}catch(e){}const cur0=(()=>{try{return LS.getItem('aeDcLvl2')||'normal'}catch(e){return'normal'}})();[['easy','輕鬆'],['normal','普通'],['hard','高手']].forEach(([k,t])=>{const b=document.createElement('button');b.textContent=(k==='hard'&&!won?'🔒':'')+t;b.className=k===cur0?'on':'';b.onclick=()=>{if(busy)return;if(k==='hard'&&!won){toast('在「普通」贏一盤就能解鎖高手',1800);return}try{LS.setItem('aeDcLvl2',k);LS.removeItem('aeDcSave2')}catch(e){}tone(700,.1);startLevel(cur)};lv.appendChild(b)});bar.appendChild(lv)}
- {const ib=document.createElement('button');ib.className='btn ghost dc-inv';ib.textContent='邀請朋友';ib.onclick=inviteFriend;bar.appendChild(ib)}bar.querySelector('.dc-re').onclick=()=>{tone(500,.1);const ov=document.createElement('div');ov.className='dc-end';ov.innerHTML='<div class="dc-end-box"><b>這盤要怎麼辦？</b><button data-a="new" class="btn">重新開一局</button><button data-a="quit" class="btn ghost">結束，回美術館</button><button data-a="no" class="dc-end-x">繼續下</button></div>';document.body.appendChild(ov);
-  ov.onclick=e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a&&e.target!==ov)return;ov.remove();if(!a||a==='no')return;over=true;try{LS.removeItem('aeDcSave2')}catch(_){}try{track('dc_end',{a})}catch(_){}if(a==='new')startLevel(cur);else document.getElementById('lvBack').click()}};
+ const bar=document.createElement('div');bar.className='dc-bar';bar.innerHTML='<span class="dc-stat"></span><button class="dc-re">結束／投降</button>';box.insertBefore(bar,st);const sb=bar.querySelector('.dc-stat');{const lv=document.createElement('div');lv.className='dc-lvl';let won=0;try{won=+(LS.getItem('aeDcWinN2')||0)}catch(e){}const cur0=(()=>{try{return LS.getItem('aeDcLvl2')||'normal'}catch(e){return'normal'}})();[['easy','輕鬆'],['normal','普通'],['hard','高手']].forEach(([k,t])=>{const b=document.createElement('button');b.textContent=(k==='hard'&&!won?'🔒':'')+t;b.className=k===cur0?'on':'';b.onclick=()=>{if(busy)return;if(k==='hard'&&!won){toast('在「普通」贏一盤就能解鎖高手',1800);return}try{LS.setItem('aeDcLvl2',k);LS.removeItem('aeDcSave2')}catch(e){}tone(700,.1);startLevel(cur)};lv.appendChild(b)});bar.appendChild(lv)}
+ {const ib=document.createElement('button');ib.className='btn ghost dc-inv';ib.textContent='邀請朋友';ib.onclick=inviteFriend;bar.appendChild(ib)}bar.querySelector('.dc-re').onclick=()=>{tone(500,.1);const ov=document.createElement('div');ov.className='dc-end';const live=me&&!over;ov.innerHTML='<div class="dc-end-box"><b>這盤要怎麼辦？</b>'+(live?'<div class="dc-end-2"><button data-a="draw" class="btn ghost">求和</button><button data-a="resign" class="btn ghost">投降</button></div>':'')+(NET?'':'<button data-a="new" class="btn">重新開一局</button><button data-a="quit" class="btn ghost">結束，回美術館</button>')+'<button data-a="no" class="dc-end-x">繼續下</button></div>';document.body.appendChild(ov);
+  ov.onclick=e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a&&e.target!==ov)return;ov.remove();if(!a||a==='no')return;if(a==='resign'){doResign('你投降了，這盤算輸');return}if(a==='draw'){askDraw();return}over=true;try{LS.removeItem('aeDcSave2')}catch(_){}try{track('dc_end',{a})}catch(_){}if(a==='new')startLevel(cur);else document.getElementById('lvBack').click()}};
  const bd=document.createElement('div');bd.className='dc-board';box.appendChild(bd);
  const tray=document.createElement('div');tray.className='dc-tray dc-tray-me';box.appendChild(tray);const trayTop=document.createElement('div');trayTop.className='dc-tray dc-tray-ai';box.insertBefore(trayTop,bd);let lastCap=null;
  const NET=(typeof ON!=='undefined'&&ON.net)?ON.net():null;const role=NET?NET.role:null;let netRow=NET?NET.row:null,unwatch=null,applied=0,sent=new Set(),remoteNow=false,netQ=Promise.resolve();
- if(NET){bar.querySelector('.dc-re').style.display='none';bar.querySelector('.dc-inv').style.display='none';const lvE=bar.querySelector('.dc-lvl');if(lvE)lvE.style.display='none';setTimeout(()=>{const h=$('#lvHint');if(h)h.textContent='台灣暗棋：翻棋、大吃小、兵吃帥、炮隔子打。和朋友輪流下，把對方的棋吃光！'},0)}
+ if(NET){bar.querySelector('.dc-inv').style.display='none';const lvE=bar.querySelector('.dc-lvl');if(lvE)lvE.style.display='none';setTimeout(()=>{const h=$('#lvHint');if(h)h.textContent='台灣暗棋：翻棋、大吃小、兵吃帥、炮隔子打。和朋友輪流下，把對方的棋吃光！'},0)}
  const SK='aeDcSave2';let saved=null;if(!NET){try{saved=JSON.parse(LS.getItem(SK)||'null')}catch(e){}}if(saved&&(!saved.B||saved.B.length!==W*H))saved=null;
  const ARTS=Object.keys(CONFIG.art).filter(k=>/^wp\d+$/.test(k));let artK=NET&&netRow.state&&netRow.state.art?netRow.state.art:saved&&CONFIG.art[saved.art]?saved.art:null;if(!artK){let last=null;try{last=LS.getItem('aeDcArt2')}catch(e){}const pool=ARTS.filter(k=>k!==last);artK=pool[Math.random()*pool.length|0]||ARTS[0];try{LS.setItem('aeDcArt2',artK)}catch(e){}}
  const A=CONFIG.art[artK];bd.style.setProperty('--bg',`url(${A.board||A.wallpaper})`);l.wp=A.wallpaper;l.title=A.title;l.story=artStory(A);
@@ -661,7 +662,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
  const allMoves=c=>{const ms=[];B.forEach((p,i)=>{if(p&&p.up&&p.c===c)ms.push(...moves(i))});B.forEach((p,i)=>{if(p&&!p.up)ms.push({flip:i})});return ms};
  const threatened=(i,c,B2=B)=>{for(let k=0;k<B2.length;k++){const p=B2[k];if(!p||!p.up||p.c===c)continue;if(moves(k,B2).some(m=>m.t===i&&m.cap))return true}return false};
  const bestCap=(c,B2)=>{let v=0;B2.forEach((p,k)=>{if(p&&p.up&&p.c===c)moves(k,B2).forEach(m=>{if(m.cap)v=Math.max(v,VAL[m.cap.r])})});return v};
- const count=c=>B.filter(p=>p&&p.c===c).length;
+ const count=c=>B.filter(p=>p&&p.c===c).length;const valOf=c=>B.reduce((t,p)=>t+(p&&p.c===c?[0,1,2.5,3,3.5,4.5,5.5,7][p.r]:0),0);
  const upd=()=>{const mine=me?count(me):16,his=me?count(ai):16;sb.textContent=`勝 ${res}｜敗 ${lose}`;st.innerHTML=me?`<span class="${me==='r'?'dc-tr':'dc-tb'}">你：${me==='r'?'紅':'黑'} ${mine}</span><b>${over?'':turn==='me'?'輪到你':NET?'朋友思考中…':'電腦思考中…'}</b><span>${NET?'朋友':'電腦'} ${his}</span>`:NET?(turn==='me'?'<b>你先翻一顆棋，決定顏色</b>':(netRow.guest||role==='guest'?'<b>等朋友翻第一顆棋…</b>':'<b>等待朋友加入…</b>')):'<b>點一顆棋翻開，決定你的顏色</b>';prog(me?(16-his)/16:0);X.mine=mine};
  const wood=(f,v=.35,d=0)=>{const a=ac();if(!a||muted||FAST)return;f=f*1.7;const t=a.currentTime+d;const n=Math.floor(a.sampleRate*.025),buf=a.createBuffer(1,n,a.sampleRate),ch=buf.getChannelData(0);for(let k=0;k<n;k++)ch[k]=(Math.random()*2-1)*Math.pow(1-k/n,6);const src=a.createBufferSource();src.buffer=buf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f;bp.Q.value=6;const g=a.createGain();g.gain.value=v*2.2;src.connect(bp);bp.connect(g);const o=a.createOscillator(),og=a.createGain();o.frequency.setValueAtTime(f*.32,t);o.frequency.exponentialRampToValueAtTime(f*.22,t+.08);og.gain.setValueAtTime(v*.5,t);og.gain.exponentialRampToValueAtTime(.0001,t+.09);o.connect(og);[g,og].forEach(x=>{x.connect(a.destination);if(recDest)x.connect(recDest)});src.start(t);o.start(t);o.stop(t+.1)};
  ['dc_sel','dc_pick','dc_land','dc_place','dc_cap','dc_boom','win'].forEach(loadSfx);const ps=(n,v)=>{if(!FAST)playSfx(n,v)};
@@ -681,7 +682,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
   if(mineN===0||(turn==='me'&&!meHas)){finish(false);return true}
   const KO=12;if(16-hisN>=KO){toast(`吃掉對方 ${KO} 子，勝負已定！`,1800);finish(true);return true}
   if(16-mineN>=KO){toast(`${NET?'對方':'電腦'}吃掉你 ${KO} 子，這盤輸了`,1800);finish(false);return true}
-  const QL=20,val=c=>B.reduce((t,p)=>t+(p&&p.c===c?[0,1,2.5,3,3.5,4.5,5.5,7][p.r]:0),0);
+  const QL=20,val=valOf;
   if(quiet>=QL){const a=val(me),b=val(ai);toast(a===b?`連續 ${QL} 步沒吃子，子力相同，和局`:`連續 ${QL} 步沒吃子，比子力：${a>b?'你贏':(NET?'對方贏':'電腦贏')}（${a} 比 ${b}）`,2400);finish(a===b?null:a>b);return true}
   if(quiet>=QL-5&&quiet<QL)toast(`再 ${QL-quiet} 步沒吃子就比子力定勝負`,1300);
   return false}
@@ -723,20 +724,25 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
    ms.forEach(m=>{const d=document.createElement('div');d.className='dc-dot'+(m.cap?' dc-capdot':'');d.style.left=(m.t%W)*25+'%';d.style.top=(m.t/W|0)*12.5+'%';bd.appendChild(d)});return}
   clearSel()};
  function netSend(mv){const st=netRow.state||{};const ms=(st.moves||[]).concat([{...mv,by:role}]);sent.add(ms.length-1);applied=ms.length;netRow.state={...st,moves:ms};NET.push(netRow.state)}
- async function netApply(row){netRow={...netRow,...row};const ms=(row.state&&row.state.moves)||[];if(ms.length-applied>2){FAST=true;bd.classList.add('dc-fast')}try{while(applied<ms.length){const idx=applied++,mv=ms[idx];if(sent.has(idx))continue;const mine=mv.by===role;remoteNow=!mine;const m=mv.flip!==undefined?{flip:mv.flip}:{f:mv.f,t:mv.t,cap:B[mv.t]||null};await play(m);remoteNow=false;turn=mine?'ai':'me';upd();if(checkEnd())return}}finally{if(FAST){FAST=false;requestAnimationFrame(()=>bd.classList.remove('dc-fast'))}}upd()}
+ async function netApply(row){netRow={...netRow,...row};const ms=(row.state&&row.state.moves)||[];if(ms.length-applied>2){FAST=true;bd.classList.add('dc-fast')}try{while(applied<ms.length){const idx=applied++,mv=ms[idx];if(sent.has(idx))continue;const mine=mv.by===role;if(mv.act){if(over)continue;if(mv.act==='resign'){toast(mine?'你投降了':'對方投降，你贏了！',2000);finish(!mine);return}if(mv.act==='drawYes'){toast('雙方同意，和局',1800);finish(null);return}if(mv.act==='drawNo'&&!mine)toast('對方不同意和局，繼續下',1800);if(mv.act==='drawOffer'&&!mine&&!ms.slice(idx+1).some(x=>x.act==='drawYes'||x.act==='drawNo'))drawPrompt();continue}remoteNow=!mine;const m=mv.flip!==undefined?{flip:mv.flip}:{f:mv.f,t:mv.t,cap:B[mv.t]||null};await play(m);remoteNow=false;turn=mine?'ai':'me';upd();if(checkEnd())return}}finally{if(FAST){FAST=false;requestAnimationFrame(()=>bd.classList.remove('dc-fast'))}}upd()}
  if(NET){try{window.__dcUnwatch&&window.__dcUnwatch()}catch(e){}unwatch=NET.watch(row=>{netQ=netQ.then(()=>netApply(row)).catch(()=>{})});if(netRow.state&&netRow.state.moves&&netRow.state.moves.length){netQ=netQ.then(()=>netApply(netRow))}window.__dcUnwatch=unwatch}
  window.__dc={auto:async()=>{if(busy||over||turn!=='me')return false;const m=aiPick(me||'r');if(!m)return false;await play(m);turn='ai';if(!checkEnd())await aiTurn();return true},endWin:()=>{if(!over){if(!me){me='r';ai='b'}finish(true)}},state:()=>({over,turn,me,role,applied}),bench:()=>{const t=performance.now();const m=smartPick(ai);return [performance.now()-t,!!m]},legal:()=>me?allMoves(me).filter(m=>m.f!==undefined).map(m=>({f:m.f,t:m.t,cap:!!m.cap})):[]};
  const tmRow=document.createElement('div');tmRow.className='dc-tmrow';const tmEl=document.createElement('div');tmEl.className='dc-timer';tmEl.innerHTML='<i></i><b></b>';tmRow.appendChild(tmEl);bd.parentNode.insertBefore(tmRow,bd);
- let tmDl=0,tmLast='',tmTick=-1;const TL=20000;
+ let tmDl=0,tmLast='',tmTick=-1,tmOut=0;const TL=20000;
  const tmIv=setInterval(()=>{if(!document.body.contains(bd)){clearInterval(tmIv);BGM.stop();return}if(muted&&BGM.src)BGM.stop();else if(!muted&&BGM.on&&!BGM.src&&document.body.classList.contains('dc-on'))BGM.start();
   const k=turn+(busy?'b':'')+over;if(over||turn!=='me'){tmEl.classList.remove('on','hot');tmLast=k;return}
   if(!tmLast.startsWith('me')||tmLast.includes('true')){tmDl=Date.now()+TL;tmTick=-1;if(tmLast&&!FAST&&!over)turnBanner()}tmLast=k;if(busy){tmDl=Math.max(tmDl,Date.now()+1500)}
   const left=Math.max(0,tmDl-Date.now()),sec=Math.ceil(left/1000);tmEl.classList.add('on');tmEl.classList.toggle('hot',sec<=5);
   tmEl.querySelector('i').style.transform=`scaleX(${left/TL})`;tmEl.querySelector('b').textContent=sec+' 秒';
   if(sec<=5&&sec>0&&sec!==tmTick){tmTick=sec;sfx.pick()}
-  if(left<=0&&!busy){const m=aiPick(me||'r');if(!m)return;toast('時間到，自動幫你下一步',1200);humanDo(m)}},200);timers.push(tmIv);
+  if(left<=0&&!busy){tmOut++;if(tmOut>=3){tmDl=Date.now()+TL;doResign('超時第 3 次，這盤判負');return}const m=aiPick(me||'r');if(!m)return;toast(`超時第 ${tmOut} 次，自動幫你下一步（第 3 次判負）`,2000);humanDo(m)}},200);timers.push(tmIv);
  {const mb=document.createElement('button');mb.className='dc-mus';const lab=()=>mb.textContent=BGM.on?'♪ 音樂開':'♪ 音樂關';lab();mb.onclick=e=>{e.stopPropagation();BGM.toggle();lab()};tmRow.appendChild(mb)}
  BGM.start();
+ function doResign(msg){if(over)return;if(NET)netSend({act:'resign'});toast(msg,2000);finish(false)}
+ function askDraw(){if(over||!me)return;if(NET){netSend({act:'drawOffer'});toast('已向對方提出和局，等對方回覆',2000);return}
+  const d=valOf(ai)-valOf(me),hid=B.filter(p=>p&&!p.up).length;
+  if(d<=1.5&&hid<=6){toast('電腦同意和局',1800);finish(null)}else toast(d>1.5?'電腦覺得自己佔優勢，不同意和局':'還有很多棋沒翻，電腦想再下下看',2000)}
+ function drawPrompt(){const ov=document.createElement('div');ov.className='dc-end';ov.innerHTML='<div class="dc-end-box"><b>對方提出和局</b><button data-a="yes" class="btn">同意和局</button><button data-a="no" class="btn ghost">繼續下</button></div>';document.body.appendChild(ov);ov.onclick=e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a)return;ov.remove();if(over)return;if(a==='yes'){netSend({act:'drawYes'});toast('雙方同意，和局',1800);finish(null)}else netSend({act:'drawNo'})}}
  function turnBanner(){const t=document.createElement('div');t.className='dc-turn';t.innerHTML='<b>輪到你</b>';bd.appendChild(t);setTimeout(()=>t.remove(),1100)}
  async function rps(){busy=true;const H=['✊','✌️','✋'],N=['石頭','剪刀','布'];const ov=document.createElement('div');ov.className='dc-rps';ov.innerHTML='<div class="dc-rps-t">猜拳決定先後</div><div class="dc-rps-row"><div><i id="rpsA">✊</i><span>你</span></div><em>VS</em><div><i id="rpsB">✊</i><span>電腦</span></div></div><div class="dc-rps-r"></div>';document.body.appendChild(ov);
   let a,b;do{a=Math.random()*3|0;b=Math.random()*3|0}while(a===b);
