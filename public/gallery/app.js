@@ -907,7 +907,8 @@ packs.beatFn = () => {
   if (listener.on && performance.now() / 1000 - (roomBeat.rawAt || -9) < 2.5) return { live: true, room: true, pulse: Math.exp(-(performance.now() / 1000 - roomBeat.rawAt) / 0.11), count: roomBeat.count, stage: 'groove', energy: roomBeat.level, ...hit() };
   return { live: false, quiet: true, pulse: 0, count: 0, ...hit() };
 };
-packs.chimeFn = (k, i) => (k === 'glow' ? sound.glowChime() : k === 'coin' ? sound.coinChime(i) : sound.zapChime(i)); // one-tap effect sounds
+let chimeSpy = null;
+packs.chimeFn = (k, i) => { if (chimeSpy) chimeSpy(k); return k === 'glow' ? sound.glowChime() : k === 'coin' ? sound.coinChime(i) : sound.zapChime(i); }; // one-tap effect sounds
 let camT = 0; // camera clock while arranging in God mode (loops the work's duration)
 let list = [], idx = 0, cur = 0, ambCur = 0, curDur = 10, curItem = null;
 let playing = false, busy = false, pending = null, elapsed = 0, shown = false;
@@ -1416,6 +1417,8 @@ function setPaused(p) {
   player.classList.toggle('paused', p);
   $('#pauseBtn').setAttribute('aria-label', p ? 'Play' : 'Pause');
   const v = mediaOf(cur); if (v.tagName === 'VIDEO') { if (p) v.pause(); else v.play().catch(() => {}); }
+  // a showcase follows its soundtrack: pausing the show pauses the music too (and the show resumes with it)
+  if (SC && sound.customEl && !player.classList.contains('muted')) { if (p) sound.customEl.pause(); else sound.customEl.play().catch(() => {}); }
 }
 
 // ---------- R6: record a moving clip (IG / FB / live wallpaper) ----------
@@ -2080,6 +2083,7 @@ async function showcaseBoot() {
   try { SC = (await import('./showcase.js')).SHOWCASES[SHOW_ID] || null; } catch { SC = null; }
   if (!SC) { location.replace(location.pathname); return; }
   document.documentElement.classList.add('licensed', 'showcase');
+  packs.quiet = true; // only the soundtrack is heard: light effects never add their own sounds over it
   const st = SC.settings; // AE's settings, every time (a visitor's earlier changes never stay)
   for (const k of ['mode', 'transition', 'interval', 'music', 'volume', 'advance', 'intensity']) if (k in st) S[k] = st[k];
   for (const k of ['effects', 'interact', 'display']) if (st[k]) S[k] = { ...DEFAULTS[k], ...st[k] };
@@ -2110,6 +2114,9 @@ async function showcaseAct2() {
   await loadCatalog();
   const { l } = buildList(null); list = l; elapsed = 0; buildStrip();
   idx = 0; SC.items.forEach((it, i) => { if (it.at != null && (SC.startAt || 0) >= it.at) idx = i; }); // open on the work the music starts in
+  // the stage show is driven by its own soundtrack: the microphone closes (on iPhone/iPad an open microphone switches
+  // the audio hardware and makes the music run fast and high)
+  if (listener.on || listener.starting) { S.interact.listen = false; stopListening(); }
   S.music = SC.settings.music; S.display.intro = !!(SC.settings.display || {}).intro;
   if (S.display.intro) await playIntro(); // the title card opens the stage show
   startMusic();
@@ -2179,6 +2186,6 @@ function exposeHooks() {
     get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', laserMode: packs.laserMode || null, hits: { count: listener.hitCount || 0, times: listener.hitTimes ? listener.hitTimes.slice(-24) : [], flashes: packs.laserHits || 0, led: packs.ledHits || 0 }, lock: { locked: !!roomBeat.locked, bpm: +(roomBeat.bpm || 0).toFixed(1), beats: roomBeat.lockCount || 0, emitted: listener.lock ? listener.lock.emitted.slice(-24) : [], onsets: listener.lock ? listener.lock.onsets.slice(-16) : [] }, bursts: (packs.bursts || []).length, music: sound.preset, packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
     beat: () => sound.beat(), beatClock: () => sound.lastBeatClock, setLatency: (v) => { if (sound.ctx) Object.defineProperty(sound.ctx, 'outputLatency', { configurable: true, get: () => v }); }, trackTime: () => (sound.customEl ? sound.customEl.currentTime : 0),
     registerOld: () => { try { registerPack({ ...PACKS.get('firefly'), version: 1 }); } catch { /* ignore */ } return PACKS.get('firefly') ? PACKS.get('firefly').version : 0; },
-    rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); }, checkLicence, licence: () => LIC, licState: () => ({ offline: licOffline, blocked: licBlocked, okAt: licOkAt }),
+    rec, enterLowPower, packsList: () => [...PACKS.values()].map(p => ({ id: p.id, type: p.type })), aliveAt: (x, y) => alive.aliveAt(x, y), aliveRect: () => alive.rect, simulateFps: (f, secs) => { for (let k = 0; k < f * secs; k++) trackFps(1 / f); }, go, jump, openPlayer, closePlayer, reload: async () => { await loadCatalog(); renderAll(); }, checkLicence, chimeHook: (fn) => { chimeSpy = fn; }, licence: () => LIC, licState: () => ({ offline: licOffline, blocked: licBlocked, okAt: licOkAt }),
   };
 }

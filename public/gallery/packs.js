@@ -106,7 +106,7 @@ export class PackHost {
   colorAt(x, y) { return this.alive.colorOf(x, y); }
   flowAt(x, y) { return this.alive.dirAt(x, y); }
   livingPoint() { return this.alive.livingPoint(); }
-  chime(kind, i = 0) { try { this.chimeFn && this.chimeFn(kind, i); } catch { /* sound is optional */ } }
+  chime(kind, i = 0) { if (this.quiet) return; try { this.chimeFn && this.chimeFn(kind, i); } catch { /* sound is optional */ } } // quiet: a show whose soundtrack must stay pure
   // one-tap effects (burst packages): play once and end
   fire(id) {
     const pk = PACKS.get(id); if (!pk || pk.type !== 'burst' || !this.rect) return false;

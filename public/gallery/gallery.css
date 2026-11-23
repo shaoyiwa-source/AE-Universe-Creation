@@ -618,9 +618,8 @@ html.licensed body{background:#050806}
 .lw-player.lights-only{background:#000}
 
 /* showcase: the finished show only — no buttons, no settings, no progress bar; the work, its light and its sound */
-html.showcase .pl-controls,html.showcase .pl-tray,html.showcase .pl-progress,html.showcase #micDot,html.showcase .pl-strip,html.showcase #godPanel{display:none!important}
-html.showcase .lw-player{cursor:none}
-html.showcase .lw-player.alivehover{cursor:grab}
+/* showcase: the controls appear when you touch or move (pause, music, settings) and step away again; the rest stays hidden */
+html.showcase .pl-tray,html.showcase .pl-progress,html.showcase .pl-strip,html.showcase #godPanel,html.showcase #godBtn,html.showcase #prevBtn,html.showcase #nextBtn,html.showcase #stripBtn,html.showcase #trayBtn,html.showcase #closeBtn{display:none!important}
 /* showcase act 1: the room's sound drives the light of the painting itself (brightness, colour, contrast — never its shape) */
 html.showcase .lw-player.sc-listen .pl-media{filter:brightness(var(--sc-b,.3)) saturate(var(--sc-s,.55)) contrast(var(--sc-c,.8))}
 /* showcase: a warm, dark gallery wall instead of a colour fog — the framed work is the light in the room */
