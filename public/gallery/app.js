@@ -80,6 +80,7 @@ sound.setVolume(S.volume);
 // ---------- toast ----------
 let toastTimer;
 function toast(msg, ms = 3400) {
+  if (SC) return; // a showcase never shows system messages
   const el = $('#toast');
   el.textContent = msg; el.hidden = false;
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
@@ -919,6 +920,8 @@ const dims = (el) => el.tagName === 'VIDEO' ? [el.videoWidth, el.videoHeight] : 
 function fitRect(nw, nh) {
   const W = stage.clientWidth, H = stage.clientHeight;
   const pad = S.display.mat ? Math.max(12, Math.min(64, Math.min(W, H) * (Math.min(W, H) < 600 ? 0.035 : 0.05))) : 0;
+  const hang = SC && SC.hang ? Math.min(W, H) * SC.hang : 0; // a showcase that hangs works in frames leaves room for the frame and its picture light
+  if (hang) { const s0 = Math.min((W - hang * 2) / nw, (H - hang * 2.2) / nh); const w0 = nw * s0, h0 = nh * s0; return { x: (W - w0) / 2, y: (H - h0) / 2 + hang * 0.2, w: w0, h: h0 }; }
   let s = Math.min((W - pad * 2) / nw, (H - pad * 2) / nh);
   // R9: a wide work on a wide screen leaves no room beside or below it, so the title would sit on the painting.
   // Give up a little size (at most ~16%) to free a calm strip below for the title; otherwise keep the full size.
@@ -1308,6 +1311,7 @@ async function show(i) {
   const ok = await loadInto(nextSlot, work);
   if (!ok) { busy = false; if (list.length > 1) { list.splice(i, 1); idx = i % list.length; buildStrip(); return show(idx); } return; }
   const r = placeSlide(nextSlot);
+  packs.glideTo(r); // frames and LEDs that carry on move to the new work as it arrives
   const media = mediaOf(nextSlot);
   curItem = itemOf(work.id);
   curDur = (curItem && curItem.duration) || S.interval;
@@ -1375,7 +1379,8 @@ function positionCaption(r) {
   const minBottom = narrow ? 88 : 22;
   cap.style.left = ''; cap.style.bottom = ''; cap.style.maxWidth = ''; cap.classList.remove('over', 'side');
   const capH = cap.offsetHeight || 90;
-  const below = H - (r.y + r.h), left = r.x;
+  const fp = SC && SC.hang ? Math.min(r.w, r.h) * 0.05 + 12 : 0; // a framed work: keep clear of the frame and its shadow
+  const below = H - (r.y + r.h) - fp, left = r.x - fp;
   if (below >= capH + minBottom + 8) {
     cap.style.left = Math.max(16, r.x) + 'px';
     cap.style.maxWidth = Math.max(220, Math.min(r.w, W - 32)) + 'px';
@@ -1386,6 +1391,7 @@ function positionCaption(r) {
     cap.style.maxWidth = (left - Math.max(20, left * 0.12) - 28) + 'px';
     cap.style.bottom = Math.max(minBottom, H - (r.y + r.h)) + 'px';
   } else cap.classList.add('over');
+  if (fp && cap.classList.contains('side')) { const room = parseFloat(cap.style.maxWidth) || 200; cap.style.setProperty('--cap-fit', Math.max(0.6, Math.min(1, room / 300)).toFixed(2)); } // a long title shrinks to fit beside the frame
 }
 
 function setCaption(work, i, rect) {

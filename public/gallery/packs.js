@@ -74,7 +74,20 @@ export class PackHost {
   }
   get W() { return this.alive.W; }
   get H() { return this.alive.H; }
-  get rect() { return this.alive.rect; }
+  // the work's place on screen; when the work changes, light that stays (frames, LEDs) glides to the new place
+  get rect() {
+    const to = this.alive.rect, g = this.glide;
+    if (!g || !to) return to;
+    const q = Math.min(1, (performance.now() - g.at) / g.ms), e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+    if (q >= 1) { // arrived: hold the new place until the player itself has moved there (the transition may still run)
+      const T = g.to || to;
+      if (Math.abs(to.x - T.x) + Math.abs(to.y - T.y) + Math.abs(to.w - T.w) + Math.abs(to.h - T.h) < 2) this.glide = null;
+      return { ...T };
+    }
+    const T = g.to || to;
+    return { x: g.from.x + (T.x - g.from.x) * e, y: g.from.y + (T.y - g.from.y) * e, w: g.from.w + (T.w - g.from.w) * e, h: g.from.h + (T.h - g.from.h) * e };
+  }
+  glideTo(r, ms = 1200) { const from = this.rect; if (from && r) this.glide = { from: { ...from }, to: { ...r }, at: performance.now(), ms }; }
   get front() { return this.alive.fx; }
   get back() { return this.alive.bx; }
   // a layer above the work that the camera never moves (screen-fixed light such as LED strips); made on first use

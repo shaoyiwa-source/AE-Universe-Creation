@@ -623,3 +623,9 @@ html.showcase .lw-player{cursor:none}
 html.showcase .lw-player.alivehover{cursor:grab}
 /* showcase act 1: the room's sound drives the light of the painting itself (brightness, colour, contrast — never its shape) */
 html.showcase .lw-player.sc-listen .pl-media{filter:brightness(var(--sc-b,.3)) saturate(var(--sc-s,.55)) contrast(var(--sc-c,.8))}
+/* showcase: a warm, dark gallery wall instead of a colour fog — the framed work is the light in the room */
+html.showcase .lw-player{background:#0c0907}
+html.showcase .pl-amb{filter:blur(72px) saturate(.35) brightness(.2)!important}
+html.showcase .pl-ambient::after{background:radial-gradient(ellipse 70% 60% at 50% 42%,rgba(120,84,46,.22),rgba(28,20,13,.55) 70%,rgba(8,6,4,.85) 100%)} /* the wall stays behind the work (no stacking above it) */
+html.showcase .pl-caption-meta,html.showcase #capTitle{white-space:nowrap}
+html.showcase .pl-caption.side #capTitle{font-size:calc(clamp(26px,3.4vw,46px) * var(--cap-fit,1))}
