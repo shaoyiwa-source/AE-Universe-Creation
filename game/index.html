@@ -257,7 +257,7 @@ body.museum #g2{border-color:#c9a45c44}
 @keyframes dcdrop{0%{transform:rotateX(180deg) translateZ(20px) scale(1.08);animation-timing-function:cubic-bezier(.55,0,1,.45)}34%{transform:rotateX(180deg) translateZ(0) scale(1)}52%{transform:rotateX(180deg) scale(1.025,.965)}75%{transform:rotateX(180deg) scale(.995,1.008)}100%{transform:rotateX(180deg) scale(1)}}
 .dc-p.dc-drop .dc-sh{transition:transform .08s,opacity .08s}
 /* ==== 精品手工木棋 ==== */
-.dc-back,.dc-face{background:var(--w,url(img/dc_w0.png)) center/100% 100% no-repeat!important}
+.dc-back{background:var(--bk,url(img/dc_w0.png)) center/100% 100% no-repeat!important}.dc-face{background:var(--fc,url(img/dc_w0.png)) center/100% 100% no-repeat!important}
 .dc-back,.dc-face{box-shadow:0 1px 0 #c8955a,0 2px 0 #bf8a4f,0 3px 0 #b47f46,0 4px 0 #a8733d,0 5px 0 #9b6834,0 6px 0 #8d5c2c,0 7px 0 #7c4f25,0 7px 0 1px #5a361866,0 10px 12px #120802aa!important}
 .dc-face::before{inset:11%!important;border:2px solid currentColor!important;opacity:.85!important;box-shadow:0 1px 0 #fff4,inset 0 1px 0 #0005;mix-blend-mode:multiply}
 .dc-face span{font-family:"Noto Serif TC","PMingLiU",serif;font-weight:900;mix-blend-mode:multiply;text-shadow:0 1px 0 #ffe9c088,0 -1px 0 #0004!important}
@@ -343,6 +343,25 @@ body.art-on #stars{opacity:0;transition:opacity .4s}
 .dc-stat span{white-space:nowrap;font-size:12px}
 .dc-re{padding:5px 12px!important;font-size:12px!important}
 .dc-lvl button{padding:4px 9px!important;font-size:12px!important}
+
+/* 棋子造型 */
+body[data-skin=art] .dc-back,body[data-skin=art] .dc-face{box-shadow:0 1px 0 #e9dfc8,0 2px 0 #e2d6bb,0 3px 0 #d8caa9,0 4px 0 #cbbb96,0 5px 0 #bba984,0 6px 0 #a99572,0 7px 0 #8f7b5a,0 10px 12px #120802aa!important}
+body[data-skin=art] .dc-ed{background:radial-gradient(circle,#e8dcc2 0 60%,#bba984 80%,#8f7b5a)!important}
+body[data-skin=neon] .dc-back,body[data-skin=neon] .dc-face{box-shadow:0 1px 0 #2a2633,0 2px 0 #24202c,0 3px 0 #1e1a25,0 4px 0 #19161f,0 5px 0 #141118,0 6px 0 #0f0d12,0 7px 0 #0a090c,0 0 14px #5effb355,0 10px 12px #000c!important}
+body[data-skin=neon] .dc-ed{background:#15121a!important}
+body[data-skin=neon] .dc-face span,body[data-skin=neon] .dc-face::before{mix-blend-mode:normal!important}
+body[data-skin=neon] .dc-face.dc-red{color:#ff5fa2;text-shadow:0 0 6px #ff5fa2,0 0 14px #ff5fa299!important}
+body[data-skin=neon] .dc-face.dc-blk{color:#7dffb3;text-shadow:0 0 6px #7dffb3,0 0 14px #7dffb399!important}
+body[data-skin=neon] .dc-face::before{box-shadow:0 0 8px currentColor!important}
+body[data-skin=jade] .dc-back,body[data-skin=jade] .dc-face{box-shadow:0 1px 0 #7fc7a2,0 2px 0 #72bb95,0 3px 0 #66ae88,0 4px 0 #59a17b,0 5px 0 #4d946e,0 6px 0 #418761,0 7px 0 #357a55,0 10px 12px #04140caa!important}
+body[data-skin=jade] .dc-ed{background:radial-gradient(circle,#7fc7a2 0 60%,#4d946e 80%,#357a55)!important}
+body[data-skin=jade] .dc-face.dc-red{color:#7a0f12}body[data-skin=jade] .dc-face.dc-blk{color:#0b2a1c}
+.sk-box{width:min(340px,90vw)!important}.sk-box small{text-align:center;font-size:11px;letter-spacing:.25em;color:#f4f0e7aa}
+.sk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sk{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:1px solid #edcd7533;border-radius:12px;background:#ffffff06;color:#f4f0e7}
+.sk.on{border-color:#edcd75;box-shadow:0 0 16px #edcd7533}.sk img{width:62px;height:62px;filter:drop-shadow(0 5px 6px #000a)}
+.sk b{font-size:14px;font-weight:600;color:#edcd75}.sk i{font-style:normal;font-size:11px;line-height:1.4;color:#f4f0e7aa;text-align:center}
+.sk.lock img{filter:grayscale(1) brightness(.5)}.sk.lock b{color:#f4f0e788}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap&text=%E5%B8%A5%E4%BB%95%E7%9B%B8%E4%BF%A5%E5%82%8C%E7%82%AE%E5%85%B5%E5%B0%87%E5%A3%AB%E8%B1%A1%E8%BB%8A%E9%A6%AC%E5%8C%85%E5%8D%92">
 </head>
@@ -489,6 +508,19 @@ function bell(f,when,level=.1,decay=2.6){if(CURI!=='bell'){voice(CURI,f,when,lev
 function tone(f,d=.25,type="sine",v=.18,delay=0){const a=ac();if(!a||muted||!isFinite(f))return;if(BUS){let ff=f;while(ff<240)ff*=2;while(ff>2100)ff/=2;bell(snapP(ff),a.currentTime+delay,Math.min(.16,v*.75),Math.max(.7,Math.min(2.8,d*5)));return}if(type==="square"||type==="sawtooth"){type="triangle";v*=1.3;if(f<260)f*=1.5}const t=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);if(recDest)g.connect(recDest);o.start(t);o.stop(t+d+.05)}
 const SCALE=[523,587,659,784,880,1047,1175,1319,1568,1760];
 function chime(){const a=ac();if(!a)return;const t=a.currentTime+.01;[72,79,84].forEach((m,i)=>voice('bell',440*Math.pow(2,(m-69)/12),t+i*.09,.1,3))}
+const SKIN={K:'aeDcSkin1',L:[
+ {id:'wood',n:'手工木',d:'六種木紋，每顆都不一樣',need:0,bk:i=>`dc_w${(i*7+3)%6}`,fc:i=>`dc_w${(i*7+3)%6}`,pv:'dc_w2'},
+ {id:'art',n:'畫作棋背',d:'棋背是 AE 原作的局部，正面象牙白',need:0,bk:i=>`dc_art${(i*5+1)%8}`,fc:()=> 'dc_ivory',pv:'dc_art2'},
+ {id:'neon',n:'螢光夜光',d:'黑漆棋面、螢光刻字，背面是發光漩渦',need:100,bk:()=> 'dc_neonb',fc:()=> 'dc_neon',pv:'dc_neonb'},
+ {id:'jade',n:'青玉',d:'溫潤的青玉，帶天然雲紋',need:250,bk:i=>`dc_jade${i%3}`,fc:i=>`dc_jade${(i+1)%3}`,pv:'dc_jade1'}],
+ all:(()=>{try{return new URLSearchParams(location.search).get('skins')==='all'}catch(e){return false}})(),
+ cur(){let c='wood';try{c=LS.getItem(this.K)||'wood'}catch(e){}const sk=this.L.find(x=>x.id===c)||this.L[0];return this.ok(sk)?sk:this.L[0]},
+ ok(sk){return this.all||(typeof RANK!=='undefined'?RANK.get().pts:0)>=sk.need},
+ apply(el,i){const sk=this.cur();el.style.setProperty('--bk',`url(img/${sk.bk(i)}.png)`);el.style.setProperty('--fc',`url(img/${sk.fc(i)}.png)`);document.body.dataset.skin=sk.id},
+ refresh(){document.querySelectorAll('.dc-p').forEach(el=>this.apply(el,+el.dataset.k||0))},
+ pick(){const cur=this.cur().id,pts=RANK.get().pts;const ov=document.createElement('div');ov.className='dc-end';
+  ov.innerHTML=`<div class="dc-end-box sk-box"><small>暗畫棋・棋子造型</small><div class="sk-grid">${this.L.map(sk=>{const ok=this.ok(sk);return `<button class="sk ${sk.id===cur?'on':''} ${ok?'':'lock'}" data-id="${sk.id}"><img src="img/${sk.pv}.png" alt=""><b>${sk.n}</b><i>${ok?sk.d:`${RANK.level(sk.need).name}（${sk.need} 分）解鎖・還差 ${sk.need-pts} 分`}</i></button>`}).join('')}</div><button class="btn ghost" data-x="1">關閉</button></div>`;
+  document.body.appendChild(ov);ov.onclick=e=>{const b=e.target.closest('.sk');if(b){const sk=this.L.find(x=>x.id===b.dataset.id);if(!this.ok(sk)){toast(`升到「${RANK.level(sk.need).name}」就能用`,1800);return}try{LS.setItem(this.K,sk.id)}catch(_){}this.refresh();tone(760,.12);ov.remove();toast(`已換成「${sk.n}」`,1300);return}if(e.target===ov||e.target.dataset.x)ov.remove()}}};
 const RANK={K:'aeRank1',LV:[[0,'素描學徒'],[100,'淡彩畫者'],[250,'水彩畫家'],[500,'油彩名家'],[900,'光彩大師'],[1500,'宇宙畫聖']],
  get(){let r=null;try{r=JSON.parse(LS.getItem(this.K)||'null')}catch(e){}if(!r){let w=0,l=0;try{w=+LS.getItem('aeDcWin2')||0;l=+LS.getItem('aeDcLose2')||0}catch(e){}r={w,l,d:0,ow:0,ol:0,od:0,pts:w*20}}return r},
  save(r){try{LS.setItem(this.K,JSON.stringify(r))}catch(e){}},
@@ -690,7 +722,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
  const reveal=()=>{let n=0;cells.forEach((c,i)=>{const o=!B[i];c.classList.toggle('dc-open',o);if(o)n++});const pc=Math.round(n/(W*H)*100);artLine.textContent=n?`已揭開 ${pc}%・《${A.title}》`:`下完這盤，就能揭開一幅畫（畫冊 ${getAlb().length}/8）`};const unsave=()=>{try{LS.removeItem(SK)}catch(e){}};
  const drawTray=()=>{const who=NET?'朋友':'電腦';if(!me){trayTop.innerHTML=`<span class="dc-tl">你吃掉的</span><em>還沒有</em>`;tray.innerHTML=`<span class="dc-tl">${who}吃掉你的</span><em>還沒有</em>`;return}const f=c=>{const arr=capt[c].map((r,k)=>({r,k})).sort((a,b)=>b.r-a.r);return arr.length?arr.map(o=>`<i class="${c}${lastCap&&lastCap.c===c&&lastCap.k===o.k?' dc-new':''}">${NAMES[c][o.r]}</i>`).join(''):'<em>還沒有</em>'};trayTop.innerHTML=`<span class="dc-tl">你吃掉的 ${capt[ai].length}</span>`+f(ai);tray.innerHTML=`<span class="dc-tl">${who}吃掉你的 ${capt[me].length}</span>`+f(me)};
  const pos=(el,i)=>{el.style.transform=`translate(${(i%W)*100}%,${(i/W|0)*100}%)`};
- bag.forEach((p,i)=>{if(!p)return;p.up=!!p.up0;delete p.up0;p.id=pid++;const el=document.createElement('div');el.className='dc-p';el.style.setProperty("--w",`url(img/dc_w${(i*7+3)%6}.png)`);el.innerHTML=`<div class="dc-sh"></div><div class="dc-in"><div class="dc-ed" style="--z:-2px"></div><div class="dc-ed" style="--z:-1px"></div><div class="dc-ed" style="--z:0px"></div><div class="dc-ed" style="--z:1px"></div><div class="dc-ed" style="--z:2px"></div><div class="dc-back"></div><div class="dc-face ${p.c==='r'?'dc-red':'dc-blk'}"><span>${NAMES[p.c][p.r]}</span></div></div>`;p.el=el;bd.appendChild(el);pos(el,i);if(p.up)el.classList.add('dc-up');B[i]=p});
+ bag.forEach((p,i)=>{if(!p)return;p.up=!!p.up0;delete p.up0;p.id=pid++;const el=document.createElement('div');el.className='dc-p';el.dataset.k=i;SKIN.apply(el,i);el.innerHTML=`<div class="dc-sh"></div><div class="dc-in"><div class="dc-ed" style="--z:-2px"></div><div class="dc-ed" style="--z:-1px"></div><div class="dc-ed" style="--z:0px"></div><div class="dc-ed" style="--z:1px"></div><div class="dc-ed" style="--z:2px"></div><div class="dc-back"></div><div class="dc-face ${p.c==='r'?'dc-red':'dc-blk'}"><span>${NAMES[p.c][p.r]}</span></div></div>`;p.el=el;bd.appendChild(el);pos(el,i);if(p.up)el.classList.add('dc-up');B[i]=p});
  const sleep=ms=>FAST?Promise.resolve():new Promise(r=>timers.push(setTimeout(r,ms)));
  const adj=i=>{const x=i%W,y=i/W|0,o=[];if(x>0)o.push(i-1);if(x<W-1)o.push(i+1);if(y>0)o.push(i-W);if(y<H-1)o.push(i+W);return o};
  const eats=(a,b)=>{if(a.r===1&&b.r===7)return true;if(a.r===7&&b.r===1)return false;return a.r>=b.r};
@@ -725,7 +757,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
   if(quiet>=QL-5&&quiet<QL)toast(`再 ${QL-quiet} 步沒吃子就比子力定勝負`,1300);
   return false}
  let res=0,lose=0;try{res=+LS.getItem('aeDcWin2')||0;lose=+LS.getItem('aeDcLose2')||0}catch(e){}
- function finish(w){if(!recd){recd=true;const k=w===true?'w':w===false?'l':'d';const R=RANK.add(k,!!NET,LVL);timers.push(setTimeout(()=>toast(`${R.gain>=0?'+':''}${R.gain} 分・${R.lv.name}${R.up?'　升級了！✦':''}`,2200),1900))}over=true;unsave();upd();if(w&&!NET&&LVL!=='easy'){try{LS.setItem('aeDcWinN2',(+(LS.getItem('aeDcWinN2')||0)+1)+'')}catch(e){}}if(w){const al=getAlb();const nw=!al.includes(artK);if(nw){al.push(artK);try{LS.setItem('aeDcAlbum2',JSON.stringify(al))}catch(e){}}artLine.textContent=nw?`你揭開了整幅《${A.title}》✦ 已收進棋局畫冊`:`你揭開了整幅《${A.title}》✦`;track('dc_album',{art:artK,n:al.length})}if(w){res++;try{LS.setItem('aeDcWin2',res)}catch(e){}toast(`🏆 你贏了！（累計 ${res} 勝）`,1600);bd.classList.add('dc-win');B.forEach((p,k)=>{if(p&&p.c===me){p.el.style.setProperty('--dl',(k%8)*.06+'s');p.el.classList.add('dc-dance')}});timers.push(setTimeout(()=>{B.forEach(p=>{if(p)p.el.classList.add('dc-fade')});[523,659,784,1047].forEach((f,k)=>tone(f,2.2,'sine',.1,k*.12));tone(262,2.6,'triangle',.08)},1300));timers.push(setTimeout(win,4300))}
+ function finish(w){if(!recd){recd=true;const k=w===true?'w':w===false?'l':'d';const R=RANK.add(k,!!NET,LVL);timers.push(setTimeout(()=>toast(`${R.gain>=0?'+':''}${R.gain} 分・${R.lv.name}${R.up?'　升級了！✦':''}${R.up&&SKIN.L.some(k=>k.need===R.lv.base&&k.need>0)?'　解鎖新棋子造型':''}`,2600),1900))}over=true;unsave();upd();if(w&&!NET&&LVL!=='easy'){try{LS.setItem('aeDcWinN2',(+(LS.getItem('aeDcWinN2')||0)+1)+'')}catch(e){}}if(w){const al=getAlb();const nw=!al.includes(artK);if(nw){al.push(artK);try{LS.setItem('aeDcAlbum2',JSON.stringify(al))}catch(e){}}artLine.textContent=nw?`你揭開了整幅《${A.title}》✦ 已收進棋局畫冊`:`你揭開了整幅《${A.title}》✦`;track('dc_album',{art:artK,n:al.length})}if(w){res++;try{LS.setItem('aeDcWin2',res)}catch(e){}toast(`🏆 你贏了！（累計 ${res} 勝）`,1600);bd.classList.add('dc-win');B.forEach((p,k)=>{if(p&&p.c===me){p.el.style.setProperty('--dl',(k%8)*.06+'s');p.el.classList.add('dc-dance')}});timers.push(setTimeout(()=>{B.forEach(p=>{if(p)p.el.classList.add('dc-fade')});[523,659,784,1047].forEach((f,k)=>tone(f,2.2,'sine',.1,k*.12));tone(262,2.6,'triangle',.08)},1300));timers.push(setTimeout(win,4300))}
   else{if(w===false){lose++;try{LS.setItem('aeDcLose2',lose)}catch(e){}}upd();toast(w===null?'和局！':NET?'朋友贏了，再約一盤吧！':'電腦贏了，再來一局！',1800);tone(220,.3,'sawtooth',.06);if(!NET)timers.push(setTimeout(()=>{if(w===false)FAIL[cur]=(FAIL[cur]||0)+1;startLevel(cur)},1900));else{artLine.textContent=`一起揭開了《${A.title}》✦`;bd.classList.add('dc-win')}}}
 
  // ===== 強化電腦：期望值搜尋（不偷看未翻的棋，只用剩餘棋子的機率） =====
@@ -774,7 +806,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
   tmEl.querySelector('i').style.transform=`scaleX(${left/TL})`;tmEl.querySelector('b').textContent=sec+' 秒';
   if(sec<=5&&sec>0&&sec!==tmTick){tmTick=sec;sfx.pick()}
   if(left<=0&&!busy){tmOut++;if(tmOut>=3){tmDl=Date.now()+TL;doResign('超時第 3 次，這盤判負');return}const m=aiPick(me||'r');if(!m)return;toast(`超時第 ${tmOut} 次，自動幫你下一步（第 3 次判負）`,2000);humanDo(m)}},200);timers.push(tmIv);
- {const mb=document.createElement('button');mb.className='dc-mus';const lab=()=>mb.textContent=BGM.on?'♪ 音樂開':'♪ 音樂關';lab();mb.onclick=e=>{e.stopPropagation();BGM.toggle();lab()};tmRow.appendChild(mb)}
+ {const mb=document.createElement('button');mb.className='dc-mus';const lab=()=>mb.textContent=BGM.on?'♪ 音樂開':'♪ 音樂關';lab();mb.onclick=e=>{e.stopPropagation();BGM.toggle();lab()};tmRow.appendChild(mb);const kb=document.createElement('button');kb.className='dc-mus';kb.textContent='棋子';kb.onclick=e=>{e.stopPropagation();SKIN.pick()};tmRow.appendChild(kb)}
  BGM.start();
  if(NET){oppEl=document.createElement('div');oppEl.className='dc-opp';oppEl.style.display='none';bar.parentNode.insertBefore(oppEl,bar.nextSibling);timers.push(setTimeout(()=>{try{const st=netRow.state||{};netRow.state={...st,prof:{...(st.prof||{}),[role]:RANK.card()}};NET.push(netRow.state);upd()}catch(e){}},1200))}
  function confirmBox(t,sub,ok,fn){const ov=document.createElement('div');ov.className='dc-end';ov.innerHTML=`<div class="dc-end-box"><b>${t}</b><p class="dc-end-sub">${sub}</p><button data-a="ok" class="btn">${ok}</button><button data-a="no" class="btn ghost">再想想</button></div>`;document.body.appendChild(ov);ov.onclick=e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a&&e.target!==ov)return;ov.remove();if(a==='ok'&&!over)fn()}}
