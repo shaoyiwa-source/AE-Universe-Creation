@@ -171,14 +171,14 @@ body.dc-on{background:linear-gradient(#0a0503b3,#0a0503d9),url(img/dc_table.jpg)
 .dc-p.dc-hit .dc-in{animation:dchit .17s ease-out}
 @keyframes dchit{0%{transform:rotateX(180deg) translateZ(20px) scale(1.08)}55%{transform:rotateX(180deg) translateZ(0) scale(.96,.94)}100%{transform:rotateX(180deg) scale(1)}}
 .dc-board.dc-jolt{animation:dcjolt .14s linear}@keyframes dcjolt{25%{transform:translate(1.5px,1px)}50%{transform:translate(-1.5px,-.5px)}75%{transform:translate(.8px,-1px)}}
-.dc-tmrow{display:flex;gap:8px;align-items:center;margin:0 auto 6px}.dc-tmrow .dc-timer{flex:1;margin:0}
+.dc-tmrow{width:100%;display:flex;gap:8px;align-items:center;margin:0 auto 6px}.dc-tmrow .dc-timer{flex:1;margin:0}
 .dc-mus{flex:none;white-space:nowrap;padding:4px 12px;border-radius:14px;border:1px solid #c9a45c88;background:#0004;color:#f3d68a;font:600 12px system-ui}
 .dc-timer{position:relative;height:22px;margin:0 auto 6px;width:100%;max-width:100%;border-radius:11px;background:#0005;overflow:hidden;opacity:0;transition:opacity .3s}
 .dc-timer.on{opacity:1}.dc-timer i{position:absolute;inset:0;background:linear-gradient(90deg,#c9a45c,#f3d68a);transform-origin:left;transition:transform .2s linear}
 .dc-timer b{position:relative;display:block;text-align:center;font:700 13px/22px system-ui;color:#2b1a08;text-shadow:0 1px #fff6}
 .dc-timer.hot i{background:linear-gradient(90deg,#c0392b,#ff6b4a)}.dc-timer.hot b{color:#fff;text-shadow:0 1px 2px #0008}
 .dc-art{font-size:12px;opacity:.85;margin:4px 0 0;min-height:16px}
-.dc-p{position:absolute;left:0;top:0;width:25%;height:12.5%;transition:transform .34s cubic-bezier(.25,.8,.3,1);z-index:2;pointer-events:none}
+.dc-p{position:absolute;left:0;top:0;width:25%;height:12.5%;transition:transform .3s cubic-bezier(.45,.05,.3,1);z-index:2;pointer-events:none}
 .dc-in{position:absolute;inset:8%;transform-style:preserve-3d;transition:transform .42s cubic-bezier(.25,.8,.3,1),opacity .4s}
 .dc-p.dc-up .dc-in{transform:rotateX(180deg)}.dc-p.dc-flipping .dc-in{transform:translateZ(26px) rotateX(90deg) scale(1.08)}
 .dc-back,.dc-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
@@ -224,17 +224,76 @@ body.dc-on{background:linear-gradient(#0a0503b3,#0a0503d9),url(img/dc_table.jpg)
 .sx-close{position:absolute;bottom:20px;left:50%;transform:translateX(-50%)}
 .lp-ov{position:fixed;inset:0;z-index:10;background:#000e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center}.lp-ov img{max-width:80vw;max-height:65vh;border-radius:10px;-webkit-touch-callout:default;user-select:auto}
 #shareImg{width:min(60vw,240px);border-radius:12px;margin:10px 0}
+
+body.museum{background:radial-gradient(120% 60% at 50% 0,#3a2c20 0,#1b140f 55%,#120d0a 100%) fixed}
+body.museum #map h2{margin-top:46px;font-family:'Noto Serif TC',serif;font-weight:900;letter-spacing:.12em;color:#f3e2bd;text-shadow:0 2px 12px #000a;margin-bottom:4px}
+.mu-eye{display:block;font:600 11px/1.6 system-ui;letter-spacing:.35em;color:#c9a45c;margin-bottom:4px}
+body.museum #map>p.small{color:#d9c7a3cc}
+.mu-ex{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:10px}
+.mu-wrap{display:block;width:min(560px,94vw);margin:14px auto 0}
+.mu-hall{position:relative;padding:18px 10px 8px;margin-bottom:18px;background:linear-gradient(#ffffff06,#0000 40%),repeating-linear-gradient(90deg,#ffffff04 0 2px,#0000 2px 9px);border-top:1px solid #c9a45c33;border-radius:4px}
+.mu-hd{font:600 12px system-ui;letter-spacing:.4em;color:#c9a45c;text-align:center;margin-bottom:14px}
+.mu-hd::before,.mu-hd::after{content:'';display:inline-block;width:38px;height:1px;background:#c9a45c66;vertical-align:middle;margin:0 10px}
+.mu-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 14px}.mu-grid .mu-hd{grid-column:1/-1;margin-bottom:0}
+.mu-work{position:relative;cursor:pointer;margin:0 auto 22px;transition:transform .35s}
+.mu-grid .mu-work{margin:0}
+.mu-work:active{transform:scale(.98)}
+.mu-light{position:absolute;left:-10%;right:-10%;top:-30px;height:70%;background:radial-gradient(50% 60% at 50% 0,#ffe9b844,#0000 70%);pointer-events:none}
+.mu-frame{position:relative;padding:9px;background:linear-gradient(135deg,#7a5418,#e9c873 22%,#a87a2c 45%,#f6dd94 62%,#8a5f1e 85%,#d8b25f);border-radius:2px;box-shadow:0 14px 26px #000c,0 3px 6px #0009,inset 0 0 0 1px #fff3,inset 0 0 6px #0008}
+.mu-mat{position:relative;padding:8px;background:#efe7d6;box-shadow:inset 0 0 0 1px #0002,inset 0 2px 6px #0004}
+.mu-pic{aspect-ratio:1/1;background-size:cover;background-position:center;filter:grayscale(.92) brightness(.72) contrast(.95);transition:filter 1.2s}
+.mu-big .mu-pic{aspect-ratio:4/3}
+.mu-work.done .mu-pic{filter:none}
+.mu-veil{position:absolute;left:8px;right:8px;bottom:8px;padding:6px 0;text-align:center;font:600 11px system-ui;letter-spacing:.2em;color:#fff;background:linear-gradient(#0000,#0009)}
+.mu-plq{margin:10px auto 0;width:max-content;max-width:100%;padding:6px 14px;background:#f4efe4;color:#2a2018;border-radius:2px;box-shadow:0 3px 8px #0008;text-align:center;line-height:1.35}
+.mu-plq small{display:block;font:600 9px system-ui;letter-spacing:.18em;color:#8a7a62}
+.mu-plq b{display:block;font-family:'Noto Serif TC',serif;font-size:15px}
+.mu-big .mu-plq b{font-size:17px}
+.mu-plq i{font-style:normal;font-size:11px;color:#7a6a52}
+.mu-st{display:block;color:#c99a2a;font-size:11px;letter-spacing:.1em}
+body.museum #g2{border-color:#c9a45c44}
+
+.dc-p.dc-drop .dc-in{animation:dcdrop .24s linear}
+@keyframes dcdrop{0%{transform:rotateX(180deg) translateZ(20px) scale(1.08);animation-timing-function:cubic-bezier(.55,0,1,.45)}34%{transform:rotateX(180deg) translateZ(0) scale(1)}52%{transform:rotateX(180deg) scale(1.025,.965)}75%{transform:rotateX(180deg) scale(.995,1.008)}100%{transform:rotateX(180deg) scale(1)}}
+.dc-p.dc-drop .dc-sh{transition:transform .08s,opacity .08s}
+/* ==== 精品手工木棋 ==== */
+.dc-back,.dc-face{background:var(--w,url(img/dc_w0.png)) center/100% 100% no-repeat!important}
+.dc-back,.dc-face{box-shadow:0 1px 0 #c8955a,0 2px 0 #bf8a4f,0 3px 0 #b47f46,0 4px 0 #a8733d,0 5px 0 #9b6834,0 6px 0 #8d5c2c,0 7px 0 #7c4f25,0 7px 0 1px #5a361866,0 10px 12px #120802aa!important}
+.dc-face::before{inset:11%!important;border:2px solid currentColor!important;opacity:.85!important;box-shadow:0 1px 0 #fff4,inset 0 1px 0 #0005;mix-blend-mode:multiply}
+.dc-face span{font-family:"Noto Serif TC","PMingLiU",serif;font-weight:900;mix-blend-mode:multiply;text-shadow:0 1px 0 #ffe9c088,0 -1px 0 #0004!important}
+.dc-face.dc-red{color:#9c1d14}.dc-face.dc-blk{color:#24160b}
+.dc-ed{background:radial-gradient(circle,#b9874f 0 60%,#8f5f30 80%,#6e4520)!important}
+.dc-sh{background:radial-gradient(#000b,#0000 70%)!important;bottom:0!important;height:22%!important}
+
+/* ==== 官網 VI（v2475 baseline：近黑 #090b0a、霧金 #edcd75、Cormorant Garamond＋Noto Serif TC、Inter） ==== */
+:root{--bg:#090b0a;--txt:#f7f5ee;--gold:#edcd75;--pearl:#f4f0e7;--quiet:rgba(249,246,239,.69);--fs-display:"Cormorant Garamond","Noto Serif TC",serif;--fs-ui:Inter,"Noto Sans TC",-apple-system,"PingFang TC",sans-serif}
+html,body{background:var(--bg);color:var(--txt);font-family:var(--fs-ui)}
+#stars{opacity:.28}
+h1,h2,#lvTitle,#rwColor{font-family:var(--fs-display);font-weight:500;letter-spacing:.06em;color:var(--pearl)}
+h1{background:none;-webkit-background-clip:initial;color:var(--pearl);filter:none;font-size:clamp(28px,7.4vw,44px);letter-spacing:.1em}
+.small{color:var(--quiet);opacity:1;letter-spacing:.04em}
+p{color:var(--quiet);opacity:1}
+.btn{background:var(--gold);color:#16130b;box-shadow:none;font-family:var(--fs-ui);font-weight:600;font-size:15px;letter-spacing:.14em;padding:13px 30px;border:1px solid var(--gold)}
+.btn.ghost{background:transparent;color:var(--gold);border:1px solid #edcd7599}
+#bookBtn,#shopBtn,.lv-back{background:#090b0acc;border:1px solid #edcd7566;color:var(--gold);font-family:var(--fs-ui);letter-spacing:.06em;backdrop-filter:blur(8px)}
+#hud{background:linear-gradient(#090b0af2,#090b0a00)}
+.vi-brand img{height:26px;display:block}
+.vi-logo{width:min(220px,56vw);height:auto;margin:auto auto 6px!important;filter:drop-shadow(0 6px 22px #edcd7522)}
+#intro>.small:first-of-type{letter-spacing:.28em;font-size:11px}
+#snd{color:var(--gold)}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap&text=%E5%B8%A5%E4%BB%95%E7%9B%B8%E4%BF%A5%E5%82%8C%E7%82%AE%E5%85%B5%E5%B0%87%E5%A3%AB%E8%B1%A1%E8%BB%8A%E9%A6%AC%E5%8C%85%E5%8D%92">
 </head>
 <body>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=Noto+Serif+TC:wght@500;600&display=swap">
 <canvas id="stars"></canvas>
-<div id="hud"><span data-brand>AE Universe</span><span id="gems"></span><button id="snd" aria-label="聲音">🔊</button></div>
-<button id="bookBtn">📖 收藏冊</button>
-<button id="shopBtn">⭐ 兌換所</button>
+<div id="hud"><span data-brand class="vi-brand"><img src="img/ae-rings.webp" alt="AE Universe Creation"></span><span id="gems"></span><button id="snd" aria-label="聲音">🔊</button></div>
+<button id="bookBtn">收藏冊</button>
+<button id="shopBtn">兌換所</button>
 
 <!-- intro -->
 <section class="screen on" id="intro">
+  <img class="vi-logo" src="img/ae-rings.webp" alt="AE Universe Creation">
   <div class="small"><span data-zh>朝軒宇宙創造</span> 出品・AE UNIVERSE CREATION</div>
   <h1>AE 宇宙心靈地圖</h1><div class="small" style="letter-spacing:.3em;opacity:.85;margin:-4px 0 10px">找回遺忘的顏色</div>
   <p>宇宙裡有 8 種顏色，被大家慢慢遺忘了。<br>每顆星球都藏著一幅等你喚醒的畫。</p>
@@ -310,7 +369,7 @@ body.dc-on{background:linear-gradient(#0a0503b3,#0a0503d9),url(img/dc_table.jpg)
 const LS=(()=>{const m={};let ok=false;try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);ok=true}catch(e){}return{getItem:k=>{try{return ok?localStorage.getItem(k):(k in m?m[k]:null)}catch(e){return k in m?m[k]:null}},setItem:(k,v)=>{m[k]=String(v);try{ok&&localStorage.setItem(k,v)}catch(e){}},removeItem:k=>{delete m[k];try{ok&&localStorage.removeItem(k)}catch(e){}}}})();
 
 /* ===== CONFIG：換客戶只改這裡（說明見 CONFIG_說明.md） ===== */
-const CONFIG={
+const CONFIG={museum:true,
  brand:{name:'AE Universe',zh:'朝軒宇宙創造',game:'宇宙心靈地圖',tagline:'全部是手繪原畫',moreUrl:'',hashtag:'AE Universe'},
  art:{
   wp1:{title:'螢光薊花',wallpaper:'img/wp1.jpg',board:'img/dc_1.jpg',story:'《螢光薊花》：像路邊不起眼的小花，在夜裡悄悄亮起來。願你也記得，自己一直都在發光。'},
@@ -384,7 +443,22 @@ rs();addEventListener('resize',rs);
 (function loop(t){sx.clearRect(0,0,sc.width,sc.height);for(const s of st){sx.globalAlpha=.4+.6*Math.abs(Math.sin(t/900+s.p));sx.fillStyle=s.c;sx.beginPath();sx.arc(s.x,s.y,s.r*devicePixelRatio,0,7);sx.fill()}requestAnimationFrame(loop)})(0);
 
 /* ---------- map ---------- */
-function renderMap(){gems();$('#bookBtn').style.display='block';const box=$('#planets');box.innerHTML='';LV.forEach((l,i)=>{const open=true;const d=document.createElement('div');d.className='planet'+(done.includes(i)?' done':open?' open':'');d.style.setProperty('--c',l.c);d.style.backgroundImage=`url(${l.img})`;d.innerHTML=`${open?'':'<div class="lock">🔒</div>'}${BEST[i]?`<div class="stars">${'★'.repeat(BEST[i])}${'☆'.repeat(3-BEST[i])}</div>`:''}<div class="lbl">${i+1}. ${l.name}</div>`;d.onclick=()=>{if(!open){tone(200,.15,'square',.08);toast('先完成前一顆星球喔');return}tone(660,.12);startLevel(i)};box.appendChild(d)});
+const MUSEUM=(()=>{try{const q=new URLSearchParams(location.search).get('museum');if(q!==null)return q!=='0';}catch(e){}return !!(CONFIG.museum)})();
+const FLAG=['darkchess','match3'];
+function renderMuseum(){gems();$('#bookBtn').style.display='block';document.body.classList.add('museum');const sec=$('#map');
+ sec.querySelector('h2').innerHTML='<span class="mu-eye">AE UNIVERSE GALLERY</span>宇宙心靈美術館';
+ sec.querySelector('p.small').textContent='每幅畫都遺忘了自己的顏色。玩它，就能把顏色找回來。';
+ const box=$('#planets');box.innerHTML='';box.className='mu-wrap';
+ const frame=(l,i,big)=>{const d=document.createElement('div');const ok=done.includes(i);d.className='mu-work'+(big?' mu-big':'')+(ok?' done':'');
+  const st=BEST[i]?`<span class="mu-st">${'★'.repeat(BEST[i])}${'☆'.repeat(3-BEST[i])}</span>`:'';
+  d.innerHTML=`<div class="mu-light"></div><div class="mu-frame"><div class="mu-mat"><div class="mu-pic" style="background-image:url(${l.img})"></div>${ok?'':'<div class="mu-veil">等你找回顏色</div>'}</div></div><div class="mu-plq"><small>No.${String(i+1).padStart(2,'0')}${big?'・主展品':''}</small><b>${l.name}</b><i>${l.color}</i>${st}</div>`;
+  d.onclick=()=>{tone(660,.12);startLevel(i)};return d};
+ const h1=document.createElement('div');h1.className='mu-hall';h1.innerHTML='<div class="mu-hd">主展廳</div>';box.appendChild(h1);
+ FLAG.forEach(fn=>{const i=LV.findIndex(l=>l.fn===fn);if(i>=0)h1.appendChild(frame(LV[i],i,true))});
+ const h2=document.createElement('div');h2.className='mu-hall mu-grid';h2.innerHTML='<div class="mu-hd">收藏廳</div>';box.appendChild(h2);
+ LV.forEach((l,i)=>{if(!FLAG.includes(l.fn))h2.appendChild(frame(l,i,false))});
+ const g2=$('#g2');if(g2)g2.innerHTML='<div class="small">下一個展廳</div><b>第二展廳・層層心形</b><div class="small">即將開館・敬請期待</div>';{const ex=document.createElement('div');ex.className='mu-ex';box.appendChild(ex);const box0=box;{const box=ex;if(LV.every((l,i)=>BEST[i]>=1)){const c=document.createElement('button');c.className='btn ckb on';c.id='chBtn';c.textContent=chBest?`⚡ 挑戰模式（最佳 ${chBest} 秒）`:`⚡ 挑戰模式：${LV.length} 關連續闖`;c.style.gridColumn='1/-1';c.style.justifySelf='center';c.onclick=chalStart;box.appendChild(c)}if(done.length===LV.length){const b=document.createElement('button');b.className='btn';b.textContent='進入收藏館 ✦';b.onclick=finale;box.appendChild(b);b.style.gridColumn='1/-1';b.style.justifySelf='center'}}}}
+function renderMap(){if(MUSEUM)return renderMuseum();gems();$('#bookBtn').style.display='block';const box=$('#planets');box.innerHTML='';LV.forEach((l,i)=>{const open=true;const d=document.createElement('div');d.className='planet'+(done.includes(i)?' done':open?' open':'');d.style.setProperty('--c',l.c);d.style.backgroundImage=`url(${l.img})`;d.innerHTML=`${open?'':'<div class="lock">🔒</div>'}${BEST[i]?`<div class="stars">${'★'.repeat(BEST[i])}${'☆'.repeat(3-BEST[i])}</div>`:''}<div class="lbl">${i+1}. ${l.name}</div>`;d.onclick=()=>{if(!open){tone(200,.15,'square',.08);toast('先完成前一顆星球喔');return}tone(660,.12);startLevel(i)};box.appendChild(d)});
  if(LV.every((l,i)=>BEST[i]>=1)){const c=document.createElement('button');c.className='btn ckb on';c.id='chBtn';c.textContent=chBest?`⚡ 挑戰模式（最佳 ${chBest} 秒）`:`⚡ 挑戰模式：${LV.length} 關連續闖`;c.style.gridColumn='1/-1';c.style.justifySelf='center';c.onclick=chalStart;box.appendChild(c)}
  if(done.length===LV.length){const b=document.createElement('button');b.className='btn';b.textContent='進入收藏館 ✦';b.onclick=finale;box.appendChild(b);b.style.gridColumn='1/-1';b.style.justifySelf='center'}requestAnimationFrame(mapLinks);setTimeout(mapLinks,600)}
 const SFXRAW={},SFXBUF={};function loadSfx(n){if(!SFXRAW[n])SFXRAW[n]=fetch('sfx/'+n+'.m4a').then(r=>r.ok?r.arrayBuffer():null).catch(()=>null);return SFXRAW[n]}
@@ -542,7 +616,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
  const reveal=()=>{let n=0;cells.forEach((c,i)=>{const o=!B[i];c.classList.toggle('dc-open',o);if(o)n++});const pc=Math.round(n/(W*H)*100);artLine.textContent=n?`已揭開 ${pc}%・《${A.title}》`:`下完這盤，就能揭開一幅畫（畫冊 ${getAlb().length}/8）`};const unsave=()=>{try{LS.removeItem(SK)}catch(e){}};
  const drawTray=()=>{const who=NET?'朋友':'電腦';if(!me){trayTop.innerHTML=`<span class="dc-tl">你吃掉的</span><em>還沒有</em>`;tray.innerHTML=`<span class="dc-tl">${who}吃掉你的</span><em>還沒有</em>`;return}const f=c=>{const arr=capt[c].map((r,k)=>({r,k})).sort((a,b)=>b.r-a.r);return arr.length?arr.map(o=>`<i class="${c}${lastCap&&lastCap.c===c&&lastCap.k===o.k?' dc-new':''}">${NAMES[c][o.r]}</i>`).join(''):'<em>還沒有</em>'};trayTop.innerHTML=`<span class="dc-tl">你吃掉的 ${capt[ai].length}</span>`+f(ai);tray.innerHTML=`<span class="dc-tl">${who}吃掉你的 ${capt[me].length}</span>`+f(me)};
  const pos=(el,i)=>{el.style.transform=`translate(${(i%W)*100}%,${(i/W|0)*100}%)`};
- bag.forEach((p,i)=>{if(!p)return;p.up=!!p.up0;delete p.up0;p.id=pid++;const el=document.createElement('div');el.className='dc-p';el.innerHTML=`<div class="dc-sh"></div><div class="dc-in"><div class="dc-ed" style="--z:-2px"></div><div class="dc-ed" style="--z:-1px"></div><div class="dc-ed" style="--z:0px"></div><div class="dc-ed" style="--z:1px"></div><div class="dc-ed" style="--z:2px"></div><div class="dc-back"></div><div class="dc-face ${p.c==='r'?'dc-red':'dc-blk'}"><span>${NAMES[p.c][p.r]}</span></div></div>`;p.el=el;bd.appendChild(el);pos(el,i);if(p.up)el.classList.add('dc-up');B[i]=p});
+ bag.forEach((p,i)=>{if(!p)return;p.up=!!p.up0;delete p.up0;p.id=pid++;const el=document.createElement('div');el.className='dc-p';el.style.setProperty("--w",`url(img/dc_w${(i*7+3)%6}.png)`);el.innerHTML=`<div class="dc-sh"></div><div class="dc-in"><div class="dc-ed" style="--z:-2px"></div><div class="dc-ed" style="--z:-1px"></div><div class="dc-ed" style="--z:0px"></div><div class="dc-ed" style="--z:1px"></div><div class="dc-ed" style="--z:2px"></div><div class="dc-back"></div><div class="dc-face ${p.c==='r'?'dc-red':'dc-blk'}"><span>${NAMES[p.c][p.r]}</span></div></div>`;p.el=el;bd.appendChild(el);pos(el,i);if(p.up)el.classList.add('dc-up');B[i]=p});
  const sleep=ms=>FAST?Promise.resolve():new Promise(r=>timers.push(setTimeout(r,ms)));
  const adj=i=>{const x=i%W,y=i/W|0,o=[];if(x>0)o.push(i-1);if(x<W-1)o.push(i+1);if(y>0)o.push(i-W);if(y<H-1)o.push(i+W);return o};
  const eats=(a,b)=>{if(a.r===1&&b.r===7)return true;if(a.r===7&&b.r===1)return false;return a.r>=b.r};
@@ -562,8 +636,8 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
   if(!me){if(remoteNow){ai=p.c;me=ai==='r'?'b':'r'}else{me=p.c;ai=me==='r'?'b':'r'}toast(`你是${me==='r'?'紅':'黑'}方！`,1400)}}
  const flag=document.createElement('div');flag.className='dc-flag';flag.style.display='none';bd.appendChild(flag);const markLast=i=>{cells.forEach(c=>c.classList.remove('dc-last'));cells[i].classList.add('dc-last');flag.style.display='';flag.style.left=((i%W)*25+19)+'%';flag.style.top=((i/W|0)*12.5+.6)+'%'};
  async function doMove(m){const p=B[m.f];p.el.classList.remove('dc-sel');p.el.classList.add('dc-lift');await sleep(110);
-  if(m.cap){const q=m.cap;const qr=q.el.getBoundingClientRect();pos(p.el,m.t);await sleep(230);if(p.r===2)sfx.boom();else sfx.cap();q.el.classList.add('dc-knock');p.el.classList.add('dc-hit');bd.classList.remove('dc-jolt');void bd.offsetWidth;bd.classList.add('dc-jolt');await sleep(170);p.el.classList.remove('dc-hit');q.el.style.visibility='hidden';setTimeout(()=>q.el.remove(),400);if(!FAST){const tgt=(q.c===ai?trayTop:tray).getBoundingClientRect();const f=document.createElement('div');f.className='dc-fly';f.style.color=q.c==='r'?'#b3121f':'#1a1410';f.textContent=NAMES[q.c][q.r];f.style.left=(qr.left+qr.width/2-12)+'px';f.style.top=(qr.top+qr.height/2-12)+'px';f.style.transform='scale(2.6)';document.body.appendChild(f);requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transform=`translate(${tgt.left+90+capt[q.c].length*27-(qr.left+qr.width/2-12)}px,${tgt.top+2-(qr.top+qr.height/2-12)}px) scale(1)`;f.style.opacity='0'}));setTimeout(()=>f.remove(),800)}lastCap={c:q.c,k:capt[q.c].length};capt[q.c].push(q.r);setTimeout(drawTray,FAST?0:520);quiet=0;{const w=document.createElement('div');w.className='dc-wave';w.style.left=(m.t%W)*25+'%';w.style.top=(m.t/W|0)*12.5+'%';bd.appendChild(w);setTimeout(()=>w.remove(),500)}}
-  else{pos(p.el,m.t);await sleep(330);sfx.move();quiet++}
+  if(m.cap){const q=m.cap;const qr=q.el.getBoundingClientRect();pos(p.el,m.t);await sleep(230);if(p.r===2)sfx.boom();else sfx.cap();q.el.classList.add('dc-knock');p.el.classList.remove('dc-lift');p.el.classList.add('dc-hit');bd.classList.remove('dc-jolt');void bd.offsetWidth;bd.classList.add('dc-jolt');await sleep(170);p.el.classList.remove('dc-hit');q.el.style.visibility='hidden';setTimeout(()=>q.el.remove(),400);if(!FAST){const tgt=(q.c===ai?trayTop:tray).getBoundingClientRect();const f=document.createElement('div');f.className='dc-fly';f.style.color=q.c==='r'?'#b3121f':'#1a1410';f.textContent=NAMES[q.c][q.r];f.style.left=(qr.left+qr.width/2-12)+'px';f.style.top=(qr.top+qr.height/2-12)+'px';f.style.transform='scale(2.6)';document.body.appendChild(f);requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transform=`translate(${tgt.left+90+capt[q.c].length*27-(qr.left+qr.width/2-12)}px,${tgt.top+2-(qr.top+qr.height/2-12)}px) scale(1)`;f.style.opacity='0'}));setTimeout(()=>f.remove(),800)}lastCap={c:q.c,k:capt[q.c].length};capt[q.c].push(q.r);setTimeout(drawTray,FAST?0:520);quiet=0;{const w=document.createElement('div');w.className='dc-wave';w.style.left=(m.t%W)*25+'%';w.style.top=(m.t/W|0)*12.5+'%';bd.appendChild(w);setTimeout(()=>w.remove(),500)}}
+  else{pos(p.el,m.t);await sleep(300);p.el.classList.remove('dc-lift');p.el.classList.add('dc-drop');await sleep(80);sfx.move();quiet++;setTimeout(()=>p.el.classList.remove('dc-drop'),160)}
   B[m.t]=p;B[m.f]=null;reveal();markLast(m.t);p.el.classList.remove('dc-lift');await sleep(60)}
  const clearSel=()=>{sel=-1;bd.querySelectorAll('.dc-sel').forEach(e=>e.classList.remove('dc-sel'));bd.querySelectorAll('.dc-dot').forEach(e=>e.remove())};
  function checkEnd(){if(!me)return false;const mineN=count(me),hisN=count(ai);
@@ -886,7 +960,7 @@ async function saveFile(src,name){try{const b=await (await fetch(src)).blob();sa
 
 if(done.length){gems()}
 const setH=()=>document.documentElement.style.setProperty('--H',innerHeight+'px');setH();addEventListener('resize',setH);
-document.title=`${CONFIG.brand.name}｜${CONFIG.brand.game}`;document.querySelectorAll('[data-brand]').forEach(e=>e.textContent=CONFIG.brand.name);document.querySelectorAll('[data-zh]').forEach(e=>e.textContent=CONFIG.brand.zh);document.querySelectorAll('[data-tag]').forEach(e=>e.textContent=CONFIG.brand.hashtag);
+document.title=`${CONFIG.brand.name}｜${CONFIG.brand.game}`;document.querySelectorAll('[data-brand]').forEach(e=>{if(!e.classList.contains('vi-brand'))e.textContent=CONFIG.brand.name});document.querySelectorAll('[data-zh]').forEach(e=>e.textContent=CONFIG.brand.zh);document.querySelectorAll('[data-tag]').forEach(e=>e.textContent=CONFIG.brand.hashtag);
 (function preload(){const b=$('#startBtn'),lbl=b.textContent;const L=[...LV.map(l=>l.img),...LV.map(l=>l.wp),'img/L3sq.jpg','img/wpX_s.jpg'];let n=0,fin=false;b.disabled=true;b.style.opacity=.6;
  const end=()=>{if(fin)return;fin=true;b.disabled=false;b.style.opacity=1;b.textContent=lbl};const step=()=>{n++;b.textContent=`宇宙載入中 ${Math.round(n/L.length*100)}%`;if(n>=L.length)end()};
  L.forEach(src=>{const i=new Image();i.onload=i.onerror=step;i.src=src});setTimeout(end,9000)})();
