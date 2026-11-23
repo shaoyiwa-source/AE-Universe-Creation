@@ -145,7 +145,7 @@ p{line-height:1.6;max-width:420px;margin:.4em auto;opacity:.92}
 .spark{position:absolute;font-style:normal;pointer-events:none;animation:spk .7s forwards;z-index:4}@keyframes spk{to{transform:translate(var(--dx),var(--dy)) scale(.3);opacity:0}}
 .dc-wrap{display:flex;flex-direction:column;align-items:center;width:100%}
 .dc-status{display:flex;gap:14px;justify-content:center;align-items:center;font-size:14px;margin:0 0 6px;min-height:22px}.dc-tr{color:#ff6b6b}.dc-tb{color:#cfd3ff}
-.dc-board{position:relative;width:min(88vw,calc((var(--H,100vh) - 300px) / 2),340px);aspect-ratio:1/2;border-radius:8px;background:var(--bg) center/cover,#c38d52;border:12px solid #3a2112;border-image:url(img/dc_table.jpg) 40 stretch;box-shadow:0 0 0 1px #1a0c05,0 18px 34px #000c;transition:background 1s;touch-action:manipulation;perspective:800px}
+.dc-board{position:relative;width:min(88vw,calc((var(--H,100vh) - 245px) / 2),340px);aspect-ratio:1/2;border-radius:8px;background:var(--bg) center/cover,#c38d52;border:12px solid #3a2112;border-image:url(img/dc_table.jpg) 40 stretch;box-shadow:0 0 0 1px #1a0c05,0 18px 34px #000c;transition:background 1s;touch-action:manipulation;perspective:800px}
 .dc-cell{position:absolute;width:25%;height:12.5%;box-shadow:inset 0 0 0 .6px #5a321488}.dc-cell::before{content:'';position:absolute;inset:0;background:url(img/dc_boardwood.jpg) calc(var(--cx,0)*-100%) calc(var(--cy,0)*-100%)/400% 800%;box-shadow:inset 0 0 0 1px #2a160a66,inset 2px 3px 6px #1a0c0499,inset -1px -1px 0 #ffffff14;transition:opacity .9s ease}.dc-cell.dc-open::before{opacity:0}.dc-cell.dc-open{box-shadow:inset 0 0 0 .5px #ffffff22}
 .alb .bcard.lock img{display:none}.alb .bcard.lock::before{content:'？';display:flex;align-items:center;justify-content:center;aspect-ratio:3/4;border-radius:8px;font:900 22px serif;color:#5a3214;background:repeating-linear-gradient(92deg,#0000 0 7px,#5a33140f 7px 9px),linear-gradient(180deg,#d4a265,#c08a50)}.alb.bgrid{grid-template-columns:repeat(4,1fr);gap:8px}.alb .bcard img{aspect-ratio:3/4;object-fit:cover}.alb .bcard div{font-size:11px}
 .dc-inv{display:none;padding:6px 12px;font-size:13px;margin-left:6px}body.online .dc-inv{display:inline-block}.on-login input[type=email]{width:min(320px,80vw);padding:12px;border-radius:12px;border:1px solid #fff4;background:#ffffff12;color:#fff;font-size:16px}.on-opt{display:flex;gap:6px;align-items:center}
@@ -281,6 +281,22 @@ p{color:var(--quiet);opacity:1}
 .vi-logo{width:min(220px,56vw);height:auto;margin:auto auto 6px!important;filter:drop-shadow(0 6px 22px #edcd7522)}
 #intro>.small:first-of-type{letter-spacing:.28em;font-size:11px}
 #snd{color:var(--gold)}
+
+html,body{overflow-x:hidden;overscroll-behavior:none}
+.screen{overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain}
+.mu-light{left:0!important;right:0!important}
+.mu-wrap{max-width:100%}
+
+/* 暗棋版面精簡：讓上下兩排吃子都在螢幕內 */
+body.dc-on #level{padding-top:44px}
+body.dc-on #lvHint{display:none}
+body.dc-on #lvTitle{font-size:19px;margin:0 0 4px}
+body.dc-on .dc-art{margin:2px 0 0;min-height:0;font-size:11px}
+body.dc-on .dc-tmrow{margin:2px auto 4px}
+body.dc-on .dc-timer{height:18px}body.dc-on .dc-timer b{font-size:11px;line-height:18px}
+body.dc-on .dc-mus{padding:2px 10px;font-size:11px}
+body.dc-on .dc-tray{min-height:26px;margin:3px 0}
+body.dc-on #level .bar{display:none}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap&text=%E5%B8%A5%E4%BB%95%E7%9B%B8%E4%BF%A5%E5%82%8C%E7%82%AE%E5%85%B5%E5%B0%87%E5%A3%AB%E8%B1%A1%E8%BB%8A%E9%A6%AC%E5%8C%85%E5%8D%92">
 </head>
@@ -697,6 +713,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
   if(left<=0&&!busy){const m=aiPick(me||'r');if(!m)return;toast('時間到，自動幫你下一步',1200);humanDo(m)}},200);timers.push(tmIv);
  {const mb=document.createElement('button');mb.className='dc-mus';const lab=()=>mb.textContent=BGM.on?'♪ 音樂開':'♪ 音樂關';lab();mb.onclick=e=>{e.stopPropagation();BGM.toggle();lab()};tmRow.appendChild(mb)}
  BGM.start();
+ const fit=()=>{if(!document.body.contains(bd))return removeEventListener('resize',fit);bd.style.width='';const last=tray.getBoundingClientRect().bottom,lim=(visualViewport?visualViewport.height:innerHeight)-6;const over=last-lim;if(over>0){const w=Math.max(150,bd.offsetWidth-over/2);bd.style.width=w+'px'}};requestAnimationFrame(fit);setTimeout(fit,400);addEventListener('resize',fit);
  upd();drawTray();reveal();if(saved&&!NET){toast('接著上一盤繼續 ✦',1400);if(turn==='ai')timers.push(setTimeout(aiTurn,700))}hintIdle()}
 
 // 彈弓射星
