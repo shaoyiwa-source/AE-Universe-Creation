@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>AE動態桌布</title>
-<meta name="description" content="匯入照片，加上會動的可愛元件、濾鏡與動態主題，做出你的 iPhone 動態桌布。">
+<title>AE動態桌布 · AE Live Wallpaper</title>
+<meta name="description" content="匯入照片，加上會動的可愛元件、濾鏡與動態主題，做出你的 iPhone 動態桌布。Make your own live iPhone wallpaper.">
 <meta name="theme-color" content="#fcfcfa" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141c18" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,67 +18,79 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Zen+Maru+Gothic:wght@900&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem('ae-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="/wallpaper/style.css?v=5">
+<link rel="stylesheet" href="/wallpaper/style.css?v=8">
 </head>
 <body>
 <div id="app">
   <header class="topbar">
-    <a class="brand" href="/" aria-label="回到 AE Universe Creation 官網"><img src="/wallpaper/icons/ae-rings.webp" alt="" width="52" height="26"><div class="brand-text">動態桌布<small>AE Universe Creation</small></div></a>
-    <div class="top-actions">
-      <button class="pill ghost" id="btnTheme" aria-label="切換深色／淺色">◐</button>
-      <button class="pill ghost" id="btnUndo" aria-label="復原">↶</button>
-      <button class="pill" id="btnPlay">預覽</button>
-      <button class="pill primary" id="btnExport">匯出</button>
-    </div>
+    <button class="icon-btn menu-trigger" id="btnMenu" aria-expanded="false" aria-controls="menu" type="button">
+      <span class="hamburger" aria-hidden="true"><i></i><i></i></span><span class="vh" data-i18n="menu"></span>
+    </button>
+    <a class="wordmark" href="/" data-i18n-aria="home">
+      <img src="/wallpaper/icons/ae-rings.webp" alt="" width="54" height="27">
+      <span class="wm-name">AE Universe<span>LIVE WALLPAPER</span></span>
+    </a>
+    <button class="lang-btn" id="btnLang" type="button"></button>
   </header>
 
   <main class="stage" id="stage">
+    <div class="stage-tools">
+      <div class="tool-group">
+        <button class="icon-btn" id="btnUndo" data-i18n-aria="undo" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H4v5"/><path d="M4 12c1.6-3.6 5-5.5 9-5 4 .5 7 4 7 8"/></svg>
+        </button>
+        <button class="icon-btn" id="btnRedo" data-i18n-aria="redo" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7h5v5"/><path d="M20 12c-1.6-3.6-5-5.5-9-5-4 .5-7 4-7 8"/></svg>
+        </button>
+      </div>
+      <button class="pill" id="btnPlay" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span data-i18n="preview"></span>
+      </button>
+    </div>
     <div class="canvas-wrap" id="canvasWrap">
       <canvas id="canvas" width="1080" height="2340"></canvas>
       <div class="sel-bar" id="selBar" hidden>
-        <button data-sel="smaller" aria-label="縮小">－</button>
-        <button data-sel="bigger" aria-label="放大">＋</button>
-        <button data-sel="rotl" aria-label="左轉">⟲</button>
-        <button data-sel="rotr" aria-label="右轉">⟳</button>
-        <button data-sel="front" aria-label="移到最上層">⇡</button>
-        <button data-sel="edit" aria-label="編輯" id="selEdit">✎</button>
-        <button data-sel="delete" class="danger" aria-label="刪除">🗑</button>
+        <button data-sel="smaller" data-i18n-aria="smaller"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+        <button data-sel="bigger" data-i18n-aria="bigger"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
+        <button data-sel="rotl" data-i18n-aria="rotl"><svg viewBox="0 0 24 24"><path d="M4 4v6h6"/><path d="M5 14a7 7 0 1 0 2-7L4 10"/></svg></button>
+        <button data-sel="rotr" data-i18n-aria="rotr"><svg viewBox="0 0 24 24"><path d="M20 4v6h-6"/><path d="M19 14a7 7 0 1 1-2-7l3 3"/></svg></button>
+        <button data-sel="front" data-i18n-aria="front"><svg viewBox="0 0 24 24"><path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/></svg></button>
+        <button data-sel="delete" class="danger" data-i18n-aria="delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
       </div>
     </div>
   </main>
 
-  <section class="panel" id="panel"></section>
+  <section class="panel" id="panel" aria-live="polite"></section>
 
-  <nav class="tabbar" id="tabbar">
-    <button data-tab="photo" class="on"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>桌布</span></button>
-    <button data-tab="edit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg><span>編輯</span></button>
-    <button data-tab="comp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="9" cy="10.5" r=".6"/><circle cx="15" cy="10.5" r=".6"/><path d="M9.5 14.5c1.4 1.2 3.6 1.2 5 0"/></svg><span>元件</span></button>
-    <button data-tab="filter"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="10" r="5"/><circle cx="15" cy="10" r="5"/><circle cx="12" cy="15" r="5"/></svg><span>濾鏡</span></button>
-    <button data-tab="theme"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/></svg><span>主題</span></button>
-    <button data-tab="music"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg><span>音樂</span></button>
-    <button data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>設定</span></button>
-  </nav>
+  <nav class="steps" id="steps" aria-label="steps"></nav>
+</div>
+
+<!-- 選單（與官網相同的樣式） -->
+<div class="menu" id="menu" hidden>
+  <nav class="menu-list" id="menuList"></nav>
+  <p class="menu-note">Aurelia &amp; Elion · AE Universe Creation</p>
+  <button class="btn" id="btnDark" type="button"></button>
 </div>
 
 <!-- 互動模式（全螢幕播放） -->
 <div class="player" id="player" hidden>
   <canvas id="playerCanvas" width="1080" height="2340"></canvas>
   <div class="lock-clock" id="lockClock"><div class="lc-date" id="lcDate"></div><div class="lc-time" id="lcTime"></div></div>
-  <button class="fab" id="fab" aria-label="AE互動按鈕"><img src="/wallpaper/icons/ae-rings.webp" alt=""></button>
+  <button class="fab" id="fab" data-i18n-aria="fab"><img src="/wallpaper/icons/ae-rings.webp" alt=""></button>
   <div class="fab-menu" id="fabMenu" hidden>
-    <button data-fab="theme">換主題</button>
-    <button data-fab="music">音樂播放／暫停</button>
-    <button data-fab="clock">鎖定畫面時鐘</button>
-    <button data-fab="hide">隱藏互動按鈕</button>
-    <button data-fab="exit">離開互動模式</button>
+    <button data-fab="theme" data-i18n="fabTheme"></button>
+    <button data-fab="music" data-i18n="fabMusic"></button>
+    <button data-fab="clock" data-i18n="fabClock"></button>
+    <button data-fab="hide" data-i18n="fabHide"></button>
+    <button data-fab="exit" data-i18n="fabExit"></button>
   </div>
   <div class="toast" id="playerToast"></div>
 </div>
 
 <!-- 通用對話框 -->
 <div class="modal" id="modal" hidden>
-  <div class="modal-card">
-    <button class="modal-x" id="modalX" aria-label="關閉">✕</button>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <button class="modal-x" id="modalX" data-i18n-aria="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <div id="modalBody"></div>
   </div>
 </div>
@@ -89,6 +101,6 @@
 <input type="file" id="fileSticker" accept="image/*" hidden>
 <input type="file" id="fileMusic" accept="audio/*" hidden>
 
-<script type="module" src="/wallpaper/js/app.js?v=5"></script>
+<script type="module" src="/wallpaper/js/app.js?v=8"></script>
 </body>
 </html>

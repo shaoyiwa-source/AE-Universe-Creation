@@ -1,18 +1,20 @@
-// AE動態桌布 — 主程式
+// AE動態桌布 — 主程式（四個步驟：底圖 → 裝飾 → 風格 → 完成）
 import {
   W, H, FILTERS, THEMES, COMPONENTS, burst, applyFilterPixels, drawComponentIcon, defaultBackground,
 } from './effects.js';
 import { SOUNDS, playSound, audio, music, setSfxVolume, recordingDestination } from './sound.js';
 import {
   createScene, setBase, setFilter, coverCanvas, hitTest, renderScene, images, serializeScene,
-  deserializeScene, serializeObjects, loadImage, canvasToBlob, FONT,
+  deserializeScene, serializeObjects, loadImage, canvasToBlob,
 } from './scene.js';
 import { kvGet, kvSet, galleryAll, galleryPut, galleryDel, loadSettings, saveSettings } from './store.js';
+import { t, nm, getLang, setLang, SYMBOLS, symLabel } from './i18n.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
+const EN = () => getLang() === 'en';
 
 // 在原生 iPhone App（WKWebView）中執行時，可呼叫原生功能
 const NATIVE = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.ae);
@@ -25,7 +27,6 @@ function blobToBase64(blob) {
     r.readAsDataURL(blob);
   });
 }
-if (NATIVE) document.documentElement.classList.add('native');
 
 const S = loadSettings();
 S.compSounds = { ...Object.fromEntries(COMPONENTS.map((c) => [c.id, c.sound])), ...(S.compSounds || {}) };
@@ -35,24 +36,23 @@ const DEFAULT_BG = defaultBackground();
 let scene = createScene();
 setBase(scene, DEFAULT_BG, false);
 
+const STEPS = ['photo', 'decorate', 'style', 'finish'];
+const STEP_LABEL = { photo: 's1', decorate: 's2', style: 's3', finish: 's4' };
 const ui = {
-  tab: 'photo', tool: 'select', color: '#FF7EB6', size: 16, textColor: '#FF7EB6',
-  selected: null, draft: null, recording: false, gallery: [],
+  step: 'photo', sub: { decorate: 'comp', style: 'theme' }, tool: 'select', drawMode: 'glow',
+  color: '#FF7EB6', size: 16, textColor: '#FF7EB6', selected: null, draft: null,
+  recording: false, gallery: [], recDur: 10, visited: new Set(['photo']),
 };
 const undoStack = [];
+const redoStack = [];
 
 const canvas = $('#canvas');
 const ctx = canvas.getContext('2d');
 const pCanvas = $('#playerCanvas');
 const pctx = pCanvas.getContext('2d');
+const panel = $('#panel');
 
 const COLORS = ['#FF7EB6', '#FF4D6D', '#FFB347', '#FFD93D', '#7ED957', '#4DD4C6', '#5AA9FF', '#9B7BFF', '#FFFFFF', '#4A3550'];
-const SYMBOLS = [
-  ['❤️', '愛心'], ['🌙', '月亮'], ['☀️', '太陽'], ['⭐', '星星'], ['♾️', '無限'], ['🌸', '花'],
-  ['🌳', '樹'], ['🐦', '鳥'], ['🐟', '魚'], ['🐶', '狗'], ['🐱', '貓'], ['🌈', '彩虹'],
-  ['☁️', '雲'], ['🍀', '幸運草'], ['🦋', '蝴蝶'], ['🐰', '兔兔'], ['🍓', '草莓'], ['🎀', '蝴蝶結'],
-  ['✨', '閃亮'], ['💖', '心心'], ['🌷', '鬱金香'], ['🐻', '熊熊'], ['🍰', '蛋糕'], ['🪐', '星球'],
-];
 const THEME_SWATCH = {
   none: 'linear-gradient(135deg,var(--paper),var(--line))',
   laser: 'conic-gradient(from 200deg at 50% 100%,#1a0033,#ff2fd0,#1a0033,#2fd5ff,#1a0033,#b6ff2f,#1a0033)',
@@ -62,7 +62,7 @@ const THEME_SWATCH = {
   bubbles: 'radial-gradient(circle at 35% 35%,#fff 0 6%,transparent 7%),radial-gradient(circle at 65% 62%,rgba(255,255,255,.8) 0 4%,transparent 5%),linear-gradient(140deg,#ffd6f0,#d6f0ff 50%,#e9d6ff)',
   aurora: 'linear-gradient(180deg,#071433,#0b3a4a 45%,#36d39a 72%,#7b5cff)',
 };
-const THEME_ICON = {};
+const ICON_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
 // ======================================================================
 // 小工具
@@ -76,6 +76,7 @@ function toast(msg, el = $('#toast')) {
 }
 
 function openModal(html, bind) {
+  closeMenu();
   $('#modalBody').innerHTML = html;
   $('#modal').hidden = false;
   if (bind) bind($('#modalBody'));
@@ -92,30 +93,91 @@ function autosave() {
   saveTimer = setTimeout(async () => { kvSet('current', await serializeScene(scene)); }, 700);
 }
 
+function now() { return performance.now() / 1000; }
+
+// ---------------- 復原／重做 ----------------
 function snapshot() { return JSON.parse(JSON.stringify(serializeObjects(scene.objects))); }
 function pushHistory(snap = snapshot()) {
   undoStack.push(snap);
   if (undoStack.length > 50) undoStack.shift();
+  redoStack.length = 0;
+  updateHistoryButtons();
 }
 function undo() {
-  if (!undoStack.length) return toast('沒有可以復原的步驟');
+  if (!undoStack.length) return toast(t('noUndo'));
+  redoStack.push(snapshot());
   scene.objects = undoStack.pop();
+  afterHistory();
+}
+function redo() {
+  if (!redoStack.length) return toast(t('noRedo'));
+  undoStack.push(snapshot());
+  scene.objects = redoStack.pop();
+  afterHistory();
+}
+function afterHistory() {
   select(null);
   autosave();
-  if (ui.tab === 'edit') renderPanel();
+  updateHistoryButtons();
+  renderPanel();
+}
+function updateHistoryButtons() {
+  $('#btnUndo').disabled = !undoStack.length;
+  $('#btnRedo').disabled = !redoStack.length;
 }
 $('#btnUndo').onclick = undo;
+$('#btnRedo').onclick = redo;
 
-// 深色／淺色（與 AE 官網共用 ae-theme 設定）
-$('#btnTheme').onclick = () => {
-  const root = document.documentElement;
-  const cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  const next = cur === 'dark' ? 'light' : 'dark';
-  root.dataset.theme = next;
-  try { localStorage.setItem('ae-theme', next); } catch (e) { /* ignore */ }
+// ======================================================================
+// 頁首：選單、語言、深色外觀（與官網共用設定）
+// ======================================================================
+function applyStaticText() {
+  $$('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  $$('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  $('#btnLang').textContent = t('langSwitch');
+  $('#btnLang').setAttribute('aria-label', EN() ? '切換至中文' : 'Switch to English');
+  document.documentElement.lang = EN() ? 'en' : 'zh-Hant';
+  renderMenu();
+}
+
+$('#btnLang').onclick = () => {
+  setLang(EN() ? 'zh' : 'en');
+  applyStaticText();
+  renderSteps();
+  renderPanel();
 };
 
-function now() { return performance.now() / 1000; }
+function isDark() {
+  const root = document.documentElement;
+  return (root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+}
+$('#btnDark').onclick = () => {
+  const next = isDark() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('ae-theme', next); } catch (e) { /* ignore */ }
+  renderMenu();
+};
+
+function renderMenu() {
+  const items = [
+    ['settings', 'mSettings', 'mSettingsSub'], ['rotate', 'mRotate', 'mRotateSub'],
+    ['lock', 'mLock', 'mLockSub'], ['shortcut', 'mShortcut', 'mShortcutSub'],
+  ];
+  if (!NATIVE) items.push(['install', 'mInstall', 'mInstallSub']);
+  $('#menuList').innerHTML = items.map(([id, a, b]) => `<button data-menu="${id}" type="button">${t(a)}<small>${t(b)}</small></button>`).join('')
+    + `<a href="/">${t('mSite')}<small>${t('mSiteSub')}</small></a>`;
+  $('#btnDark').textContent = isDark() ? t('darkOff') : t('darkOn');
+}
+function closeMenu() { $('#menu').hidden = true; $('#btnMenu').setAttribute('aria-expanded', 'false'); }
+$('#btnMenu').onclick = () => {
+  const open = $('#menu').hidden;
+  $('#menu').hidden = !open;
+  $('#btnMenu').setAttribute('aria-expanded', String(open));
+};
+$('#menuList').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-menu]'); if (!b) return;
+  ({ settings: showSettings, rotate: showRotation, lock: showLockGuide, shortcut: showSetWallpaperGuide, install: showInstallGuide })[b.dataset.menu]();
+});
 
 // ======================================================================
 // 點擊元件：動起來＋發聲
@@ -132,20 +194,24 @@ function triggerTap(o, withSound = true) {
 }
 
 // ======================================================================
-// 選取
+// 選取：依物件類型自動切到對應的面板
 // ======================================================================
 function select(o) {
+  const changed = ui.selected !== o;
   ui.selected = o;
   $('#selBar').hidden = !o;
-  $('#selEdit').hidden = !(o && o.type === 'text');
-  if (ui.tab === 'edit' || ui.tab === 'comp') renderPanel();
+  if (!changed) return;
+  if (o && ui.step === 'decorate') {
+    if (o.type === 'comp') ui.sub.decorate = 'comp';
+    else if (o.type === 'text') ui.sub.decorate = 'text';
+  }
+  if (ui.step === 'decorate') renderPanel();
 }
 
 $('#selBar').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b || !ui.selected) return;
   const o = ui.selected;
   const act = b.dataset.sel;
-  if (act === 'edit') { setTab('edit'); setTimeout(() => $('#txtInput')?.focus(), 50); return; }
   pushHistory();
   if (act === 'smaller') o.scale = Math.max(0.2, o.scale * 0.85);
   if (act === 'bigger') o.scale = Math.min(6, o.scale * 1.18);
@@ -161,17 +227,16 @@ function addObject(o) {
   o.id = uid();
   o.rot = o.rot || 0;
   o.scale = o.scale || 1;
-  o.x = o.x ?? W / 2 + (Math.random() - 0.5) * 200;
-  o.y = o.y ?? H / 2 + (Math.random() - 0.5) * 300;
+  o.x = o.x ?? W / 2 + (Math.random() - 0.5) * 240;
+  o.y = o.y ?? H * 0.55 + (Math.random() - 0.5) * 420;
   scene.objects.push(o);
-  ui.tool = 'select';
   select(o);
   autosave();
   return o;
 }
 
 // ======================================================================
-// 畫布觸控：拖曳、縮放旋轉、手寫、光紋
+// 畫布觸控：拖曳、雙指縮放旋轉、手寫、光紋
 // ======================================================================
 function toCanvas(e) {
   const r = canvas.getBoundingClientRect();
@@ -260,9 +325,9 @@ $('#fileBase').addEventListener('change', async (e) => {
     setBase(scene, coverCanvas(img), true);
     filterThumbs = null;
     autosave();
-    toast('已匯入桌布照片 ');
+    toast(t('photoIn'));
     renderPanel();
-  } catch (err) { toast('無法讀取這張圖片'); } finally { URL.revokeObjectURL(url); }
+  } catch (err) { toast(t('badImage')); } finally { URL.revokeObjectURL(url); }
 });
 
 $('#fileSticker').addEventListener('change', async (e) => {
@@ -279,8 +344,8 @@ $('#fileSticker').addEventListener('change', async (e) => {
     const id = uid();
     images.set(id, small);
     addObject({ type: 'image', imgId: id, scale: 1.2 });
-    toast('已加入可愛圖片');
-  } catch (err) { toast('無法讀取這張圖片'); } finally { URL.revokeObjectURL(url); }
+    toast(t('imageAdded'));
+  } catch (err) { toast(t('badImage')); } finally { URL.revokeObjectURL(url); }
 });
 
 $('#fileMusic').addEventListener('change', async (e) => {
@@ -293,36 +358,51 @@ $('#fileMusic').addEventListener('change', async (e) => {
 });
 
 // ======================================================================
-// 面板
+// 步驟與面板
 // ======================================================================
+function renderSteps() {
+  $('#steps').innerHTML = STEPS.map((s, i) => `
+    <button type="button" data-step="${s}" class="${ui.step === s ? 'on' : ''}" aria-current="${ui.step === s ? 'step' : 'false'}">
+      <b>0${i + 1}</b><span>${t(STEP_LABEL[s])}</span>${ui.step === s ? `<i class="chev" aria-hidden="true">${panel.classList.contains('collapsed') ? '▲' : '▼'}</i>` : ''}
+    </button>`).join('');
+}
+$('#steps').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-step]'); if (b) goStep(b.dataset.step);
+});
+
+function goStep(step) {
+  if (ui.recording) return;
+  // 再點一次目前的步驟：收起／展開面板，讓畫布變大
+  if (step === ui.step && panel.innerHTML) {
+    panel.classList.toggle('collapsed');
+    renderSteps();
+    return;
+  }
+  panel.classList.remove('collapsed');
+  ui.step = step;
+  ui.visited.add(step);
+  updateTool();
+  if (step !== 'decorate') select(null);
+  renderSteps();
+  renderPanel();
+  panel.scrollTop = 0;
+}
+
+// 畫筆只在「裝飾 → 畫筆」時啟用，其他時候都是選取模式
+function updateTool() {
+  const drawing = ui.step === 'decorate' && ui.sub.decorate === 'draw';
+  ui.tool = drawing ? ui.drawMode : 'select';
+  if (drawing) select(null);
+}
+
 let filterThumbs = null;
 function makeFilterThumbs() {
   const src = document.createElement('canvas');
-  src.width = 120; src.height = 260;
-  src.getContext('2d').drawImage(scene.baseRaw || DEFAULT_BG, 0, 0, 120, 260);
+  src.width = 120; src.height = 200;
+  const base = scene.baseRaw || DEFAULT_BG;
+  src.getContext('2d').drawImage(base, 0, base.height * 0.2, base.width, base.width * (200 / 120), 0, 0, 120, 200);
   filterThumbs = {};
   FILTERS.forEach((f) => { filterThumbs[f.id] = applyFilterPixels(src, f.id).toDataURL('image/jpeg', 0.8); });
-}
-
-function setTab(tab) {
-  ui.tab = tab;
-  $$('#tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
-  if (tab !== 'edit' && ui.tool !== 'select') ui.tool = 'select';
-  renderPanel();
-}
-$('#tabbar').addEventListener('click', (e) => {
-  const b = e.target.closest('button'); if (b) setTab(b.dataset.tab);
-});
-
-const panel = $('#panel');
-function renderPanel() {
-  const fn = PANELS[ui.tab];
-  panel.innerHTML = fn.html();
-  fn.bind && fn.bind(panel);
-}
-
-function colorRow(current, attr) {
-  return `<div class="colors">${COLORS.map((c) => `<button data-${attr}="${c}" class="${c === current ? 'on' : ''}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>`;
 }
 
 function rotationInfo() {
@@ -333,35 +413,65 @@ function rotationInfo() {
   return { index: ((k % n) + n) % n, next: S.rotateAnchor + (k + 1) * period };
 }
 
+function colorRow(current, attr) {
+  return `<div class="colors">${COLORS.map((c) => `<button type="button" data-${attr}="${c}" class="${c === current ? 'on' : ''}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>`;
+}
+
+function head(n, h, p) {
+  return `<div class="step-head"><div class="eyebrow">${t('stepOf', n)}</div><h3>${t(h)}</h3>${p ? `<p>${t(p)}</p>` : ''}</div>`;
+}
+function subtabs(group, list) {
+  return `<div class="subtabs" role="tablist">${list.map(([id, key]) => `<button type="button" role="tab" data-sub="${group}:${id}" class="${ui.sub[group] === id ? 'on' : ''}" aria-selected="${ui.sub[group] === id}">${t(key)}</button>`).join('')}</div>`;
+}
+function foot(i) {
+  const prev = i > 0 ? `<button type="button" class="text-link muted" data-go="${STEPS[i - 1]}">${t('back')}</button>` : '<span></span>';
+  const next = i < STEPS.length - 1
+    ? `<button type="button" class="btn solid" data-go="${STEPS[i + 1]}">${t('next', t(STEP_LABEL[STEPS[i + 1]]))} →</button>`
+    : `<button type="button" class="text-link muted" data-go="photo">${t('startOver')}</button>`;
+  return `<div class="step-foot">${prev}${next}</div>`;
+}
+
+function renderPanel() {
+  const fn = PANELS[ui.step];
+  panel.innerHTML = fn.html();
+  panel.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => goStep(b.dataset.go));
+  panel.querySelectorAll('[data-sub]').forEach((b) => b.onclick = () => {
+    const [group, id] = b.dataset.sub.split(':');
+    ui.sub[group] = id;
+    updateTool();
+    renderPanel();
+  });
+  fn.bind && fn.bind(panel);
+}
+
 const PANELS = {
+  // ---------------- 01 底圖 ----------------
   photo: {
     html() {
       const rot = rotationInfo();
       return `
-      <h3>桌布照片 <small>${scene.hasPhoto ? '已匯入照片' : '目前使用預設底圖'}</small></h3>
+      ${head(1, 'h1', 'p1')}
       <div class="row">
-        <button class="btn solid" id="pickBase">匯入照片</button>
-        <button class="btn blue" id="useDefault">預設底圖</button>
+        <button type="button" class="btn solid" id="pickBase">${t('importPhoto')}</button>
+        <button type="button" class="btn quiet" id="useDefault">${t('defaultBg')}</button>
       </div>
-      <p class="hint">建議使用直式照片，會自動裁成 iPhone 全螢幕比例（1080×2340）。</p>
-      <h3>我的桌布收藏 <small>${ui.gallery.length} 張・輪播用</small></h3>
-      <div class="gallery">
-        ${ui.gallery.map((g, i) => `<div class="g ${rot && rot.index === i ? 'current' : ''}" data-load="${g.id}">
-            <img src="${g.thumb}" alt="桌布 ${i + 1}">
-            <button class="del" data-del="${g.id}" aria-label="刪除">✕</button>
-            ${rot && rot.index === i ? '<span class="badge">目前</span>' : ''}
+      <p class="hint">${scene.hasPhoto ? t('usingPhoto') : t('usingDefault')}</p>
+      <div class="section-title"><h4>${t('myGallery')}</h4><small>${t('galleryCount', ui.gallery.length)}</small></div>
+      ${ui.gallery.length ? `<div class="gallery">
+        ${ui.gallery.map((g, i) => `<div class="g ${rot && rot.index === i ? 'current' : ''}" data-load="${g.id}" role="button" tabindex="0">
+            <img src="${g.thumb}" alt="">
+            <button type="button" class="del" data-del="${g.id}" aria-label="${t('delete')}">${ICON_X}</button>
+            ${rot && rot.index === i ? `<span class="badge">${t('current')}</span>` : ''}
           </div>`).join('')}
-      </div>
-      <button class="btn block" id="saveGallery">把目前作品存進收藏</button>
-      <p class="hint">點收藏縮圖可載入編輯。在「設定」開啟自動更換後，互動模式會依頻率輪流顯示收藏的桌布。</p>`;
+      </div><p class="hint">${t('galleryHint')}</p>` : `<div class="empty">${t('galleryEmpty')}</div>`}
+      ${foot(0)}`;
     },
     bind(p) {
       $('#pickBase', p).onclick = () => $('#fileBase').click();
       $('#useDefault', p).onclick = () => { setBase(scene, DEFAULT_BG, false); filterThumbs = null; autosave(); renderPanel(); };
-      $('#saveGallery', p).onclick = saveToGallery;
       p.querySelectorAll('[data-del]').forEach((b) => b.onclick = async (e) => {
         e.stopPropagation();
-        if (!confirm('要刪除這張收藏的桌布嗎？')) return;
+        if (!confirm(t('confirmDelete'))) return;
         await galleryDel(b.dataset.del);
         await refreshGallery();
       });
@@ -371,85 +481,56 @@ const PANELS = {
         pushHistory();
         scene = await deserializeScene(item.data, DEFAULT_BG);
         filterThumbs = null; select(null); autosave();
-        toast('已載入收藏的桌布');
+        toast(t('loaded'));
         renderPanel();
       });
     },
   },
 
-  edit: {
+  // ---------------- 02 裝飾 ----------------
+  decorate: {
     html() {
-      const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
-      return `
-      <h3>編輯工具 <small>${ui.tool === 'select' ? '點選物件可移動・雙指縮放旋轉' : '在畫面上直接畫'}</small></h3>
-      <div class="row">
-        <button class="chip ${ui.tool === 'select' ? 'on' : ''}" data-tool="select">選取移動</button>
-        <button class="chip ${ui.tool === 'pen' ? 'on' : ''}" data-tool="pen">手寫字</button>
-        <button class="chip ${ui.tool === 'glow' ? 'on' : ''}" data-tool="glow">手畫光紋</button>
-      </div>
-      ${ui.tool !== 'select' ? `
+      const sub = ui.sub.decorate;
+      let body = '';
+      if (sub === 'comp') {
+        const sel = ui.selected && ui.selected.type === 'comp' ? ui.selected : null;
+        body = `
+        <div class="grid">${COMPONENTS.map((c) => { const n = nm('comp', c); return `
+          <button type="button" class="tile ${sel && sel.kind === c.id ? 'on' : ''}" data-comp="${c.id}">
+            <canvas width="150" height="150" data-icon="${c.id}"></canvas>${esc(n.name)}<small>${esc(n.desc)}</small>
+          </button>`; }).join('')}</div>
+        ${sel ? `<div class="section-title"><h4>${t('compSound')}</h4><small>${esc(nm('comp', COMPONENTS.find((c) => c.id === sel.kind)).name)}</small></div>
+          <div class="row">${SOUNDS.map((s) => `<button type="button" class="chip ${S.compSounds[sel.kind] === s.id ? 'on' : ''}" data-snd="${sel.kind}:${s.id}">${esc(nm('sound', s).name)}</button>`).join('')}
+            <button type="button" class="chip ${S.compSounds[sel.kind] === 'none' ? 'on' : ''}" data-snd="${sel.kind}:none">${t('mute')}</button></div>`
+          : `<p class="hint">${t('compSoundHint')}</p>`}`;
+      } else if (sub === 'sym') {
+        body = `<div class="sym-grid">${SYMBOLS.map((s) => `<button type="button" data-sym="${s[0]}" aria-label="${esc(symLabel(s))}"><div>${s[0]}<span>${esc(symLabel(s))}</span></div></button>`).join('')}</div>`;
+      } else if (sub === 'text') {
+        const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
+        body = `
+        <textarea id="txtInput" rows="2" placeholder="${esc(t('textPh'))}">${sel ? esc(sel.text) : ''}</textarea>
+        <div class="row" style="margin-top:10px">${colorRow(sel ? sel.color : ui.textColor, 'tcolor')}</div>
+        <div class="row"><button type="button" class="btn solid" id="addText">${sel ? t('updateText') : t('addText')}</button></div>`;
+      } else if (sub === 'draw') {
+        body = `
+        <div class="row">
+          <button type="button" class="chip ${ui.drawMode === 'glow' ? 'on' : ''}" data-mode="glow">${t('glow')}</button>
+          <button type="button" class="chip ${ui.drawMode === 'pen' ? 'on' : ''}" data-mode="pen">${t('pen')}</button>
+        </div>
         <div class="row">${colorRow(ui.color, 'color')}</div>
-        <div class="row"><span class="label">筆刷粗細</span><input type="range" id="size" min="4" max="48" value="${ui.size}"></div>` : ''}
-      <h3>文字方塊</h3>
-      <textarea id="txtInput" rows="2" placeholder="輸入想寫的字，例如：今天也要開心 ♡">${sel ? esc(sel.text) : ''}</textarea>
-      <div class="row" style="margin-top:8px">${colorRow(sel ? sel.color : ui.textColor, 'tcolor')}</div>
-      <div class="row"><button class="btn solid" id="addText">${sel ? '更新文字' : '＋ 加入文字'}</button></div>
-      <h3>可愛小符號</h3>
-      <div class="sym-grid">${SYMBOLS.map(([c, n]) => `<button data-sym="${c}" aria-label="${n}"><div>${c}<span>${n}</span></div></button>`).join('')}</div>
-      <div class="row">
-        <button class="btn blue" id="pickSticker">匯入可愛圖片</button>
-        <button class="btn" id="clearAll">清除全部編輯</button>
-      </div>`;
-    },
-    bind(p) {
-      p.querySelectorAll('[data-tool]').forEach((b) => b.onclick = () => {
-        ui.tool = b.dataset.tool;
-        if (ui.tool !== 'select') select(null);
-        renderPanel();
-      });
-      p.querySelectorAll('[data-color]').forEach((b) => b.onclick = () => { ui.color = b.dataset.color; renderPanel(); });
-      $('#size', p)?.addEventListener('input', (e) => { ui.size = +e.target.value; });
-      p.querySelectorAll('[data-tcolor]').forEach((b) => b.onclick = () => {
-        ui.textColor = b.dataset.tcolor;
-        if (ui.selected && ui.selected.type === 'text') { pushHistory(); ui.selected.color = ui.textColor; autosave(); }
-        p.querySelectorAll('[data-tcolor]').forEach((x) => x.classList.toggle('on', x === b));
-      });
-      $('#addText', p).onclick = async () => {
-        const text = $('#txtInput', p).value.trim();
-        if (!text) return toast('先輸入文字喔');
-        try { await document.fonts.load(`900 96px "Zen Maru Gothic"`, text); } catch (e) { /* offline */ }
-        if (ui.selected && ui.selected.type === 'text') {
-          pushHistory(); ui.selected.text = text; autosave(); toast('已更新文字');
-        } else {
-          addObject({ type: 'text', text, color: ui.textColor, size: 120, y: H * 0.55 });
-        }
-        renderPanel();
-      };
-      p.querySelectorAll('[data-sym]').forEach((b) => b.onclick = () => addObject({ type: 'emoji', char: b.dataset.sym, scale: 1.6 }));
-      $('#pickSticker', p).onclick = () => $('#fileSticker').click();
-      $('#clearAll', p).onclick = () => {
-        if (!scene.objects.length) return;
-        if (!confirm('要清除畫面上全部的文字、符號、筆畫與元件嗎？（可按 ↶ 復原）')) return;
-        pushHistory(); scene.objects = []; select(null); autosave();
-      };
-    },
-  },
-
-  comp: {
-    html() {
+        <div class="row"><span class="label">${t('brush')}</span><input type="range" id="size" min="4" max="48" value="${ui.size}"></div>
+        <p class="hint">${t('drawHint')}</p>`;
+      } else if (sub === 'image') {
+        body = `
+        <div class="row"><button type="button" class="btn solid" id="pickSticker">${t('importImage')}</button></div>
+        <p class="hint">${t('imageHint')}</p>`;
+      }
       return `
-      <h3>動態可愛元件 <small>點一下加到桌布</small></h3>
-      <div class="grid">${COMPONENTS.map((c) => `
-        <button class="tile" data-comp="${c.id}">
-          <canvas width="160" height="160" data-icon="${c.id}"></canvas>${c.name}<small>${c.desc}</small>
-        </button>`).join('')}</div>
-      <h3>元件聲音 <small>點元件時播放</small></h3>
-      ${COMPONENTS.map((c) => `
-        <div class="row nowrap"><span class="label">${c.name}</span>
-          ${SOUNDS.map((s) => `<button class="chip ${S.compSounds[c.id] === s.id ? 'on' : ''}" data-snd="${c.id}:${s.id}">${s.name}</button>`).join('')}
-          <button class="chip ${S.compSounds[c.id] === 'none' ? 'on' : ''}" data-snd="${c.id}:none">無聲</button>
-        </div>`).join('')}
-      <p class="hint">在畫面上點一下元件就能看它動、聽它叫；拖曳可移動，雙指可縮放旋轉。</p>`;
+      ${head(2, 'h2', 'p2')}
+      ${subtabs('decorate', [['comp', 'subComp'], ['sym', 'subSym'], ['text', 'subText'], ['draw', 'subDraw'], ['image', 'subImage']])}
+      ${body}
+      ${scene.objects.length ? `<div class="row"><button type="button" class="text-link muted" id="clearAll">${t('clearAll')}</button></div>` : ''}
+      ${foot(1)}`;
     },
     bind(p) {
       p.querySelectorAll('[data-comp]').forEach((b) => b.onclick = () => {
@@ -462,110 +543,146 @@ const PANELS = {
         playSound(snd);
         renderPanel();
       });
-    },
-  },
-
-  filter: {
-    html() {
-      if (!filterThumbs) makeFilterThumbs();
-      return `
-      <h3>濾鏡 <small>會動的動態濾鏡</small></h3>
-      <div class="grid" style="grid-template-columns:repeat(4,1fr)">${FILTERS.map((f) => `
-        <button class="tile ${scene.filter === f.id ? 'on' : ''}" data-filter="${f.id}">
-          <img class="swatch" style="aspect-ratio:120/200;object-fit:cover" src="${filterThumbs[f.id]}" alt="">${f.name}<small>${f.desc}</small>
-        </button>`).join('')}</div>`;
-    },
-    bind(p) {
-      p.querySelectorAll('[data-filter]').forEach((b) => b.onclick = () => {
-        setFilter(scene, b.dataset.filter); autosave(); renderPanel();
+      p.querySelectorAll('[data-sym]').forEach((b) => b.onclick = () => addObject({ type: 'emoji', char: b.dataset.sym, scale: 1.6 }));
+      p.querySelectorAll('[data-mode]').forEach((b) => b.onclick = () => { ui.drawMode = b.dataset.mode; updateTool(); renderPanel(); });
+      p.querySelectorAll('[data-color]').forEach((b) => b.onclick = () => { ui.color = b.dataset.color; renderPanel(); });
+      $('#size', p)?.addEventListener('input', (e) => { ui.size = +e.target.value; });
+      p.querySelectorAll('[data-tcolor]').forEach((b) => b.onclick = () => {
+        ui.textColor = b.dataset.tcolor;
+        if (ui.selected && ui.selected.type === 'text') { pushHistory(); ui.selected.color = ui.textColor; autosave(); }
+        p.querySelectorAll('[data-tcolor]').forEach((x) => x.classList.toggle('on', x === b));
+      });
+      const addText = $('#addText', p);
+      if (addText) addText.onclick = async () => {
+        const text = $('#txtInput', p).value.trim();
+        if (!text) return toast(t('needText'));
+        try { await document.fonts.load('900 96px "Zen Maru Gothic"', text); } catch (e) { /* offline */ }
+        if (ui.selected && ui.selected.type === 'text') {
+          pushHistory(); ui.selected.text = text; autosave(); toast(t('textUpdated'));
+        } else {
+          addObject({ type: 'text', text, color: ui.textColor, size: 120, y: H * 0.55, x: W / 2 });
+        }
+        renderPanel();
+      };
+      $('#pickSticker', p)?.addEventListener('click', () => $('#fileSticker').click());
+      $('#clearAll', p)?.addEventListener('click', () => {
+        if (!confirm(t('confirmClear'))) return;
+        pushHistory(); scene.objects = []; select(null); autosave(); renderPanel();
       });
     },
   },
 
-  theme: {
+  // ---------------- 03 風格 ----------------
+  style: {
     html() {
+      const sub = ui.sub.style;
+      let body = '';
+      if (sub === 'theme') {
+        body = `
+        <div class="grid four">${THEMES.map((th) => { const n = nm('theme', th); return `
+          <button type="button" class="tile ${scene.theme === th.id ? 'on' : ''}" data-theme="${th.id}">
+            <div class="swatch" style="background:${THEME_SWATCH[th.id]}"></div>${esc(n.name)}<small>${esc(n.desc)}</small>
+          </button>`; }).join('')}</div>
+        <div class="row"><span class="label">${t('intensity')}</span><input type="range" id="intensity" min="0.1" max="1" step="0.05" value="${scene.intensity}"></div>`;
+      } else if (sub === 'filter') {
+        if (!filterThumbs) makeFilterThumbs();
+        body = `
+        <div class="grid four">${FILTERS.map((f) => { const n = nm('filter', f); return `
+          <button type="button" class="tile ${scene.filter === f.id ? 'on' : ''}" data-filter="${f.id}">
+            <img class="swatch" src="${filterThumbs[f.id]}" alt="">${esc(n.name)}<small>${esc(n.desc)}</small>
+          </button>`; }).join('')}</div>`;
+      } else if (sub === 'music') {
+        body = `
+        ${music.el ? `<div class="music-card">
+            <div class="eq ${music.playing ? 'on' : ''}"><i></i><i></i><i></i><i></i></div>
+            <div class="name">${esc(music.name)}</div>
+            <button type="button" class="btn solid" id="mToggle">${music.playing ? t('pause') : t('play')}</button>
+          </div>` : `<p class="hint">${t('noMusic')}</p>`}
+        <div class="row"><button type="button" class="btn ${music.el ? 'quiet' : 'solid'}" id="pickMusic">${music.el ? t('changeMusic') : t('importMusic')}</button></div>
+        <div class="row"><span class="label">${t('musicVol')}</span><input type="range" id="mVol" min="0" max="1" step="0.05" value="${S.musicVolume}"></div>
+        <div class="section-title"><h4>${t('sfx')}</h4></div>
+        <div class="row">${SOUNDS.map((s) => `<button type="button" class="chip" data-try="${s.id}">${esc(nm('sound', s).name)}</button>`).join('')}</div>
+        <div class="row"><span class="label">${t('sfxVol')}</span><input type="range" id="sVol" min="0" max="1" step="0.05" value="${S.sfxVolume}"></div>
+        <p class="hint">${t('musicHint')}</p>`;
+      }
       return `
-      <h3>動態桌面主題</h3>
-      <div class="grid" style="grid-template-columns:repeat(4,1fr)">${THEMES.map((t) => `
-        <button class="tile ${scene.theme === t.id ? 'on' : ''}" data-theme="${t.id}">
-          <div class="swatch" style="background:${THEME_SWATCH[t.id]};display:grid;place-items:center;font-size:28px">${THEME_ICON[t.id] || ''}</div>${t.name}<small>${t.desc}</small>
-        </button>`).join('')}</div>
-      <div class="row"><span class="label">效果強度</span><input type="range" id="intensity" min="0.1" max="1" step="0.05" value="${scene.intensity}"></div>
-      <p class="hint">匯入音樂並播放時，雷射、風、星光會跟著音樂的節奏變化。</p>`;
+      ${head(3, 'h3', 'p3')}
+      ${subtabs('style', [['theme', 'subTheme'], ['filter', 'subFilter'], ['music', 'subMusic']])}
+      ${body}
+      ${foot(2)}`;
     },
     bind(p) {
       p.querySelectorAll('[data-theme]').forEach((b) => b.onclick = () => { scene.theme = b.dataset.theme; autosave(); renderPanel(); });
-      $('#intensity', p).addEventListener('input', (e) => { scene.intensity = +e.target.value; autosave(); });
-    },
-  },
-
-  music: {
-    html() {
-      return `
-      <h3>背景音樂</h3>
-      ${music.el ? `<div class="music-card">
-          <div class="eq ${music.playing ? 'on' : ''}"><i></i><i></i><i></i><i></i></div>
-          <div class="name">${esc(music.name)}</div>
-          <button class="btn solid" id="mToggle">${music.playing ? '暫停' : '播放'}</button>
-        </div>` : '<p class="hint">還沒有音樂。匯入一首歌，動態主題會跟著節奏閃動！</p>'}
-      <div class="row"><button class="btn ${music.el ? 'blue' : 'solid'}" id="pickMusic">${music.el ? '換一首' : '匯入音樂'}</button></div>
-      <div class="row"><span class="label">音樂音量</span><input type="range" id="mVol" min="0" max="1" step="0.05" value="${S.musicVolume}"></div>
-      <h3>可愛音效</h3>
-      <div class="row">${SOUNDS.map((s) => `<button class="chip" data-try="${s.id}">${s.name}</button>`).join('')}</div>
-      <div class="row"><span class="label">音效音量</span><input type="range" id="sVol" min="0" max="1" step="0.05" value="${S.sfxVolume}"></div>
-      <p class="hint">支援 mp3、m4a、wav 等格式。錄製動態影片時，音樂與音效會一起錄進去。</p>`;
-    },
-    bind(p) {
-      $('#pickMusic', p).onclick = () => $('#fileMusic').click();
-      $('#mToggle', p) && ($('#mToggle', p).onclick = () => { music.toggle(); setTimeout(renderPanel, 80); });
-      $('#mVol', p).addEventListener('input', (e) => { S.musicVolume = +e.target.value; music.setVolume(S.musicVolume); persistSettings(); });
-      $('#sVol', p).addEventListener('input', (e) => { S.sfxVolume = +e.target.value; setSfxVolume(S.sfxVolume); persistSettings(); });
+      $('#intensity', p)?.addEventListener('input', (e) => { scene.intensity = +e.target.value; autosave(); });
+      p.querySelectorAll('[data-filter]').forEach((b) => b.onclick = () => { setFilter(scene, b.dataset.filter); autosave(); renderPanel(); });
+      $('#pickMusic', p)?.addEventListener('click', () => $('#fileMusic').click());
+      $('#mToggle', p)?.addEventListener('click', () => { music.toggle(); setTimeout(renderPanel, 80); });
+      $('#mVol', p)?.addEventListener('input', (e) => { S.musicVolume = +e.target.value; music.setVolume(S.musicVolume); persistSettings(); });
+      $('#sVol', p)?.addEventListener('input', (e) => { S.sfxVolume = +e.target.value; setSfxVolume(S.sfxVolume); persistSettings(); });
       p.querySelectorAll('[data-try]').forEach((b) => b.onclick = () => playSound(b.dataset.try));
     },
   },
 
-  settings: {
+  // ---------------- 04 完成 ----------------
+  finish: {
     html() {
-      const rot = rotationInfo();
-      const sw = (key, title, sub) => `
-        <label class="set-item"><div><b>${title}</b><small>${sub}</small></div>
-          <span class="switch"><input type="checkbox" data-set="${key}" ${S[key] ? 'checked' : ''}><span></span></span></label>`;
+      const canRec = pickMime() !== null && !!canvas.captureStream;
       return `
-      <h3>使用者互動模式</h3>
-      ${sw('componentTap', '點元件互動', '點可愛元件會跳動並發出聲音')}
-      ${sw('touchFx', '觸碰特效', '點畫面任何地方會噴出星星')}
-      ${sw('showFab', '顯示互動按鈕', '互動模式右下角的 AE 按鈕（隱藏後長按畫面可叫回）')}
-      ${sw('showClock', '預覽鎖定畫面時鐘', '互動模式中顯示時間，方便對照版面')}
-      <div class="row" style="margin-top:8px"><button class="btn solid block" id="lockGuide">設定「鎖定畫面按鈕」叫出 App</button></div>
-      <h3 style="margin-top:14px">桌布更新頻率</h3>
-      ${sw('rotateOn', '自動更換桌布', '從「我的桌布收藏」依序輪播')}
-      <div class="row">
-        <span class="label">每</span>
-        <input type="number" id="rotEvery" min="1" max="99" value="${S.rotateEvery}" style="width:72px">
-        <select id="rotUnit">
-          <option value="hour" ${S.rotateUnit === 'hour' ? 'selected' : ''}>小時</option>
-          <option value="day" ${S.rotateUnit === 'day' ? 'selected' : ''}>天</option>
-        </select>
-        <span style="font-size:13px">更新一次</span>
+      ${head(4, 'h4', 'p4')}
+      <div class="row"><button type="button" class="btn block" id="fPlay">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;stroke:none"><path d="M8 5v14l11-7z"/></svg>${t('fullPreview')}</button></div>
+
+      <div class="card">
+        <h4>${t('setTitle')}</h4>
+        <p>${t('setText')}</p>
+        <div class="row">
+          <button type="button" class="btn solid" id="fSet">${t('setBtn')}</button>
+          <button type="button" class="text-link" id="fSetGuide">${t('setGuide')}</button>
+        </div>
       </div>
-      <p class="hint">${!S.rotateOn ? '開啟後才會輪播。' : !ui.gallery.length ? '收藏裡還沒有桌布，先到「桌布」分頁存幾張吧。' : `目前顯示第 ${rot.index + 1} / ${ui.gallery.length} 張・下次更新：${new Date(rot.next).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`}</p>
-      <h3 style="margin-top:14px">一鍵設為桌布</h3>
-      <div class="row"><button class="btn solid block" id="setGuide">建立「${SHORTCUT_NAME}」捷徑</button></div>
-      <div class="row"><button class="btn blue block" id="rotGuide">讓 iPhone 系統桌布也自動更換</button></div>
-      <div class="row" ${NATIVE ? 'hidden' : ''}><button class="btn block" id="installGuide">把 AE動態桌布 加到主畫面</button></div>`;
+
+      ${NATIVE ? `<div class="card">
+        <h4>${t('liveTitle')}</h4>
+        <p>${t('liveText')}</p>
+        <div class="row"><button type="button" class="btn solid" id="fLive">${t('liveBtn')}</button><span id="liveOut"></span></div>
+      </div>` : ''}
+
+      <div class="card">
+        <h4>${t('saveTitle')}</h4>
+        <p>${t('saveText')}</p>
+        <div class="row"><button type="button" class="btn" id="fPng">${t('saveImage')}</button><span id="pngOut"></span></div>
+        <div class="section-title" style="margin-top:6px"><h4>${t('recTitle')}</h4></div>
+        ${canRec ? `
+          <div class="row">${[5, 10, 15].map((s) => `<button type="button" class="chip ${ui.recDur === s ? 'on' : ''}" data-dur="${s}">${t('sec', s)}</button>`).join('')}</div>
+          <div class="row"><button type="button" class="btn" id="fVid">● ${t('recStart')}</button><span id="vidOut"></span></div>`
+        : `<p class="hint">${t('noRec')}</p>`}
+        <div class="row"><button type="button" class="btn quiet" id="fGallery">${t('saveGallery')}</button></div>
+      </div>
+      <div class="note">${NATIVE ? t('finishNoteNative') : t('finishNote')}</div>
+      ${foot(3)}`;
     },
     bind(p) {
-      p.querySelectorAll('[data-set]').forEach((inp) => inp.onchange = () => {
-        S[inp.dataset.set] = inp.checked;
-        if (inp.dataset.set === 'rotateOn' && inp.checked) S.rotateAnchor = Date.now();
-        persistSettings(); renderPanel();
+      $('#fPlay', p).onclick = enterPlayer;
+      $('#fSet', p).onclick = () => setAsWallpaper();
+      $('#fSetGuide', p).onclick = showSetWallpaperGuide;
+      $('#fPng', p).onclick = async () => {
+        $('#pngOut', p).textContent = t('making');
+        const blob = await renderStillBlob();
+        $('#pngOut', p).innerHTML = `<button type="button" class="btn solid" id="savePng">${t('saveShare')}</button>`;
+        $('#savePng', p).onclick = () => shareOrDownload(blob, `AE-Live-Wallpaper-${Date.now()}.png`);
+      };
+      p.querySelectorAll('[data-dur]').forEach((b) => b.onclick = () => {
+        ui.recDur = +b.dataset.dur;
+        p.querySelectorAll('[data-dur]').forEach((x) => x.classList.toggle('on', x === b));
       });
-      $('#rotEvery', p).onchange = (e) => { S.rotateEvery = Math.max(1, Math.min(99, Math.round(+e.target.value) || 1)); S.rotateAnchor = Date.now(); persistSettings(); renderPanel(); };
-      $('#rotUnit', p).onchange = (e) => { S.rotateUnit = e.target.value; S.rotateAnchor = Date.now(); persistSettings(); renderPanel(); };
-      $('#lockGuide', p).onclick = showLockGuide;
-      $('#rotGuide', p).onclick = showRotateGuide;
-      $('#setGuide', p).onclick = showSetWallpaperGuide;
-      $('#installGuide', p).onclick = showInstallGuide;
+      $('#fVid', p)?.addEventListener('click', () => startRecording(p));
+      $('#fLive', p)?.addEventListener('click', () => startRecording(p, {
+        seconds: 3, out: '#liveOut', btn: '#fLive', withStill: true,
+        onDone: async (video, still) => {
+          await native('saveLivePhoto', { video: await blobToBase64(video), image: await blobToBase64(still) });
+        },
+      }));
+      $('#fGallery', p).onclick = saveToGallery;
     },
   },
 };
@@ -575,7 +692,7 @@ const PANELS = {
 // ======================================================================
 async function refreshGallery() {
   ui.gallery = await galleryAll();
-  if (ui.tab === 'photo' || ui.tab === 'settings') renderPanel();
+  if (ui.step === 'photo') renderPanel();
 }
 
 async function makeThumb(sc) {
@@ -587,88 +704,127 @@ async function makeThumb(sc) {
 }
 
 async function saveToGallery() {
+  select(null);
   const item = { id: uid(), created: Date.now(), thumb: await makeThumb(scene), data: await serializeScene(scene) };
   try {
     await galleryPut(item);
-    toast('已存進我的桌布收藏 ');
-  } catch (e) { toast('儲存失敗，可能是空間不足'); }
+    toast(t('savedGallery'));
+  } catch (e) { toast(t('saveFail')); }
   await refreshGallery();
 }
 
 // ======================================================================
-// 說明對話框
+// 設定與說明
 // ======================================================================
 function playUrl() { return NATIVE ? 'aewallpaper://play' : `${location.origin}/wallpaper/?mode=play`; }
 function copyBtn(text) {
-  return `<div class="code"><span>${esc(text)}</span><button class="btn" data-copy="${esc(text)}">複製</button></div>`;
+  return `<div class="code"><span>${esc(text)}</span><button type="button" class="btn" data-copy="${esc(text)}">${t('copy')}</button></div>`;
 }
 function bindCopy(root) {
   root.querySelectorAll('[data-copy]').forEach((b) => b.onclick = async () => {
-    try { await navigator.clipboard.writeText(b.dataset.copy); toast('已複製'); } catch (e) { toast('請長按網址手動複製'); }
+    try { await navigator.clipboard.writeText(b.dataset.copy); toast(t('copied')); } catch (e) { toast(t('copyFail')); }
+  });
+}
+function switchItem(key, title, sub) {
+  return `<label class="set-item"><div><b>${t(title)}</b><small>${t(sub)}</small></div>
+    <span class="switch"><input type="checkbox" data-set="${key}" ${S[key] ? 'checked' : ''}><span></span></span></label>`;
+}
+
+function showSettings() {
+  openModal(`
+    <h2>${t('setHead')}</h2>
+    ${switchItem('componentTap', 'tapComp', 'tapCompSub')}
+    ${switchItem('touchFx', 'touchFx', 'touchFxSub')}
+    ${switchItem('showFab', 'showFab', 'showFabSub')}
+    ${switchItem('showClock', 'showClock', 'showClockSub')}`, (root) => {
+    root.querySelectorAll('[data-set]').forEach((inp) => inp.onchange = () => { S[inp.dataset.set] = inp.checked; persistSettings(); });
+  });
+}
+
+function showRotation() {
+  const fmt = (d) => new Date(d).toLocaleString(EN() ? 'en-GB' : 'zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const info = () => {
+    const rot = rotationInfo();
+    if (!S.rotateOn) return t('rotOff');
+    if (!ui.gallery.length) return t('rotEmpty');
+    return t('rotNow', rot.index + 1, ui.gallery.length, fmt(rot.next));
+  };
+  openModal(`
+    <h2>${t('rotHead')}</h2>
+    ${switchItem('rotateOn', 'rotOn', 'rotOnSub')}
+    <div class="row" style="margin-top:14px">
+      <span>${t('every')}</span>
+      <input type="number" id="rotEvery" min="1" max="99" value="${S.rotateEvery}" style="width:72px">
+      <select id="rotUnit">
+        <option value="hour" ${S.rotateUnit === 'hour' ? 'selected' : ''}>${t('hour')}</option>
+        <option value="day" ${S.rotateUnit === 'day' ? 'selected' : ''}>${t('day')}</option>
+      </select>
+      <span>${t('once')}</span>
+    </div>
+    <p class="hint" id="rotInfo">${info()}</p>
+    <button type="button" class="btn quiet block" id="rotGuide">${t('rotGuideBtn')}</button>`, (root) => {
+    const refresh = () => { $('#rotInfo', root).textContent = info(); };
+    root.querySelector('[data-set]').onchange = (e) => { S.rotateOn = e.target.checked; if (S.rotateOn) S.rotateAnchor = Date.now(); persistSettings(); refresh(); };
+    $('#rotEvery', root).onchange = (e) => { S.rotateEvery = Math.max(1, Math.min(99, Math.round(+e.target.value) || 1)); S.rotateAnchor = Date.now(); persistSettings(); refresh(); };
+    $('#rotUnit', root).onchange = (e) => { S.rotateUnit = e.target.value; S.rotateAnchor = Date.now(); persistSettings(); refresh(); };
+    $('#rotGuide', root).onclick = showRotateGuide;
   });
 }
 
 function showLockGuide() {
   if (NATIVE) {
-    openModal(`
+    openModal(EN() ? `
+    <h2>Lock Screen button</h2>
+    <p class="hint">The app includes an “AE互動” control (iOS 18+). Press it and unlock to open interactive mode.</p>
+    <h4>Add it</h4>
+    <ol><li>Touch and hold the Lock Screen → Customise → Lock Screen</li><li>Tap “–” on the bottom-left or bottom-right control</li><li>Tap “+” → search “AE” → choose “AE互動”</li></ol>
+    <h4>Hide it</h4>
+    <ul><li>Remove it the same way from the Lock Screen.</li><li>In the app, turn off “Show the AE button” in Interaction.</li></ul>` : `
     <h2>鎖定畫面按鈕</h2>
-    <p class="hint">AE動態桌布 App 內建鎖定畫面按鈕（iOS 18 以上）。按下並解鎖後，會直接進入互動模式。</p>
+    <p class="hint">App 內建「AE互動」按鈕（iOS 18 以上）。按下並解鎖後，會直接進入互動模式。</p>
     <h4>加入按鈕</h4>
-    <ol>
-      <li>在鎖定畫面長按 →「自訂」→ 選「鎖定畫面」</li>
-      <li>點左下或右下按鈕上的「－」移除原本的（手電筒／相機）</li>
-      <li>點「＋」→ 搜尋「AE」→ 選擇「AE互動」→ 完成</li>
-    </ol>
-    <h4>也可以放在控制中心</h4>
-    <ol><li>從右上角往下滑 → 長按空白處 →「加入控制項」→ 搜尋「AE互動」</li></ol>
+    <ol><li>在鎖定畫面長按 →「自訂」→ 選「鎖定畫面」</li><li>點左下或右下按鈕上的「－」移除原本的</li><li>點「＋」→ 搜尋「AE」→ 選擇「AE互動」</li></ol>
     <h4>隱藏這個按鈕</h4>
-    <ul>
-      <li>鎖定畫面：同樣進入「自訂」，按「－」移除 AE互動 按鈕。</li>
-      <li>App 內：在「設定」關閉「顯示互動按鈕」，互動模式就不會出現浮動按鈕（長按畫面 1 秒可暫時叫回）。</li>
-    </ul>`);
+    <ul><li>鎖定畫面：同樣進入「自訂」，按「－」移除。</li><li>App 內：在「互動設定」關閉「顯示互動按鈕」。</li></ul>`);
     return;
   }
-  openModal(`
-    <h2>鎖定畫面按鈕</h2>
-    <p class="hint">iPhone（iOS 18 以上）可以把「捷徑」放到鎖定畫面下方的控制項按鈕。按下後解鎖，就會直接打開 AE動態桌布 的互動模式。</p>
-    <h4>步驟 1：建立捷徑</h4>
-    <ol>
-      <li>打開「捷徑」App → 右上角「＋」新增捷徑</li>
-      <li>加入動作「打開 URL」，貼上下面的網址</li>
-      <li>把捷徑命名為「AE互動」，可選可愛的圖示</li>
-    </ol>
+  openModal(EN() ? `
+    <h2>Lock Screen button</h2>
+    <p class="hint">On iOS 18 you can put a shortcut in the Lock Screen controls. Press it and unlock to open AE Live Wallpaper in interactive mode.</p>
+    <h4>1 · Create the shortcut</h4>
+    <ol><li>Open Shortcuts → tap “+”</li><li>Add the “Open URLs” action and paste the link below</li><li>Name it “AE互動”</li></ol>
     ${copyBtn(playUrl())}
-    <h4>步驟 2：放到鎖定畫面</h4>
-    <ol>
-      <li>在鎖定畫面長按 → 「自訂」→ 選「鎖定畫面」</li>
-      <li>點左下或右下按鈕上的「－」移除原本的（手電筒／相機）</li>
-      <li>點「＋」→ 搜尋「捷徑」→ 選擇「AE互動」→ 完成</li>
-    </ol>
+    <h4>2 · Put it on the Lock Screen</h4>
+    <ol><li>Touch and hold the Lock Screen → Customise → Lock Screen</li><li>Tap “–” on the bottom-left or bottom-right control</li><li>Tap “+” → Shortcut → choose “AE互動”</li></ol>
+    <h4>Hide it</h4>
+    <ul><li>Remove it the same way from the Lock Screen.</li><li>In interactive mode, turn off “Show the AE button” in Interaction (long-press the screen to bring it back).</li></ul>` : `
+    <h2>鎖定畫面按鈕</h2>
+    <p class="hint">iPhone（iOS 18 以上）可以把「捷徑」放到鎖定畫面下方的控制項。按下後解鎖，就會直接打開動態桌布的互動模式。</p>
+    <h4>步驟 1 · 建立捷徑</h4>
+    <ol><li>打開「捷徑」App → 右上角「＋」</li><li>加入動作「打開 URL」，貼上下面的網址</li><li>把捷徑命名為「AE互動」</li></ol>
+    ${copyBtn(playUrl())}
+    <h4>步驟 2 · 放到鎖定畫面</h4>
+    <ol><li>在鎖定畫面長按 →「自訂」→ 選「鎖定畫面」</li><li>點左下或右下按鈕上的「－」移除原本的</li><li>點「＋」→ 搜尋「捷徑」→ 選擇「AE互動」</li></ol>
     <h4>隱藏這個按鈕</h4>
-    <ul>
-      <li>鎖定畫面：同樣進入「自訂」，按「－」把 AE互動 按鈕移除即可。</li>
-      <li>App 內：在「設定」關閉「顯示互動按鈕」，互動模式就不會出現 AE 浮動按鈕（長按畫面 1 秒可暫時叫回）。</li>
-    </ul>`, bindCopy);
+    <ul><li>鎖定畫面：同樣進入「自訂」，按「－」移除。</li><li>互動模式：在「互動設定」關閉「顯示互動按鈕」（長按畫面 1 秒可暫時叫回）。</li></ul>`, bindCopy);
 }
 
 function showRotateGuide() {
-  openModal(`
+  openModal(EN() ? `
+    <h2>Rotate the iPhone wallpaper</h2>
+    <p class="hint">iOS does not let apps change the wallpaper in the background. These two ways keep it changing on a schedule:</p>
+    <h4>A · Photo Shuffle (recommended)</h4>
+    <ol><li>Save the wallpapers you like as images and put them in one album</li><li>Settings → Wallpaper → Add New Wallpaper → Photo Shuffle</li><li>Choose the album and set the frequency to Hourly or Daily</li></ol>
+    <h4>B · Shortcuts automation + rotation here</h4>
+    <ol><li>Turn on “Rotate wallpapers” in Wallpaper rotation</li><li>Shortcuts → Automation → Time of Day → action “Open URLs” with the link below</li><li>At that time, interactive mode opens with the wallpaper that is due</li></ol>
+    ${copyBtn(playUrl())}` : `
     <h2>系統桌布自動更換</h2>
-    <p class="hint">基於 iOS 的安全限制，任何 App 都不能在背景直接替你換掉系統桌布。下面兩種做法可以讓 iPhone 依頻率自動更新：</p>
-    <h4>方法 A：iPhone 內建「相片隨機顯示」（最推薦）</h4>
-    <ol>
-      <li>在本 App 匯出你喜歡的桌布（匯出 → 儲存靜態桌布），存到「照片」並放進同一本相簿</li>
-      <li>設定 → 背景圖片 → 「＋ 新增背景圖片」→「相片隨機顯示」</li>
-      <li>選擇那本相簿，頻率選「每小時」或「每天」</li>
-    </ol>
-    <h4>方法 B：捷徑自動化＋本 App 輪播</h4>
-    <ol>
-      <li>在「設定」開啟「自動更換桌布」，選好每幾小時／幾天</li>
-      <li>捷徑 App → 自動化 → 新增「特定時間」，動作選「打開 URL」貼上下面網址</li>
-      <li>到點會打開互動模式，自動顯示當下該輪到的那張桌布</li>
-    </ol>
-    ${copyBtn(playUrl())}
-    <div class="note">小提醒：動態效果（雷射、星光、元件動畫、音效）需在 App 的互動模式中才會播放；設成系統桌布時是靜態圖或 Live Photo。</div>`, bindCopy);
+    <p class="hint">iOS 不允許任何 App 在背景替你換系統桌布。下面兩種做法可以讓 iPhone 依頻率自動更新：</p>
+    <h4>方法 A · 相片隨機顯示（推薦）</h4>
+    <ol><li>把喜歡的桌布存成圖片，放進同一本相簿</li><li>設定 → 背景圖片 →「＋ 新增背景圖片」→「相片隨機顯示」</li><li>選擇那本相簿，頻率選「每小時」或「每天」</li></ol>
+    <h4>方法 B · 捷徑自動化＋這裡的輪播</h4>
+    <ol><li>在「桌布更新頻率」開啟「自動更換桌布」</li><li>捷徑 App → 自動化 →「特定時間」→ 動作「打開 URL」，貼上下面網址</li><li>到點會打開互動模式，顯示該輪到的那張桌布</li></ol>
+    ${copyBtn(playUrl())}`, bindCopy);
 }
 
 // ---------------- 一鍵設為桌布（剪貼簿＋捷徑） ----------------
@@ -685,7 +841,7 @@ async function setAsWallpaper() {
   if (NATIVE) {
     try {
       const data = await blobToBase64(await renderStillBlob());
-      toast('正在打開捷徑…');
+      toast(t('openingNative'));
       await native('setWallpaper', { data, shortcut: SHORTCUT_NAME });
     } catch (e) { toast(`${e.message || e}`); }
     return;
@@ -696,58 +852,66 @@ async function setAsWallpaper() {
     if (!navigator.clipboard || !window.ClipboardItem) throw new Error('no clipboard');
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]);
   } catch (e) {
-    toast('無法複製圖片，改用「儲存／分享」');
-    shareOrDownload(await blobP, `AE動態桌布-${Date.now()}.png`);
+    toast(t('clipFail'));
+    shareOrDownload(await blobP, `AE-Live-Wallpaper-${Date.now()}.png`);
     return;
   }
-  toast('桌布已複製，正在打開捷徑…');
+  toast(t('opening'));
   location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT_NAME)}`;
 }
 
 function showSetWallpaperGuide() {
-  openModal(`
+  openModal(EN() ? `
+    <h2>Create the “${SHORTCUT_NAME}” shortcut</h2>
+    <p class="hint">Do this once. After that, “Set as wallpaper” sets the current design as your iPhone wallpaper.</p>
+    <ol>
+      <li>Open Shortcuts → tap “+”</li>
+      <li>Add the action <b>Get Clipboard</b></li>
+      <li>Add the action <b>Set Wallpaper</b> and choose which wallpaper to change</li>
+      <li>Expand Set Wallpaper and turn off <b>Show Preview</b></li>
+      <li>Name the shortcut exactly as below</li>
+    </ol>
+    ${copyBtn(SHORTCUT_NAME)}
+    <div class="note">The first time it runs, iPhone asks for permission to read the clipboard and change the wallpaper — choose “Always Allow”.</div>` : `
     <h2>建立「${SHORTCUT_NAME}」捷徑</h2>
-    <p class="hint">只需要做一次。之後在 App 按「設為桌布」，就會自動把畫面設成 iPhone 桌布。</p>
+    <p class="hint">只需要做一次。之後在第四步按「設為桌布」，就會把目前畫面設成 iPhone 桌布。</p>
     <ol>
       <li>打開「捷徑」App → 右上角「＋」</li>
       <li>點「加入動作」，搜尋「<b>取得剪貼板</b>」並加入</li>
-      <li>再搜尋「<b>設定背景圖片</b>」並加入（在「設定背景圖片」動作裡選擇要套用的背景圖片）</li>
-      <li>點「設定背景圖片」動作旁的箭頭，關閉「<b>顯示預覽</b>」，會更快完成</li>
+      <li>再搜尋「<b>設定背景圖片</b>」並加入，選擇要套用的背景圖片</li>
+      <li>點「設定背景圖片」旁的箭頭，關閉「<b>顯示預覽</b>」</li>
       <li>把捷徑名稱改成下面這個名字（要一模一樣）</li>
     </ol>
     ${copyBtn(SHORTCUT_NAME)}
-    <div class="note">
-      第一次執行時，iPhone 會詢問是否允許「${SHORTCUT_NAME}」讀取剪貼板、更改背景圖片，請選「一律允許」。<br>
-      「設為桌布」設定的是靜態圖片；iPhone 不讓捷徑或 App 直接設定原況照片（Live Photo）。
-    </div>`, bindCopy);
+    <div class="note">第一次執行時，iPhone 會詢問是否允許讀取剪貼板、更改背景圖片，請選「一律允許」。</div>`, bindCopy);
 }
 
 function showInstallGuide() {
-  openModal(`
+  openModal(EN() ? `
+    <h2>Add to Home Screen</h2>
+    <ol><li>Open this page in Safari on iPhone</li><li>Tap the Share button</li><li>Choose “Add to Home Screen” → Add</li></ol>
+    <p class="hint">It opens full screen like an app. Your designs stay on your phone and are never uploaded.</p>
+    ${copyBtn(`${location.origin}/wallpaper/`)}` : `
     <h2>加到主畫面</h2>
-    <ol>
-      <li>用 iPhone 的 Safari 打開這個網頁</li>
-      <li>點下方的「分享」按鈕 <b>⎋</b></li>
-      <li>選「加入主畫面」→「新增」</li>
-    </ol>
-    <p class="hint">加入後會像一般 App 一樣全螢幕開啟，作品與收藏都存在你的手機裡，不會上傳。</p>
+    <ol><li>用 iPhone 的 Safari 打開這個網頁</li><li>點下方的「分享」按鈕</li><li>選「加入主畫面」→「新增」</li></ol>
+    <p class="hint">加入後會像 App 一樣全螢幕開啟，作品都存在你的手機裡，不會上傳。</p>
     ${copyBtn(`${location.origin}/wallpaper/`)}`, bindCopy);
 }
 
 // ======================================================================
-// 匯出：靜態圖、動態影片
+// 匯出：圖片、影片
 // ======================================================================
 async function shareOrDownload(blob, name) {
   if (NATIVE) {
     try {
       await native(blob.type.startsWith('video') ? 'saveVideo' : 'saveImage', { data: await blobToBase64(blob), mime: blob.type });
-      toast('已存到「照片」');
-    } catch (e) { toast(`儲存失敗：${e.message || e}`); }
+      toast(t('savedPhotos'));
+    } catch (e) { toast(t('saveErr', e.message || e)); }
     return;
   }
   const file = new File([blob], name, { type: blob.type });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'AE動態桌布' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    try { await navigator.share({ files: [file], title: 'AE Live Wallpaper' }); return; } catch (e) { if (e.name === 'AbortError') return; }
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name;
@@ -758,68 +922,12 @@ async function shareOrDownload(blob, name) {
 function pickMime() {
   if (!window.MediaRecorder) return null;
   const list = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
-  return list.find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || '';
+  return list.find((m) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
 }
-
-let exportDur = 10;
-function showExport() {
-  select(null);
-  const canRec = pickMime() !== null && !!canvas.captureStream;
-  openModal(`
-    <h2>匯出桌布</h2>
-    <h4>一鍵設為 iPhone 桌布</h4>
-    <p class="hint">透過 iPhone「捷徑」直接把目前畫面設成鎖定畫面＋主畫面桌布。第一次使用要先建立捷徑。</p>
-    <div class="row">
-      <button class="btn solid" id="exSet">設為桌布</button>
-      <button class="btn blue" id="exSetGuide">第一次使用？建立捷徑</button>
-    </div>
-    ${NATIVE ? `
-    <h4>原況照片（Live Photo）</h4>
-    <p class="hint">錄製 3 秒並直接存成原況照片。到 設定 → 背景圖片 選用後，鎖定畫面就會動。錄製時可以點元件互動。</p>
-    <div class="row"><button class="btn solid" id="exLive">製作原況照片</button><span id="liveOut"></span></div>` : ''}
-    <h4>靜態桌布（PNG）</h4>
-    <p class="hint">1080×2340 高畫質，可直接設為 iPhone 桌布。</p>
-    <div class="row"><button class="btn solid" id="exPng">產生靜態桌布</button><span id="pngOut"></span></div>
-    <h4>動態桌布影片（含音樂與音效）</h4>
-    ${canRec ? `
-      <div class="row">${[5, 10, 15].map((s) => `<button class="chip ${exportDur === s ? 'on' : ''}" data-dur="${s}">${s} 秒</button>`).join('')}</div>
-      <div class="row"><button class="btn solid" id="exVid">● 開始錄製</button><span id="vidOut"></span></div>
-      <p class="hint">錄製時可以點畫面上的元件，互動也會被錄進去。</p>`
-    : '<p class="hint">這個瀏覽器不支援錄影，請使用 iPhone Safari（iOS 14.5 以上）或 Chrome。</p>'}
-    <h4>存進我的桌布收藏</h4>
-    <div class="row"><button class="btn blue" id="exGallery">存進收藏</button></div>
-    <div class="note">
-      <b>不用捷徑也可以：</b>把靜態桌布存到照片 → 打開該照片 → 分享 → 「設為背景圖片」。<br>
-      ${NATIVE ? '<b>設定原況照片桌布：</b>設定 → 背景圖片 →「＋ 新增背景圖片」→ 照片 → 選剛存好的原況照片。'
-    : '<b>想讓鎖定畫面會動：</b>把影片用「intoLive」等 App 轉成 Live Photo，再於 設定 → 背景圖片 選擇該 Live Photo（長按鎖定畫面即可播放）；或使用 AE動態桌布 iPhone App 直接製作原況照片。'}
-    </div>`, (root) => {
-    $('#exSet', root).onclick = () => setAsWallpaper();
-    $('#exSetGuide', root).onclick = showSetWallpaperGuide;
-    $('#exPng', root).onclick = async () => {
-      $('#pngOut', root).textContent = '產生中…';
-      const blob = await renderStillBlob();
-      $('#pngOut', root).innerHTML = '<button class="btn" id="savePng">儲存／分享</button>';
-      $('#savePng', root).onclick = () => shareOrDownload(blob, `AE動態桌布-${Date.now()}.png`);
-    };
-    root.querySelectorAll('[data-dur]').forEach((b) => b.onclick = () => {
-      exportDur = +b.dataset.dur;
-      root.querySelectorAll('[data-dur]').forEach((x) => x.classList.toggle('on', x === b));
-    });
-    $('#exVid', root) && ($('#exVid', root).onclick = () => startRecording(root));
-    $('#exLive', root) && ($('#exLive', root).onclick = () => startRecording(root, {
-      seconds: 3, out: '#liveOut', btn: '#exLive', withStill: true,
-      onDone: async (video, still) => {
-        await native('saveLivePhoto', { video: await blobToBase64(video), image: await blobToBase64(still) });
-      },
-    }));
-    $('#exGallery', root).onclick = async () => { await saveToGallery(); };
-  });
-}
-$('#btnExport').onclick = showExport;
 
 function startRecording(root, opts = {}) {
   if (ui.recording) return;
-  const seconds = opts.seconds || exportDur;
+  const seconds = opts.seconds || ui.recDur;
   const stillP = opts.withStill ? renderStillBlob() : null;
   const mime = pickMime();
   const stream = canvas.captureStream(30);
@@ -829,41 +937,37 @@ function startRecording(root, opts = {}) {
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
   const out = $(opts.out || '#vidOut', root);
-  const btn = $(opts.btn || '#exVid', root);
+  const btn = $(opts.btn || '#fVid', root);
   btn.disabled = true;
   rec.onstop = () => {
     ui.recording = false;
-    stream.getVideoTracks().forEach((t) => t.stop());
+    stream.getVideoTracks().forEach((tr) => tr.stop());
     const type = (rec.mimeType || mime || 'video/webm').split(';')[0];
     const blob = new Blob(chunks, { type });
     const ext = type.includes('mp4') ? 'mp4' : 'webm';
     btn.disabled = false;
     if (opts.onDone) {
-      out.textContent = '處理中…';
+      out.textContent = t('processing');
       stillP.then((still) => opts.onDone(blob, still))
-        .then(() => { out.textContent = '已存到「照片」'; toast('原況照片已存到「照片」'); })
-        .catch((e) => { out.textContent = `失敗：${e.message || e}`; });
+        .then(() => { out.textContent = t('savedPhotos'); toast(t('liveSaved')); })
+        .catch((e) => { out.textContent = t('failed', e.message || e); });
       return;
     }
-    btn.textContent = '● 重新錄製';
-    out.innerHTML = '<button class="btn" id="saveVid">儲存／分享影片</button>';
-    $('#saveVid', root).onclick = () => shareOrDownload(blob, `AE動態桌布-${Date.now()}.${ext}`);
-    toast('錄製完成');
+    btn.textContent = `● ${t('recAgain')}`;
+    out.innerHTML = `<button type="button" class="btn solid" id="saveVid">${t('saveVideo')}</button>`;
+    $('#saveVid', root).onclick = () => shareOrDownload(blob, `AE-Live-Wallpaper-${Date.now()}.${ext}`);
+    toast(t('recDone'));
   };
   ui.recording = true;
   select(null);
   rec.start(250);
   let left = seconds;
-  out.innerHTML = `<span class="rec">錄製中 ${left}s</span>`;
+  out.innerHTML = `<span class="rec">${t('recording', left)}</span>`;
   const iv = setInterval(() => {
     left -= 1;
     if (left <= 0 || rec.state !== 'recording') { clearInterval(iv); if (rec.state === 'recording') rec.stop(); return; }
-    out.innerHTML = `<span class="rec">錄製中 ${left}s</span>`;
+    out.innerHTML = `<span class="rec">${t('recording', left)}</span>`;
   }, 1000);
-  // 讓使用者看得到畫面：收起對話框
-  $('#modal').hidden = true;
-  toast(`錄製 ${seconds} 秒中… 可以點元件互動`);
-  setTimeout(() => { if ($('#modalBody').contains(out)) $('#modal').hidden = false; }, seconds * 1000 + 600);
 }
 
 // ======================================================================
@@ -885,13 +989,14 @@ async function sceneForPlayer() {
 
 async function enterPlayer() {
   select(null);
+  closeMenu();
   audio();
   player.scene = await sceneForPlayer();
   player.open = true;
   $('#player').hidden = false;
   applyPlayerUi();
   updateClock();
-  if (S.componentTap || S.touchFx) toast('點點看畫面上的元件 ', $('#playerToast'));
+  if (S.componentTap || S.touchFx) toast(t('tapHint'), $('#playerToast'));
 }
 function exitPlayer() {
   player.open = false;
@@ -909,8 +1014,9 @@ $('#btnPlay').onclick = enterPlayer;
 
 function updateClock() {
   const d = new Date();
-  $('#lcTime').textContent = d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-  $('#lcDate').textContent = d.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'long' });
+  const loc = EN() ? 'en-GB' : 'zh-TW';
+  $('#lcTime').textContent = d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', hour12: false });
+  $('#lcDate').textContent = d.toLocaleDateString(loc, { month: 'long', day: 'numeric', weekday: 'long' });
 }
 setInterval(async () => {
   if (!player.open) return;
@@ -918,7 +1024,7 @@ setInterval(async () => {
   const rot = rotationInfo();
   if (rot && rot.index !== player.rotIndex) {
     player.scene = await sceneForPlayer();
-    toast('桌布已依頻率更新 ', $('#playerToast'));
+    toast(t('rotated'), $('#playerToast'));
   }
 }, 15000);
 
@@ -937,7 +1043,7 @@ pCanvas.addEventListener('pointerdown', (e) => {
   else if (S.touchFx) { burst(p.x, p.y, 'spark', 9, 0.8); }
   clearTimeout(player.pressTimer);
   player.pressTimer = setTimeout(() => {
-    if (!S.showFab) { $('#fab').hidden = false; toast('互動按鈕暫時出現囉', $('#playerToast')); }
+    if (!S.showFab) { $('#fab').hidden = false; toast(t('fabPeek'), $('#playerToast')); }
   }, 900);
 });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => pCanvas.addEventListener(ev, () => clearTimeout(player.pressTimer)));
@@ -947,19 +1053,19 @@ $('#fabMenu').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
   const act = b.dataset.fab;
   if (act === 'theme') {
-    const ids = THEMES.map((t) => t.id);
+    const ids = THEMES.map((th) => th.id);
     const sc = player.scene;
     sc.theme = ids[(ids.indexOf(sc.theme) + 1) % ids.length];
-    toast(`主題：${THEMES.find((t) => t.id === sc.theme).name}`, $('#playerToast'));
+    toast(t('themeIs', nm('theme', THEMES.find((th) => th.id === sc.theme)).name), $('#playerToast'));
     if (sc === scene) autosave();
   } else if (act === 'music') {
-    if (!music.el) toast('先到「音樂」分頁匯入音樂喔', $('#playerToast'));
-    else toast(music.toggle() ? `♪ ${music.name}` : '音樂暫停', $('#playerToast'));
+    if (!music.el) toast(t('needMusic'), $('#playerToast'));
+    else toast(music.toggle() ? `♪ ${music.name}` : t('musicPaused'), $('#playerToast'));
   } else if (act === 'clock') {
     S.showClock = !S.showClock; persistSettings(); applyPlayerUi();
   } else if (act === 'hide') {
     S.showFab = false; persistSettings(); applyPlayerUi();
-    toast('已隱藏，長按畫面可叫回', $('#playerToast'));
+    toast(t('fabHidden'), $('#playerToast'));
   } else if (act === 'exit') {
     exitPlayer(); renderPanel();
   }
@@ -970,13 +1076,13 @@ $('#fabMenu').addEventListener('click', (e) => {
 // 主迴圈
 // ======================================================================
 function loop(ms) {
-  const t = ms / 1000;
+  const time = ms / 1000;
   music.update();
   if (player.open && player.scene) {
-    renderScene(pctx, player.scene, t);
+    renderScene(pctx, player.scene, time);
   } else {
-    renderScene(ctx, scene, t, { draft: ui.draft, selected: ui.recording ? null : ui.selected });
-    if (ui.tab === 'comp') $$('canvas[data-icon]', panel).forEach((c) => drawComponentIcon(c, c.dataset.icon, t));
+    renderScene(ctx, scene, time, { draft: ui.draft, selected: ui.recording ? null : ui.selected });
+    if (ui.step === 'decorate' && ui.sub.decorate === 'comp') $$('canvas[data-icon]', panel).forEach((c) => drawComponentIcon(c, c.dataset.icon, time));
   }
   requestAnimationFrame(loop);
 }
@@ -1000,7 +1106,10 @@ async function boot() {
     );
   }
   ui.gallery = await galleryAll();
+  applyStaticText();
+  renderSteps();
   renderPanel();
+  updateHistoryButtons();
   requestAnimationFrame(loop);
   try { await document.fonts.load('900 96px "Zen Maru Gothic"', 'AE動態桌布'); } catch (e) { /* offline */ }
   if (new URLSearchParams(location.search).get('mode') === 'play') enterPlayer();
