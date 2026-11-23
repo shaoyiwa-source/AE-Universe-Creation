@@ -25,6 +25,7 @@ export default {
     { id: 'pattern', type: 'choice', default: 'rainbow', label: { zh: '燈光模式', en: 'Pattern' }, options: [
       { id: 'rainbow', zh: '流動', en: 'Flow' }, { id: 'breathe', zh: '呼吸', en: 'Breathe' }, { id: 'chase', zh: '跑馬燈', en: 'Chase' },
       { id: 'comet', zh: '流星', en: 'Comet' }, { id: 'twinkle', zh: '星光閃爍', en: 'Twinkle' }, { id: 'meter', zh: '聲音律動', en: 'Sound meter' },
+      { id: 'dance', zh: '隨音樂舞動（低音在中、高音在兩端）', en: 'Dance to the music (bass in the middle, treble outwards)' },
       { id: 'solid', zh: '恆亮', en: 'Steady' } ] },
     { id: 'colors', type: 'choice', default: 'rainbow', label: { zh: '顏色', en: 'Colours' }, options: [
       { id: 'rainbow', zh: '七彩', en: 'Rainbow' }, { id: 'own', zh: '自選顏色', en: 'My colours' }, { id: 'painting', zh: '畫作的顏色', en: 'From the painting' },
@@ -41,7 +42,7 @@ export default {
     { id: 'stage', type: 'choice', default: 'with', label: { zh: '畫作', en: 'The work' }, options: [{ id: 'with', zh: '和燈光一起', en: 'With the lights' }, { id: 'dim', zh: '調暗', en: 'Dimmed' }, { id: 'dark', zh: '只有燈光（黑幕）', en: 'Lights only (dark stage)' }] },
   ],
   create(host, p) {
-    let t = 0, shift = 0, flashT = -9, hitsSeen = null, lastCount = null, level = 0, rng = 1;
+    let bands = null, t = 0, shift = 0, flashT = -9, hitsSeen = null, lastCount = null, level = 0, rng = 1;
     const tw = Array.from({ length: 2000 }, () => { rng = (rng * 16807) % 2147483647; return rng / 2147483647; }); // fixed twinkle phases
     const palette = (x) => { // x 0…1 around the colour wheel of the chosen colours
       x = ((x % 1) + 1) % 1;
@@ -133,6 +134,7 @@ export default {
           if (b.live && b.count != null) { if (lastCount !== null && b.count > lastCount) { flashT = t; shift += 0.08; } lastCount = b.count; }
           pulse = Math.max(Math.exp(-Math.max(0, t - flashT) / (0.12 * p.speed)), b.live ? (b.pulse || 0) * 0.6 : 0);
           level = Math.max(b.energy ?? b.level ?? 0, pulse * 0.6, level * Math.pow(0.2, dt));
+          bands = b.bands || null;
         }
         // screen-fixed: the camera never moves the strips (those around the work follow its framing above)
         const ctx = host.overlay || host.front;
@@ -153,6 +155,10 @@ export default {
               case 'comet': { const head = (t * 0.35 + si * 0.5) % 1, d = ((head - u) % 1 + 1) % 1; col = palette(head + shift); v = d < 0.25 ? Math.pow(1 - d / 0.25, 2) : 0.04; break; }
               case 'twinkle': { const ph = tw[(i + si * 211) % tw.length]; col = palette(ph + shift); v = 0.08 + 0.92 * Math.pow(Math.max(0, Math.sin(t * (1.2 + ph * 2.4) + ph * 40)), 8); break; }
               case 'meter': { const lit = Math.min(1, level * 1.4); col = palette(L.m * 0.4 + shift); v = L.m <= lit ? 1 : 0.05; break; }
+              case 'dance': { // each LED is a band of the music: bass where the meter starts, treble outwards
+                const bi = Math.min(15, Math.floor(L.m * 16)), bv = bands ? bands[bi] : 0.25 + 0.25 * Math.sin(t * 3 + L.m * 6);
+                col = palette(L.m * 0.85 + shift); v = 0.04 + 0.96 * Math.pow(Math.max(0, bv), 1.4); break;
+              }
               case 'solid': col = palette(u + shift); v = 1; break;
               default: col = palette(u * 1.5 - t * 0.12 + shift); v = 1; // flowing rainbow
             }

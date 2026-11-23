@@ -262,6 +262,20 @@ export class Listener {
       total += p; cen += p * f; logSum += db * Math.LN10 / 10; n++;
       if (f >= 2500) hi += p; if (f >= 250 && f < 3000) mid += p; if (f >= 30 && f < 95) low += p; // kick-drum band (below most voices)
     }
+    // 16 bands from bass to treble (40 Hz – 12 kHz, log-spaced), each following its own loudness so music at any volume
+    // makes the light dance: fast attack, softer fall, like an equaliser
+    if (!this.bands) { this.bands = new Float32Array(16); this.bandPk = new Float32Array(16).fill(-60); this.bandFl = new Float32Array(16).fill(-90); }
+    for (let b = 0; b < 16; b++) {
+      const f0 = 40 * Math.pow(300, b / 16), f1 = 40 * Math.pow(300, (b + 1) / 16);
+      const i0 = Math.max(2, Math.floor(f0 / binHz)), i1 = Math.max(i0 + 1, Math.ceil(f1 / binHz));
+      let e = 0, k = 0; for (let i = i0; i < i1 && i < this.freq.length; i++) { e += Math.pow(10, Math.max(-140, this.freq[i]) / 10); k++; }
+      const bdb = 10 * Math.log10(e / Math.max(1, k) + 1e-14);
+      this.bandPk[b] = Math.max(bdb, this.bandPk[b] - dt * 6);           // the band's recent peak (falls 6 dB/s)
+      this.bandFl[b] = Math.min(bdb, this.bandFl[b] + dt * 3);           // and its floor (rises 3 dB/s)
+      const span = Math.max(12, this.bandPk[b] - this.bandFl[b]);
+      const v = Math.max(0, Math.min(1, (bdb - (this.bandPk[b] - span)) / span)) * (this.bandPk[b] > -95 ? 1 : 0);
+      this.bands[b] = v > this.bands[b] ? v : this.bands[b] + (v - this.bands[b]) * Math.min(1, dt * 7);
+    }
     const centroid = total > 0 ? cen / total : 0;
     const flat = total > 0 ? Math.min(1, Math.exp(logSum / n) / (total / n)) : 0; // 0 tonal … 1 noisy
     const hiRatio = total > 0 ? hi / total : 0, midRatio = total > 0 ? mid / total : 0;
