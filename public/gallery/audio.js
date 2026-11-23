@@ -28,6 +28,7 @@ export class Sound {
       const comp = ctx.createDynamicsCompressor();
       comp.threshold.value = -18; comp.ratio.value = 3; comp.attack.value = 0.02; comp.release.value = 0.4;
       this.master.connect(comp).connect(ctx.destination);
+      this.an = ctx.createAnalyser(); this.an.fftSize = 2048; this.an.smoothingTimeConstant = 0.2; this.master.connect(this.an); // what we play, for lights that dance to it
       this.comp = comp;
       this.reverb = ctx.createConvolver();
       this.reverb.buffer = this._impulse(4.2, 2.6);

@@ -5,7 +5,7 @@ import { FX } from './fx.js';
 import { runTransition, resetSlide, TRANSITIONS } from './transitions.js';
 import { STR, OPTIONS } from './i18n.js';
 import { recordClip, canRecord } from './recorder.js';
-import { Listener } from './listen.js';
+import { Listener, makeBands, updateBands } from './listen.js';
 import { Alive } from './alive.js';
 import { PackHost, PACKS, packsOf, paramsFor, transitionPack, registerPack, packFromSource, BUILTIN } from './packs.js';
 
@@ -887,12 +887,21 @@ const packs = new PackHost(alive); // R10 God mode: effect packages drawn on the
 // the beat for beat-driven light: our music's kick; with our music off but the microphone on, the room's own music;
 // otherwise none — beat-driven effects then breathe slowly instead of flashing
 const roomBeat = { count: 0, at: -9, level: 0 };
+// our own music, heard by the lights: 16 bands from what the player is playing (the LEDs dance to it)
+let ownBands = null, ownBandState = null, ownFreq = null;
+function hearOwnMusic(dt) {
+  const an = sound.an;
+  if (!an || player.hidden || S.music === 'none' || player.classList.contains('muted')) { ownBands = null; return; }
+  if (!ownFreq) { ownFreq = new Float32Array(an.frequencyBinCount); ownBandState = makeBands(); }
+  an.getFloatFrequencyData(ownFreq);
+  ownBands = updateBands(ownBandState, ownFreq, sound.ctx.sampleRate / an.fftSize, dt);
+}
 packs.beatFn = () => {
   // every sound the room makes — claps, snaps, knocks, a kick, a hi-hat — flashes the light at once (LED-strip style);
   // the locked beat carries the groove on top. Our own soundtrack is not counted (it already drives the light exactly).
   const hit = () => (listener.on ? { hits: roomBeat.hits || 0, hitAge: roomBeat.hitAge, level: listener.level || 0, bands: listener.bands || null } : {});
   const b = sound.beat();
-  if (b.live && !player.classList.contains('muted') && S.music !== 'none') return b;
+  if (b.live && !player.classList.contains('muted') && S.music !== 'none') return ownBands ? { ...b, bands: ownBands } : b;
   if (listener.on && roomBeat.locked) return { live: true, room: true, locked: true, pulse: roomBeat.pulse, count: roomBeat.lockCount, stage: 'groove', energy: roomBeat.level, bpm: roomBeat.bpm, ...hit() };
   if (listener.on && performance.now() / 1000 - (roomBeat.rawAt || -9) < 2.5) return { live: true, room: true, pulse: Math.exp(-(performance.now() / 1000 - roomBeat.rawAt) / 0.11), count: roomBeat.count, stage: 'groove', energy: roomBeat.level, ...hit() };
   return { live: false, quiet: true, pulse: 0, count: 0, ...hit() };
@@ -1593,6 +1602,7 @@ fx.onFrame = (dt) => {
   trackFps(dt); watchMusic(dt);
   sound.visualLead = Math.min(0.05, (sound.visualLead || 0.016) * 0.9 + dt * 0.1); // one frame ahead, averaged
   alive.frame(dt, playing);
+  hearOwnMusic(dt);
   packs.frame(dt);
   showcaseFrame(dt);
   player.classList.toggle('lights-only', (packs.lightsOnly || 0) > 0.5); // pure light art: only the lights are on stage

@@ -16,7 +16,11 @@
 //   1:38 a breath: Infinity Core, soft light and ribbons
 //   1:57 the second build, 2:09 the second drop
 //   2:40 the close: Eternal Sunshine in calm golden light; then it begins again
-const DARK_LED = { layout: 'frame', around: 'work', pattern: 'rainbow', colors: 'painting', count: 46, size: 5, glow: 0.55, speed: 0.7, bright: 0.8, sound: true, stage: 'with' };
+// LEDs that dance to the music around the work: in the painting's own colours (with taste); full rainbow only at the drops
+const DANCE = { layout: 'frame', around: 'work', pattern: 'dance', colors: 'painting', count: 50, size: 5, glow: 0.5, speed: 0.6, bright: 0.75, sound: true, stage: 'with' };
+const DROP = { ...DANCE, colors: 'rainbow', bright: 0.9, glow: 0.6 };
+// light floating near and far around the painting
+const FLOAT = (drift, color = 'painting', count = 150) => ({ id: 'depth', p: { drift, color, count, speed: 0.3, glow: 0.7 } });
 
 export const SHOWCASES = {
   eternal: {
@@ -39,14 +43,14 @@ export const SHOWCASES = {
       { id: 'sc-infinity-core-ribbons', src: 'assets/showcase/infinity-core-ribbons.webp', title: { en: 'Infinity Core', zh: '' } },
       { id: 'sc-eternal-sunshine', src: 'assets/showcase/eternal-sunshine.webp', title: { en: 'Eternal Sunshine', zh: '' } },
     ],
-    // act 1: the room's sound plays the painting
+    // act 1: the room's sound plays the painting — the LEDs dance to every voice, clap and song in the room
     intro: {
       seconds: 40,
       hint: { zh: '對它說話、拍手、彈指 — 看它回應你', en: 'Speak, clap, snap — and watch it answer' },
       items: [
-        { id: 'sc-heart', duration: 20, fx: [{ id: 'laser', p: { colors: 'prism', hits: true, sun: true, bolts: true } }, { id: 'led', p: { layout: 'frame', around: 'work', pattern: 'meter', colors: 'rainbow', count: 40, size: 6, glow: 0.7, speed: 1, bright: 0.95, sound: true, stage: 'with' } }, { id: 'ribbons', p: { count: 4, color: 'rainbow' } }] },
-        { id: 'sc-abundant-number', duration: 20, fx: [{ id: 'laser', p: { colors: 'prism', hits: true, sun: true, bolts: true } }, { id: 'led', p: { layout: 'frame', around: 'work', pattern: 'meter', colors: 'rainbow', count: 40, size: 6, glow: 0.7, speed: 1, bright: 0.95, sound: true, stage: 'with' } }, { id: 'wind', p: { strength: 0.6, petals: 14, color: 'painting' } }],
-          tr: { id: 'zoom', p: { glow: true } } },
+        { id: 'sc-heart', duration: 20, fx: [{ id: 'laser', p: { colors: 'prism', hits: true, sun: true, bolts: true } }, { id: 'led', p: { ...DROP, bright: 0.95 } }, FLOAT('breathe'), { id: 'ribbons', p: { count: 3, color: 'rainbow' } }] },
+        { id: 'sc-abundant-number', duration: 20, fx: [{ id: 'laser', p: { colors: 'prism', hits: true, sun: true, bolts: true } }, { id: 'led', p: { ...DROP, bright: 0.95 } }, FLOAT('toward')],
+          tr: { id: 'zoom', p: { glow: true } }, cam: { id: 'cam-approach', p: {} } },
       ],
     },
     trackLength: 181.6,
@@ -57,34 +61,34 @@ export const SHOWCASES = {
       { at: 129.38, fire: ['glow', 'sweep', 'coins'] },
     ],
     items: [
-      // ---- intro ----
-      { id: 'ae01', at: 0, fx: [{ id: 'light', p: { intensity: 0.75, rays: 6, tone: 'gold', sweep: true, every: 8 } }, { id: 'wind', p: { strength: 0.35, petals: 12, color: 'painting' } }],
+      // ---- intro: the signature work in heavenly light, light floating towards you ----
+      { id: 'ae01', at: 0, fx: [{ id: 'light', p: { intensity: 0.75, rays: 6, tone: 'gold', sweep: true, every: 8 } }, { id: 'wind', p: { strength: 0.35, petals: 12, color: 'painting' } }, FLOAT('toward', 'gold')],
         cam: { id: 'cam-approach', p: {} } },
-      { id: 'sc-infinity-core-flower', at: 17, fx: [{ id: 'ribbons', p: { count: 5, opacity: 0.8, color: 'painting' } }, { id: 'light', p: { intensity: 0.5, tone: 'white' } }],
+      { id: 'sc-infinity-core-flower', at: 17, fx: [{ id: 'ribbons', p: { count: 5, opacity: 0.8, color: 'painting' } }, { id: 'light', p: { intensity: 0.5, tone: 'white' } }, FLOAT('breathe')],
         tr: { id: 'zoom', p: { glow: true } }, cam: { id: 'cam-gaze', p: {} } },
-      { id: 'sc-love-energy', at: 33, fx: [{ id: 'wind', p: { strength: 0.6, petals: 16, color: 'painting' } }, { id: 'ribbons', p: { count: 4, color: 'painting' } }],
+      { id: 'sc-love-energy', at: 33, fx: [{ id: 'wind', p: { strength: 0.6, petals: 16, color: 'painting' } }, { id: 'led', p: DANCE }, FLOAT('away')],
         tr: { id: 'fly', p: { depth: true } }, cam: { id: 'cam-tour', p: {} } },
-      // ---- first build ----
-      { id: 'sc-infinity-nature', at: 51, fx: [{ id: 'laser', p: { colors: 'prism', sun: true } }, { id: 'light', p: { intensity: 0.45, sweep: true, every: 5 } }],
+      // ---- first build: the lasers gather on the eyes; the LEDs dance in the painting's colours ----
+      { id: 'sc-infinity-nature', at: 51, fx: [{ id: 'laser', p: { colors: 'prism', sun: true } }, { id: 'led', p: DANCE }, { id: 'light', p: { intensity: 0.45, sweep: true, every: 5 } }],
         tr: { id: 'curtain', p: {} }, cam: { id: 'cam-gaze', p: {} } },
-      // ---- first drop: the dark works glow ----
-      { id: 'ae14', at: 61.2, fx: [{ id: 'laser', p: { colors: 'prism', sun: true, bolts: true, pools: true, beams: 8, power: 1 } }, { id: 'led', p: DARK_LED }, { id: 'ribbons', p: { count: 3, color: 'painting' } }],
+      // ---- first drop: the dark works glow like neon — every laser, the LEDs in full colour, light rushing towards you ----
+      { id: 'ae14', at: 61.2, fx: [{ id: 'laser', p: { colors: 'prism', sun: true, bolts: true, pools: true, beams: 8, power: 1 } }, { id: 'led', p: DROP }, FLOAT('toward', 'painting', 170), { id: 'ribbons', p: { count: 3, color: 'painting' } }],
         tr: { id: 'zoom', p: { glow: true, duration: 1.4 } }, cam: { id: 'cam-orbit', p: {} } },
-      { id: 'ae22', at: 80, fx: [{ id: 'laser', p: { colors: 'prism', bolts: true } }, { id: 'led', p: { ...DARK_LED, pattern: 'chase' } }, { id: 'wind', p: { strength: 0.7, color: 'painting' } }],
+      { id: 'ae22', at: 80, fx: [{ id: 'laser', p: { colors: 'prism', bolts: true } }, { id: 'led', p: DANCE }, { id: 'wind', p: { strength: 0.7, color: 'painting' } }],
         tr: { id: 'flip', p: {} }, cam: { id: 'cam-documentary', p: {} } },
-      // ---- a breath ----
-      { id: 'sc-infinity-core-ribbons', at: 97, fx: [{ id: 'light', p: { intensity: 0.6, tone: 'gold', sweep: true } }, { id: 'ribbons', p: { count: 4, color: 'painting' } }],
+      // ---- a breath: soft light, ribbons, light drifting away ----
+      { id: 'sc-infinity-core-ribbons', at: 97, fx: [{ id: 'light', p: { intensity: 0.6, tone: 'gold', sweep: true } }, { id: 'ribbons', p: { count: 4, color: 'painting' } }, FLOAT('away', 'gold')],
         tr: { id: 'fly', p: {} }, cam: { id: 'cam-approach', p: {} } },
       // ---- second build ----
-      { id: 'ae08', at: 116, fx: [{ id: 'laser', p: { colors: 'prism', sun: true } }, { id: 'led', p: { ...DARK_LED, pattern: 'twinkle' } }],
+      { id: 'ae08', at: 116, fx: [{ id: 'laser', p: { colors: 'prism', sun: true } }, { id: 'led', p: DANCE }, FLOAT('breathe')],
         tr: { id: 'curtain', p: {} }, cam: { id: 'cam-gaze', p: {} } },
       // ---- second drop ----
-      { id: 'ae21', at: 125.7, fx: [{ id: 'laser', p: { colors: 'prism', sun: true, bolts: true, pools: true, beams: 8, power: 1 } }, { id: 'led', p: DARK_LED }, { id: 'wind', p: { strength: 0.5, color: 'painting' } }],
+      { id: 'ae21', at: 125.7, fx: [{ id: 'laser', p: { colors: 'prism', sun: true, bolts: true, pools: true, beams: 8, power: 1 } }, { id: 'led', p: DROP }, FLOAT('toward', 'painting', 170), { id: 'wind', p: { strength: 0.5, color: 'painting' } }],
         tr: { id: 'zoom', p: { glow: true, duration: 1.4 } }, cam: { id: 'cam-orbit', p: {} } },
-      { id: 'ae13', at: 145, fx: [{ id: 'laser', p: { colors: 'painting', bolts: true } }, { id: 'ribbons', p: { count: 5, color: 'painting' } }],
+      { id: 'ae13', at: 145, fx: [{ id: 'laser', p: { colors: 'painting', bolts: true } }, { id: 'led', p: DANCE }, { id: 'ribbons', p: { count: 5, color: 'painting' } }],
         tr: { id: 'flip', p: {} }, cam: { id: 'cam-documentary', p: {} } },
-      // ---- the close ----
-      { id: 'sc-eternal-sunshine', at: 161, fx: [{ id: 'light', p: { intensity: 0.7, tone: 'gold', rays: 7, sweep: true, every: 10 } }, { id: 'wind', p: { strength: 0.3, petals: 12, color: 'painting' } }],
+      // ---- the close: Eternal Sunshine in calm golden light, light breathing near and far ----
+      { id: 'sc-eternal-sunshine', at: 161, fx: [{ id: 'light', p: { intensity: 0.7, tone: 'gold', rays: 7, sweep: true, every: 10 } }, { id: 'wind', p: { strength: 0.3, petals: 12, color: 'painting' } }, FLOAT('breathe', 'gold')],
         tr: { id: 'fly', p: { depth: true } }, cam: { id: 'cam-gaze', p: {} } },
     ],
   },
