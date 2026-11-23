@@ -35,7 +35,7 @@ export const SHOWCASES = {
     },
     // works chosen for this show (13th Aurelia), beside the built-in ones
     works: [
-      { id: 'sc-heart', src: 'assets/showcase/heart.webp', title: { en: '', zh: '' } },
+      { id: 'sc-heart', src: 'assets/showcase/heart.webp', title: { en: 'Heart Reborn', zh: '' } },
       { id: 'sc-abundant-number', src: 'assets/showcase/abundant-number.webp', title: { en: 'Abundant Number', zh: '' } },
       { id: 'sc-infinity-nature', src: 'assets/showcase/infinity-nature.webp', title: { en: 'Infinity Nature', zh: '' } },
       { id: 'sc-infinity-core-flower', src: 'assets/showcase/infinity-core-flower.webp', title: { en: 'Infinity Core', zh: '' } },
