@@ -5,6 +5,10 @@
       "destination": "/gallery.html"
     },
     {
+      "source": "/showcase",
+      "destination": "/gallery.html?showcase=eternal"
+    },
+    {
       "source": "/shop",
       "destination": "/shop.html"
     },

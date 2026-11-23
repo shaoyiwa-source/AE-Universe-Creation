@@ -33,7 +33,7 @@ http.createServer(async (req, res) => {
   }
   let p = decodeURIComponent(url.pathname);
   if (p === '/' ) p = '/index.html';
-  if (p === '/gallery') p = '/gallery.html';
+  if (p === '/gallery' || p === '/showcase') p = '/gallery.html';
   const file = path.join(pub, p);
   if (!file.startsWith(pub) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; return res.end('not found'); }
   res.setHeader('Content-Type', TYPES[path.extname(file)] || 'application/octet-stream');

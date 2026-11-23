@@ -49,7 +49,11 @@ const ED = window.__AE_EDITION__ || null;
 // licensed player (R11): /gallery?license=<id> — a client's own arranged exhibition, bound to one screen
 const LIC_ID = (() => { try { const v = new URLSearchParams(location.search).get('license'); return !ED && /^l[a-z0-9]{6,40}$/.test(v || '') ? v : null; } catch { return null; } })();
 let LIC = null;
-const SKEY = ED ? 'ae-lumina-ed-' + ED.id : 'ae-lumina-settings';
+// showcase (/gallery?showcase=<name>): AE's finished show for one client or a demo — opens straight into the
+// performance, no settings, no studio, no buttons; the programme lives in gallery/showcase.js
+const SHOW_ID = (() => { try { const v = new URLSearchParams(location.search).get('showcase') || (/^\/showcase\/?$/.test(location.pathname) ? 'eternal' : ''); return !ED && !LIC_ID && /^[a-z0-9-]{1,30}$/.test(v || '') ? v : null; } catch { return null; } })();
+let SC = null;
+const SKEY = ED ? 'ae-lumina-ed-' + ED.id : SHOW_ID ? 'ae-lumina-showcase-' + SHOW_ID : 'ae-lumina-settings';
 const S = loadSettings(DEFAULTS, SKEY);
 if (ED && ED.settings && lsGet(SKEY, null) === null) {
   const es = ED.settings;
@@ -115,6 +119,15 @@ async function loadPackages(list) {
   }
 }
 async function loadCatalog() {
+  if (SC) {
+    const byId = new Map(FALLBACK.map(w => [w.id, w]));
+    const all = [...(SC.intro ? SC.intro.items : []), ...SC.items];
+    works = [...new Set(all.map(it => it.id))].map(id => byId.get(id)).filter(Boolean).map(normWork); tracks = []; cloud = 'showcase';
+    const act = (scAct === 0 && SC.intro ? SC.intro.items : SC.items).map((it, i, a) => (it.at != null ? { ...it, duration: Math.max(4, ((a[i + 1] && a[i + 1].at != null ? a[i + 1].at : SC.trackLength || 180) - it.at) + 3) } : it));
+    exhibitions = [{ id: 'xshowcase', title: SC.title, note: SC.note, mode: SC.settings.mode, items: act.filter(it => byId.has(it.id)) }];
+    view = 'xshowcase'; catalogPacks = [];
+    return;
+  }
   if (LIC) {
     works = (LIC.works || []).map(normWork); tracks = []; cloud = 'licensed';
     exhibitions = LIC.exhibition ? [{ ...LIC.exhibition, id: 'xlic' }] : [];
@@ -875,7 +888,7 @@ const roomBeat = { count: 0, at: -9, level: 0 };
 packs.beatFn = () => {
   // every sound the room makes — claps, snaps, knocks, a kick, a hi-hat — flashes the light at once (LED-strip style);
   // the locked beat carries the groove on top. Our own soundtrack is not counted (it already drives the light exactly).
-  const hit = () => (listener.on ? { hits: roomBeat.hits || 0, hitAge: roomBeat.hitAge } : {});
+  const hit = () => (listener.on ? { hits: roomBeat.hits || 0, hitAge: roomBeat.hitAge, level: listener.level || 0 } : {});
   const b = sound.beat();
   if (b.live && !player.classList.contains('muted') && S.music !== 'none') return b;
   if (listener.on && roomBeat.locked) return { live: true, room: true, locked: true, pulse: roomBeat.pulse, count: roomBeat.lockCount, stage: 'groove', energy: roomBeat.level, bpm: roomBeat.bpm, ...hit() };
@@ -1579,6 +1592,7 @@ fx.onFrame = (dt) => {
   sound.visualLead = Math.min(0.05, (sound.visualLead || 0.016) * 0.9 + dt * 0.1); // one frame ahead, averaged
   alive.frame(dt, playing);
   packs.frame(dt);
+  showcaseFrame(dt);
   player.classList.toggle('lights-only', (packs.lightsOnly || 0) > 0.5); // pure light art: only the lights are on stage
   // manual paging: the camera plays its move once and holds; God mode loops it; otherwise it follows the work's time
   if (packs.cam && shown) { const manual = S.advance === 'manual'; if (god.open || (manual && playing)) camT += dt; packs.cameraFrame(god.open ? (camT % curDur) / curDur : manual ? Math.min(1, camT / curDur) : elapsed / curDur); }
@@ -2041,12 +2055,91 @@ $('#licPrint').addEventListener('click', () => {
   w.document.close();
 });
 
+// ---------- showcase: one tap, then the finished show (nothing to set, nothing to press) ----------
+let scFired = new Set(), scLastT = 0;
+const scText = (o) => (o ? (lang === 'zh' ? (o.zh || o.en) : (o.en || o.zh)) : '') || '';
+async function showcaseBoot() {
+  try { SC = (await import('./showcase.js')).SHOWCASES[SHOW_ID] || null; } catch { SC = null; }
+  if (!SC) { location.replace(location.pathname); return; }
+  document.documentElement.classList.add('licensed', 'showcase');
+  const st = SC.settings; // AE's settings, every time (a visitor's earlier changes never stay)
+  for (const k of ['mode', 'transition', 'interval', 'music', 'volume', 'advance', 'intensity']) if (k in st) S[k] = st[k];
+  for (const k of ['effects', 'interact', 'display']) if (st[k]) S[k] = { ...DEFAULTS[k], ...st[k] };
+  S.selected = [];
+  await loadCatalog(); renderAll();
+  makeGrain(); applyLang();
+  document.title = `${scText(SC.title)} · AE Universe Creation`;
+  const gate = $('#startGate');
+  $('#gateShow').textContent = scText(SC.title);
+  const ge = $('#gateEdition'); ge.hidden = !SC.subtitle; ge.textContent = SC.subtitle ? scText(SC.subtitle) : '';
+  gate.hidden = false;
+  $('#gateBtn').addEventListener('click', () => {
+    gate.hidden = true; scFired = new Set();
+    if (SC.intro && Listener.supported()) { scAct = 0; S.music = 'none'; S.interact.listen = true; S.display.intro = false; } // the microphone is asked inside this tap; the painting appears at once
+    else { scAct = 1; S.interact.listen = false; }
+    loadCatalog().then(() => {
+      scActAt = performance.now(); openPlayer(null);
+      if (scAct === 0 && SC.intro.hint) { const h = $('#hint'); h.textContent = scText(SC.intro.hint); setTimeout(() => h.classList.add('on'), 2600); setTimeout(() => h.classList.remove('on'), 9000); } // invite the room to make a sound
+    });
+  }, { once: true });
+}
+let scLastClock = 0, scCued = false;
+let scAct = 1, scActAt = 0, scHits = 0, scLastBurst = 0, scReact = 0, scBurstN = 0;
+// act 2: the theme track begins and the choreographed stage show takes over
+async function showcaseAct2() {
+  scAct = 1; scFired = new Set(); scLastT = 0; scCued = false;
+  player.style.removeProperty('--sc-b'); player.style.removeProperty('--sc-s'); player.style.removeProperty('--sc-c'); player.classList.remove('sc-listen');
+  await loadCatalog();
+  const { l } = buildList(null); list = l; elapsed = 0; buildStrip();
+  idx = 0; SC.items.forEach((it, i) => { if (it.at != null && (SC.startAt || 0) >= it.at) idx = i; }); // open on the work the music starts in
+  S.music = SC.settings.music; S.display.intro = !!(SC.settings.display || {}).intro;
+  if (S.display.intro) await playIntro(); // the title card opens the stage show
+  startMusic();
+  show(idx);
+}
+// the big moments of the soundtrack (its drops) get a burst of light on top of the choreography
+function showcaseFrame(dt) {
+  if (!SC || player.hidden || !shown) return;
+  if (scAct === 0) { // act 1: every sound lifts the painting from dim and soft to bright, saturated and contrasty
+    player.classList.add('sc-listen');
+    const lvl = listener.on ? (listener.level || 0) : 0, hits = listener.hitCount || 0;
+    if (hits > scHits) {
+      const now = performance.now();
+      if (now - scLastBurst > 380) { scLastBurst = now; packs.fire(['glow', 'sweep'][scBurstN++ % 2]); } // a burst of light at each sound
+      scReact = 1;
+    }
+    scHits = hits;
+    scReact = Math.max(scReact * Math.pow(0.22, dt), Math.min(1, lvl * 2.2));
+    const r = scReact;
+    player.style.setProperty('--sc-b', (0.3 + 0.95 * r).toFixed(3));  // from a dim, soft painting…
+    player.style.setProperty('--sc-s', (0.55 + 1.45 * r).toFixed(3)); // …to bright, saturated and contrasty
+    player.style.setProperty('--sc-c', (0.8 + 0.55 * r).toFixed(3));
+    const sec = (performance.now() - scActAt) / 1000;
+    if (!busy && (sec > SC.intro.seconds || (!listener.on && sec > 4))) showcaseAct2(); // no microphone: straight to the show
+    return;
+  }
+  if (SC.items.some(it => it.at != null) && sound.customEl) {
+    const t = sound.customEl.currentTime || 0; let k = 0;
+    if (sound.customEl.paused) return;
+    if (!scCued) { if (t >= (SC.startAt || 0) - 0.5) scCued = true; else return; } // until the track has reached its cue, its clock means nothing
+    SC.items.forEach((it, i) => { if (it.at != null && t >= it.at) k = i; });
+    scLastClock = t;
+    if (k !== idx && k < list.length && !(pending && pending.to === k)) jump(k);
+  }
+  if (!SC.moments) return;
+  const t = sound.customEl ? sound.customEl.currentTime : 0;
+  if (t < scLastT - 5) scFired = new Set(); // the track looped
+  scLastT = t;
+  SC.moments.forEach((m, i) => { if (!scFired.has(i) && t >= m.at && t < m.at + 1.5) { scFired.add(i); for (const id of m.fire) packs.fire(id); } });
+}
+
 // ---------- boot (+ kiosk / shared links: ?show=&mode=&autoplay=1&lang=) ----------
 (async function boot() {
   const q = new URLSearchParams(location.search);
   if (q.get('lang') === 'en' || q.get('lang') === 'zh') lang = q.get('lang');
   setStudio(studio && !LIC_ID);
   if (LIC_ID) { makeGrain(); applyLang(); await licenceBoot(); exposeHooks(); return; }
+  if (SHOW_ID) { await showcaseBoot(); exposeHooks(); return; }
   await loadCatalog();
   if (q.get('show') && exhibitions.some(e => e.id === q.get('show'))) setView(q.get('show'), { applyShowMode: !q.get('mode') });
   if (q.get('mode') && OPTIONS.modes.some(m => m.id === q.get('mode'))) applyMode(modeOf(q.get('mode')), { quiet: true });

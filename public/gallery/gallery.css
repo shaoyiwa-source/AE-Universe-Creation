@@ -616,3 +616,10 @@ html.licensed body{background:#050806}
 /* lights only: the painting, its title, Lumi, sparkles and grain leave the stage; only the lights remain */
 .lw-player.lights-only .pl-slide,.lw-player.lights-only .pl-neon,.lw-player.lights-only .pl-ambient,.lw-player.lights-only .pl-fx,.lw-player.lights-only .pl-grain,.lw-player.lights-only .pl-caption,.lw-player.lights-only .pl-mark,.lw-player.lights-only .pl-stage .pl-alive,.lw-player.lights-only .pl-stage .pl-alive-back{opacity:0!important}
 .lw-player.lights-only{background:#000}
+
+/* showcase: the finished show only — no buttons, no settings, no progress bar; the work, its light and its sound */
+html.showcase .pl-controls,html.showcase .pl-tray,html.showcase .pl-progress,html.showcase #micDot,html.showcase .pl-strip,html.showcase #godPanel{display:none!important}
+html.showcase .lw-player{cursor:none}
+html.showcase .lw-player.alivehover{cursor:grab}
+/* showcase act 1: the room's sound drives the light of the painting itself (brightness, colour, contrast — never its shape) */
+html.showcase .lw-player.sc-listen .pl-media{filter:brightness(var(--sc-b,.3)) saturate(var(--sc-s,.55)) contrast(var(--sc-c,.8))}
