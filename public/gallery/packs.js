@@ -20,6 +20,7 @@ import coins from './pack-coins.js';
 import sweep from './pack-sweep.js';
 import led from './pack-led.js';
 import depth from './pack-depth.js';
+import frame from './pack-frame.js';
 
 export const PACKS = new Map();
 export const TYPES = ['effect', 'transition', 'camera', 'burst'];
@@ -35,7 +36,7 @@ export function registerPack(pk) {
   PACKS.set(pk.id, pk);
   return pk;
 }
-[wind, light, ribbons, laser, led, depth, fly, flip, zoom, curtain, camGaze, camApproach, camTour, camOrbit, camDocumentary, glow, coins, sweep].forEach(registerPack);
+[wind, light, ribbons, laser, led, depth, frame, fly, flip, zoom, curtain, camGaze, camApproach, camTour, camOrbit, camDocumentary, glow, coins, sweep].forEach(registerPack);
 export const BUILTIN = new Set(PACKS.keys());
 
 // a package file (self-contained module text with `export default { … }`) → the package object

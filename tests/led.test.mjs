@@ -50,7 +50,8 @@ try {
   const P = '.lw-god-params[data-pack=led]';
   const nCtl = await page.evaluate((P) => document.querySelectorAll(`${P} .lw-param`).length, P);
   check('the LED strip is in God mode with its own controls (layout, pattern, colours, size, speed, sound, stage…)', nCtl === 14, `${nCtl} controls`);
-  const lit = () => page.evaluate(() => { const c = document.querySelector('.pl-led'), x = c.getContext('2d'); const d = x.getImageData(0, 0, c.width, c.height).data; let n = 0, hues = new Set(); for (let i = 0; i < d.length; i += 16) if (d[i + 3] > 60) { n++; hues.add(`${d[i] >> 6}${d[i + 1] >> 6}${d[i + 2] >> 6}`); } return { n, hues: hues.size }; });
+  // LEDs around the whole screen sit on the fixed layer; around the work, on the layer that moves with it
+  const lit = () => page.evaluate(() => { let n = 0; const hues = new Set(); for (const c of document.querySelectorAll('.pl-led, .pl-alive')) { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 0; i < d.length; i += 16) if (d[i + 3] > 60) { n++; hues.add(`${d[i] >> 6}${d[i + 1] >> 6}${d[i + 2] >> 6}`); } } return { n, hues: hues.size }; });
   const a = await lit();
   check('a rainbow row of LEDs lights the bottom of the screen', a.n > 200 && a.hues >= 6, JSON.stringify(a));
   await page.screenshot({ path: `${out}/led-rainbow.png` });

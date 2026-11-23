@@ -74,8 +74,6 @@ export default {
       let r = { x: 0, y: 0, w: W, h: H };
       if (p.around === 'work' && host.rect) {
         r = { ...host.rect };
-        const cp = host.camPose; // follow the camera's framing of the work (zoom and drift)
-        if (cp && cp.s) { const cx = r.x + r.w / 2, cy = r.y + r.h / 2; r = { x: cx - (r.w / 2) * cp.s + (cp.tx || 0), y: cy - (r.h / 2) * cp.s + (cp.ty || 0), w: r.w * cp.s, h: r.h * cp.s }; }
       }
       const n = Math.max(2, Math.round(p.count));
       const g = p.around === 'work' ? -Math.max(8, p.size * 1.5) : Math.max(12, p.size * 2.5), e = Math.max(4, p.size); // outside the work, inside the screen
@@ -119,8 +117,7 @@ export default {
       frame(dt, k) {
         t += dt * p.speed;
         const r = host.rect; if (!r) return;
-        const cp = p.around === 'work' ? host.camPose : null;
-        const kk = [p.layout, p.around, p.count, p.size, host.W, host.H, r.x, r.y, r.w, r.h, host.alive && host.alive.quality, cp ? [cp.s, cp.tx, cp.ty].join(':') : ''].join();
+        const kk = [p.layout, p.around, p.count, p.size, host.W, host.H, r.x, r.y, r.w, r.h, host.alive && host.alive.quality].join();
         if (kk !== key) { S = strips(); key = kk; }
         // sound: every clap / knock / beat flashes the strip and turns its colours
         let pulse = 0;
@@ -136,12 +133,14 @@ export default {
           level = Math.max(b.energy ?? b.level ?? 0, pulse * 0.6, level * Math.pow(0.2, dt));
           bands = b.bands || null;
         }
-        // screen-fixed: the camera never moves the strips (those around the work follow its framing above)
-        const ctx = host.overlay || host.front;
-        ctx.save();
+        // around the whole screen: a fixed layer the camera never moves; around the work: the layer that moves with the
+        // work, so the strip stays on its edge through zoom, drift and 3D tilt alike
+        const ov = host.overlay || host.front;
+        const ctx = p.around === 'work' ? host.front : ov;
         // the stage: with the painting, dimmed, or lights only (the player hides the painting, title, Lumi and sparkles)
         if (p.stage === 'dark') host.lightsOnly = Math.max(host.lightsOnly || 0, k);
-        if (p.stage === 'dim') { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(0,0,0,${0.6 * k})`; ctx.fillRect(0, 0, host.W, host.H); }
+        if (p.stage === 'dim') { ov.save(); ov.globalCompositeOperation = 'source-over'; ov.fillStyle = `rgba(0,0,0,${0.6 * k})`; ov.fillRect(0, 0, host.W, host.H); ov.restore(); }
+        ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         const sz = Math.max(1.5, Math.min(p.size, S.spacing * 0.8)); // an LED is never bigger than the gap to the next one
         const glow = (host.alive && host.alive.quality < 1) ? p.glow * 0.5 : p.glow;
