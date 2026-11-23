@@ -68,7 +68,15 @@ try {
   await page.waitForFunction(() => window.__lumina.state.music === 'eternal', null, { timeout: 45000 }).catch(() => {});
   await wait(1500);
   const a2 = await page.evaluate(() => ({ music: window.__lumina.state.music, cur: window.__lumina.state.curId, b: getComputedStyle(document.querySelector('.pl-slide.live .pl-media')).filter, listen: window.__lumina.state.listen, t: window.__lumina.trackTime() }));
-  check('act 2: the theme track begins at the build, the painting at full light, the microphone closed', a2.music === 'eternal' && a2.cur === 'sc-infinity-nature' && (a2.b === 'none' || a2.b === '') && !a2.listen, JSON.stringify(a2));
+  const full = (f) => f === 'none' || f === '' || /^brightness\(1(\.0+)?\) saturate\(1(\.0+)?\)$/.test(f);
+  check('act 2: the theme track begins at the build, the painting at full light, the microphone still listening', a2.music === 'eternal' && a2.cur === 'sc-infinity-nature' && full(a2.b) && a2.listen, JSON.stringify(a2));
+  // with the music playing, the room still plays along: a clap flashes the LEDs and lifts the painting's light
+  const r0 = await page.evaluate(() => ({ led: window.__lumina.state.hits.led, laser: window.__lumina.state.hits.flashes }));
+  await page.evaluate(() => window.__clap(window.__ctx.currentTime + 0.1, 0.9));
+  let lift = 1; for (let i = 0; i < 12; i++) { await wait(60); lift = Math.max(lift, +(await page.evaluate(() => getComputedStyle(document.getElementById('player')).getPropertyValue('--sc-lift'))) || 1); }
+  await wait(400);
+  const r1 = await page.evaluate(() => ({ led: window.__lumina.state.hits.led, laser: window.__lumina.state.hits.flashes }));
+  check('act 2: a clap over the music still flashes the LEDs and lasers and lifts the painting', r1.led > r0.led && r1.laser > r0.laser && lift > 1.1, JSON.stringify({ r0, r1, lift }));
   await page.waitForFunction(() => window.__lumina.trackTime() > 66, null, { timeout: 20000 }).catch(() => {});
   await wait(600);
   const drop = await page.evaluate(() => ({ cur: window.__lumina.state.curId, laser: window.__lumina.state.laserMode, packs: window.__lumina.state.packs.map(p => p.id), t: +window.__lumina.trackTime().toFixed(2) }));

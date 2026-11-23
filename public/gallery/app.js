@@ -79,8 +79,8 @@ sound.setVolume(S.volume);
 
 // ---------- toast ----------
 let toastTimer;
-function toast(msg, ms = 3400) {
-  if (SC) return; // a showcase never shows system messages
+function toast(msg, ms = 3400, essential = false) {
+  if (SC && !essential) return; // a showcase never shows system messages (only what the viewer must do)
   const el = $('#toast');
   el.textContent = msg; el.hidden = false;
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
@@ -902,7 +902,14 @@ packs.beatFn = () => {
   // the locked beat carries the groove on top. Our own soundtrack is not counted (it already drives the light exactly).
   const hit = () => (listener.on ? { hits: roomBeat.hits || 0, hitAge: roomBeat.hitAge, level: listener.level || 0, bands: listener.bands || null } : {});
   const b = sound.beat();
-  if (b.live && !player.classList.contains('muted') && S.music !== 'none') return ownBands ? { ...b, bands: ownBands } : b;
+  if (b.live && !player.classList.contains('muted') && S.music !== 'none') {
+    if (!SC) return ownBands ? { ...b, bands: ownBands } : b;
+    // a showcase: the room plays along with the music — claps and voices flash the light; each LED follows whichever is
+    // louder in its band, the music or the room
+    const room = hit(), mic = room.bands;
+    const bands = ownBands && mic ? ownBands.map((v, i) => Math.max(v, mic[i] || 0)) : (ownBands || mic || null);
+    return { ...b, hits: room.hits, hitAge: room.hitAge, ...(bands ? { bands } : {}) };
+  }
   if (listener.on && roomBeat.locked) return { live: true, room: true, locked: true, pulse: roomBeat.pulse, count: roomBeat.lockCount, stage: 'groove', energy: roomBeat.level, bpm: roomBeat.bpm, ...hit() };
   if (listener.on && performance.now() / 1000 - (roomBeat.rawAt || -9) < 2.5) return { live: true, room: true, pulse: Math.exp(-(performance.now() / 1000 - roomBeat.rawAt) / 0.11), count: roomBeat.count, stage: 'groove', energy: roomBeat.level, ...hit() };
   return { live: false, quiet: true, pulse: 0, count: 0, ...hit() };
@@ -1762,7 +1769,7 @@ player.addEventListener('pointerdown', (e) => {
   // a living part of the painting → it answers the touch; anywhere else → hold to magnify
   if (S.interact.alive && alive.aliveAt(x, y) > 0.3) { down.alive = true; alive.press(e.pointerId, x, y, forceOf(e)); }
   else loupeTimer = setTimeout(() => { if (down && down.id === e.pointerId) openLoupe(down.lx ?? x, down.ly ?? y, e.pointerType !== 'mouse'); }, 450);
-  sound.ensure();
+  sound.ensure(); if (playing && S.music !== 'none' && !player.classList.contains('muted')) sound.nudgeTrack(); // a touch brings a stopped track back
   const hit = fx.pointerDown(x, y);
   if (hit.seed) sound.chime(x / r.width, y / r.height, true);
   else if (S.interact.ripple || S.interact.chime) sound.chime(x / r.width, y / r.height, false);
@@ -1836,9 +1843,9 @@ function watchMusic(dt) {
   if ((musicWatch += dt) < 2) return;
   musicWatch = 0;
   if (player.hidden || !playing || document.hidden || S.music === 'none' || player.classList.contains('muted') || !sound.ctx) return;
-  if (!sound.running) {
-    sound.resume();
-    setTimeout(() => { if (!sound.running && !player.hidden && !musicNudged) { musicNudged = true; toast(T('tapForMusic'), 4200); } }, 700);
+  if (!sound.running || (sound.customEl && sound.customEl.paused && (sound.preset === 'eternal' || sound.preset === 'custom'))) {
+    sound.resume(); sound.nudgeTrack();
+    setTimeout(() => { const stuck = !sound.running || (sound.customEl && sound.customEl.paused && (sound.preset === 'eternal' || sound.preset === 'custom')); if (stuck && !player.hidden && !musicNudged) { musicNudged = true; toast(T('tapForMusic'), 6000, true); } }, 900);
   } else musicNudged = false;
 }
 
@@ -2097,6 +2104,7 @@ async function showcaseBoot() {
   gate.hidden = false;
   $('#gateBtn').addEventListener('click', () => {
     gate.hidden = true; scFired = new Set();
+    if (SC.settings.music === 'eternal') sound.unlockEternal(); // iPhone: free the theme track to start later, inside this tap
     if (SC.intro && Listener.supported()) { scAct = 0; S.music = 'none'; S.interact.listen = true; S.display.intro = false; } // the microphone is asked inside this tap; the painting appears at once
     else { scAct = 1; S.interact.listen = false; }
     loadCatalog().then(() => {
@@ -2106,6 +2114,7 @@ async function showcaseBoot() {
   }, { once: true });
 }
 let scLastClock = 0, scCued = false;
+let scSlow = 0;
 let scAct = 1, scActAt = 0, scHits = 0, scLastBurst = 0, scReact = 0, scBurstN = 0;
 // act 2: the theme track begins and the choreographed stage show takes over
 async function showcaseAct2() {
@@ -2114,12 +2123,10 @@ async function showcaseAct2() {
   await loadCatalog();
   const { l } = buildList(null); list = l; elapsed = 0; buildStrip();
   idx = 0; SC.items.forEach((it, i) => { if (it.at != null && (SC.startAt || 0) >= it.at) idx = i; }); // open on the work the music starts in
-  // the stage show is driven by its own soundtrack: the microphone closes (on iPhone/iPad an open microphone switches
-  // the audio hardware and makes the music run fast and high)
-  if (listener.on || listener.starting) { S.interact.listen = false; stopListening(); }
   S.music = SC.settings.music; S.display.intro = !!(SC.settings.display || {}).intro;
   if (S.display.intro) await playIntro(); // the title card opens the stage show
   startMusic();
+  // the microphone stays open: the room keeps playing along with the music (claps, voices, the music's own loudness)
   show(idx);
 }
 // the big moments of the soundtrack (its drops) get a burst of light on top of the choreography
@@ -2150,6 +2157,16 @@ function showcaseFrame(dt) {
     SC.items.forEach((it, i) => { if (it.at != null && t >= it.at) k = i; });
     scLastClock = t;
     if (k !== idx && k < list.length && !(pending && pending.to === k)) jump(k);
+  }
+  if (listener.on) {
+    const lvl = listener.level || 0, hits = listener.hitCount || 0;
+    scSlow += (lvl - scSlow) * Math.min(1, dt * 0.6); // the room's usual loudness (the music from the speaker included)
+    if (hits > scHits) scReact = 1;
+    scHits = hits;
+    scReact = Math.max(scReact * Math.pow(0.1, dt), Math.min(1, Math.max(0, lvl - scSlow - 0.04) * 3));
+    player.classList.add('sc-room');
+    player.style.setProperty('--sc-lift', (1 + 0.22 * scReact).toFixed(3));
+    player.style.setProperty('--sc-sat', (1 + 0.35 * scReact).toFixed(3));
   }
   if (!SC.moments) return;
   const t = sound.customEl ? sound.customEl.currentTime : 0;

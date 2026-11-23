@@ -628,3 +628,5 @@ html.showcase .pl-amb{filter:blur(72px) saturate(.35) brightness(.2)!important}
 html.showcase .pl-ambient::after{background:radial-gradient(ellipse 70% 60% at 50% 42%,rgba(120,84,46,.22),rgba(28,20,13,.55) 70%,rgba(8,6,4,.85) 100%)} /* the wall stays behind the work (no stacking above it) */
 html.showcase .pl-caption-meta,html.showcase #capTitle{white-space:nowrap}
 html.showcase .pl-caption.side #capTitle{font-size:calc(clamp(26px,3.4vw,46px) * var(--cap-fit,1))}
+/* showcase act 2: the room's sudden sounds lift the painting's light for a moment (on top of the music) */
+html.showcase .lw-player.sc-room:not(.sc-listen) .pl-media{filter:brightness(var(--sc-lift,1)) saturate(var(--sc-sat,1))}

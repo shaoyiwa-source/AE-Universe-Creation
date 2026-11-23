@@ -22,7 +22,11 @@ export class Sound {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return false;
-      const ctx = this.ctx = new AC();
+      // iPhone/iPad: the audio hardware runs at 48 kHz as soon as the microphone opens; a context made at another rate
+      // would then play everything too fast and too high. Made at 48 kHz from the start, nothing shifts.
+      const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      let ctx; try { ctx = iOS ? new AC({ sampleRate: 48000 }) : new AC(); } catch { ctx = new AC(); }
+      this.ctx = ctx;
       this.master = ctx.createGain();
       this.master.gain.value = this.volume;
       const comp = ctx.createDynamicsCompressor();
@@ -495,6 +499,19 @@ export class Sound {
     if (el.readyState >= 1) cue(); else el.addEventListener('loadedmetadata', cue, { once: true });
     this.rhythm = createRhythm(ETERNAL.events, ETERNAL.accents, ETERNAL.sections);
   }
+
+  // iPhone/iPad allow a track to start later (without a tap) only if it was started once inside a tap: call this in the
+  // tap, it plays the theme track silently for an instant and stops — the track is then free to play when the show needs it
+  unlockEternal() {
+    if (!this.ensure()) return;
+    if (!this.customEl) { this.customEl = new Audio(); this.customEl.loop = true; try { this.customNode = this.ctx.createMediaElementSource(this.customEl); this.customNode.connect(this.master); } catch { /* element output */ } }
+    const el = this.customEl, abs = new URL(ETERNAL_URL, location.href).href;
+    if (el.src !== abs) el.src = abs;
+    el.muted = true;
+    const p = el.play(); if (p && p.then) p.then(() => { if (this.preset !== 'eternal') el.pause(); el.muted = false; }).catch(() => { el.muted = false; }); else el.muted = false;
+  }
+  // the track should be playing but is not (blocked or interrupted): try again — inside a tap this always works
+  nudgeTrack() { const el = this.customEl; if (el && (this.preset === 'eternal' || this.preset === 'custom') && el.paused) { el.muted = false; el.play().catch(() => {}); return true; } return false; }
 
   _custom() {
     if (!this.customUrl) return;
