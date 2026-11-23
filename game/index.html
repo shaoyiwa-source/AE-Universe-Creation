@@ -297,6 +297,18 @@ body.dc-on .dc-timer{height:18px}body.dc-on .dc-timer b{font-size:11px;line-heig
 body.dc-on .dc-mus{padding:2px 10px;font-size:11px}
 body.dc-on .dc-tray{min-height:26px;margin:3px 0}
 body.dc-on #level .bar{display:none}
+
+.dc-turn{position:absolute;left:0;right:0;top:44%;display:flex;justify-content:center;z-index:30;pointer-events:none;animation:dcturn 1.1s ease forwards}
+.dc-turn b{padding:8px 26px;border-radius:999px;background:#090b0ae6;border:1px solid #edcd75;color:#edcd75;font:600 18px/1.2 'Cormorant Garamond','Noto Serif TC',serif;letter-spacing:.3em;box-shadow:0 8px 24px #000a,0 0 24px #edcd7533}
+@keyframes dcturn{0%{opacity:0;transform:scale(.8)}18%{opacity:1;transform:scale(1.04)}30%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+.dc-rps{position:fixed;inset:0;z-index:60;background:#090b0ad9;backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;animation:fade .3s}
+.dc-rps.out{opacity:0;transition:opacity .35s}
+.dc-rps-t{font:500 20px 'Cormorant Garamond','Noto Serif TC',serif;letter-spacing:.3em;color:#edcd75}
+.dc-rps-row{display:flex;align-items:center;gap:22px}.dc-rps-row em{font:italic 600 16px 'Cormorant Garamond',serif;color:#edcd7599}
+.dc-rps-row>div{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 18px;border:1px solid #edcd7544;border-radius:14px;background:#ffffff08;transition:.3s}
+.dc-rps-row>div.win{border-color:#edcd75;box-shadow:0 0 26px #edcd7544;transform:scale(1.06)}
+.dc-rps-row i{font-style:normal;font-size:46px;line-height:1}.dc-rps-row span{font-size:13px;color:#f4f0e7cc;letter-spacing:.2em}
+.dc-rps-r{min-height:22px;font-size:15px;color:#f4f0e7;letter-spacing:.08em}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap&text=%E5%B8%A5%E4%BB%95%E7%9B%B8%E4%BF%A5%E5%82%8C%E7%82%AE%E5%85%B5%E5%B0%87%E5%A3%AB%E8%B1%A1%E8%BB%8A%E9%A6%AC%E5%8C%85%E5%8D%92">
 </head>
@@ -649,7 +661,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
  const sfx={pick:()=>ps('dc_sel',.5),flip:()=>ps('dc_pick',.7),land:()=>ps('dc_land',1),move:()=>ps('dc_place',1),cap:()=>ps('dc_cap',1),boom:()=>ps('dc_boom',1)};
  const shown=new Set();async function bigCard(p){if(FAST||shown.has(p.c+p.r))return;shown.add(p.c+p.r);const lines={7:['翻到'+NAMES[p.c][7]+'！','最強的一顆，現身了'],4:['翻到'+NAMES[p.c][4]+'！','橫衝直撞的力量']};const L=lines[p.r];const d=document.createElement('div');d.className='dc-card';d.innerHTML=`<div class="pc" style="color:${p.c==='r'?'#b3121f':'#1a1410'}">${NAMES[p.c][p.r]}</div><div class="scroll">${L[0]}</div><div class="art" style="background-image:url(${mid(A.wallpaper)})"></div><div class="q">《${A.title}》・${L[1]}</div>`;document.body.appendChild(d);requestAnimationFrame(()=>d.classList.add('on'));chime();let done=false;await new Promise(res=>{const end=()=>{if(done)return;done=true;d.classList.remove('on');setTimeout(()=>{d.remove();res()},350)};d.onclick=end;setTimeout(end,2200)})}
  async function doFlip(i){const p=B[i];markLast(i);p.up=true;sfx.flip();if(FAST){p.el.classList.add('dc-up')}else{p.el.classList.add('dc-tossing');await sleep(400);p.el.classList.add('dc-up');p.el.classList.remove('dc-tossing');p.el.classList.add('dc-landing');sfx.land();await sleep(160);p.el.classList.remove('dc-landing')}p.el.classList.add('dc-gloss');setTimeout(()=>p.el.classList.remove('dc-gloss'),700);quiet=0;if(p.r===7)await bigCard(p);
-  if(!me){if(remoteNow){ai=p.c;me=ai==='r'?'b':'r'}else{me=p.c;ai=me==='r'?'b':'r'}toast(`你是${me==='r'?'紅':'黑'}方！`,1400)}}
+  if(!me){if(remoteNow||(!NET&&turn==='ai')){ai=p.c;me=ai==='r'?'b':'r'}else{me=p.c;ai=me==='r'?'b':'r'}toast(`你是${me==='r'?'紅':'黑'}方！`,1400)}}
  const flag=document.createElement('div');flag.className='dc-flag';flag.style.display='none';bd.appendChild(flag);const markLast=i=>{cells.forEach(c=>c.classList.remove('dc-last'));cells[i].classList.add('dc-last');flag.style.display='';flag.style.left=((i%W)*25+19)+'%';flag.style.top=((i/W|0)*12.5+.6)+'%'};
  async function doMove(m){const p=B[m.f];p.el.classList.remove('dc-sel');p.el.classList.add('dc-lift');await sleep(110);
   if(m.cap){const q=m.cap;const qr=q.el.getBoundingClientRect();pos(p.el,m.t);await sleep(230);if(p.r===2)sfx.boom();else sfx.cap();q.el.classList.add('dc-knock');p.el.classList.remove('dc-lift');p.el.classList.add('dc-hit');bd.classList.remove('dc-jolt');void bd.offsetWidth;bd.classList.add('dc-jolt');await sleep(170);p.el.classList.remove('dc-hit');q.el.style.visibility='hidden';setTimeout(()=>q.el.remove(),400);if(!FAST){const tgt=(q.c===ai?trayTop:tray).getBoundingClientRect();const f=document.createElement('div');f.className='dc-fly';f.style.color=q.c==='r'?'#b3121f':'#1a1410';f.textContent=NAMES[q.c][q.r];f.style.left=(qr.left+qr.width/2-12)+'px';f.style.top=(qr.top+qr.height/2-12)+'px';f.style.transform='scale(2.6)';document.body.appendChild(f);requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transform=`translate(${tgt.left+90+capt[q.c].length*27-(qr.left+qr.width/2-12)}px,${tgt.top+2-(qr.top+qr.height/2-12)}px) scale(1)`;f.style.opacity='0'}));setTimeout(()=>f.remove(),800)}lastCap={c:q.c,k:capt[q.c].length};capt[q.c].push(q.r);setTimeout(drawTray,FAST?0:520);quiet=0;{const w=document.createElement('div');w.className='dc-wave';w.style.left=(m.t%W)*25+'%';w.style.top=(m.t/W|0)*12.5+'%';bd.appendChild(w);setTimeout(()=>w.remove(),500)}}
@@ -689,7 +701,7 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
    if(s>bs){bs=s;best=m}}return best}
  async function play(m){busy=true;clearSel();if(m.flip!==undefined)await doFlip(m.flip);else await doMove(m);upd();busy=false}
  const persist=()=>{if(!over)save()};
- async function aiTurn(){turn='ai';upd();if(checkEnd())return;await sleep(500+Math.random()*400);const m=aiPick(ai);if(!m){checkEnd();return}await play(m);turn='me';upd();if(!checkEnd())persist();hintIdle()}
+ async function aiTurn(){turn='ai';upd();if(checkEnd())return;await sleep(500+Math.random()*400);const m=aiPick(ai||'b');if(!m){checkEnd();return}await play(m);turn='me';upd();if(!checkEnd())persist();hintIdle()}
  let idleT=null;const hintIdle=()=>{clearTimeout(idleT);idleT=setTimeout(()=>{if(over||turn!=='me'||busy||!document.body.contains(bd))return;const m=aiPick(me||'r');if(!m)return;const i=m.flip!==undefined?m.flip:m.f;const e=B[i]&&B[i].el;if(e){e.classList.add('dc-hint');setTimeout(()=>e.classList.remove('dc-hint'),1600)}},12000);timers.push(idleT)};
  async function humanDo(m){clearTimeout(idleT);await play(m);turn='ai';persist();if(NET){netSend(m.flip!==undefined?{flip:m.flip}:{f:m.f,t:m.t});upd();checkEnd();return}if(!checkEnd())aiTurn()}
  bd.onclick=async e=>{if(busy||over||turn!=='me')return;const r=bd.getBoundingClientRect();const x=Math.floor((e.clientX-r.left)/r.width*W),y=Math.floor((e.clientY-r.top)/r.height*H);if(x<0||y<0||x>=W||y>=H)return;const i=y*W+x,p=B[i];
@@ -706,15 +718,23 @@ function darkchess(l){const W=4,H=8;let FAST=false;const NAMES={r:['','兵','炮
  let tmDl=0,tmLast='',tmTick=-1;const TL=20000;
  const tmIv=setInterval(()=>{if(!document.body.contains(bd)){clearInterval(tmIv);BGM.stop();return}if(muted&&BGM.src)BGM.stop();else if(!muted&&BGM.on&&!BGM.src&&document.body.classList.contains('dc-on'))BGM.start();
   const k=turn+(busy?'b':'')+over;if(over||turn!=='me'){tmEl.classList.remove('on','hot');tmLast=k;return}
-  if(!tmLast.startsWith('me')||tmLast.includes('true')){tmDl=Date.now()+TL;tmTick=-1}tmLast=k;if(busy){tmDl=Math.max(tmDl,Date.now()+1500)}
+  if(!tmLast.startsWith('me')||tmLast.includes('true')){tmDl=Date.now()+TL;tmTick=-1;if(tmLast&&!FAST&&!over)turnBanner()}tmLast=k;if(busy){tmDl=Math.max(tmDl,Date.now()+1500)}
   const left=Math.max(0,tmDl-Date.now()),sec=Math.ceil(left/1000);tmEl.classList.add('on');tmEl.classList.toggle('hot',sec<=5);
   tmEl.querySelector('i').style.transform=`scaleX(${left/TL})`;tmEl.querySelector('b').textContent=sec+' 秒';
   if(sec<=5&&sec>0&&sec!==tmTick){tmTick=sec;sfx.pick()}
   if(left<=0&&!busy){const m=aiPick(me||'r');if(!m)return;toast('時間到，自動幫你下一步',1200);humanDo(m)}},200);timers.push(tmIv);
  {const mb=document.createElement('button');mb.className='dc-mus';const lab=()=>mb.textContent=BGM.on?'♪ 音樂開':'♪ 音樂關';lab();mb.onclick=e=>{e.stopPropagation();BGM.toggle();lab()};tmRow.appendChild(mb)}
  BGM.start();
+ function turnBanner(){const t=document.createElement('div');t.className='dc-turn';t.innerHTML='<b>輪到你</b>';bd.appendChild(t);setTimeout(()=>t.remove(),1100)}
+ async function rps(){busy=true;const H=['✊','✌️','✋'],N=['石頭','剪刀','布'];const ov=document.createElement('div');ov.className='dc-rps';ov.innerHTML='<div class="dc-rps-t">猜拳決定先後</div><div class="dc-rps-row"><div><i id="rpsA">✊</i><span>你</span></div><em>VS</em><div><i id="rpsB">✊</i><span>電腦</span></div></div><div class="dc-rps-r"></div>';document.body.appendChild(ov);
+  let a,b;do{a=Math.random()*3|0;b=Math.random()*3|0}while(a===b);
+  const A=ov.querySelector('#rpsA'),Bh=ov.querySelector('#rpsB');for(let k=0;k<9;k++){A.textContent=H[k%3];Bh.textContent=H[(k+1)%3];sfx.pick();await new Promise(r=>setTimeout(r,90+k*14))}
+  A.textContent=H[a];Bh.textContent=H[b];const meFirst=(a===0&&b===1)||(a===1&&b===2)||(a===2&&b===0);
+  (meFirst?A:Bh).parentNode.classList.add('win');ov.querySelector('.dc-rps-r').textContent=`你出${N[a]}、電腦出${N[b]}　${meFirst?'你先下！':'電腦先下'}`;try{tone(meFirst?880:520,.18)}catch(e){}
+  await new Promise(r=>setTimeout(r,1300));ov.classList.add('out');setTimeout(()=>ov.remove(),400);busy=false;
+  if(meFirst){turn='me';upd();turnBanner()}else{turn='ai';upd();aiTurn()}}
  const fit=()=>{if(!document.body.contains(bd))return removeEventListener('resize',fit);bd.style.width='';const last=tray.getBoundingClientRect().bottom,lim=(visualViewport?visualViewport.height:innerHeight)-6;const over=last-lim;if(over>0){const w=Math.max(150,bd.offsetWidth-over/2);bd.style.width=w+'px'}};requestAnimationFrame(fit);setTimeout(fit,400);addEventListener('resize',fit);
- upd();drawTray();reveal();if(saved&&!NET){toast('接著上一盤繼續 ✦',1400);if(turn==='ai')timers.push(setTimeout(aiTurn,700))}hintIdle()}
+ upd();drawTray();reveal();if(saved&&!NET){toast('接著上一盤繼續 ✦',1400);if(turn==='ai')timers.push(setTimeout(aiTurn,700))}else if(!NET&&!window.__noRps)timers.push(setTimeout(rps,500));hintIdle()}
 
 // 彈弓射星
 function sling(l){const WW=400,HH=500,GR=455,SX=78,SY=360,G=.32;
