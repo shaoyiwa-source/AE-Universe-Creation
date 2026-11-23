@@ -151,12 +151,14 @@ function isDark() {
   const root = document.documentElement;
   return (root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
 }
-$('#btnDark').onclick = () => {
+function toggleDark() {
   const next = isDark() ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
   try { localStorage.setItem('ae-theme', next); } catch (e) { /* ignore */ }
   renderMenu();
-};
+}
+$('#btnDark').onclick = toggleDark;
+$('#btnThemeTop').onclick = toggleDark;
 
 function renderMenu() {
   const items = [

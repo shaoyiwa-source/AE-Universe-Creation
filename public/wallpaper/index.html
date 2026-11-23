@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Zen+Maru+Gothic:wght@900&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem('ae-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="/wallpaper/style.css?v=8">
+<link rel="stylesheet" href="/wallpaper/style.css?v=9">
 </head>
 <body>
 <div id="app">
@@ -30,7 +30,10 @@
       <img src="/wallpaper/icons/ae-rings.webp" alt="" width="54" height="27">
       <span class="wm-name">AE Universe<span>LIVE WALLPAPER</span></span>
     </a>
-    <button class="lang-btn" id="btnLang" type="button"></button>
+    <div class="header-actions">
+      <button class="lang-btn" id="btnLang" type="button"></button>
+      <button class="theme-btn" id="btnThemeTop" type="button" data-i18n-aria="themeToggle">◐</button>
+    </div>
   </header>
 
   <main class="stage" id="stage">
@@ -101,6 +104,6 @@
 <input type="file" id="fileSticker" accept="image/*" hidden>
 <input type="file" id="fileMusic" accept="audio/*" hidden>
 
-<script type="module" src="/wallpaper/js/app.js?v=8"></script>
+<script type="module" src="/wallpaper/js/app.js?v=9"></script>
 </body>
 </html>

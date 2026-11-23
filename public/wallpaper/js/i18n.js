@@ -21,6 +21,7 @@ const T = {
   redo: ['重做', 'Redo'],
   preview: ['預覽', 'Preview'],
   close: ['關閉', 'Close'],
+  themeToggle: ['切換深色／淺色外觀', 'Switch dark / light appearance'],
   darkOn: ['深色外觀', 'Dark appearance'],
   darkOff: ['淺色外觀', 'Light appearance'],
   mSettings: ['互動設定', 'Interaction'],
