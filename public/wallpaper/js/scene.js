@@ -75,7 +75,11 @@ export function objHalfSize(o) {
 export function hitTest(objects, x, y) {
   for (let i = objects.length - 1; i >= 0; i--) {
     const o = objects[i];
-    if (o.type === 'stroke') continue;
+    if (o.type === 'stroke') {
+      const reach = (o.size || 16) * 1.2 + 30;
+      if (o.points.some(([px, py]) => Math.abs(px - x) < reach && Math.abs(py - y) < reach && Math.hypot(px - x, py - y) < reach)) return o;
+      continue;
+    }
     const [hw, hh] = objHalfSize(o);
     const c = Math.cos(-(o.rot || 0)), s = Math.sin(-(o.rot || 0));
     const dx = x - o.x, dy = y - o.y;
@@ -186,14 +190,63 @@ export function renderScene(ctx, scene, t, opts = {}) {
   if (scene.base) ctx.drawImage(scene.base, 0, 0);
   else { ctx.fillStyle = '#FFE3F0'; ctx.fillRect(0, 0, W, H); }
   drawTheme(ctx, scene.theme, t, dt, scene.intensity, music);
-  for (const o of scene.objects) drawObject(ctx, o, t, true);
+  if (opts.reveal != null) drawRevealed(ctx, scene.objects, t, opts.reveal);
+  else for (const o of scene.objects) drawObject(ctx, o, t, true);
   if (opts.draft) drawObject(ctx, opts.draft, t, true);
   drawParticles(ctx, dt);
   drawFilterOverlay(ctx, scene.filter, t);
   if (opts.selected) drawSelection(ctx, opts.selected);
 }
 
+// 重播手繪過程：筆畫依序一筆一筆畫出來（其他物件照常顯示）
+function drawRevealed(ctx, objects, t, k) {
+  const total = objects.reduce((n, o) => n + (o.type === 'stroke' ? o.points.length : 0), 0);
+  let budget = Math.floor(total * Math.min(1, Math.max(0, k)));
+  let tip = null;
+  for (const o of objects) {
+    if (o.type !== 'stroke') { drawObject(ctx, o, t, true); continue; }
+    if (budget <= 0) continue;
+    if (budget >= o.points.length) { budget -= o.points.length; drawObject(ctx, o, t, true); continue; }
+    const pts = o.points.slice(0, Math.max(1, budget));
+    budget = 0;
+    drawObject(ctx, { ...o, points: pts }, t, true);
+    tip = { p: pts[pts.length - 1], o };
+  }
+  if (tip) {
+    // 筆尖的光點
+    const [x, y] = tip.p, r = (tip.o.size || 16) * 1.6;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2);
+    g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.35, tip.o.mode === 'rainbow' ? `hsla(${(t * 90) % 360},100%,70%,.6)` : hexA(tip.o.color, 0.6)); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+function hexA(hex, a) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return `rgba(255,255,255,${a})`;
+  const n = parseInt(m[1], 16);
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+}
+export const hasStrokes = (sc) => sc.objects.some((o) => o.type === 'stroke');
+
+function strokeBox(o) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [x, y] of o.points) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+  const pad = (o.size || 16) * 1.2 + 10;
+  return [x0 - pad, y0 - pad, x1 + pad, y1 + pad];
+}
+
 function drawSelection(ctx, o) {
+  if (o.type === 'stroke') {
+    const [x0, y0, x1, y1] = strokeBox(o);
+    ctx.save();
+    ctx.setLineDash([18, 12]); ctx.lineWidth = 5; ctx.strokeStyle = '#FF7EB6';
+    ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.restore();
+    return;
+  }
   const [hw, hh] = objHalfSize(o);
   ctx.save();
   ctx.translate(o.x, o.y); ctx.rotate(o.rot || 0);

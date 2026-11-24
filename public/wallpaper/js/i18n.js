@@ -217,6 +217,18 @@ const T = {
   eraserHint: ['在畫面上抹過筆畫就能擦掉。', 'Swipe over a drawing to erase it.'],
   removeBg: ['自動去除白色背景', 'Remove white background'],
   themeToggle: ['切換深色／淺色外觀', 'Switch dark / light appearance'],
+  deleted: ['已刪除・可按復原找回', 'Deleted — tap undo to bring it back'],
+  newText: ['新增另一段文字', 'Add another text'],
+  recReveal: ['重播手繪過程', 'Replay the drawing'],
+  recRevealSub: ['影片開頭會把你畫的光紋一筆一筆畫出來', 'Your strokes are drawn in, one by one, at the start of the video'],
+  liveRecStart: ['邊畫邊錄影', 'Record while drawing'],
+  liveRecStop: ['停止錄影', 'Stop recording'],
+  liveRecOn: ['錄影中・畫好了再按停止', 'Recording — tap stop when done'],
+  liveRecHint: ['把手繪光紋的過程錄成影片', 'Capture your glowing strokes as a video'],
+  liveRecDone: ['繪畫過程錄好了', 'Your drawing video is ready'],
+  backToEdit: ['返回編輯', 'Back to edit'],
+  playerHint: ['左上角返回編輯・拖曳可移動物件・右下角 AE 按鈕有更多功能', 'Back to edit at top left · drag to move things · more in the AE button'],
+  playerHintRot: ['左上角返回編輯・右下角 AE 按鈕有更多功能', 'Back to edit at top left · more in the AE button'],
 
   // 其他
   noUndo: ['沒有可以復原的步驟', 'Nothing to undo'],

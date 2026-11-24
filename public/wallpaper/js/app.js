@@ -5,7 +5,7 @@ import {
 import { SOUNDS, playSound, audio, music, setSfxVolume, recordingDestination } from './sound.js';
 import {
   createScene, setBase, setFilter, coverCanvas, hitTest, renderScene, images, serializeScene,
-  deserializeScene, serializeObjects, loadImage, canvasToBlob, textFont,
+  deserializeScene, serializeObjects, loadImage, canvasToBlob, textFont, hasStrokes,
 } from './scene.js';
 import { kvGet, kvSet, galleryAll, galleryPut, galleryDel, loadSettings, saveSettings } from './store.js';
 import { t, nm, getLang, setLang, SYMBOLS, symLabel } from './i18n.js';
@@ -40,7 +40,7 @@ const ui = {
   sheet: null, afterProps: null, tool: 'select', drawMode: 'glow',
   color: '#FF7EB6', size: 16, textColor: '#FF7EB6', textFont: 'round', textOutline: '#fff', removeBg: false,
   selected: null, draft: null,
-  recording: false, gallery: [], recDur: 10,
+  recording: false, gallery: [], recDur: 10, recReveal: true, reveal: null, liveRec: null,
 };
 const undoStack = [];
 const redoStack = [];
@@ -67,11 +67,11 @@ const ICON_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'
 // 小工具
 // ======================================================================
 let toastTimer;
-function toast(msg, el = $('#toast')) {
+function toast(msg, el = $('#toast'), ms = 2200) {
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  toastTimer = setTimeout(() => el.classList.remove('show'), ms);
 }
 
 function openModal(html, bind) {
@@ -133,6 +133,7 @@ $('#btnRedo').onclick = redo;
 function applyStaticText() {
   $$('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
   $$('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  $$('[data-tip-key]').forEach((el) => { el.dataset.tip = t(el.dataset.tipKey); el.setAttribute('aria-label', el.dataset.tip); el.title = el.dataset.tip; });
   $('#btnLang').textContent = t('langSwitch');
   $('#btnLang').setAttribute('aria-label', EN() ? '切換至中文' : 'Switch to English');
   document.documentElement.lang = EN() ? 'en' : 'zh-Hant';
@@ -249,7 +250,7 @@ canvas.addEventListener('pointerdown', (e) => {
   canvas.setPointerCapture(e.pointerId);
   const p = toCanvas(e);
   pointers.set(e.pointerId, p);
-  if (pointers.size === 2 && ui.selected && ui.tool === 'select') {
+  if (pointers.size === 2 && ui.selected && ui.selected.type !== 'stroke' && ui.tool === 'select') {
     const [a, b] = [...pointers.values()];
     gesture = {
       type: 'pinch', d0: Math.hypot(b.x - a.x, b.y - a.y), a0: Math.atan2(b.y - a.y, b.x - a.x),
@@ -271,7 +272,36 @@ canvas.addEventListener('pointerdown', (e) => {
   const hit = hitTest(scene.objects, p.x, p.y);
   if (hit) select(hit, false, true);
   else if (ui.selected) select(null);
-  gesture = hit ? { type: 'drag', o: hit, ox: hit.x - p.x, oy: hit.y - p.y, sx: p.x, sy: p.y, moved: false, snap: snapshot() } : null;
+  gesture = hit ? dragGesture(hit, p, snapshot()) : null;
+});
+
+// 拖曳：一般物件移動中心點，筆畫整條平移
+function dragGesture(o, p, snap) {
+  return { type: 'drag', o, ox: (o.x ?? 0) - p.x, oy: (o.y ?? 0) - p.y, sx: p.x, sy: p.y, lx: p.x, ly: p.y, moved: false, snap };
+}
+function moveObject(g, p) {
+  if (g.o.type === 'stroke') {
+    const dx = p.x - g.lx, dy = p.y - g.ly;
+    g.o.points.forEach((pt) => { pt[0] += dx; pt[1] += dy; });
+  } else { g.o.x = p.x + g.ox; g.o.y = p.y + g.oy; }
+  g.lx = p.x; g.ly = p.y;
+}
+function deleteSelected() {
+  const o = ui.selected; if (!o) return;
+  const i = scene.objects.indexOf(o);
+  if (i < 0) return;
+  pushHistory();
+  scene.objects.splice(i, 1);
+  select(null);
+  if (ui.sheet === 'text') renderPanel();
+  autosave();
+  toast(t('deleted'));
+}
+$('#btnDelete').onclick = deleteSelected;
+document.addEventListener('keydown', (e) => {
+  if ((e.key === 'Delete' || e.key === 'Backspace') && ui.selected && !player.open && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName)) {
+    e.preventDefault(); deleteSelected();
+  }
 });
 
 canvas.addEventListener('pointermove', (e) => {
@@ -287,7 +317,7 @@ canvas.addEventListener('pointermove', (e) => {
     gesture.changed = true;
   } else if (gesture.type === 'drag') {
     if (Math.hypot(p.x - gesture.sx, p.y - gesture.sy) > 14) gesture.moved = true;
-    if (gesture.moved) { gesture.o.x = p.x + gesture.ox; gesture.o.y = p.y + gesture.oy; }
+    if (gesture.moved) moveObject(gesture, p);
   } else if (gesture.type === 'draw' && ui.draft) {
     const pts = ui.draft.points; const l = pts[pts.length - 1];
     if (Math.hypot(p.x - l[0], p.y - l[1]) > 4) pts.push([p.x, p.y]);
@@ -442,6 +472,7 @@ $('#dock').addEventListener('click', (e) => {
 
 function openSheet(id) {
   if (ui.recording) return;
+  if (ui.liveRec && id !== 'draw') ui.liveRec.stop();
   if (ui.sheet === id && !isDesktop()) return closeSheet();
   ui.sheet = id;
   ui.afterProps = null;
@@ -452,6 +483,7 @@ function openSheet(id) {
   panel.scrollTop = 0;
 }
 function closeSheet() {
+  if (ui.liveRec) ui.liveRec.stop();
   ui.sheet = isDesktop() ? 'photo' : null;
   updateTool();
   renderSteps();
@@ -627,6 +659,7 @@ const SHEETS = {
         <input type="text" id="txtInput" placeholder="${esc(t('textPh'))}" value="${sel ? esc(sel.text) : ''}">
         <button type="button" class="btn solid" id="addText">${sel ? t('updateText') : t('addText')}</button>
       </div>
+      ${sel ? `<div class="row"><button type="button" class="chip" id="newText">＋ ${t('newText')}</button><button type="button" class="chip danger" id="delText">${t('delete')}</button></div>` : ''}
       ${textOptions(sel)}`;
     },
     bind(p) {
@@ -641,10 +674,13 @@ const SHEETS = {
           await loadTextFont(o);
           const n = scene.objects.filter((x) => x.type === 'text').length;
           addObject({ ...o, x: W / 2, y: H * (0.42 + (n % 4) * 0.08) });
-          $('#txtInput', p).value = '';
+          renderPanel();
+          return;
         }
         $('#txtInput', p).blur();
       };
+      $('#newText', p)?.addEventListener('click', () => { select(null, true); renderPanel(); setTimeout(() => $('#txtInput')?.focus(), 50); });
+      $('#delText', p)?.addEventListener('click', deleteSelected);
       $('#addText', p).onclick = submit;
       $('#txtInput', p).addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
     },
@@ -659,12 +695,16 @@ const SHEETS = {
       </div>
       ${ui.drawMode === 'eraser' ? `<p class="hint">${t('eraserHint')}</p>` : `
       ${ui.drawMode !== 'rainbow' ? `<div class="row">${colorRow(ui.color, 'color')}</div>` : ''}
-      <div class="row"><span class="label">${t('brush')}</span><input type="range" id="size" min="4" max="48" value="${ui.size}"></div>`}`;
+      <div class="row"><span class="label">${t('brush')}</span><input type="range" id="size" min="4" max="48" value="${ui.size}"></div>`}
+      ${pickMime() !== null ? `<div class="row rec-draw">
+        <button type="button" class="btn ${ui.liveRec ? 'solid' : ''}" id="liveRec">${ui.liveRec ? `■ ${t('liveRecStop')}` : `● ${t('liveRecStart')}`}</button>
+        <span id="liveRecOut">${ui.liveRec ? `<span class="rec">${t('liveRecOn')}</span>` : `<small class="hint">${t('liveRecHint')}</small>`}</span></div>` : ''}`;
     },
     bind(p) {
       p.querySelectorAll('[data-mode]').forEach((b) => b.onclick = () => { ui.drawMode = b.dataset.mode; updateTool(); renderPanel(); });
       p.querySelectorAll('[data-color]').forEach((b) => b.onclick = () => { ui.color = b.dataset.color; renderPanel(); });
       $('#size', p)?.addEventListener('input', (e) => { ui.size = +e.target.value; });
+      $('#liveRec', p)?.addEventListener('click', toggleLiveRec);
     },
   },
 
@@ -748,14 +788,16 @@ const SHEETS = {
       const o = ui.selected;
       if (!o) return '';
       const deg = Math.round((((o.rot || 0) * 180) / Math.PI + 540) % 360 - 180);
+      const isStroke = o.type === 'stroke';
       return `
+      ${isStroke ? `<div class="row">${o.mode === 'rainbow' ? '' : colorRow(o.color, 'scolor')}</div>` : `
       <div class="row"><span class="label">${t('propSize')}</span><input type="range" data-slider="scale" min="0.2" max="4" step="0.02" value="${o.scale}"></div>
-      <div class="row"><span class="label">${t('propRotate')}</span><input type="range" data-slider="rot" min="-180" max="180" step="1" value="${deg}"></div>
+      <div class="row"><span class="label">${t('propRotate')}</span><input type="range" data-slider="rot" min="-180" max="180" step="1" value="${deg}"></div>`}
       <div class="row"><span class="label">${t('propOpacity')}</span><input type="range" data-slider="alpha" min="0.15" max="1" step="0.01" value="${o.alpha ?? 1}"></div>
       <div class="row nowrap">
         ${o.type === 'text' ? `<button type="button" class="chip" data-prop="edit">${t('updateText')}</button>` : ''}
         <button type="button" class="chip" data-prop="dup">${t('duplicate')}</button>
-        <button type="button" class="chip" data-prop="flip">${t('flip')}</button>
+        ${isStroke ? '' : `<button type="button" class="chip" data-prop="flip">${t('flip')}</button>`}
         <button type="button" class="chip" data-prop="up">${t('forward')}</button>
         <button type="button" class="chip" data-prop="down">${t('backward')}</button>
         <button type="button" class="chip danger" data-prop="del">${t('delete')}</button>
@@ -785,6 +827,11 @@ const SHEETS = {
         p.querySelectorAll('[data-snd]').forEach((x) => x.classList.toggle('on', x === b));
       });
       if (ui.selected && ui.selected.type === 'text') bindTextOptions(p);
+      p.querySelectorAll('[data-scolor]').forEach((b) => b.onclick = () => {
+        const o = ui.selected; if (!o) return;
+        pushHistory(); o.color = b.dataset.scolor; autosave();
+        p.querySelectorAll('[data-scolor]').forEach((x) => x.classList.toggle('on', x === b));
+      });
       p.querySelectorAll('[data-prop]').forEach((b) => b.onclick = () => {
         const o = ui.selected; if (!o) return;
         const act = b.dataset.prop;
@@ -793,7 +840,9 @@ const SHEETS = {
         const i = scene.objects.indexOf(o);
         if (act === 'dup') {
           const copy = JSON.parse(JSON.stringify(serializeObjects([o])[0]));
-          copy.id = uid(); copy.x += 60; copy.y += 60;
+          copy.id = uid();
+          if (copy.type === 'stroke') copy.points.forEach((pt) => { pt[0] += 60; pt[1] += 60; });
+          else { copy.x += 60; copy.y += 60; }
           scene.objects.splice(i + 1, 0, copy);
           select(copy);
         } else if (act === 'flip') {
@@ -803,7 +852,7 @@ const SHEETS = {
         } else if (act === 'down' && i > 0) {
           scene.objects.splice(i, 1); scene.objects.splice(i - 1, 0, o);
         } else if (act === 'del') {
-          scene.objects.splice(i, 1); select(null);
+          scene.objects.splice(i, 1); select(null); toast(t('deleted'));
         }
         autosave();
       });
@@ -837,6 +886,8 @@ const SHEETS = {
         <div class="section-title" style="margin-top:6px"><h4>${t('recTitle')}</h4></div>
         ${canRec ? `
           <div class="row">${[5, 10, 15].map((s) => `<button type="button" class="chip ${ui.recDur === s ? 'on' : ''}" data-dur="${s}">${t('sec', s)}</button>`).join('')}</div>
+          ${hasStrokes(scene) ? `<label class="set-item"><div><b>${t('recReveal')}</b><small>${t('recRevealSub')}</small></div>
+            <span class="switch"><input type="checkbox" id="recReveal" ${ui.recReveal ? 'checked' : ''}><span></span></span></label>` : ''}
           <div class="row"><button type="button" class="btn" id="fVid">● ${t('recStart')}</button><span id="vidOut"></span></div>`
         : `<p class="hint">${t('noRec')}</p>`}
         <div class="row"><button type="button" class="btn quiet" id="fGallery">${t('saveGallery')}</button></div>
@@ -857,7 +908,8 @@ const SHEETS = {
         ui.recDur = +b.dataset.dur;
         p.querySelectorAll('[data-dur]').forEach((x) => x.classList.toggle('on', x === b));
       });
-      $('#fVid', p)?.addEventListener('click', () => startRecording(p));
+      $('#recReveal', p)?.addEventListener('change', (e) => { ui.recReveal = e.target.checked; });
+      $('#fVid', p)?.addEventListener('click', () => startRecording(p, { reveal: ui.recReveal && hasStrokes(scene) }));
       $('#fLive', p)?.addEventListener('click', () => startRecording(p, {
         seconds: 3, out: '#liveOut', btn: '#fLive', withStill: true,
         onDone: async (video, still) => {
@@ -1107,6 +1159,44 @@ function pickMime() {
   return list.find((m) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
 }
 
+// 畫筆面板：邊畫邊錄，把手繪光紋的過程錄成影片
+function toggleLiveRec() {
+  if (ui.liveRec) { ui.liveRec.stop(); return; }
+  if (ui.recording) return;
+  const mime = pickMime();
+  const stream = canvas.captureStream(30);
+  try { recordingDestination().stream.getAudioTracks().forEach((tr) => stream.addTrack(tr)); } catch (e) { /* 無音訊 */ }
+  let rec;
+  try { rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined); } catch (e) { rec = new MediaRecorder(stream); }
+  const chunks = [];
+  rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  select(null, true);
+  const limit = setTimeout(() => rec.state === 'recording' && rec.stop(), 120000);
+  rec.onstop = () => {
+    clearTimeout(limit);
+    ui.liveRec = null;
+    stream.getVideoTracks().forEach((tr) => tr.stop());
+    const type = (rec.mimeType || mime || 'video/webm').split(';')[0];
+    const blob = new Blob(chunks, { type });
+    const ext = type.includes('mp4') ? 'mp4' : 'webm';
+    if (ui.sheet === 'draw') renderPanel();
+    const save = () => shareOrDownload(blob, `AE-Drawing-${Date.now()}.${ext}`);
+    const out = $('#liveRecOut');
+    if (out) {
+      out.innerHTML = `<button type="button" class="btn solid" id="saveLiveRec">${t('saveVideo')}</button>`;
+      $('#saveLiveRec').onclick = save;
+    } else {
+      openModal(`<h2>${t('liveRecDone')}</h2><div class="row"><button type="button" class="btn solid" id="saveLiveRec">${t('saveVideo')}</button></div>`,
+        (m) => { $('#saveLiveRec', m).onclick = save; });
+    }
+    toast(t('recDone'));
+  };
+  ui.liveRec = { stop: () => rec.state === 'recording' && rec.stop() };
+  rec.start(250);
+  renderPanel();
+  toast(t('liveRecOn'));
+}
+
 function startRecording(root, opts = {}) {
   if (ui.recording) return;
   const seconds = opts.seconds || ui.recDur;
@@ -1123,6 +1213,7 @@ function startRecording(root, opts = {}) {
   btn.disabled = true;
   rec.onstop = () => {
     ui.recording = false;
+    ui.reveal = null;
     stream.getVideoTracks().forEach((tr) => tr.stop());
     const type = (rec.mimeType || mime || 'video/webm').split(';')[0];
     const blob = new Blob(chunks, { type });
@@ -1142,6 +1233,7 @@ function startRecording(root, opts = {}) {
   };
   ui.recording = true;
   select(null);
+  if (opts.reveal) ui.reveal = { start: performance.now(), dur: seconds * 1000 * 0.6 };
   rec.start(250);
   let left = seconds;
   out.innerHTML = `<span class="rec">${t('recording', left)}</span>`;
@@ -1155,7 +1247,7 @@ function startRecording(root, opts = {}) {
 // ======================================================================
 // 互動模式（全螢幕）
 // ======================================================================
-const player = { open: false, scene: null, rotIndex: -1, pressTimer: null, fabMenu: false };
+const player = { open: false, scene: null, rotIndex: -1, pressTimer: null, fabMenu: false, dimTimer: null, drag: null, tipsShown: false };
 
 async function sceneForPlayer() {
   const rot = rotationInfo();
@@ -1176,20 +1268,32 @@ async function enterPlayer() {
   player.scene = await sceneForPlayer();
   player.open = true;
   $('#player').hidden = false;
+  $('#toast').classList.remove('show');
   applyPlayerUi();
   updateClock();
-  if (S.componentTap || S.touchFx) toast(t('tapHint'), $('#playerToast'));
+  wakeBack();
+  toast(t(player.scene === scene ? 'playerHint' : 'playerHintRot'), $('#playerToast'), 4200);
 }
+// 返回鍵：一段時間沒碰畫面就變淡，碰一下又出現
+function wakeBack() {
+  const b = $('#playerBack');
+  b.classList.remove('dim');
+  clearTimeout(player.dimTimer);
+  player.dimTimer = setTimeout(() => b.classList.add('dim'), 3500);
+}
+$('#playerBack').onclick = () => { exitPlayer(); renderPanel(); };
 function exitPlayer() {
   player.open = false;
-  player.fabMenu = false;
-  $('#fabMenu').hidden = true;
+  setFabMenu(false);
+  player.drag = null;
   $('#player').hidden = true;
   if (location.search.includes('mode=play')) history.replaceState?.(null, '', location.pathname);
 }
 function applyPlayerUi() {
   $('#fab').hidden = !S.showFab;
   $('#lockClock').hidden = !S.showClock;
+  $('[data-fab="clock"]').classList.toggle('on', !!S.showClock);
+  $('[data-fab="music"]').classList.toggle('on', !!(music.el && !music.el.paused));
   if (!S.showFab) { $('#fabMenu').hidden = true; player.fabMenu = false; }
 }
 $('#btnPlay').onclick = enterPlayer;
@@ -1218,19 +1322,46 @@ function toPlayer(e) {
 
 pCanvas.addEventListener('pointerdown', (e) => {
   audio();
+  wakeBack();
+  pCanvas.setPointerCapture?.(e.pointerId);
   const p = toPlayer(e);
-  if (player.fabMenu) { player.fabMenu = false; $('#fabMenu').hidden = true; }
+  if (player.fabMenu) setFabMenu(false);
   const hit = hitTest(player.scene.objects, p.x, p.y);
-  if (hit && S.componentTap) triggerTap(hit);
-  else if (S.touchFx) { burst(p.x, p.y, 'spark', 9, 0.8); }
+  // 預覽時也能拖曳物件（只限正在編輯的作品；輪播中的收藏不改）
+  player.drag = hit ? { ...dragGesture(hit, p, snapshot()), editable: player.scene === scene } : null;
+  if (!hit && S.touchFx) burst(p.x, p.y, 'spark', 9, 0.8);
   clearTimeout(player.pressTimer);
   player.pressTimer = setTimeout(() => {
+    if (player.drag && player.drag.moved) return;
     if (!S.showFab) { $('#fab').hidden = false; toast(t('fabPeek'), $('#playerToast')); }
   }, 900);
 });
-['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => pCanvas.addEventListener(ev, () => clearTimeout(player.pressTimer)));
+pCanvas.addEventListener('pointermove', (e) => {
+  const g = player.drag; if (!g || !g.editable) return;
+  const p = toPlayer(e);
+  if (!g.moved && Math.hypot(p.x - g.sx, p.y - g.sy) > 14) { g.moved = true; clearTimeout(player.pressTimer); }
+  if (g.moved) moveObject(g, p);
+});
+function endPlayerPointer() {
+  clearTimeout(player.pressTimer);
+  const g = player.drag; player.drag = null;
+  if (!g) return;
+  if (g.moved) { pushHistory(g.snap); autosave(); }
+  else if (S.componentTap) triggerTap(g.o);
+}
+['pointerup', 'pointercancel'].forEach((ev) => pCanvas.addEventListener(ev, endPlayerPointer));
 
-$('#fab').onclick = () => { player.fabMenu = !player.fabMenu; $('#fabMenu').hidden = !player.fabMenu; };
+function setFabMenu(open) {
+  player.fabMenu = open;
+  const m = $('#fabMenu');
+  m.hidden = !open;
+  if (open) {
+    applyPlayerUi();
+    // 第一次打開時把每個圖示的說明都秀出來，之後滑鼠移上去／按住才出現
+    if (!player.tipsShown) { player.tipsShown = true; m.classList.add('tips'); setTimeout(() => m.classList.remove('tips'), 2600); }
+  }
+}
+$('#fab').onclick = () => { wakeBack(); setFabMenu(!player.fabMenu); };
 $('#fabMenu').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
   const act = b.dataset.fab;
@@ -1246,24 +1377,30 @@ $('#fabMenu').addEventListener('click', (e) => {
   } else if (act === 'clock') {
     S.showClock = !S.showClock; persistSettings(); applyPlayerUi();
   } else if (act === 'hide') {
-    S.showFab = false; persistSettings(); applyPlayerUi();
+    S.showFab = false; persistSettings(); setFabMenu(false);
     toast(t('fabHidden'), $('#playerToast'));
-  } else if (act === 'exit') {
-    exitPlayer(); renderPanel();
   }
-  if (act !== 'exit' && act !== 'hide') { player.fabMenu = false; $('#fabMenu').hidden = true; }
+  applyPlayerUi();
 });
 
 // ======================================================================
 // 主迴圈
 // ======================================================================
+const btnDelete = $('#btnDelete');
+// 錄影時重播手繪過程：前 60% 的時間把筆畫一筆一筆畫出來
+function revealAt(ms) {
+  if (!ui.reveal) return null;
+  return Math.min(1, (ms - ui.reveal.start) / ui.reveal.dur);
+}
 function loop(ms) {
   const time = ms / 1000;
   music.update();
   if (player.open && player.scene) {
     renderScene(pctx, player.scene, time);
   } else {
-    renderScene(ctx, scene, time, { draft: ui.draft, selected: ui.recording ? null : ui.selected });
+    renderScene(ctx, scene, time, { draft: ui.draft, selected: ui.recording ? null : ui.selected, reveal: revealAt(ms) });
+    const showDel = !!ui.selected && !ui.recording;
+    if (btnDelete.hidden === showDel) btnDelete.hidden = !showDel;
     if (ui.sheet === 'comp') $$('canvas[data-icon]', panel).forEach((c) => drawComponentIcon(c, c.dataset.icon, time));
   }
   requestAnimationFrame(loop);
