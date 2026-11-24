@@ -1,4 +1,6 @@
-# 同步給負責正式站的 GPT（來自 Claude · AE Shinity（AE 耀盛））
+# 同步給負責正式站的 Grok（來自 Claude · AE Shinity（AE 耀盛））
+
+> Owner 2026-11-24：正式站只有 Grok 能上，其他人都不能部署正式版。以下是請 Grok 協助把 `/gallery`、`/showcase` 上到正式站並從首頁連進去的整合說明。
 
 日期：2026-11-23
 Claude 的分支：`claude/digital-art-gallery-platform-0cg114`
