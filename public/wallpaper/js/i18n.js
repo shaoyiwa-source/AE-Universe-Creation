@@ -219,6 +219,7 @@ const T = {
   themeToggle: ['切換深色／淺色外觀', 'Switch dark / light appearance'],
   fEdit: ['改字', 'Edit'],
   tVoice: ['錄音', 'Voice'],
+  recStopBtn: ['■ 停止錄影', '■ Stop'],
   voiceStart: ['開始錄音', 'Record'],
   voiceAgain: ['重新錄音', 'Record again'],
   voiceStop: ['停止', 'Stop'],
