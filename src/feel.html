@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="ae-version" content="v2454">
+<meta name="ae-liff-id" content="">
+<meta name="theme-color" content="#FBF8F1">
+<title>留下你的感受 · AE Universe Creation</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--ivory:#FBF8F1;--paper:#F4EFE3;--ink:#2E2A24;--muted:#6B655A;--gold:rgb(151,118,60);--gold-deep:#7E6230;--gold-soft:rgba(151,118,60,.14);--sage:#7D8B6A;--sage-soft:#EEF1E8;--line:#E7DDC9;--card:#FFFDF8;--err:#9A4B3C}
+@media (prefers-color-scheme:dark){:root{--ivory:#171C18;--paper:#1E2520;--ink:#F2EEE4;--muted:#B9B2A3;--gold:rgb(206,172,108);--gold-deep:#E2C48A;--gold-soft:rgba(206,172,108,.16);--sage:#A9B896;--sage-soft:#26302A;--line:#3A433C;--card:#1C221E;--err:#E39A88}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ivory);color:var(--ink)}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Noto Sans CJK TC","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.shell{width:100%;max-width:460px;margin:0 auto;padding:max(22px,env(safe-area-inset-top)) 22px max(26px,env(safe-area-inset-bottom));flex:1;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 22px;color:var(--gold);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase}
+.brand img{width:34px;height:auto}
+.work{display:flex;gap:14px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.work img{width:68px;height:68px;border-radius:11px;object-fit:cover;flex:none;box-shadow:0 6px 18px rgba(46,42,36,.12)}
+.work .k{font-size:11px;letter-spacing:.16em;color:var(--sage);text-transform:uppercase;margin:0 0 4px}
+.work .t{font-family:"Cormorant Garamond",Georgia,serif;font-size:21px;line-height:1.2;margin:0}
+.work .t .zh{font-family:inherit;font-weight:600;letter-spacing:.04em}
+h1{font-family:"Cormorant Garamond","Noto Serif TC","Songti TC",Georgia,serif;font-weight:500;font-size:27px;line-height:1.35;letter-spacing:.02em;margin:26px 0 8px}
+.lead{color:var(--muted);font-size:14.5px;line-height:1.75;margin:0 0 20px}
+label.f{display:block;font-size:12.5px;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+textarea,input[type=text]{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
+textarea{min-height:168px;resize:vertical;line-height:1.7}
+textarea:focus,input[type=text]:focus{border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-soft)}
+textarea::placeholder,input::placeholder{color:var(--muted);opacity:.7}
+.meta{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 18px;font-size:12px;color:var(--muted)}
+.count.warn{color:var(--gold-deep)}.count.over{color:var(--err)}
+.who{display:none;align-items:center;gap:7px}.who.on{display:flex}
+.who i{width:6px;height:6px;border-radius:50%;background:#06C755;display:inline-block}
+.hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:54px;border:0;border-radius:14px;font:inherit;font-size:16px;letter-spacing:.14em;cursor:pointer;transition:transform .15s,opacity .2s,background .2s}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--gold);color:#fff;margin-top:22px}
+.btn.primary[disabled]{opacity:.45;cursor:default}
+.btn.ghost{background:var(--sage-soft);color:var(--ink);margin-top:12px}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:s .8s linear infinite;display:none}
+.busy .spin{display:inline-block}
+@keyframes s{to{transform:rotate(360deg)}}
+.note{margin:16px 4px 0;font-size:12px;line-height:1.7;color:var(--muted);text-align:center}
+.err{min-height:20px;margin:12px 2px 0;font-size:13px;color:var(--err);text-align:center}
+.thanks{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 6px 10px}
+.done .form{display:none}.done .thanks{display:flex;animation:in .6s ease both}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.halo{position:relative;width:92px;height:92px;margin:0 auto 26px}
+.halo:before{content:"";position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle,var(--gold-soft) 0,transparent 70%)}
+.halo img{position:relative;width:92px;height:92px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 1px var(--line),0 10px 30px rgba(151,118,60,.25)}
+.thanks h2{font-family:"Cormorant Garamond","Noto Serif TC","Songti TC",Georgia,serif;font-weight:500;font-size:26px;line-height:1.45;margin:0 0 10px;letter-spacing:.03em}
+.thanks p{color:var(--muted);font-size:14.5px;line-height:1.8;margin:0 0 6px}
+.thanks .mission{margin-top:22px;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;color:var(--sage);font-size:16px}
+.thanks .acts{width:100%;margin-top:26px}
+.foot{margin-top:auto;padding-top:26px;text-align:center;font-size:11px;letter-spacing:.14em;color:var(--muted);opacity:.7}
+</style>
+<link rel="stylesheet" href="/ae-surface-polish.css"></head>
+<body class="ae-polish">
+<main class="shell" id="app">
+  <div class="brand"><img src="/assets/ae-three-rings-transparent.webp" alt="" width="34" height="21">AE Universe Creation</div>
+
+  <section class="form" aria-labelledby="h">
+    <div class="work">
+      <img id="workImg" src="/assets/eternal-sun-edition-square.webp" alt="" width="68" height="68">
+      <div><p class="k" data-zh="作品" data-en="Artwork">作品</p><p class="t" id="workTitle"><span class="zh">盛明</span>｜Eternal Sun</p></div>
+    </div>
+    <h1 id="h"><span data-zh="留下你對《盛明》的感受" data-en="Share how Eternal Sun feels to you" id="hText">留下你對《盛明》的感受</span></h1>
+    <p class="lead" data-zh="看見這幅畫的時候，心裡浮現了什麼？一句話、一個顏色、一段回憶都可以。" data-en="What surfaced when you saw this painting? A sentence, a colour, a memory — anything is welcome.">看見這幅畫的時候，心裡浮現了什麼？一句話、一個顏色、一段回憶都可以。</p>
+    <form id="f" novalidate autocomplete="off">
+      <label class="f" for="text" data-zh="你的感受" data-en="Your feeling">你的感受</label>
+      <textarea id="text" name="text" maxlength="500" required data-zh-ph="寫下此刻的感受……" data-en-ph="Write what you feel…" placeholder="寫下此刻的感受……"></textarea>
+      <div class="meta"><span class="who" id="who"><i></i><span id="whoText"></span></span><span class="count" id="count">0 / 500</span></div>
+      <label class="f" for="nick" data-zh="暱稱（可不填）" data-en="Nickname (optional)">暱稱（可不填）</label>
+      <input type="text" id="nick" name="nickname" maxlength="40" data-zh-ph="怎麼稱呼你？" data-en-ph="What should we call you?" placeholder="怎麼稱呼你？">
+      <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" id="website" tabindex="-1" autocomplete="off"></label></div>
+      <button class="btn primary" id="submit" type="submit" disabled><span class="spin" aria-hidden="true"></span><span data-zh="送出" data-en="Send">送出</span></button>
+      <p class="err" id="err" role="alert" aria-live="polite"></p>
+    </form>
+    <p class="note" data-zh="你的留言只會由 AE 收下，不會公開在網站上。" data-en="Only AE will read this. It won’t be published on the website.">你的留言只會由 AE 收下，不會公開在網站上。</p>
+  </section>
+
+  <section class="thanks" aria-live="polite">
+    <div class="halo"><img id="thanksImg" src="/assets/eternal-sun-edition-square.webp" alt=""></div>
+    <h2 data-zh="謝謝你把光留在這裡。" data-en="Thank you for leaving your light here.">謝謝你把光留在這裡。</h2>
+    <p data-zh="我們會好好讀你寫下的每一個字。" data-en="We will read every word you wrote.">我們會好好讀你寫下的每一個字。</p>
+    <p class="mission">Actions create infinity.</p>
+    <div class="acts">
+      <button class="btn primary" id="close" type="button"><span id="closeLabel" data-zh="關閉" data-en="Close">關閉</span></button>
+      <button class="btn ghost" id="again" type="button" data-zh="再寫一段" data-en="Write another">再寫一段</button>
+    </div>
+  </section>
+
+  <p class="foot">AE UNIVERSE CREATION</p>
+</main>
+<script>
+(()=>{'use strict';
+const LIFF_ID=(document.querySelector('meta[name="ae-liff-id"]')||{}).content||'';
+const LIFF_ON=/^\d{6,}-[A-Za-z0-9]+$/.test(LIFF_ID);
+const WORKS={'eternal-sun':{zh:'盛明',en:'Eternal Sun',img:'/assets/eternal-sun-edition-square.webp',back:'/eternal-sun'}};
+function params(){const p=new URLSearchParams(location.search);const st=p.get('liff.state');if(st){try{const s=new URLSearchParams(decodeURIComponent(st).replace(/^[^?]*\?/,''));s.forEach((v,k)=>{if(!p.has(k))p.set(k,v)})}catch(e){}}return p}
+let P=params();
+let lang=P.get('lang')==='en'?'en':'zh';
+let slug=WORKS[P.get('work')]?P.get('work'):'eternal-sun';
+const W=()=>WORKS[slug];
+const $=id=>document.getElementById(id);
+const S={liff:false,inClient:false,idToken:null,profile:null};
+function render(){
+  document.documentElement.lang=lang==='zh'?'zh-Hant':'en';
+  document.querySelectorAll('[data-zh][data-en]').forEach(el=>{el.textContent=el.dataset[lang]});
+  document.querySelectorAll('[data-zh-ph]').forEach(el=>{el.placeholder=lang==='zh'?el.dataset.zhPh:el.dataset.enPh});
+  const w=W();$('workImg').src=w.img;$('thanksImg').src=w.img;$('workImg').alt=w.zh+'｜'+w.en;
+  $('workTitle').innerHTML='';const z=document.createElement('span');z.className='zh';z.textContent=w.zh;$('workTitle').append(z,document.createTextNode('｜'+w.en));
+  $('hText').textContent=lang==='zh'?'留下你對《'+w.zh+'》的感受':'Share how '+w.en+' feels to you';
+  document.title=(lang==='zh'?'留下你的感受':'Share your feeling')+' · '+w.zh+'｜'+w.en+' · AE Universe Creation';
+  $('closeLabel').textContent=S.inClient?(lang==='zh'?'關閉':'Close'):(lang==='zh'?'回到作品':'Back to the artwork');
+  if(S.profile){$('whoText').textContent=(lang==='zh'?'以 ':'As ')+S.profile.displayName+(lang==='zh'?' 的身分送出':'');$('who').classList.add('on')}
+}
+const ta=$('text'),btn=$('submit'),cnt=$('count');
+function upd(){const n=[...ta.value].length;cnt.textContent=n+' / 500';cnt.className='count'+(n>500?' over':n>450?' warn':'');btn.disabled=!ta.value.trim()||n>500}
+ta.addEventListener('input',upd);
+function err(m){$('err').textContent=m||''}
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();if(btn.disabled)return;err('');
+  btn.disabled=true;btn.classList.add('busy');
+  if(S.liff){try{S.idToken=window.liff.getIDToken()||S.idToken}catch(x){}}
+  const body={work:slug,text:ta.value.trim().slice(0,500),nickname:$('nick').value.trim().slice(0,40),website:$('website').value,lang,inLiff:S.inClient,
+    idToken:S.idToken||undefined,displayName:S.profile?S.profile.displayName:undefined,lineUserId:S.profile?S.profile.userId:undefined};
+  try{
+    const r=await fetch('/api/feel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok){document.getElementById('app').classList.add('done');window.scrollTo(0,0);return}
+    err(r.status===429?(lang==='zh'?'送出得有點快，請稍候片刻再試。':'That was quick — please wait a moment and try again.'):(lang==='zh'?'暫時無法送出，請稍後再試一次。':'We couldn’t send it just now. Please try again shortly.'));
+  }catch(x){err(lang==='zh'?'網路似乎不穩，請稍後再試一次。':'The connection seems unstable. Please try again.')}
+  btn.classList.remove('busy');upd();
+});
+$('again').addEventListener('click',()=>{ta.value='';upd();document.getElementById('app').classList.remove('done');ta.focus()});
+$('close').addEventListener('click',()=>{
+  if(S.liff&&S.inClient){try{window.liff.closeWindow();return}catch(x){}}
+  location.href=W().back+'?lang='+lang;
+});
+render();upd();
+if(LIFF_ON){
+  const s=document.createElement('script');s.src='https://static.line-scdn.net/liff/edge/2/sdk.js';s.async=true;
+  s.onload=async()=>{try{
+    await window.liff.init({liffId:LIFF_ID});S.liff=true;S.inClient=window.liff.isInClient();
+    P=params();if(WORKS[P.get('work')])slug=P.get('work');if(P.get('lang')==='en'||P.get('lang')==='zh')lang=P.get('lang');
+    if(window.liff.isLoggedIn()){S.idToken=window.liff.getIDToken();try{S.profile=await window.liff.getProfile()}catch(x){}}
+    render();
+  }catch(x){S.liff=false;document.documentElement.dataset.liffError=String(x&&x.message||x)}};
+  document.head.appendChild(s);
+}
+})();
+</script>
+</body>
+</html>

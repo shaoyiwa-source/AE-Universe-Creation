@@ -1,0 +1,101 @@
+{
+  "rewrites": [
+    {
+      "source": "/shop",
+      "destination": "/shop.html"
+    },
+    {
+      "source": "/today",
+      "destination": "/today.html"
+    },
+    {
+      "source": "/experience",
+      "destination": "/experience-portal.html"
+    },
+    {
+      "source": "/together",
+      "destination": "/together.html"
+    },
+    {
+      "source": "/checkout-stage",
+      "destination": "/checkout-stage.html"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/checkout.html"
+    },
+    {
+      "source": "/cart",
+      "destination": "/cart.html"
+    },
+    {
+      "source": "/collections",
+      "destination": "/collections.html"
+    },
+    {
+      "source": "/works",
+      "destination": "/works.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/about.html"
+    },
+    {
+      "source": "/eternal-sun",
+      "destination": "/eternal-sun.html"
+    },
+    {
+      "source": "/index",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/color-moment",
+      "destination": "/color-moment.html"
+    },
+    {
+      "source": "/feel",
+      "destination": "/feel.html"
+    },
+    {
+      "source": "/feel-admin",
+      "destination": "/feel-admin.html"
+    },
+    {
+      "source": "/free-heart-layers",
+      "destination": "/free-heart-layers.html"
+    },
+    {
+      "source": "/art-wall",
+      "destination": "/works.html"
+    },
+    {
+      "source": "/works-classic",
+      "destination": "/works-classic.html"
+    },
+    {
+      "source": "/touch-moment",
+      "destination": "/experience.html"
+    },
+    {
+      "source": "/dream-giver",
+      "destination": "/dream-giver.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/art-wall.html",
+      "destination": "/art-wall",
+      "permanent": false
+    },
+    {
+      "source": "/soul-cards",
+      "destination": "/color-moment",
+      "permanent": false
+    },
+    {
+      "source": "/soul-cards.html",
+      "destination": "/color-moment",
+      "permanent": false
+    }
+  ]
+}

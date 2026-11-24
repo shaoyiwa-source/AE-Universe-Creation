@@ -1,0 +1,111 @@
+/* Shared visitor entry (cover, tap hint, gold dots, mode row, help sheet) — Eternal Sun pages. 2026-11-19 */
+#aeCover{position:fixed;inset:0;z-index:300;overflow:hidden;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(22px,4.2vh,40px);
+  padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));box-sizing:border-box;
+  background:radial-gradient(ellipse 70% 55% at 50% 44%,#1d1710 0%,#0e0b07 55%,#050403 100%);
+  -webkit-tap-highlight-color:transparent;touch-action:none;outline:none;
+  transition:opacity .65s ease,visibility 0s linear .65s}
+#aeCover.out{opacity:0;visibility:hidden;pointer-events:none}
+/* the painting, small and framed (Owner 11/19 11:02: the cover picture was too big) */
+#aeCover .aeCover-art{display:block;flex:0 0 auto;width:min(62vw,calc(56vh*1110/1536),400px);height:auto;aspect-ratio:1110/1536;object-fit:cover;
+  padding:clamp(6px,1.6vw,10px);box-sizing:border-box;background:linear-gradient(145deg,#3a2c16,#1a140b);
+  border:1px solid rgba(214,178,106,.75);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 0 6px rgba(214,178,106,.08),0 18px 50px rgba(0,0,0,.7),0 0 60px rgba(233,190,90,.12);
+  user-select:none;-webkit-user-drag:none;pointer-events:none;animation:aeCoverIn 1s ease-out both}
+#aeCover .aeCover-veil{display:none}
+#aeCover .aeCover-title{position:static;display:flex;flex-direction:column;align-items:center;gap:14px;pointer-events:none;animation:aeCoverIn 1.2s ease-out .15s both}
+#aeCover .aeCover-title .aeCover-rule:last-child{display:none}
+#aeCover h1{margin:0;font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;font-weight:500;
+  font-size:clamp(21px,6.2vw,36px);line-height:1.3;letter-spacing:.3em;padding-left:.3em;white-space:nowrap;
+  color:#f0d590;background:linear-gradient(180deg,#fff0c2 0%,#eccb78 55%,#c49440 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#aeCover .aeCover-rule{display:block;width:44px;height:1px;background:linear-gradient(90deg,rgba(233,200,121,0),rgba(233,200,121,.9),rgba(233,200,121,0))}
+@keyframes aeCoverIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+html.ae-cover-on,html.ae-cover-on body{overflow:hidden!important;overscroll-behavior:none}
+
+/* gold dots (positioned by JS inside the host) */
+#aeCues{position:absolute;inset:0;z-index:18;pointer-events:none}
+#aeCues .ae-cue{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,#fff6c8 0 22%,rgba(255,220,120,.95) 36%,rgba(232,200,121,.45) 58%,rgba(232,200,121,0) 74%);
+  box-shadow:0 0 20px 7px rgba(232,200,121,.8),0 0 0 2px rgba(255,244,200,.85);
+  animation:ae-cue-pulse 2.2s ease-in-out infinite}
+#aeCues .ae-cue:nth-child(1){width:36px;height:36px;margin:-18px 0 0 -18px}
+#aeCues .ae-cue::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:1.5px solid rgba(255,236,180,.7);animation:ae-cue-ring 2.2s ease-out infinite}
+@keyframes ae-cue-pulse{0%,100%{transform:scale(.86);opacity:.72}50%{transform:scale(1.12);opacity:1}}
+@keyframes ae-cue-ring{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+#aeCues.ae-cues-soft .ae-cue{opacity:.55;animation-duration:3.2s}
+#aeCues .ae-cue.hit{animation:ae-cue-hit .7s ease-out!important;opacity:1!important}
+#aeCues .ae-cue.hit::after{animation:ae-cue-hitring .7s ease-out!important}
+@keyframes ae-cue-hit{0%{transform:scale(1);filter:brightness(1)}25%{transform:scale(2.1);filter:brightness(1.8)}100%{transform:scale(1);filter:brightness(1)}}
+@keyframes ae-cue-hitring{0%{transform:scale(.8);opacity:1;border-width:3px}100%{transform:scale(3.4);opacity:0;border-width:1px}}
+
+/* one faint hint line */
+#aeTapHint{position:absolute;z-index:19;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;
+  font:400 13px/1 Inter,"PingFang TC","Noto Sans TC","Helvetica Neue",system-ui,sans-serif;letter-spacing:.32em;
+  padding:7px 14px 7px calc(14px + .32em);border-radius:999px;background:rgba(10,8,6,.42);
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  color:rgba(255,246,222,.88);text-shadow:0 1px 4px rgba(0,0,0,.7);opacity:0;transition:opacity .5s ease}
+#aeTapHint.on{opacity:1;animation:aeHintBreathe 3.2s ease-in-out .6s infinite}
+#aeTapHint.gone{opacity:0!important;animation:none;transition-duration:.25s}
+@keyframes aeHintBreathe{0%,100%{opacity:.5}50%{opacity:.9}}
+html.ae-cover-on #aeTapHint,html.ae-cover-on #aeCues{opacity:0}
+
+/* mode row (visual style; each page positions it under its art) */
+#aeModes{display:flex;align-items:center;justify-content:center;gap:4px;max-width:calc(100vw - 16px);padding:4px;border-radius:999px;
+  background:rgba(10,8,6,.55);border:1px solid rgba(214,178,106,.35);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-sizing:border-box;
+  font-family:Inter,"PingFang TC","Noto Sans TC","Helvetica Neue",system-ui,sans-serif}
+#aeModes button{flex:0 0 auto;min-height:36px;margin:0;padding:0 11px;border:0;border-radius:999px;background:transparent;color:#e8d7a8;
+  font:inherit;font-size:13px;letter-spacing:.06em;line-height:1;cursor:pointer;white-space:nowrap;box-shadow:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#aeModes button.on{background:rgba(232,200,121,.22);color:#f6ead0;box-shadow:inset 0 0 0 1px rgba(232,200,121,.55)}
+#aeModes .aeModes-sep{flex:0 0 1px;align-self:stretch;margin:7px 2px;background:rgba(214,178,106,.35)}
+#aeModes button.aeModes-help{color:rgba(232,215,168,.7);font-size:12px;padding:0 10px}
+#aeModes button:focus-visible{outline:2px solid #e8c879;outline-offset:1px}
+@media(max-width:400px){#aeModes{gap:2px;padding:3px}#aeModes button{padding:0 8px;font-size:12px;min-height:34px;letter-spacing:.03em}#aeModes button.aeModes-help{padding:0 8px}}
+@media(max-width:340px){#aeModes button{padding:0 6px;font-size:11.5px}}
+
+/* help sheet */
+#aeHelpSheet{position:fixed;inset:0;z-index:320;display:flex;align-items:flex-end;justify-content:center;padding:16px 14px max(18px,env(safe-area-inset-bottom));
+  background:rgba(5,4,3,.55);box-sizing:border-box;overscroll-behavior:contain}
+#aeHelpSheet[hidden]{display:none}
+#aeHelpSheet .aeHelp-card{width:min(420px,100%);max-height:80vh;overflow:auto;padding:20px 20px 14px;border-radius:18px;background:rgba(14,11,7,.96);
+  border:1px solid rgba(214,178,106,.5);box-shadow:0 10px 40px rgba(0,0,0,.6);color:#efe0b6;box-sizing:border-box;
+  font:400 14px/1.6 Inter,"PingFang TC","Noto Sans TC","Helvetica Neue",system-ui,sans-serif}
+#aeHelpSheet h2{margin:0 0 10px;font:500 18px/1.3 "Noto Serif TC","Songti TC",serif;letter-spacing:.14em;color:#f3d991}
+#aeHelpSheet ul{margin:0 0 14px;padding:0 0 0 1.1em}
+#aeHelpSheet li{margin:5px 0}
+#aeHelpSheet .aeHelp-close{display:block;width:100%;min-height:46px;margin:0;border-radius:999px;border:1px solid #e9cf86;background:linear-gradient(180deg,#f1d995,#c9a35a);
+  color:#16110a;font:500 15px/1 Inter,"PingFang TC","Noto Sans TC",system-ui,sans-serif;letter-spacing:.12em;cursor:pointer}
+@media(min-width:850px){#aeHelpSheet{align-items:center}}
+html.ae-help-on,html.ae-help-on body{overflow:hidden}
+@media(prefers-reduced-motion:reduce){
+  #aeCover .aeCover-art,#aeCover .aeCover-title,#aeTapHint.on{animation:none}
+  #aeCues .ae-cue.hit{animation:none!important}
+  #aeCues .ae-cue,#aeCues .ae-cue::after{animation:none}#aeCues .ae-cue{opacity:.9}
+}
+
+/* diagonal embossed watermark (system name) — light pressed into the paint; never takes taps */
+#aeWatermark{position:absolute;z-index:17;pointer-events:none;white-space:nowrap;user-select:none;
+  font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;font-weight:500;letter-spacing:.38em;padding-left:.38em;line-height:1;
+  color:rgba(255,252,240,.075);mix-blend-mode:screen;
+  text-shadow:0 -1px 0 rgba(255,255,255,.13),0 1px 0 rgba(60,36,8,.14),0 0 14px rgba(255,244,215,.07)}
+#aeWatermark.en{font-family:"Cormorant Garamond","Noto Serif TC",Georgia,serif;letter-spacing:.22em;padding-left:.22em;font-weight:600}
+@supports not (mix-blend-mode:screen){#aeWatermark{color:rgba(255,252,240,.1)}}
+/* entry note: fades in, leaves by itself after ~3 s, never takes taps */
+#aeToast{position:absolute;z-index:21;transform:translate(-50%,-4px);pointer-events:none;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;gap:5px;width:max-content;max-width:86%;
+  padding:9px 18px 10px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(28,22,14,.86),rgba(12,10,7,.86));
+  border:1px solid rgba(214,178,106,.42);
+  box-shadow:inset 0 1px 0 rgba(255,236,190,.14),0 10px 30px rgba(0,0,0,.5),0 0 24px rgba(233,190,90,.08);
+  backdrop-filter:blur(10px) saturate(1.1);-webkit-backdrop-filter:blur(10px) saturate(1.1);
+  color:#ecdfbd;font:400 13px/1.5 Inter,"PingFang TC","Noto Sans TC","Helvetica Neue",system-ui,sans-serif;letter-spacing:.06em;text-align:center;
+  opacity:0;transition:opacity .5s ease,transform .5s ease}
+#aeToast b{text-wrap:balance;font-family:"Noto Serif TC","Songti TC",serif;font-size:13.5px;font-weight:500;color:#f3d991;letter-spacing:.2em;padding-left:.2em}
+html[lang="en"] #aeToast b,#aeToast[lang="en"] b{font-size:13px;letter-spacing:.03em;padding-left:.03em}
+#aeToast span:last-child{font-size:12px;color:rgba(236,223,189,.82);letter-spacing:.1em}
+#aeToast .aeToast-sep{display:block;width:22px;height:1px;background:linear-gradient(90deg,transparent,rgba(214,178,106,.7),transparent)}
+#aeToast.on{opacity:1;transform:translate(-50%,0)}
+#aeToast.gone{opacity:0;transform:translate(-50%,-4px);transition-duration:.8s}
+@media(prefers-reduced-motion:reduce){#aeToast{transition:opacity .3s}}
+
+/* 經典首頁 has its own hero text at the bottom of the painting: hide the tap hint there so they never stack */
+body.home-mode #aeTapHint{display:none!important}
