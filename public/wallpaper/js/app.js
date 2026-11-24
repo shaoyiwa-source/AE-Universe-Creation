@@ -623,7 +623,7 @@ const PANELS = {
       if (sub === 'comp') {
         const sel = ui.selected && ui.selected.type === 'comp' ? ui.selected : null;
         body = `
-        <div class="grid">${COMPONENTS.map((c) => { const n = nm('comp', c); return `
+        <div class="hscroll">${COMPONENTS.map((c) => { const n = nm('comp', c); return `
           <button type="button" class="tile ${sel && sel.kind === c.id ? 'on' : ''}" data-comp="${c.id}">
             <canvas width="150" height="150" data-icon="${c.id}"></canvas>${esc(n.name)}<small>${esc(n.desc)}</small>
           </button>`; }).join('')}</div>
@@ -732,7 +732,7 @@ const PANELS = {
       let body = '';
       if (sub === 'theme') {
         body = `
-        <div class="grid four">${THEMES.map((th) => { const n = nm('theme', th); return `
+        <div class="hscroll">${THEMES.map((th) => { const n = nm('theme', th); return `
           <button type="button" class="tile ${scene.theme === th.id ? 'on' : ''}" data-theme="${th.id}">
             <div class="swatch" style="background:${THEME_SWATCH[th.id]}"></div>${esc(n.name)}<small>${esc(n.desc)}</small>
           </button>`; }).join('')}</div>
@@ -740,7 +740,7 @@ const PANELS = {
       } else if (sub === 'filter') {
         if (!filterThumbs) makeFilterThumbs();
         body = `
-        <div class="grid four">${FILTERS.map((f) => { const n = nm('filter', f); return `
+        <div class="hscroll">${FILTERS.map((f) => { const n = nm('filter', f); return `
           <button type="button" class="tile ${scene.filter === f.id ? 'on' : ''}" data-filter="${f.id}">
             <img class="swatch" src="${filterThumbs[f.id]}" alt="">${esc(n.name)}<small>${esc(n.desc)}</small>
           </button>`; }).join('')}</div>`;
