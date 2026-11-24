@@ -1333,7 +1333,7 @@ pCanvas.addEventListener('pointerdown', (e) => {
   clearTimeout(player.pressTimer);
   player.pressTimer = setTimeout(() => {
     if (player.drag && player.drag.moved) return;
-    if (!S.showFab) { $('#fab').hidden = false; toast(t('fabPeek'), $('#playerToast')); }
+    if (!S.showFab) { S.showFab = true; persistSettings(); applyPlayerUi(); toast(t('fabPeek'), $('#playerToast')); }
   }, 900);
 });
 pCanvas.addEventListener('pointermove', (e) => {

@@ -168,7 +168,7 @@ const T = {
   fabExit: ['離開互動模式', 'Exit'],
   tapHint: ['點點看畫面上的元件', 'Try tapping the companions'],
   rotated: ['桌布已依頻率更新', 'Wallpaper changed'],
-  fabPeek: ['互動按鈕暫時出現囉', 'The AE button is back for now'],
+  fabPeek: ['AE 按鈕回來了，在右下角', 'The AE button is back, bottom right'],
   fabHidden: ['已隱藏，長按畫面可叫回', 'Hidden — long-press to bring it back'],
   themeIs: ['主題：{0}', 'Theme: {0}'],
   needMusic: ['先到「音樂」匯入音樂喔', 'Add music in Music first'],
