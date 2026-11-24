@@ -345,7 +345,7 @@ body.art-on #stars{opacity:0;transition:opacity .4s}
 .dc-lvl button{padding:4px 9px!important;font-size:12px!important}
 
 /* 棋子造型 */
-body[data-skin=art] .dc-back,body[data-skin=art] .dc-face{box-shadow:0 1px 0 #e9dfc8,0 2px 0 #e2d6bb,0 3px 0 #d8caa9,0 4px 0 #cbbb96,0 5px 0 #bba984,0 6px 0 #a99572,0 7px 0 #8f7b5a,0 10px 12px #120802aa!important}
+body[data-skin=art] .dc-back{box-shadow:0 1px 0 #2a2630,0 2px 0 #242029,0 3px 0 #1e1a22,0 4px 0 #19161c,0 5px 0 #141116,0 6px 0 #0f0d10,0 7px 0 #0a090b,0 10px 12px #000c!important}body[data-skin=art] .dc-face{box-shadow:0 1px 0 #e9dfc8,0 2px 0 #e2d6bb,0 3px 0 #d8caa9,0 4px 0 #cbbb96,0 5px 0 #bba984,0 6px 0 #a99572,0 7px 0 #8f7b5a,0 10px 12px #120802aa!important}
 body[data-skin=art] .dc-ed{background:radial-gradient(circle,#e8dcc2 0 60%,#bba984 80%,#8f7b5a)!important}
 body[data-skin=neon] .dc-back,body[data-skin=neon] .dc-face{box-shadow:0 1px 0 #2a2633,0 2px 0 #24202c,0 3px 0 #1e1a25,0 4px 0 #19161f,0 5px 0 #141118,0 6px 0 #0f0d12,0 7px 0 #0a090c,0 0 14px #5effb355,0 10px 12px #000c!important}
 body[data-skin=neon] .dc-ed{background:#15121a!important}
@@ -362,6 +362,14 @@ body[data-skin=jade] .dc-face.dc-red{color:#7a0f12}body[data-skin=jade] .dc-face
 .sk.on{border-color:#edcd75;box-shadow:0 0 16px #edcd7533}.sk img{width:62px;height:62px;filter:drop-shadow(0 5px 6px #000a)}
 .sk b{font-size:14px;font-weight:600;color:#edcd75}.sk i{font-style:normal;font-size:11px;line-height:1.4;color:#f4f0e7aa;text-align:center}
 .sk.lock img{filter:grayscale(1) brightness(.5)}.sk.lock b{color:#f4f0e788}
+
+/* 精緻刻字：紅＝朱砂描金，黑＝墨描金（玉、象牙用） */
+body[data-skin=jade] .dc-face::before,body[data-skin=art] .dc-face::before{opacity:0!important}
+body[data-skin=jade] .dc-face span,body[data-skin=art] .dc-face span{mix-blend-mode:normal!important;-webkit-text-stroke:.8px #e9c46a;text-shadow:0 1px 1px #0006,0 -1px 0 #fff4!important}
+body[data-skin=jade] .dc-face.dc-red,body[data-skin=art] .dc-face.dc-red{color:#d81f1f}
+body[data-skin=jade] .dc-face.dc-blk,body[data-skin=art] .dc-face.dc-blk{color:#101010}
+body[data-skin=jade] .dc-face.dc-red span{color:#e8231e;text-shadow:0 0 1px #fff8,0 1px 2px #000a!important}
+body[data-skin=jade] .dc-face.dc-blk span{color:#0a0a0a;-webkit-text-stroke:.9px #f0d27a}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap&text=%E5%B8%A5%E4%BB%95%E7%9B%B8%E4%BF%A5%E5%82%8C%E7%82%AE%E5%85%B5%E5%B0%87%E5%A3%AB%E8%B1%A1%E8%BB%8A%E9%A6%AC%E5%8C%85%E5%8D%92">
 </head>
