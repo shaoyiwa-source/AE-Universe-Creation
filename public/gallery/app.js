@@ -1839,10 +1839,24 @@ document.addEventListener('keydown', (e) => {
 const canWake = () => 'wakeLock' in navigator && !(document.featurePolicy && !document.featurePolicy.allowsFeature('screen-wake-lock'));
 async function requestWake() { try { if (canWake()) wakeLock = await navigator.wakeLock.request('screen'); } catch { wakeLock = null; } }
 function releaseWake() { try { wakeLock?.release(); } catch { /* ignore */ } wakeLock = null; }
+// leaving the page (another app, another tab, the screen off) pauses everything, the soundtrack included — on iPhone a
+// track playing from its own element would otherwise go on in the background; coming back resumes the show
+let trackPausedByLeave = false;
+function leavePage() {
+  sound.suspend();
+  const t = sound.customEl; if (t && !t.paused) { t.pause(); trackPausedByLeave = true; }
+}
+function returnToPage() {
+  sound.resume(); requestWake(); musicNudged = false; if (listener.on) listener.resync();
+  const t = sound.customEl;
+  if (trackPausedByLeave && t && playing && !player.classList.contains('muted')) t.play().catch(() => {});
+  trackPausedByLeave = false;
+}
 document.addEventListener('visibilitychange', () => {
   if (player.hidden) return;
-  if (document.hidden) sound.suspend(); else { sound.resume(); requestWake(); musicNudged = false; if (listener.on) listener.resync(); }
+  if (document.hidden) leavePage(); else returnToPage();
 });
+window.addEventListener('pagehide', () => { if (!player.hidden) leavePage(); });
 // the music must not quietly stop: phones interrupt web audio (calls, notifications, switching apps)
 let musicWatch = 0, musicNudged = false;
 function watchMusic(dt) {

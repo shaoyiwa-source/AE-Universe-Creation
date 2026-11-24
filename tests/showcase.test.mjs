@@ -91,6 +91,13 @@ try {
   await page.evaluate(() => document.getElementById('fxBtn').click()); await page.waitForSelector('#settings:not([hidden])', { timeout: 5000 }).catch(() => {});
   const sheet = await page.evaluate(() => ({ open: !document.getElementById('settings').hidden, modes: document.querySelectorAll('#modeCards .lw-mode').length }));
   check('pause stops the music, play resumes it; settings open with the modes', !paused.playing && Math.abs(t2 - paused.t) < 0.2 && resumed.playing && resumed.t > t2 && sheet.open && sheet.modes >= 9, JSON.stringify({ paused, t2, resumed, sheet }));
+  // leaving the page pauses the soundtrack (on iPhone it would otherwise play on in the background); coming back resumes
+  const hide = (h) => page.evaluate((h) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+  await hide(true); await wait(500);
+  const away = await page.evaluate(() => ({ t: window.__lumina.trackTime(), paused: document.querySelector('audio') ? null : null }));
+  await wait(1200); const away2 = await page.evaluate(() => window.__lumina.trackTime());
+  await hide(false); await wait(1500); const back = await page.evaluate(() => window.__lumina.trackTime());
+  check('leaving the page pauses the music; coming back resumes it', Math.abs(away2 - away.t) < 0.15 && back > away2 + 0.5, JSON.stringify({ away: away.t, away2, back }));
   // the microphone refused: the showcase says why (and how to allow it); ?debug=1 shows the live state
   const c2 = await browser.newContext(phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1280, height: 720 } });
   await c2.addInitScript(() => { navigator.mediaDevices.getUserMedia = async () => { const e = new Error('Permission denied'); e.name = 'NotAllowedError'; throw e; }; });
