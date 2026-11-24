@@ -45,6 +45,12 @@ function env(g, t, peak, attack, decay) {
   g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
 }
 
+// 自訂音效（例如錄音模組錄下的「我的聲音」）
+const custom = new Map();
+export function setCustomSound(id, buffer) { if (buffer) custom.set(id, buffer); else custom.delete(id); }
+export const hasCustomSound = (id) => custom.has(id);
+export const soundOutput = () => { audio(); return master; };
+
 export function playSound(id) {
   if (!id || id === 'none') return;
   const a = audio();
@@ -52,6 +58,13 @@ export function playSound(id) {
   const out = a.createGain();
   out.gain.value = sfxVolume;
   out.connect(master);
+  if (custom.has(id)) {
+    const src = a.createBufferSource();
+    src.buffer = custom.get(id);
+    src.connect(out);
+    src.start(t);
+    return;
+  }
 
   if (id === 'pop') {
     [0, 0.085].forEach((d, i) => {

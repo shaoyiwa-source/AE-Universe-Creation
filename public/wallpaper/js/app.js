@@ -2,7 +2,7 @@
 import {
   W, H, FILTERS, THEMES, COMPONENTS, burst, applyFilterPixels, drawComponentIcon, defaultBackground,
 } from './effects.js';
-import { SOUNDS, playSound, audio, music, setSfxVolume, recordingDestination } from './sound.js';
+import { SOUNDS, playSound, audio, music, setSfxVolume, recordingDestination, setCustomSound, hasCustomSound } from './sound.js';
 import {
   createScene, setBase, setFilter, coverCanvas, hitTest, renderScene, images, serializeScene,
   deserializeScene, serializeObjects, loadImage, canvasToBlob, textFont, hasStrokes,
@@ -502,8 +502,9 @@ const TOOLS = [
   ['theme', 'tTheme', '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>'],
   ['filter', 'tFilter', '<circle cx="9" cy="10" r="5"/><circle cx="15" cy="10" r="5"/><circle cx="12" cy="15" r="5"/>'],
   ['music', 'tMusic', '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>'],
+  ['voice', 'tVoice', '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'],
 ];
-const SHEET_TITLE = { photo: 'tPhoto', comp: 'tComp', sym: 'tSym', text: 'tText', draw: 'tDraw', image: 'tImage', theme: 'tTheme', filter: 'tFilter', music: 'tMusic', finish: 'h4' };
+const SHEET_TITLE = { photo: 'tPhoto', comp: 'tComp', sym: 'tSym', text: 'tText', draw: 'tDraw', image: 'tImage', theme: 'tTheme', filter: 'tFilter', music: 'tMusic', voice: 'tVoice', finish: 'h4' };
 const isDesktop = () => matchMedia('(min-width: 900px)').matches;
 
 function renderSteps() {
@@ -521,6 +522,7 @@ $('#dock').addEventListener('click', (e) => {
 function openSheet(id) {
   if (ui.recording) return;
   if (ui.liveRec && id !== 'draw') ui.liveRec.stop();
+  if (voice.recording && id !== 'voice') toggleVoiceRec();
   if (ui.sheet === id && !isDesktop()) return closeSheet();
   ui.sheet = id;
   ui.afterProps = null;
@@ -532,6 +534,7 @@ function openSheet(id) {
 }
 function closeSheet() {
   if (ui.liveRec) ui.liveRec.stop();
+  if (voice.recording) toggleVoiceRec();
   ui.sheet = isDesktop() ? 'photo' : null;
   updateTool();
   renderSteps();
@@ -806,6 +809,57 @@ const SHEETS = {
     },
   },
 
+  // ---------------- 錄音（共用模組 /modules/audio-record） ----------------
+  voice: {
+    html() {
+      if (!voice.supported) return `<p class="hint">${t('voiceNoSupport')}</p>`;
+      const v = voice;
+      return `
+      <div class="row voice-rec">
+        <button type="button" class="btn ${v.recording ? 'solid rec-on' : 'solid'}" id="vRec">${v.recording ? `■ ${t('voiceStop')}` : `● ${t(v.raw ? 'voiceAgain' : 'voiceStart')}`}</button>
+        <span id="vStatus">${v.recording ? `<span class="rec">${t('voiceRecording', Math.floor(v.secs))}</span>` : `<small class="hint">${t(v.raw ? 'voicePick' : 'voiceHint')}</small>`}</span>
+      </div>
+      ${v.raw && !v.recording ? `
+      <div class="row nowrap">${(v.mod?.VOICE_EFFECTS || []).map((e) => `<button type="button" class="chip ${v.fx === e.id ? 'on' : ''}" data-vfx="${e.id}">${esc(EN() ? e.en : e.zh)}</button>`).join('')}</div>
+      <div class="row">
+        <button type="button" class="btn" id="vPlay">▶ ${t('voicePlay')}</button>
+        <button type="button" class="btn" id="vSave">${t('voiceSave')}</button>
+        <button type="button" class="btn solid" id="vUse">${t('voiceUse')}</button>
+      </div>
+      ${switchItem('voiceInVideo', 'voiceInVideo', 'voiceInVideoSub')}
+      <div class="row"><button type="button" class="text-link muted" id="vDel">${t('voiceDelete')}</button></div>` : ''}`;
+    },
+    bind(p) {
+      $('#vRec', p)?.addEventListener('click', toggleVoiceRec);
+      p.querySelectorAll('[data-vfx]').forEach((b) => b.onclick = async () => {
+        voice.fx = b.dataset.vfx;
+        p.querySelectorAll('[data-vfx]').forEach((x) => x.classList.toggle('on', x === b));
+        await processVoice();
+        playSound('voice');
+        saveVoice();
+      });
+      $('#vPlay', p)?.addEventListener('click', () => playSound('voice'));
+      $('#vSave', p)?.addEventListener('click', () => {
+        if (voice.processed) shareOrDownload(voice.mod.toWav(voice.processed), `AE-Voice-${voice.fx}-${Date.now()}.wav`);
+      });
+      $('#vUse', p)?.addEventListener('click', () => {
+        COMPONENTS.forEach((c) => { S.compSounds[c.id] = 'voice'; });
+        persistSettings();
+        toast(t('voiceUsed'));
+      });
+      p.querySelectorAll('[data-set]').forEach((el) => el.onchange = () => { S[el.dataset.set] = el.checked; persistSettings(); });
+      $('#vDel', p)?.addEventListener('click', () => {
+        if (!confirm(t('voiceDeleteConfirm'))) return;
+        voice.raw = null; voice.processed = null;
+        setCustomSound('voice', null);
+        COMPONENTS.forEach((c) => { if (S.compSounds[c.id] === 'voice') S.compSounds[c.id] = c.sound; });
+        persistSettings();
+        kvSet('voice', null);
+        renderPanel();
+      });
+    },
+  },
+
   // ---------------- 音樂 ----------------
   music: {
     html() {
@@ -852,6 +906,7 @@ const SHEETS = {
       </div>
       ${o.type === 'comp' ? `<div class="section-title"><h4>${t('compSound')}</h4></div>
         <div class="row nowrap">${SOUNDS.map((s) => `<button type="button" class="chip ${S.compSounds[o.kind] === s.id ? 'on' : ''}" data-snd="${o.kind}:${s.id}">${esc(nm('sound', s).name)}</button>`).join('')}
+          ${hasCustomSound('voice') ? `<button type="button" class="chip ${S.compSounds[o.kind] === 'voice' ? 'on' : ''}" data-snd="${o.kind}:voice">${t('myVoice')}</button>` : ''}
           <button type="button" class="chip ${S.compSounds[o.kind] === 'none' ? 'on' : ''}" data-snd="${o.kind}:none">${t('mute')}</button></div>` : ''}
       ${o.type === 'text' ? textOptions(o) : ''}`;
     },
@@ -1184,6 +1239,71 @@ function pickMime() {
   return list.find((m) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
 }
 
+// 錄音：功能都在共用模組 /modules/audio-record，這裡只做畫面
+const voice = {
+  mod: null, supported: true, recorder: null, recording: false, secs: 0,
+  raw: null, processed: null, fx: 'chipmunk',
+};
+async function voiceModule() {
+  if (!voice.mod) voice.mod = await import('/modules/audio-record/index.js');
+  return voice.mod;
+}
+voiceModule().then((m) => { voice.supported = m.isRecordingSupported(); }).catch(() => { voice.supported = false; });
+
+async function processVoice() {
+  if (!voice.raw) return;
+  const m = await voiceModule();
+  voice.processed = await m.applyVoiceEffect(voice.raw, voice.fx);
+  setCustomSound('voice', voice.processed);
+}
+async function saveVoice() {
+  if (!voice.raw) return;
+  const m = await voiceModule();
+  kvSet('voice', { wav: m.toWav(voice.raw), fx: voice.fx });
+}
+async function loadVoice() {
+  const saved = await kvGet('voice');
+  if (!saved || !saved.wav) return;
+  try {
+    const m = await voiceModule();
+    voice.raw = await m.decodeAudio(saved.wav, audio());
+    voice.fx = saved.fx || 'chipmunk';
+    await processVoice();
+  } catch (e) { /* 舊資料讀不到就略過 */ }
+}
+async function toggleVoiceRec() {
+  const m = await voiceModule();
+  if (voice.recording) {
+    const blob = await voice.recorder.stop();
+    voice.recording = false;
+    try {
+      voice.raw = m.trimSilence(await m.decodeAudio(blob, audio()));
+      await processVoice();
+      saveVoice();
+      playSound('voice');
+    } catch (e) { toast(t('voiceFail')); }
+    renderPanel();
+    return;
+  }
+  voice.secs = 0;
+  voice.recorder = m.createRecorder({
+    maxSeconds: 15,
+    onTick: (sec) => {
+      voice.secs = sec;
+      const st = $('#vStatus');
+      if (st) st.innerHTML = `<span class="rec">${t('voiceRecording', Math.floor(sec))}</span>`;
+      if (sec >= 15 && voice.recording) toggleVoiceRec();
+    },
+  });
+  try {
+    await voice.recorder.start();
+    voice.recording = true;
+  } catch (e) {
+    toast(t('voiceDenied'));
+  }
+  renderPanel();
+}
+
 // 畫筆面板：邊畫邊錄，把手繪光紋的過程錄成影片
 function toggleLiveRec() {
   if (ui.liveRec) { ui.liveRec.stop(); return; }
@@ -1260,6 +1380,7 @@ function startRecording(root, opts = {}) {
   select(null);
   if (opts.reveal) ui.reveal = { start: performance.now(), dur: seconds * 1000 * 0.6 };
   rec.start(250);
+  if (S.voiceInVideo && hasCustomSound('voice')) setTimeout(() => playSound('voice'), 400);
   let left = seconds;
   out.innerHTML = `<span class="rec">${t('recording', left)}</span>`;
   const iv = setInterval(() => {
@@ -1448,6 +1569,7 @@ async function boot() {
     );
   }
   ui.gallery = await galleryAll();
+  loadVoice();
   applyStaticText();
   ui.sheet = isDesktop() ? 'photo' : null;
   renderSteps();

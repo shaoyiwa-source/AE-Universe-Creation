@@ -419,3 +419,7 @@ textarea { width: 100%; resize: none; }
 .sel-float button.del { color: #b3412f; }
 .sel-float button:active { background: var(--paper); }
 @keyframes floatIn { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+/* 錄音 */
+.voice-rec { align-items: center; }
+.voice-rec .rec-on { background: #b3412f; border-color: #b3412f; }

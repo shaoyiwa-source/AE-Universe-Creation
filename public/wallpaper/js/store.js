@@ -40,6 +40,7 @@ const SETTINGS_KEY = 'ae-wallpaper-settings';
 export const DEFAULT_SETTINGS = {
   touchFx: true,          // 觸碰畫面時噴出星星
   componentTap: true,     // 點元件會動＋發聲
+  voiceInVideo: true,     // 錄影時開頭播放「我的聲音」
   showFab: true,          // 互動模式中的 AE 互動按鈕
   showClock: true,        // 互動模式顯示鎖定畫面時鐘
   sfxVolume: 0.7,
