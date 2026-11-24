@@ -1,0 +1,28 @@
+name: iOS build
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build for iOS Simulator (no signing)
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild -project AEWallpaper.xcodeproj -scheme AEWallpaper \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || status=$?
+          echo "::group::Errors"; grep -E "error:" build.log | sort -u | head -150 || true; echo "::endgroup::"
+          tail -n 40 build.log
+          exit ${status:-0}
