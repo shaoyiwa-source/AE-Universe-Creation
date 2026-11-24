@@ -1559,11 +1559,17 @@ $('#intensity').addEventListener('input', (e) => { S.intensity = +e.target.value
 
 // ---------- R8: sound reaction (microphone; analysed on this device only) ----------
 const listener = new Listener();
+let micError = '';
 async function startListening(fromGesture) {
   if (listener.on) return true;
   if (!Listener.supported()) { toast(T('micUnavailable')); return false; }
-  try { sound.ensure(); await listener.start(sound.ctx); $('#micDot').hidden = player.hidden; return true; }
-  catch (err) { if (fromGesture) toast(err && err.name === 'NotAllowedError' ? T('micDenied') : T('micUnavailable')); return false; }
+  try { sound.ensure(); micError = ''; await listener.start(sound.ctx); $('#micDot').hidden = player.hidden; return true; }
+  catch (err) {
+    micError = `${(err && err.name) || 'Error'}: ${(err && err.message) || ''}`.slice(0, 160);
+    if (SC) toast(err && err.name === 'NotAllowedError' ? T('micDeniedShow') : T('micFailedShow', (err && err.name) || '?'), 9000, true); // a showcase says why the room is not heard
+    else if (fromGesture) toast(err && err.name === 'NotAllowedError' ? T('micDenied') : T('micUnavailable'));
+    return false;
+  }
 }
 function stopListening() { listener.stop(); $('#micDot').hidden = true; fx.setSound(0, null); }
 let listenWant = null; // what the visitor asked for last (the microphone may still be asking for permission)
@@ -2175,9 +2181,28 @@ function showcaseFrame(dt) {
   SC.moments.forEach((m, i) => { if (!scFired.has(i) && t >= m.at && t < m.at + 1.5) { scFired.add(i); for (const id of m.fire) packs.fire(id); } });
 }
 
+// ?debug=1 — a small live panel for checking sound on a real phone (microphone, audio, track); screenshot it for support
+function debugPanel() {
+  const el = document.createElement('pre');
+  el.style.cssText = 'position:fixed;left:8px;top:8px;z-index:9999;margin:0;padding:8px 10px;font:11px/1.45 ui-monospace,Menlo,monospace;color:#e9e2cf;background:rgba(0,0,0,.72);border:1px solid rgba(220,190,120,.4);border-radius:8px;pointer-events:none;max-width:72vw;white-space:pre-wrap';
+  document.body.appendChild(el);
+  setInterval(() => {
+    const c = sound.ctx, t = sound.customEl;
+    el.textContent = [
+      `AE Shinity debug · ${new Date().toLocaleTimeString()}`,
+      `mic: ${listener.on ? 'ON' : listener.starting ? 'starting…' : 'off'}${micError ? ' · ' + micError : ''}`,
+      `level ${(listener.level || 0).toFixed(2)} · hits ${listener.hitCount || 0} · lock ${roomBeat.locked ? (roomBeat.bpm || 0).toFixed(0) + ' bpm' : '—'}`,
+      `audio: ${c ? c.state + ' · ' + c.sampleRate + ' Hz' : 'none'}${listener.ctx && listener.ctx !== c ? ' · mic ctx ' + listener.ctx.sampleRate : ''}`,
+      `music: ${S.music} · ${t ? (t.paused ? 'paused' : 'playing') + ' ' + t.currentTime.toFixed(1) + 's · rate ' + t.playbackRate : 'no track'}${player.classList.contains('muted') ? ' · muted' : ''}`,
+      `show: ${SC ? (scAct === 0 ? 'act 1 (listening)' : 'act 2 (stage)') : 'gallery'} · ${list[idx] ? list[idx].id : '-'} · ${navigator.userAgent.match(/iPhone|iPad|Android|Mac|Windows/) || ''}`,
+    ].join('\n');
+  }, 500);
+}
+
 // ---------- boot (+ kiosk / shared links: ?show=&mode=&autoplay=1&lang=) ----------
 (async function boot() {
   const q = new URLSearchParams(location.search);
+  if (q.get('debug') === '1') setTimeout(debugPanel, 0);
   if (q.get('lang') === 'en' || q.get('lang') === 'zh') lang = q.get('lang');
   setStudio(studio && !LIC_ID);
   if (LIC_ID) { makeGrain(); applyLang(); await licenceBoot(); exposeHooks(); return; }

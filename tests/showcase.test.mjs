@@ -91,6 +91,14 @@ try {
   await page.evaluate(() => document.getElementById('fxBtn').click()); await page.waitForSelector('#settings:not([hidden])', { timeout: 5000 }).catch(() => {});
   const sheet = await page.evaluate(() => ({ open: !document.getElementById('settings').hidden, modes: document.querySelectorAll('#modeCards .lw-mode').length }));
   check('pause stops the music, play resumes it; settings open with the modes', !paused.playing && Math.abs(t2 - paused.t) < 0.2 && resumed.playing && resumed.t > t2 && sheet.open && sheet.modes >= 9, JSON.stringify({ paused, t2, resumed, sheet }));
+  // the microphone refused: the showcase says why (and how to allow it); ?debug=1 shows the live state
+  const c2 = await browser.newContext(phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1280, height: 720 } });
+  await c2.addInitScript(() => { navigator.mediaDevices.getUserMedia = async () => { const e = new Error('Permission denied'); e.name = 'NotAllowedError'; throw e; }; });
+  const p2 = await c2.newPage(); await p2.goto(`http://localhost:${port}/showcase?debug=1`, { waitUntil: 'networkidle' });
+  await p2.click('#gateBtn'); await wait(3000);
+  const told = await p2.evaluate(() => ({ toast: [...document.querySelectorAll('.lw-toast, #toast, [role=status]')].map(e => e.textContent).join(' '), debug: [...document.querySelectorAll('pre')].map(e => e.textContent).join(' ') }));
+  check('microphone refused: the showcase says why and how to allow it; the debug panel shows the reason', /麥克風|microphone/i.test(told.toast) && /NotAllowedError/.test(told.debug), JSON.stringify(told).slice(0, 300));
+  await c2.close();
   check('no page errors', errs.length === 0, errs.slice(0, 2).join(' | '));
 } catch (e) { check('scenario crashed', false, String(e).split('\n').slice(0, 4).join(' / ')); }
 await browser.close(); srv.kill(); fs.rmSync(lib, { recursive: true, force: true });

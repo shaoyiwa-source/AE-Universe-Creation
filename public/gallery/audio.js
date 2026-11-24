@@ -22,11 +22,7 @@ export class Sound {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return false;
-      // iPhone/iPad: the audio hardware runs at 48 kHz as soon as the microphone opens; a context made at another rate
-      // would then play everything too fast and too high. Made at 48 kHz from the start, nothing shifts.
-      const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      let ctx; try { ctx = iOS ? new AC({ sampleRate: 48000 }) : new AC(); } catch { ctx = new AC(); }
-      this.ctx = ctx;
+      const ctx = this.ctx = new AC();
       this.master = ctx.createGain();
       this.master.gain.value = this.volume;
       const comp = ctx.createDynamicsCompressor();
@@ -504,7 +500,7 @@ export class Sound {
   // tap, it plays the theme track silently for an instant and stops — the track is then free to play when the show needs it
   unlockEternal() {
     if (!this.ensure()) return;
-    if (!this.customEl) { this.customEl = new Audio(); this.customEl.loop = true; try { this.customNode = this.ctx.createMediaElementSource(this.customEl); this.customNode.connect(this.master); } catch { /* element output */ } }
+    if (!this.customEl) { this.customEl = new Audio(); this.customEl.loop = true; if (!IOS) { try { this.customNode = this.ctx.createMediaElementSource(this.customEl); this.customNode.connect(this.master); } catch { /* element output */ } } }
     const el = this.customEl, abs = new URL(ETERNAL_URL, location.href).href;
     if (el.src !== abs) el.src = abs;
     el.muted = true;
@@ -518,7 +514,7 @@ export class Sound {
     if (!this.customEl) {
       this.customEl = new Audio();
       this.customEl.loop = true;
-      try { this.customNode = this.ctx.createMediaElementSource(this.customEl); this.customNode.connect(this.master); } catch { /* fallback to element output */ }
+      if (!IOS) { try { this.customNode = this.ctx.createMediaElementSource(this.customEl); this.customNode.connect(this.master); } catch { /* fallback to element output */ } }
     }
     clearInterval(this.fadeIv);
     const abs = new URL(this.customUrl, location.href).href;
@@ -568,6 +564,10 @@ export class Sound {
   }
 }
 
+// iPhone/iPad: when the microphone opens, iOS switches the audio hardware; anything played through Web Audio can then run
+// fast and high for a while. Tracks therefore play straight from their own element there (beats still follow the
+// track's clock; the lights hear it through the microphone).
+export const IOS = typeof navigator !== 'undefined' && (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 export const ETERNAL_URL = 'media/aurelia-techno-eternal-148bpm.m4a';
 // pre-measured 40–180 Hz energy of the track (no live analyser needed)
 function energyAt(time) {

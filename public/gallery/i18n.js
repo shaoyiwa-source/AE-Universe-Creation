@@ -1,7 +1,7 @@
 // AE Shinity — bilingual copy (繁中 / English)
 export const STR = {
   zh: {
-    micDenied: '沒有取得麥克風權限，聲音互動已關閉', micUnavailable: '這個環境無法使用麥克風', listening: '聲音互動中', infoEmpty: '這件作品的介紹即將補上。',
+    micDenied: '沒有取得麥克風權限，聲音互動已關閉', micDeniedShow: '麥克風沒有開啟，畫作聽不到現場的聲音。iPhone：設定 › Safari › 麥克風 › 允許，再重新整理並按「允許」。', micFailedShow: (why) => `麥克風無法啟用（${why}），畫作聽不到現場的聲音。`, micUnavailable: '這個環境無法使用麥克風', listening: '聲音互動中', infoEmpty: '這件作品的介紹即將補上。',
     intensity: '光影強度', info: '作品介紹', infoClose: '關閉介紹', lowPower: '已自動切換省電畫質，讓播放更順暢',
     countAll: '幅作品・將全部播放', countSel: '已選取・依選取順序播放', playAll: '播放全部', playSel: (n) => `播放已選 ${n} 幅`,
     rec: '錄製影片', recTitle: '錄製動態影片', fmtStory: 'IG 限動・Reels', fmtStoryD: '直式 9:16，含片頭與標題', fmtWide: '橫式', fmtWideD: '16:9，適合 YouTube 與簡報', fmtSquare: '方形', fmtSquareD: '1:1，適合貼文', fmtWall: '動態桌布', fmtWallD: '直式全螢幕、無文字，可循環',
@@ -64,7 +64,7 @@ export const STR = {
     lumiLines: ['深呼吸，慢慢看。', '今天也辛苦了。', '點點看漂浮的光種子 ✦', '這幅畫裡藏著光。', '讓心安靜一下。', '你的眼睛在微笑喔。', '行動創造無限 ∞'],
   },
   en: {
-    micDenied: 'Microphone not allowed — sound reaction is off', micUnavailable: 'The microphone is not available here', listening: 'Listening', infoEmpty: 'A note about this work is coming soon.',
+    micDenied: 'Microphone not allowed — sound reaction is off', micDeniedShow: 'The microphone is off, so the painting cannot hear the room. iPhone: Settings › Safari › Microphone › Allow, then reload and tap Allow.', micFailedShow: (why) => `The microphone could not start (${why}), so the painting cannot hear the room.`, micUnavailable: 'The microphone is not available here', listening: 'Listening', infoEmpty: 'A note about this work is coming soon.',
     intensity: 'Light intensity', info: 'About this work', infoClose: 'Close', lowPower: 'Switched to a lighter quality for smoother playback',
     countAll: 'works · all will play', countSel: 'selected · plays in your order', playAll: 'Play all', playSel: (n) => `Play ${n} selected`,
     rec: 'Record', recTitle: 'Record a moving clip', fmtStory: 'Stories & Reels', fmtStoryD: '9:16 with title card and captions', fmtWide: 'Landscape', fmtWideD: '16:9 for YouTube and presentations', fmtSquare: 'Square', fmtSquareD: '1:1 for feed posts', fmtWall: 'Live wallpaper', fmtWallD: 'Full-bleed 9:16, no text, loops',
