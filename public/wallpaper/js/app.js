@@ -247,6 +247,7 @@ let gesture = null;
 
 canvas.addEventListener('pointerdown', (e) => {
   audio();
+  $('#toast').classList.remove('show');
   canvas.setPointerCapture(e.pointerId);
   const p = toCanvas(e);
   pointers.set(e.pointerId, p);
@@ -270,7 +271,7 @@ canvas.addEventListener('pointerdown', (e) => {
     return;
   }
   const hit = hitTest(scene.objects, p.x, p.y);
-  if (hit) select(hit, false, true);
+  if (hit) select(hit);
   else if (ui.selected) select(null);
   gesture = hit ? dragGesture(hit, p, snapshot()) : null;
 });
@@ -297,7 +298,54 @@ function deleteSelected() {
   autosave();
   toast(t('deleted'));
 }
-$('#btnDelete').onclick = deleteSelected;
+// 選取物件時浮在畫布下方的小工具列（不會改變畫布大小）
+function propAction(act) {
+  const o = ui.selected; if (!o) return;
+  if (act === 'edit') { ui.sheet = 'text'; ui.afterProps = null; updateTool(); renderSteps(); renderPanel(); setTimeout(() => $('#txtInput')?.focus(), 50); return; }
+  if (act === 'more') { select(o, false, true); return; }
+  if (act === 'del') { deleteSelected(); return; }
+  pushHistory();
+  const i = scene.objects.indexOf(o);
+  if (act === 'dup') {
+    const copy = JSON.parse(JSON.stringify(serializeObjects([o])[0]));
+    copy.id = uid();
+    if (copy.type === 'stroke') copy.points.forEach((pt) => { pt[0] += 60; pt[1] += 60; });
+    else { copy.x += 60; copy.y += 60; }
+    scene.objects.splice(i + 1, 0, copy);
+    select(copy);
+  } else if (act === 'flip') {
+    o.flip = !o.flip;
+  } else if (act === 'up' && i < scene.objects.length - 1) {
+    scene.objects.splice(i, 1); scene.objects.splice(i + 1, 0, o);
+  } else if (act === 'down' && i > 0) {
+    scene.objects.splice(i, 1); scene.objects.splice(i - 1, 0, o);
+  }
+  autosave();
+}
+const FLOAT_ICONS = {
+  edit: '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
+  more: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  dup: '<rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/>',
+  flip: '<path d="M12 3v18"/><path d="M8 7L3 12l5 5zM16 7l5 5-5 5z"/>',
+  up: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  del: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+};
+const FLOAT_LABEL = { edit: 'fEdit', more: 'fMore', dup: 'duplicate', flip: 'fFlip', up: 'fUp', down: 'fDown', del: 'delete' };
+const selFloat = $('#selFloat');
+let floatFor = undefined;
+function renderSelFloat() {
+  const o = ui.recording || ui.sheet === 'props' ? null : ui.selected;
+  if (o === floatFor) return;
+  floatFor = o;
+  selFloat.hidden = !o;
+  if (!o) { selFloat.innerHTML = ''; return; }
+  const acts = [o.type === 'text' ? 'edit' : null, 'more', 'dup', o.type === 'stroke' ? null : 'flip', 'up', 'down', 'del'].filter(Boolean);
+  selFloat.innerHTML = acts.map((a) => `<button type="button" data-fact="${a}" class="${a === 'del' ? 'del' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true">${FLOAT_ICONS[a]}</svg><span>${t(FLOAT_LABEL[a])}</span></button>`).join('');
+}
+selFloat.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-fact]'); if (b) propAction(b.dataset.fact);
+});
 document.addEventListener('keydown', (e) => {
   if ((e.key === 'Delete' || e.key === 'Backspace') && ui.selected && !player.open && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName)) {
     e.preventDefault(); deleteSelected();
@@ -832,30 +880,7 @@ const SHEETS = {
         pushHistory(); o.color = b.dataset.scolor; autosave();
         p.querySelectorAll('[data-scolor]').forEach((x) => x.classList.toggle('on', x === b));
       });
-      p.querySelectorAll('[data-prop]').forEach((b) => b.onclick = () => {
-        const o = ui.selected; if (!o) return;
-        const act = b.dataset.prop;
-        if (act === 'edit') { ui.sheet = 'text'; renderSteps(); renderPanel(); setTimeout(() => $('#txtInput')?.focus(), 50); return; }
-        pushHistory();
-        const i = scene.objects.indexOf(o);
-        if (act === 'dup') {
-          const copy = JSON.parse(JSON.stringify(serializeObjects([o])[0]));
-          copy.id = uid();
-          if (copy.type === 'stroke') copy.points.forEach((pt) => { pt[0] += 60; pt[1] += 60; });
-          else { copy.x += 60; copy.y += 60; }
-          scene.objects.splice(i + 1, 0, copy);
-          select(copy);
-        } else if (act === 'flip') {
-          o.flip = !o.flip;
-        } else if (act === 'up' && i < scene.objects.length - 1) {
-          scene.objects.splice(i, 1); scene.objects.splice(i + 1, 0, o);
-        } else if (act === 'down' && i > 0) {
-          scene.objects.splice(i, 1); scene.objects.splice(i - 1, 0, o);
-        } else if (act === 'del') {
-          scene.objects.splice(i, 1); select(null); toast(t('deleted'));
-        }
-        autosave();
-      });
+      p.querySelectorAll('[data-prop]').forEach((b) => b.onclick = () => propAction(b.dataset.prop));
     },
   },
 
@@ -1386,7 +1411,6 @@ $('#fabMenu').addEventListener('click', (e) => {
 // ======================================================================
 // 主迴圈
 // ======================================================================
-const btnDelete = $('#btnDelete');
 // 錄影時重播手繪過程：前 60% 的時間把筆畫一筆一筆畫出來
 function revealAt(ms) {
   if (!ui.reveal) return null;
@@ -1399,8 +1423,7 @@ function loop(ms) {
     renderScene(pctx, player.scene, time);
   } else {
     renderScene(ctx, scene, time, { draft: ui.draft, selected: ui.recording ? null : ui.selected, reveal: revealAt(ms) });
-    const showDel = !!ui.selected && !ui.recording;
-    if (btnDelete.hidden === showDel) btnDelete.hidden = !showDel;
+    renderSelFloat();
     if (ui.sheet === 'comp') $$('canvas[data-icon]', panel).forEach((c) => drawComponentIcon(c, c.dataset.icon, time));
   }
   requestAnimationFrame(loop);

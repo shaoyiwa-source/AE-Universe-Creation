@@ -74,9 +74,6 @@ svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width:
 .stage-tools .icon-btn { background: var(--bg); border: 1px solid var(--line); }
 .stage-tools .icon-btn { min-width: 36px; min-height: 36px; }
 .stage-tools .icon-btn:disabled { opacity: .3; }
-.stage-tools .danger-btn { margin-top: 10px; color: #b3412f; border-color: #e3b5ab; animation: popIn .18s ease-out; }
-.stage-tools .danger-btn svg { stroke: currentColor; }
-.stage-tools .danger-btn[hidden] { display: none; }
 @keyframes popIn { from { transform: scale(.6); opacity: 0; } }
 .pill {
   background: var(--bg) !important; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--accent); background: transparent;
@@ -404,3 +401,21 @@ textarea { width: 100%; resize: none; }
 /* 互動模式的提示放在左下，避開右下角的 AE 按鈕與選單 */
 .player .toast { left: 16px; right: 96px; max-width: none; bottom: calc(env(safe-area-inset-bottom) + 36px); transform: translateY(20px); text-align: left; }
 .player .toast.show { transform: translateY(0); }
+
+/* 選取物件時的浮動工具列：疊在畫布下緣，不改變版面 */
+.sel-float {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3; display: flex;
+  background: var(--bg); border: 1px solid var(--line); box-shadow: 0 6px 24px rgba(0,0,0,.14);
+  max-width: calc(100% - 24px); overflow-x: auto; scrollbar-width: none; animation: floatIn .16s ease-out;
+}
+.sel-float::-webkit-scrollbar { display: none; }
+.sel-float[hidden] { display: none; }
+.sel-float button {
+  flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 46px; padding: 8px 8px 7px;
+  border: 0; background: transparent; color: var(--ink); font-size: 11px; letter-spacing: .02em;
+}
+.sel-float button + button { border-left: 1px solid var(--line); }
+.sel-float svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.sel-float button.del { color: #b3412f; }
+.sel-float button:active { background: var(--paper); }
+@keyframes floatIn { from { opacity: 0; transform: translate(-50%, 8px); } }

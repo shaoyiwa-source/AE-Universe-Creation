@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Zen+Maru+Gothic:wght@900&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem('ae-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="/wallpaper/style.css?v=19">
+<link rel="stylesheet" href="/wallpaper/style.css?v=20">
 </head>
 <body>
 <div id="app">
@@ -45,9 +45,6 @@
         <button class="icon-btn" id="btnRedo" data-i18n-aria="redo" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7h5v5"/><path d="M20 12c-1.6-3.6-5-5.5-9-5-4 .5-7 4-7 8"/></svg>
         </button>
-        <button class="icon-btn danger-btn" id="btnDelete" type="button" data-i18n-aria="delete" hidden>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
-        </button>
       </div>
       <button class="pill" id="btnPlay" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span data-i18n="preview"></span>
@@ -56,6 +53,7 @@
     <div class="canvas-wrap" id="canvasWrap">
       <canvas id="canvas" width="1080" height="2340"></canvas>
     </div>
+    <div class="sel-float" id="selFloat" hidden></div>
   </main>
 
   <section class="sheet" id="sheet" hidden></section>
@@ -101,6 +99,6 @@
 <input type="file" id="fileSticker" accept="image/*" hidden>
 <input type="file" id="fileMusic" accept="audio/*" hidden>
 
-<script type="module" src="/wallpaper/js/app.js?v=19"></script>
+<script type="module" src="/wallpaper/js/app.js?v=20"></script>
 </body>
 </html>
