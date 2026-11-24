@@ -1,5 +1,5 @@
 // AE Shinity — acceptance test (Playwright). Self-contained: starts the local API server
-// (tests/lumina-dev-server.mjs) with a fresh library and a throw-away studio password.
+// (tests/shinity-dev-server.mjs) with a fresh library and a throw-away studio password.
 // Usage: node tests/gallery.smoke.mjs <desktop|phone|tv|all> <shotDir>
 import { createRequire } from 'module';
 import { spawn } from 'child_process';
@@ -19,8 +19,8 @@ const check = (name, ok, info = '') => { results.push({ name, ok, info }); conso
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
 function startServer(port) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-'));
-  const child = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), String(port)], { env: { ...process.env, LUMINA_FS_DIR: dir, LUMINA_STUDIO_PASSWORD: PASS }, stdio: 'pipe' });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-'));
+  const child = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), String(port)], { env: { ...process.env, SHINITY_FS_DIR: dir, SHINITY_STUDIO_PASSWORD: PASS }, stdio: 'pipe' });
   return new Promise((resolve, reject) => {
     child.stdout.on('data', d => { if (String(d).includes('dev server')) resolve({ child, dir, base: `http://localhost:${port}` }); });
     child.on('exit', (code) => reject(new Error('dev server exited ' + code)));
@@ -41,9 +41,9 @@ async function scenario(label, ctxOpts, port) {
     p.on('console', m => { if (m.type() === 'error' && !/status of 401/.test(m.text())) errors.push(m.text()); });
   };
   watch(page);
-  const open = async (q = '') => { await page.goto(srv.base + '/gallery.html' + q, { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0); };
+  const open = async (q = '') => { await page.goto(srv.base + '/gallery.html' + q, { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0); };
   const ui = async (sel) => { const v = page.viewportSize(); await page.mouse.move(v.width * 0.5 + Math.random() * 20, v.height * 0.2); await wait(150); await page.click(sel); };
-  const st = () => page.evaluate(() => { const s = window.__lumina.state; return { ...s, settings: undefined, mode: s.settings.mode, interval: s.settings.interval }; });
+  const st = () => page.evaluate(() => { const s = window.__shinity.state; return { ...s, settings: undefined, mode: s.settings.mode, interval: s.settings.interval }; });
   const tile = (n) => page.locator('.screen').nth(n);
   const act = async (n, a) => { await page.waitForSelector('#toast', { state: 'hidden', timeout: 8000 }).catch(() => {}); await tile(n).hover().catch(() => {}); await tile(n).locator(`[data-act=${a}]`).click(); };
   const longPress = async (pw) => {
@@ -74,14 +74,14 @@ async function scenario(label, ctxOpts, port) {
   let modesOk = true;
   for (const [id, [iv, mu]] of Object.entries(expect)) {
     await page.click(`.lw-mode[data-mode=${id}]`);
-    const s = await page.evaluate(() => window.__lumina.state.settings);
+    const s = await page.evaluate(() => window.__shinity.state.settings);
     if (s.interval !== iv || s.music !== mu || s.mode !== id) modesOk = false;
   }
   check(`[${label}] every mode applies its preset`, modesOk);
   await page.locator('#interval').fill(String(24)); // last step = 1 hour (frame mode)
-  check(`[${label}] interval reaches 1 hour (digital frame mode)`, (await page.textContent('#intervalOut')) === '1 h' && (await page.evaluate(() => window.__lumina.state.settings.interval)) === 3600);
+  check(`[${label}] interval reaches 1 hour (digital frame mode)`, (await page.textContent('#intervalOut')) === '1 h' && (await page.evaluate(() => window.__shinity.state.settings.interval)) === 3600);
   await page.click('#resetMode');
-  check(`[${label}] reset restores mode timing`, (await page.evaluate(() => window.__lumina.state.settings.interval)) === 10);
+  check(`[${label}] reset restores mode timing`, (await page.evaluate(() => window.__shinity.state.settings.interval)) === 10);
   await page.screenshot({ path: `${shots}/${label}-settings.png` });
   await page.click('#closeSettings');
 
@@ -104,18 +104,18 @@ async function scenario(label, ctxOpts, port) {
   await wait(1800);
   check(`[${label}] maison title card opens the show (motto shown)`, await page.isVisible('#plIntro') && (await page.textContent('#introMotto')).length > 0);
   await page.screenshot({ path: `${shots}/${label}-intro.png` });
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 15000 }); await wait(500);
+  await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 15000 }); await wait(500);
   check(`[${label}] Inner Bloom finds light points in the work`, (await st()).blooms > 0);
-  const fit = await page.evaluate(() => { const s = window.__lumina.state; const el = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img'); const r = el.getBoundingClientRect(); return { ok: r.width <= innerWidth + 1 && r.height <= innerHeight + 1, fill: Math.max(r.width / innerWidth, r.height / innerHeight) }; });
+  const fit = await page.evaluate(() => { const s = window.__shinity.state; const el = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img'); const r = el.getBoundingClientRect(); return { ok: r.width <= innerWidth + 1 && r.height <= innerHeight + 1, fill: Math.max(r.width / innerWidth, r.height / innerHeight) }; });
   check(`[${label}] first work fully visible and well sized`, fit.ok && fit.fill > 0.84, JSON.stringify(fit));
   await page.mouse.click(page.viewportSize().width * 0.3, page.viewportSize().height * 0.4);
   await page.screenshot({ path: `${shots}/${label}-play.png` });
   // landscape work: its title must sit in the margin, not on the painting
-  await page.evaluate(() => window.__lumina.jump(1));
-  await page.waitForFunction(() => window.__lumina.state.idx === 1 && !window.__lumina.state.busy, null, { timeout: 12000 }).catch(() => {});
+  await page.evaluate(() => window.__shinity.jump(1));
+  await page.waitForFunction(() => window.__shinity.state.idx === 1 && !window.__shinity.state.busy, null, { timeout: 12000 }).catch(() => {});
   await page.waitForFunction(() => !document.getElementById('caption').classList.contains('off'), null, { timeout: 5000 }).catch(() => {});
   const ov = await page.evaluate(() => {
-    const cap = document.getElementById('caption'), s = window.__lumina.state;
+    const cap = document.getElementById('caption'), s = window.__shinity.state;
     const art = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img').getBoundingClientRect();
     const h2 = document.getElementById('capTitle').getBoundingClientRect();
     const ix = Math.max(0, Math.min(h2.right, art.right) - Math.max(h2.left, art.left)), iy = Math.max(0, Math.min(h2.bottom, art.bottom) - Math.max(h2.top, art.top));
@@ -125,12 +125,12 @@ async function scenario(label, ctxOpts, port) {
   await page.screenshot({ path: `${shots}/${label}-caption-landscape.png` });
   let trOk = true;
   for (const k of ['innerbloom', 'bloom', 'rings', 'ink', 'silk', 'stardust', 'bubbles', 'dissolve']) {
-    await page.evaluate((k) => { window.__lumina.state.settings.transition = k; }, k);
+    await page.evaluate((k) => { window.__shinity.state.settings.transition = k; }, k);
     const before = (await st()).idx;
-    await page.evaluate(() => window.__lumina.go(1));
+    await page.evaluate(() => window.__shinity.go(1));
     if (k === 'innerbloom' || k === 'bubbles') { await wait(1300); await page.screenshot({ path: `${shots}/${label}-tr-${k}.png` }); }
-    await page.waitForFunction((b) => !window.__lumina.state.busy && window.__lumina.state.idx !== b, before, { timeout: 9000 }).catch(() => { trOk = false; });
-    const g = await page.evaluate(() => { const s = window.__lumina.state; const sl = document.querySelectorAll('.pl-slide')[s.cur]; return getComputedStyle(sl).opacity === '1' && !(sl.style.maskImage || sl.style.webkitMaskImage); });
+    await page.waitForFunction((b) => !window.__shinity.state.busy && window.__shinity.state.idx !== b, before, { timeout: 9000 }).catch(() => { trOk = false; });
+    const g = await page.evaluate(() => { const s = window.__shinity.state; const sl = document.querySelectorAll('.pl-slide')[s.cur]; return getComputedStyle(sl).opacity === '1' && !(sl.style.maskImage || sl.style.webkitMaskImage); });
     if (!g) trOk = false;
   }
   check(`[${label}] all 8 transitions complete cleanly`, trOk);
@@ -138,7 +138,7 @@ async function scenario(label, ctxOpts, port) {
   await ui('#stripBtn');
   await page.waitForSelector('#strip:not([hidden])');
   await page.locator('.pl-thumb').nth(1).click();
-  await page.waitForFunction(() => window.__lumina.state.idx === 1 && !window.__lumina.state.busy, null, { timeout: 9000 }).catch(() => {});
+  await page.waitForFunction(() => window.__shinity.state.idx === 1 && !window.__shinity.state.busy, null, { timeout: 9000 }).catch(() => {});
   check(`[${label}] film strip jumps to a work`, (await st()).idx === 1);
   await page.screenshot({ path: `${shots}/${label}-strip.png` });
   await ui('#stripBtn');
@@ -148,11 +148,11 @@ async function scenario(label, ctxOpts, port) {
     await ui('#fxBtn');
     await page.click(`.lw-mode[data-mode=${id}]`);
     await page.click('#closeSettings');
-    await page.evaluate(() => window.__lumina.go(1));
+    await page.evaluate(() => window.__shinity.go(1));
     await wait(1500);
     if (id === 'kids') { const v = page.viewportSize(); for (const [fx, fy] of [[0.3, 0.4], [0.6, 0.55], [0.45, 0.3]]) await page.mouse.click(v.width * fx, v.height * fy); await wait(250); if ((await st()).cuties < 1) modesPlay = false; }
     if (['party', 'residence', 'gallery', 'kids', 'cinema', 'hotel'].includes(id)) await page.screenshot({ path: `${shots}/${label}-mode-${id}.png` });
-    await page.waitForFunction(() => !window.__lumina.state.busy, null, { timeout: 9000 }).catch(() => { modesPlay = false; });
+    await page.waitForFunction(() => !window.__shinity.state.busy, null, { timeout: 9000 }).catch(() => { modesPlay = false; });
     if (id === 'residence' && !(await page.evaluate(() => document.getElementById('player').classList.contains('camera')))) modesPlay = false;
   }
   check(`[${label}] all 9 modes play (camera drift in Residence, cute pops in Little Ones)`, modesPlay);
@@ -194,7 +194,7 @@ async function scenario(label, ctxOpts, port) {
     { name: 'Morning Light.png', mimeType: 'image/png', buffer: Buffer.from(files.png, 'base64') },
     { name: 'Living Ink.webm', mimeType: 'video/webm', buffer: Buffer.from(files.webm, 'base64') },
   ]);
-  await page.waitForFunction(() => window.__lumina.state.works === 29, null, { timeout: 20000 }).catch(() => {});
+  await page.waitForFunction(() => window.__shinity.state.works === 29, null, { timeout: 20000 }).catch(() => {});
   check(`[${label}] image + video uploaded to the cloud library`, (await st()).works === 29);
   check(`[${label}] video work is tagged as motion art`, (await page.locator('.screen').last().locator('.screen-tag').textContent().catch(() => '')).length > 0);
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await wait(400);
@@ -229,7 +229,7 @@ async function scenario(label, ctxOpts, port) {
   await page.selectOption('#showForm [name=mode]', 'healing');
   await page.fill('#showForm [name=noteZh]', '在流水與風鈴中，與畫作一起呼吸。');
   await page.click('#showForm button[type=submit]');
-  await page.waitForFunction(() => window.__lumina.state.view !== 'all', null, { timeout: 8000 }).catch(() => {});
+  await page.waitForFunction(() => window.__shinity.state.view !== 'all', null, { timeout: 8000 }).catch(() => {});
   const sv = await st();
   check(`[${label}] exhibition saved with 5 works and its scene mode`, sv.exhibitions === 1 && (await page.locator('.screen').count()) === 5 && sv.mode === 'healing');
   await page.screenshot({ path: `${shots}/${label}-exhibition.png` });
@@ -255,18 +255,18 @@ async function scenario(label, ctxOpts, port) {
   await page.close();
   page = await ctx.newPage(); watch(page);
   await page.goto(link.replace(/^https?:\/\/[^/]+/, srv.base), { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.__lumina);
+  await page.waitForFunction(() => window.__shinity);
   check(`[${label}] shared link shows the start gate with the motto`, await page.isVisible('#startGate') && (await page.textContent('#gateMotto')).length > 0);
   await page.screenshot({ path: `${shots}/${label}-gate.png` });
   await page.click('#gateBtn');
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 15000 });
+  await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 15000 });
   const sp = await st();
   check(`[${label}] shared exhibition plays its own works (hidden one excluded) in its mode`, sp.list === 4 && sp.mode === 'healing' && sp.view !== 'all', JSON.stringify({ list: sp.list, mode: sp.mode }));
   check(`[${label}] per-work timing applied (work 1 = 7 s)`, sp.curDur === 7, 'curDur=' + sp.curDur);
   // jump to the video work and verify it plays
-  await page.evaluate(() => window.__lumina.jump(3));
-  await page.waitForFunction(() => window.__lumina.state.idx === 3 && !window.__lumina.state.busy, null, { timeout: 12000 }).catch(() => {});
-  const vid = await page.evaluate(async () => { const s = window.__lumina.state; const sl = document.querySelectorAll('.pl-slide')[s.cur]; const v = sl.querySelector('video'); const t0 = v.currentTime; await new Promise(r => setTimeout(r, 700)); return { kind: sl.dataset.kind, adv: v.currentTime !== t0 || v.currentTime > 0, w: v.videoWidth }; });
+  await page.evaluate(() => window.__shinity.jump(3));
+  await page.waitForFunction(() => window.__shinity.state.idx === 3 && !window.__shinity.state.busy, null, { timeout: 12000 }).catch(() => {});
+  const vid = await page.evaluate(async () => { const s = window.__shinity.state; const sl = document.querySelectorAll('.pl-slide')[s.cur]; const v = sl.querySelector('video'); const t0 = v.currentTime; await new Promise(r => setTimeout(r, 700)); return { kind: sl.dataset.kind, adv: v.currentTime !== t0 || v.currentTime > 0, w: v.videoWidth }; });
   check(`[${label}] motion artwork (video) plays in the show`, vid.kind === 'video' && vid.w > 0 && vid.adv, JSON.stringify(vid));
   await page.screenshot({ path: `${shots}/${label}-video.png` });
 

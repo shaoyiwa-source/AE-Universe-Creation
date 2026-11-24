@@ -12,8 +12,8 @@ const { chromium } = require('playwright');
 const here = path.dirname(fileURLToPath(import.meta.url));
 const results = []; const check = (n, ok, info = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${n}${info ? '  — ' + info : ''}`); };
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
-const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-lock-'));
-const srv = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), '8871'], { env: { ...process.env, LUMINA_FS_DIR: lib, LUMINA_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
+const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-lock-'));
+const srv = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), '8871'], { env: { ...process.env, SHINITY_FS_DIR: lib, SHINITY_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
 process.on('exit', () => { try { srv.kill(); } catch { /* ignore */ } });
 await new Promise(r => srv.stdout.on('data', d => String(d).includes('dev server') && r()));
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
@@ -41,19 +41,19 @@ try {
     };
   });
   const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
-  await page.goto('http://localhost:8871/gallery.html', { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length);
+  await page.goto('http://localhost:8871/gallery.html', { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length);
   await page.click('#openSettings'); await page.click('.lw-mode[data-mode=party]'); await page.click('#closeSettings');
-  await page.click('#playBtn'); await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
+  await page.click('#playBtn'); await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 30000 });
   await page.evaluate(() => document.getElementById('musicBtn').click()); // our music off: the room leads
   await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
   await page.click('#interactToggles [data-opt=listen]'); await wait(800); await page.click('#closeSettings');
   // song 1: 120 BPM for 12 s
   const t1 = await page.evaluate(() => { const t = window.__ctx.currentTime + 0.3; window.__room(120, t, 12); return t; });
   await wait(4000);
-  const early = await page.evaluate(() => window.__lumina.state.lock);
+  const early = await page.evaluate(() => window.__shinity.state.lock);
   check('locks onto the room\'s tempo within 4 s', early.locked && Math.abs(early.bpm - 120) < 1.5, JSON.stringify({ locked: early.locked, bpm: early.bpm }));
   await wait(7000);
-  const s1 = await page.evaluate(() => ({ lock: window.__lumina.state.lock, kicks: window.__kicks, mode: window.__lumina.state.laserMode }));
+  const s1 = await page.evaluate(() => ({ lock: window.__shinity.state.lock, kicks: window.__kicks, mode: window.__shinity.state.laserMode }));
   // the onset detector's delay in this pipeline, and the lock's accuracy against the onsets it heard (the predictor itself)
   const nearest = (t, list) => list.reduce((b, k) => Math.abs(k - t) < Math.abs(b - t) ? k : b, list[0]);
   const det = stats(s1.lock.onsets.map(o => o - nearest(o, s1.kicks)));
@@ -65,13 +65,13 @@ try {
   // song 2: 128 BPM, a new phase
   const t2 = await page.evaluate(() => { const t = window.__ctx.currentTime + 0.37; window.__room(128, t, 12); return t; });
   await wait(12000);
-  const s2 = await page.evaluate(() => ({ lock: window.__lumina.state.lock, kicks: window.__kicks }));
+  const s2 = await page.evaluate(() => ({ lock: window.__shinity.state.lock, kicks: window.__kicks }));
   const em2 = s2.lock.emitted.filter(t => t > t2 + 5 && t < t2 + 12);
   const v2 = stats(em2.map(t => t - nearest(t, s2.kicks.filter(k => k >= t2 - 0.1))));
   check('a new song (128 BPM) re-locks and stays on the beat', s2.lock.locked && Math.abs(s2.lock.bpm - 128) < 1.5 && v2.worst <= 0.03, `bpm ${s2.lock.bpm}, worst ${(v2.worst * 1000).toFixed(1)} ms over ${em2.length} beats`);
   // silence: let go, breathe
   await wait(4500);
-  const s3 = await page.evaluate(() => ({ lock: window.__lumina.state.lock, mode: window.__lumina.state.laserMode }));
+  const s3 = await page.evaluate(() => ({ lock: window.__shinity.state.lock, mode: window.__shinity.state.laserMode }));
   check('silence: the lock lets go and the lasers breathe', !s3.lock.locked && s3.mode === 'calm', JSON.stringify({ locked: s3.lock.locked, mode: s3.mode }));
   check('no page errors', errs.length === 0, errs.slice(0, 2).join(' | '));
 } catch (e) { check('scenario crashed', false, String(e).split('\n').slice(0, 4).join(' / ')); }

@@ -15,8 +15,8 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const phone = which === 'phone';
 const ctxOpts = phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 };
 const port = phone ? 8812 : 8811;
-const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-alive-'));
-const srv = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), String(port)], { env: { ...process.env, LUMINA_FS_DIR: lib, LUMINA_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
+const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-alive-'));
+const srv = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), String(port)], { env: { ...process.env, SHINITY_FS_DIR: lib, SHINITY_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
 process.on('exit', () => { try { srv.kill(); } catch { /* ignore */ } });
 await new Promise(r => srv.stdout.on('data', d => String(d).includes('dev server') && r()));
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--enable-unsafe-swiftshader'] });
@@ -24,8 +24,8 @@ try {
   const ctx = await browser.newContext(ctxOpts); const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(String(e))); page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
   await page.goto(`http://localhost:${port}/gallery.html`, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
-  const st = () => page.evaluate(() => window.__lumina.state);
+  await page.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0);
+  const st = () => page.evaluate(() => window.__shinity.state);
   // Art Museum stays still
   await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])');
   await page.click('.lw-mode[data-mode=gallery]');
@@ -34,8 +34,8 @@ try {
   const residenceOn = (await page.getAttribute('#interactToggles [data-opt=alive]', 'aria-checked')) === 'true';
   check(`[${which}] Living Painting: on in Residence, off in the quiet Art Museum`, galleryOff && residenceOn);
   await page.click('#closeSettings');
-  await page.click('#playBtn'); await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
-  await page.evaluate(() => { window.__lumina.state.settings.interval = 120; });
+  await page.click('#playBtn'); await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 30000 });
+  await page.evaluate(() => { window.__shinity.state.settings.interval = 120; });
   await wait(400);
   const s0 = (await st()).alive;
   check(`[${which}] the painting is read and the light layers are ready`, s0.ok && s0.on, JSON.stringify(s0));
@@ -48,14 +48,14 @@ try {
   const layers = await page.evaluate(() => {
     const stage = document.getElementById('stage'), kids = [...stage.children];
     const back = stage.querySelector('.pl-alive-back'), front = stage.querySelector('.pl-alive'), slide = document.querySelector('.pl-slide');
-    const s = window.__lumina.state, img = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img');
+    const s = window.__shinity.state, img = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img');
     return { order: kids.indexOf(back) < kids.indexOf(slide) && kids.indexOf(front) > kids.indexOf(slide), passive: getComputedStyle(front).pointerEvents === 'none' && getComputedStyle(back).pointerEvents === 'none', img: getComputedStyle(img).visibility === 'visible' && !img.style.filter, inSlide: !document.querySelector('.pl-slide canvas') };
   });
   check(`[${which}] the painting is never altered (light layers behind and in front of it)`, layers.order && layers.passive && layers.img && layers.inSlide, JSON.stringify(layers));
   // find living and still spots
-  const r = await page.evaluate(() => window.__lumina.aliveRect());
+  const r = await page.evaluate(() => window.__shinity.aliveRect());
   const pts = [];
-  for (let i = 1; i < 12; i++) for (let j = 1; j < 12; j++) { const x = r.x + r.w * i / 12, y = r.y + r.h * j / 12; pts.push({ x, y, a: await page.evaluate(([x, y]) => window.__lumina.aliveAt(x, y), [x, y]) }); }
+  for (let i = 1; i < 12; i++) for (let j = 1; j < 12; j++) { const x = r.x + r.w * i / 12, y = r.y + r.h * j / 12; pts.push({ x, y, a: await page.evaluate(([x, y]) => window.__shinity.aliveAt(x, y), [x, y]) }); }
   pts.sort((a, b) => b.a - a.a);
   const A = pts[0];
   check(`[${which}] the painting is read: it has living parts`, A.a > 0.5, `best ${A.a.toFixed(2)}, ${pts.filter(p => p.a > 0.3).length}/${pts.length} living`);
@@ -96,8 +96,8 @@ try {
   // Dreamscape: alive from the very first second, and richer
   await page.evaluate(() => document.querySelector('#fxBtn').click()); await page.waitForSelector('#settings:not([hidden])');
   await page.click('.lw-mode[data-mode=dream]'); await page.click('#closeSettings');
-  await page.evaluate(() => window.__lumina.go(1));
-  await page.waitForFunction(() => !window.__lumina.state.busy && window.__lumina.state.alive.on, null, { timeout: 15000 });
+  await page.evaluate(() => window.__shinity.go(1));
+  await page.waitForFunction(() => !window.__shinity.state.busy && window.__shinity.state.alive.on, null, { timeout: 15000 });
   await wait(1500);
   const d1 = (await st()).alive;
   check(`[${which}] Dreamscape: light moves from the first second`, d1.amb > 0.7 && d1.counts.motes > 3, `after 1.5 s: amb ${d1.amb}, ${d1.counts.motes} lights`);

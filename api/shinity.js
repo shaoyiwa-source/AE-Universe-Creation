@@ -1,10 +1,11 @@
 // AE Shinity — cloud library API (single Vercel function; routes by ?a=)
 //
 // Environment (Vercel → Project → Settings → Environment Variables):
-//   LUMINA_STUDIO_PASSWORD   AE Studio password (required for any curator action)
-//   LUMINA_SESSION_SECRET    optional; signing secret for studio sessions (defaults to a hash of the password)
+//   SHINITY_STUDIO_PASSWORD  AE Studio password (required for any curator action)
+//   SHINITY_SESSION_SECRET   optional; signing secret for studio sessions (defaults to a hash of the password)
+//   (the old LUMINA_* names are still accepted)
 //   BLOB_READ_WRITE_TOKEN    the project's (private) Vercel Blob store — already used by the shop
-//   LUMINA_FS_DIR            local development only: store everything in this folder instead of Blob
+//   SHINITY_FS_DIR           local development only: store everything in this folder instead of Blob
 //
 // Public:  GET  ?a=catalog            → works (visible only), exhibitions, tracks
 //          GET  ?a=media&p=media/x    → streams a stored file (supports Range for video/audio)
@@ -18,7 +19,8 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = 'ae-lumina';
+const ROOT = 'ae-shinity';
+const OLD_ROOT = 'ae-lumina'; // the library's folder before the rename (Lumina Wall → AE Shinity); moved over automatically
 const CATALOG = `${ROOT}/catalog.json`;
 const MAX_UPLOAD = Math.floor(4.3 * 1024 * 1024);
 const MODES = ['gallery', 'healing', 'hotel', 'residence', 'party', 'dream', 'kids', 'online', 'cinema'];
@@ -112,10 +114,38 @@ function blobStore() {
     },
   };
 }
+// settings: SHINITY_* (new names); the old LUMINA_* names are still read so nothing has to be re-entered
+const env = (k) => process.env['SHINITY_' + k] || process.env['LUMINA_' + k] || '';
 function storage() {
-  if (process.env.LUMINA_FS_DIR) return fsStore(process.env.LUMINA_FS_DIR);
-  if (process.env.BLOB_READ_WRITE_TOKEN || (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID)) return blobStore();
-  return null;
+  let raw = null;
+  if (env('FS_DIR')) raw = fsStore(env('FS_DIR'));
+  else if (process.env.BLOB_READ_WRITE_TOKEN || (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID)) raw = blobStore();
+  return raw ? withMove(raw) : null;
+}
+// one-time move of everything under the old folder (ae-lumina/…) into the new one (ae-shinity/…): copy, check, then delete
+const ctypeOf = (p) => { const e = (p.split('.').pop() || '').toLowerCase(); return e === 'json' ? 'application/json' : (MIME[e] || 'application/octet-stream'); };
+let moving = null;
+function moveOnce(raw) {
+  if (!moving) moving = (async () => {
+    const old = await raw.list(OLD_ROOT + '/');
+    if (!old.length) return;
+    const have = new Set(await raw.list(ROOT + '/'));
+    for (const p of old) {
+      const np = ROOT + p.slice(OLD_ROOT.length);
+      if (!have.has(np)) { const b = await raw.get(p); if (b) { await raw.put(np, b, ctypeOf(np)); have.add(np); } }
+    }
+    for (const p of old) { const np = ROOT + p.slice(OLD_ROOT.length); if (have.has(np) && await raw.get(np)) await raw.del(p); }
+  })().catch((e) => { moving = null; throw e; });
+  return moving;
+}
+function withMove(raw) {
+  return {
+    kind: raw.kind,
+    async get(p) { await moveOnce(raw); return raw.get(p); },
+    async put(p, b, c) { await moveOnce(raw); return raw.put(p, b, c); },
+    async del(p) { await moveOnce(raw); return raw.del(p); },
+    async list(x) { await moveOnce(raw); return raw.list(x); },
+  };
 }
 
 async function readCatalog(store) {
@@ -140,8 +170,8 @@ async function writeCatalog(store, c) {
 }
 
 // ---------- auth ----------
-function password() { return String(process.env.LUMINA_STUDIO_PASSWORD || ''); }
-function secret() { return process.env.LUMINA_SESSION_SECRET || crypto.createHash('sha256').update('ae-lumina-session:' + password()).digest(); }
+function password() { return String(env('STUDIO_PASSWORD') || ''); }
+function secret() { return env('SESSION_SECRET') || crypto.createHash('sha256').update('ae-shinity-session:' + password()).digest(); }
 function signToken(hours = 12) {
   const exp = Date.now() + hours * 3600e3;
   const body = Buffer.from(JSON.stringify({ exp, n: crypto.randomBytes(6).toString('hex') })).toString('base64url');
@@ -184,7 +214,7 @@ const rid = (p) => p + Date.now().toString(36) + crypto.randomBytes(3).toString(
 const str = (v, max = 200) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
 const bi = (v, max) => ({ en: str(v && v.en, max), zh: str(v && v.zh, max) });
 const mediaPath = (p) => /^media\/[a-z0-9-]+\.(jpg|jpeg|png|webp|gif|avif|mp4|webm|mov|mp3|m4a|aac|ogg|wav|js)$/.test(p) ? `${ROOT}/${p}` : null;
-const mediaUrl = (rel) => `/api/lumina?a=media&p=${encodeURIComponent(rel)}`;
+const mediaUrl = (rel) => `/api/shinity?a=media&p=${encodeURIComponent(rel)}`;
 function relOf(url) { const m = /[?&]p=([^&]+)/.exec(String(url || '')); return m ? decodeURIComponent(m[1]) : null; }
 
 function publicView(c, studio) {
@@ -315,8 +345,8 @@ function licenceState(l) {
   if (l.expires && today() > l.expires) return 'EXPIRED';
   return 'OK';
 }
-// device tokens use their own key when LUMINA_LICENSE_SECRET is set, so changing the studio password never stops venue screens
-const licSecret = () => process.env.LUMINA_LICENSE_SECRET || secret();
+// device tokens use their own key when SHINITY_LICENSE_SECRET is set, so changing the studio password never stops venue screens
+const licSecret = () => env('LICENSE_SECRET') || secret();
 function signDevice(lid, did) { const body = Buffer.from(JSON.stringify({ l: lid, d: did })).toString('base64url'); return `${body}.${crypto.createHmac('sha256', licSecret()).update('lic:' + body).digest('base64url')}`; }
 function readDevice(tok) {
   const [body, mac] = String(tok || '').split('.'); if (!body || !mac) return null;
@@ -574,7 +604,7 @@ module.exports = async function handler(req, res) {
     return res.status(404).json({ error: 'UNKNOWN_ACTION' });
   } catch (err) {
     if (err && err.code === 'TOO_LARGE') return res.status(413).json({ error: 'TOO_LARGE' });
-    console.error('lumina api error', err && err.message);
+    console.error('shinity api error', err && err.message);
     return res.status(500).json({ error: 'SERVER_ERROR' });
   }
 };

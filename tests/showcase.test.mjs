@@ -13,9 +13,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const out = process.argv[2] || '.'; const phone = process.argv[3] === 'phone';
 const results = []; const check = (n, ok, info = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${n}${info ? '  — ' + info : ''}`); };
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
-const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-showcase-'));
+const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-showcase-'));
 const port = phone ? 8875 : 8874;
-const srv = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), String(port)], { env: { ...process.env, LUMINA_FS_DIR: lib, LUMINA_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
+const srv = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), String(port)], { env: { ...process.env, SHINITY_FS_DIR: lib, SHINITY_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
 process.on('exit', () => { try { srv.kill(); } catch { /* ignore */ } });
 await new Promise(r => srv.stdout.on('data', d => String(d).includes('dev server') && r()));
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
@@ -24,7 +24,7 @@ try {
   await ctx.addInitScript(() => {
     const AC = window.AudioContext; window.AudioContext = function (...a) { const c = new AC(...a); window.__ctx = c; return c; }; window.AudioContext.prototype = AC.prototype;
     window.__chimes = 0;
-    const wrap = () => { const L = window.__lumina; if (!L || !L.chimeHook) return setTimeout(wrap, 200); L.chimeHook(() => { window.__chimes++; }); }; setTimeout(wrap, 500);
+    const wrap = () => { const L = window.__shinity; if (!L || !L.chimeHook) return setTimeout(wrap, 200); L.chimeHook(() => { window.__chimes++; }); }; setTimeout(wrap, 500);
     navigator.mediaDevices.getUserMedia = async () => {
       const c = window.__ctx, md = c.createMediaStreamDestination();
       const noise = c.createBuffer(1, c.sampleRate, c.sampleRate); const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -40,11 +40,11 @@ try {
   check('opens on one quiet start screen (no gallery, no menus)', /盛明/.test(gate.title) && gate.main === 'none', JSON.stringify(gate));
   await page.screenshot({ path: `${out}/showcase-gate${phone ? '-phone' : ''}.png` });
   await page.click('#gateBtn');
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 30000 });
   await wait(1500);
-  const ui = await page.evaluate(() => { const vis = (id) => getComputedStyle(document.getElementById(id)).display !== 'none'; return { pause: vis('pauseBtn'), music: vis('musicBtn'), settings: vis('fxBtn'), next: vis('nextBtn'), close: vis('closeBtn'), god: vis('godBtn'), listen: window.__lumina.state.listen, playing: window.__lumina.state.music }; });
+  const ui = await page.evaluate(() => { const vis = (id) => getComputedStyle(document.getElementById(id)).display !== 'none'; return { pause: vis('pauseBtn'), music: vis('musicBtn'), settings: vis('fxBtn'), next: vis('nextBtn'), close: vis('closeBtn'), god: vis('godBtn'), listen: window.__shinity.state.listen, playing: window.__shinity.state.music }; });
   check('act 1: the microphone listens, no music yet; a touch shows only pause, music and settings (no paging, no close, no studio)', ui.pause && ui.music && ui.settings && !ui.next && !ui.close && !ui.god && ui.listen && (!ui.playing || ui.playing === 'none'), JSON.stringify(ui));
-  const look = () => page.evaluate(() => ({ b: +getComputedStyle(document.getElementById('player')).getPropertyValue('--sc-b') || 0, bursts: window.__lumina.state.bursts, laser: window.__lumina.state.hits.flashes, led: window.__lumina.state.hits.led }));
+  const look = () => page.evaluate(() => ({ b: +getComputedStyle(document.getElementById('player')).getPropertyValue('--sc-b') || 0, bursts: window.__shinity.state.bursts, laser: window.__shinity.state.hits.flashes, led: window.__shinity.state.hits.led }));
   await wait(2500); const quiet = await look();
   await page.screenshot({ path: `${out}/showcase-quiet${phone ? '-phone' : ''}.png` });
   // a clap
@@ -65,29 +65,29 @@ try {
   const settled = await look();
   check('silence again: it settles back to dim', settled.b < 0.5, String(settled.b));
   // act 2 after ~40 s
-  await page.waitForFunction(() => window.__lumina.state.music === 'eternal', null, { timeout: 45000 }).catch(() => {});
+  await page.waitForFunction(() => window.__shinity.state.music === 'eternal', null, { timeout: 45000 }).catch(() => {});
   await wait(1500);
-  const a2 = await page.evaluate(() => ({ music: window.__lumina.state.music, cur: window.__lumina.state.curId, b: getComputedStyle(document.querySelector('.pl-slide.live .pl-media')).filter, listen: window.__lumina.state.listen, t: window.__lumina.trackTime() }));
+  const a2 = await page.evaluate(() => ({ music: window.__shinity.state.music, cur: window.__shinity.state.curId, b: getComputedStyle(document.querySelector('.pl-slide.live .pl-media')).filter, listen: window.__shinity.state.listen, t: window.__shinity.trackTime() }));
   const full = (f) => f === 'none' || f === '' || /^brightness\(1(\.0+)?\) saturate\(1(\.0+)?\)$/.test(f);
   check('act 2: the theme track begins at the build, the painting at full light, the microphone still listening', a2.music === 'eternal' && a2.cur === 'sc-infinity-nature' && full(a2.b) && a2.listen, JSON.stringify(a2));
   // with the music playing, the room still plays along: a clap flashes the LEDs and lifts the painting's light
-  const r0 = await page.evaluate(() => ({ led: window.__lumina.state.hits.led, laser: window.__lumina.state.hits.flashes }));
+  const r0 = await page.evaluate(() => ({ led: window.__shinity.state.hits.led, laser: window.__shinity.state.hits.flashes }));
   await page.evaluate(() => window.__clap(window.__ctx.currentTime + 0.1, 0.9));
   let lift = 1; for (let i = 0; i < 12; i++) { await wait(60); lift = Math.max(lift, +(await page.evaluate(() => getComputedStyle(document.getElementById('player')).getPropertyValue('--sc-lift'))) || 1); }
   await wait(400);
-  const r1 = await page.evaluate(() => ({ led: window.__lumina.state.hits.led, laser: window.__lumina.state.hits.flashes }));
+  const r1 = await page.evaluate(() => ({ led: window.__shinity.state.hits.led, laser: window.__shinity.state.hits.flashes }));
   check('act 2: a clap over the music still flashes the LEDs and lasers and lifts the painting', r1.led > r0.led && r1.laser > r0.laser && lift > 1.1, JSON.stringify({ r0, r1, lift }));
-  await page.waitForFunction(() => window.__lumina.trackTime() > 66, null, { timeout: 20000 }).catch(() => {});
+  await page.waitForFunction(() => window.__shinity.trackTime() > 66, null, { timeout: 20000 }).catch(() => {});
   await wait(600);
-  const drop = await page.evaluate(() => ({ cur: window.__lumina.state.curId, laser: window.__lumina.state.laserMode, packs: window.__lumina.state.packs.map(p => p.id), t: +window.__lumina.trackTime().toFixed(2) }));
+  const drop = await page.evaluate(() => ({ cur: window.__shinity.state.curId, laser: window.__shinity.state.laserMode, packs: window.__shinity.state.packs.map(p => p.id), t: +window.__shinity.trackTime().toFixed(2) }));
   check('the drop lands on a dark work with every laser and the LED frame (on the music\'s clock)', drop.cur === 'ae14' && drop.laser === 'music' && drop.packs.includes('laser') && drop.packs.includes('led'), JSON.stringify(drop));
   await page.screenshot({ path: `${out}/showcase-act2${phone ? '-phone' : ''}.png` });
   // the controls work: pause stops the music, play resumes; settings open (modes, volume, intensity)
   await page.mouse.move(200, 200); await page.evaluate(() => document.getElementById('pauseBtn').click()); await wait(600);
-  const paused = await page.evaluate(() => ({ playing: window.__lumina.state.playing, t: window.__lumina.trackTime() }));
-  await wait(1200); const t2 = await page.evaluate(() => window.__lumina.trackTime());
+  const paused = await page.evaluate(() => ({ playing: window.__shinity.state.playing, t: window.__shinity.trackTime() }));
+  await wait(1200); const t2 = await page.evaluate(() => window.__shinity.trackTime());
   await page.evaluate(() => document.getElementById('pauseBtn').click()); await wait(1200);
-  const resumed = await page.evaluate(() => ({ playing: window.__lumina.state.playing, t: window.__lumina.trackTime() }));
+  const resumed = await page.evaluate(() => ({ playing: window.__shinity.state.playing, t: window.__shinity.trackTime() }));
   await page.evaluate(() => document.getElementById('fxBtn').click()); await page.waitForSelector('#settings:not([hidden])', { timeout: 5000 }).catch(() => {});
   const sheet = await page.evaluate(() => ({ open: !document.getElementById('settings').hidden, modes: document.querySelectorAll('#modeCards .lw-mode').length }));
   check('pause stops the music, play resumes it; settings open with the modes', !paused.playing && Math.abs(t2 - paused.t) < 0.2 && resumed.playing && resumed.t > t2 && sheet.open && sheet.modes >= 9, JSON.stringify({ paused, t2, resumed, sheet }));

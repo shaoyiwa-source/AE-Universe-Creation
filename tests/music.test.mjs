@@ -15,8 +15,8 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const phone = which === 'phone';
 const ctxOpts = phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1280, height: 800 } };
 const port = phone ? 8832 : 8831;
-const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-music-'));
-const srv = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), String(port)], { env: { ...process.env, LUMINA_FS_DIR: lib, LUMINA_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
+const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-music-'));
+const srv = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), String(port)], { env: { ...process.env, SHINITY_FS_DIR: lib, SHINITY_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
 process.on('exit', () => { try { srv.kill(); } catch { /* ignore */ } });
 await new Promise(r => srv.stdout.on('data', d => String(d).includes('dev server') && r()));
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
@@ -32,9 +32,9 @@ try {
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
   await page.goto(`http://localhost:${port}/gallery.html`, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
+  await page.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0);
   await page.click('#openSettings'); await page.click('.lw-mode[data-mode=residence]'); await page.click('#closeSettings');
-  check(`[${which}] Residence plays its own music (Warm Home)`, (await page.evaluate(() => window.__lumina.state.settings.music)) === 'hearth');
+  check(`[${which}] Residence plays its own music (Warm Home)`, (await page.evaluate(() => window.__shinity.state.settings.music)) === 'hearth');
   await page.click('#playBtn'); await page.waitForFunction(() => window.__ctx && window.__ctx.state === 'running', null, { timeout: 10000 });
   const t0 = await page.evaluate(() => window.__ctx.currentTime);
   await wait(1200);
@@ -64,7 +64,7 @@ try {
   const n2 = await page.evaluate(() => window.__notes.length);
   check(`[${which}] and keeps playing`, n2 - n1 >= 6, `${n2 - n1} notes in 10 s`);
   // two minutes later it is still playing (no silent stop)
-  await page.evaluate(() => { window.__lumina.state.settings.interval = 6; });
+  await page.evaluate(() => { window.__shinity.state.settings.interval = 6; });
   await wait(60000);
   const n3 = await page.evaluate(() => window.__notes.length); await wait(12000);
   const n4 = await page.evaluate(() => window.__notes.length);

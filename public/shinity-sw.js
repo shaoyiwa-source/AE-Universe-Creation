@@ -7,16 +7,16 @@
 // - works and media: the saved copy first (they never change under the same address)
 // - licence checks and every other API call: always the network (the player decides what to do when offline)
 // - anything the server marks no-store is never saved
-const CACHE = 'lumina-offline-v2';
+const CACHE = 'shinity-offline-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil((async () => {
-  for (const k of await caches.keys()) if (k.startsWith('lumina-offline') && k !== CACHE) await caches.delete(k);
+  for (const k of await caches.keys()) if ((k.startsWith('shinity-offline') || k.startsWith('lumina-offline')) && k !== CACHE) await caches.delete(k);
   await self.clients.claim();
 })()));
 
-const isMedia = (url) => (url.pathname === '/api/lumina' && url.searchParams.get('a') === 'media') || /\.(webp|jpe?g|png|gif|avif|mp4|webm|mov|mp3|m4a|aac|ogg|wav|woff2?)$/i.test(url.pathname);
-const isApi = (url) => url.pathname === '/api/lumina' && url.searchParams.get('a') !== 'media';
+const isMedia = (url) => (url.pathname === '/api/shinity' && url.searchParams.get('a') === 'media') || /\.(webp|jpe?g|png|gif|avif|mp4|webm|mov|mp3|m4a|aac|ogg|wav|woff2?)$/i.test(url.pathname);
+const isApi = (url) => url.pathname === '/api/shinity' && url.searchParams.get('a') !== 'media';
 const isGalleryPage = (u) => { try { const p = new URL(u).pathname; return p === '/gallery' || p === '/gallery.html'; } catch { return false; } };
 const keyOf = (req) => { const u = new URL(req.url); if (u.pathname === '/gallery' || u.pathname === '/gallery.html') return u.origin + '/gallery.html'; return req.url; };
 const storable = (res) => res && res.ok && res.status === 200 && !/no-store/i.test(res.headers.get('Cache-Control') || '');

@@ -11,7 +11,7 @@ import { PackHost, PACKS, packsOf, paramsFor, transitionPack, registerPack, pack
 
 const $ = (s, r = document) => r.querySelector(s);
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const API = '/api/lumina';
+const API = '/api/shinity';
 const MAX_UPLOAD = Math.floor(4.3 * 1024 * 1024);
 
 // House collection — used when the cloud library is unreachable (offline preview)
@@ -53,7 +53,7 @@ let LIC = null;
 // performance, no settings, no studio, no buttons; the programme lives in gallery/showcase.js
 const SHOW_ID = (() => { try { const v = new URLSearchParams(location.search).get('showcase') || (/^\/showcase\/?$/.test(location.pathname) ? 'eternal' : ''); return !ED && !LIC_ID && /^[a-z0-9-]{1,30}$/.test(v || '') ? v : null; } catch { return null; } })();
 let SC = null;
-const SKEY = ED ? 'ae-lumina-ed-' + ED.id : SHOW_ID ? 'ae-lumina-showcase-' + SHOW_ID : 'ae-lumina-settings';
+const SKEY = ED ? 'ae-shinity-ed-' + ED.id : SHOW_ID ? 'ae-shinity-showcase-' + SHOW_ID : 'ae-shinity-settings';
 const S = loadSettings(DEFAULTS, SKEY);
 if (ED && ED.settings && lsGet(SKEY, null) === null) {
   const es = ED.settings;
@@ -1513,7 +1513,7 @@ $('#recGo').addEventListener('click', async () => {
     $('#recShare').textContent = T(IS_IOS || IS_ANDROID ? 'saveToPhotos' : 'share');
     $('#recSave').textContent = T(IS_IOS || IS_ANDROID ? 'saveFile' : 'saveVideo');
     recPane('recResult');
-    window.__lumina.lastClip = { size: out.blob.size, mime: out.mime, width: out.width, height: out.height, name: rec.name, audio: !!audioStream };
+    window.__shinity.lastClip = { size: out.blob.size, mime: out.mime, width: out.width, height: out.height, name: rec.name, audio: !!audioStream };
   } catch (err) {
     if (err.code !== 'ABORTED') { console.warn('record', err); toast(T('recFailed')); }
     recPane('recSetup');
@@ -1887,7 +1887,7 @@ function offlineOk(c) {
 function markSeen() { const c = licCached(); if (!c) return; c.seen = Math.max(c.seen || 0, Date.now()); try { localStorage.setItem(licCacheKey(), JSON.stringify(c)); } catch { /* ignore */ } }
 async function forgetOffline() { // revoked / moved / not found: nothing of this licence stays on the machine
   try { localStorage.removeItem(licCacheKey()); } catch { /* ignore */ }
-  try { const regs = await navigator.serviceWorker?.getRegistrations?.() || []; for (const r of regs) await r.unregister(); for (const k of await caches.keys()) if (k.startsWith('lumina-offline')) await caches.delete(k); } catch { /* ignore */ }
+  try { const regs = await navigator.serviceWorker?.getRegistrations?.() || []; for (const r of regs) await r.unregister(); for (const k of await caches.keys()) if (k.startsWith('lumina-offline') || k.startsWith('shinity-offline')) await caches.delete(k); } catch { /* ignore */ }
 }
 const licToken = () => { try { return JSON.parse(localStorage.getItem(licKey()) || 'null'); } catch { return null; } };
 function showLicGate(msg, { form = true, err = false, title, claim = false } = {}) {
@@ -1959,10 +1959,10 @@ async function checkLicence({ claim = false } = {}) {
 let swReady = null;
 function precacheForOffline() {
   if (!('serviceWorker' in navigator) || !LIC) return;
-  swReady = swReady || navigator.serviceWorker.register('/lumina-sw.js').then(() => navigator.serviceWorker.ready).catch(() => null);
+  swReady = swReady || navigator.serviceWorker.register('/shinity-sw.js').then(() => navigator.serviceWorker.ready).catch(() => null);
   swReady.then((reg) => {
     if (!reg || !reg.active) return;
-    const urls = new Set(performance.getEntriesByType('resource').map(e => e.name).filter(u => u.startsWith(location.origin) && !/\/api\/lumina\?a=(?!media)/.test(u)));
+    const urls = new Set(performance.getEntriesByType('resource').map(e => e.name).filter(u => u.startsWith(location.origin) && !/\/api\/(shinity|lumina)\?a=(?!media)/.test(u)));
     urls.add(location.origin + '/gallery.html'); urls.add(location.href.split('#')[0]);
     for (const w of LIC.works || []) for (const u of [w.src, w.thumb, w.poster]) if (u) urls.add(new URL(u, location.href).href);
     for (const pk of LIC.packs || []) if (pk.src) urls.add(new URL(pk.src, location.href).href);
@@ -2199,7 +2199,7 @@ function showcaseFrame(dt) {
   exposeHooks();
 })();
 function exposeHooks() {
-  window.__lumina = {
+  window.__shinity = {
     get state() { return { lastFps, feat: listener.lastFeat, kind: listener.kind, lowPower, listen: listener.on, soundStats: { ...listener.stats, ...fx.soundStats }, info: !$('#plInfo').hidden, edition: !!ED, curId: list[idx] && list[idx].id, idx, playing, busy, shown, list: list.length, cur, works: works.length, view, exhibitions: exhibitions.length, curDur, selected: S.selected.length, settings: S, studio, cloud, blooms: fx.blooms.length, cuties: fx.cuties.length, audio: sound.ctx ? sound.ctx.state : 'none', laserMode: packs.laserMode || null, hits: { count: listener.hitCount || 0, times: listener.hitTimes ? listener.hitTimes.slice(-24) : [], flashes: packs.laserHits || 0, led: packs.ledHits || 0 }, lock: { locked: !!roomBeat.locked, bpm: +(roomBeat.bpm || 0).toFixed(1), beats: roomBeat.lockCount || 0, emitted: listener.lock ? listener.lock.emitted.slice(-24) : [], onsets: listener.lock ? listener.lock.onsets.slice(-16) : [] }, bursts: (packs.bursts || []).length, music: sound.preset, packs: packs.current(), cam: packs.cam ? packs.cam.pk.id : null, camPose: packs.camPose, god: god.open, alive: { ok: alive.ok, on: alive.on, amb: +(alive.amb || 0).toFixed(2), counts: alive.counts(), share: alive.map ? +alive.map.share.toFixed(2) : 0, strength: +alive.strength().toFixed(2), pressing: alive.pressing, stats: { ...alive.stats } }, loupe: !!loupeOn }; },
     beat: () => sound.beat(), beatClock: () => sound.lastBeatClock, setLatency: (v) => { if (sound.ctx) Object.defineProperty(sound.ctx, 'outputLatency', { configurable: true, get: () => v }); }, trackTime: () => (sound.customEl ? sound.customEl.currentTime : 0),
     registerOld: () => { try { registerPack({ ...PACKS.get('firefly'), version: 1 }); } catch { /* ignore */ } return PACKS.get('firefly') ? PACKS.get('firefly').version : 0; },

@@ -45,9 +45,9 @@ function makeWav(file) {
   fs.writeFileSync(file, buf);
 }
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-r8-'));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-r8-'));
 const wav = path.join(dir, 'mic.wav'); makeWav(wav);
-const srv = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), String(port)], { env: { ...process.env, LUMINA_FS_DIR: path.join(dir, 'lib'), LUMINA_STUDIO_PASSWORD: 'x-' + Date.now() }, stdio: 'pipe' });
+const srv = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), String(port)], { env: { ...process.env, SHINITY_FS_DIR: path.join(dir, 'lib'), SHINITY_STUDIO_PASSWORD: 'x-' + Date.now() }, stdio: 'pipe' });
 fs.mkdirSync(path.join(dir, 'lib'));
 process.on('exit', () => { try { srv.kill(); } catch { /* ignore */ } });
 await new Promise((res, rej) => { srv.stdout.on('data', d => String(d).includes('dev server') && res()); srv.on('exit', c => rej(new Error('server exited ' + c))); });
@@ -59,9 +59,9 @@ try {
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(String(e))); page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
   await page.goto(base, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
+  await page.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0);
   const ui = async (sel) => { const v = page.viewportSize(); await page.mouse.move(v.width * 0.5, v.height * 0.25); await wait(150); await page.click(sel); };
-  const st = () => page.evaluate(() => window.__lumina.state);
+  const st = () => page.evaluate(() => window.__shinity.state);
 
   // lasers belong to Night Party only
   await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])');
@@ -80,13 +80,13 @@ try {
   await page.click('#closeSettings');
 
   await page.click('#playBtn');
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 20000 });
+  await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 20000 });
   check(`[${which}] listening indicator shows in the player`, await page.isVisible('#micDot'));
   // never crop: sample the camera drift — the drawn artwork never exceeds its fitted frame
   let crop = 0;
   for (let k = 0; k < 8; k++) {
     crop = Math.max(crop, await page.evaluate(() => {
-      const s = window.__lumina.state, img = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img');
+      const s = window.__shinity.state, img = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img');
       const b = img.getBoundingClientRect(); return Math.max(0, b.width - parseFloat(img.style.width), b.height - parseFloat(img.style.height));
     }));
     await wait(400);
@@ -122,11 +122,11 @@ try {
 
   // low-power: throttle the CPU and expect the player to lighten itself
   await page.click('#playBtn');
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 20000 });
+  await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 20000 });
   // a healthy device must not be downgraded; ~20 fps for 4 s must trigger the lighter quality
-  await page.evaluate(() => window.__lumina.simulateFps(58, 6));
+  await page.evaluate(() => window.__shinity.simulateFps(58, 6));
   const pre = await st(); const stayed = !pre.lowPower; console.log("diag", JSON.stringify({ lowPower: pre.lowPower, fps: pre.lastFps, alive: pre.alive.counts }));
-  await page.evaluate(() => window.__lumina.simulateFps(20, 6.5));
+  await page.evaluate(() => window.__shinity.simulateFps(20, 6.5));
   check(`[${which}] a smooth device keeps full quality`, stayed);
   const lp = await st();
   check(`[${which}] slow device switches to lighter quality automatically`, lp.lowPower && await page.evaluate(() => document.getElementById("player").classList.contains("lowpower")), JSON.stringify({ lp: lp.lowPower, playing: lp.playing, shown: lp.shown, fps: lp.lastFps }));
@@ -141,7 +141,7 @@ await browser.close();
 const b2 = await chromium.launch();
 try {
   const c2 = await b2.newContext(ctxOpts); const p2 = await c2.newPage();
-  await p2.goto(base, { waitUntil: 'networkidle' }); await p2.waitForFunction(() => window.__lumina);
+  await p2.goto(base, { waitUntil: 'networkidle' }); await p2.waitForFunction(() => window.__shinity);
   await p2.click('#openSettings'); await p2.waitForSelector('#settings:not([hidden])');
   await p2.click('#interactToggles [data-opt=listen]'); await wait(1500);
   check(`[${which}] refused microphone: stays off with a clear message`, (await p2.getAttribute('#interactToggles [data-opt=listen]', 'aria-checked')) === 'false' && (await p2.isVisible('#toast')));

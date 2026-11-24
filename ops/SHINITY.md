@@ -1,7 +1,7 @@
 # AE Shinity（AE 耀盛，原名 AE Shinity） — 開發紀錄與驗收（PV）
 
 > **2026-11-24 改名**：Owner 正式將 Lumina Wall 改名為 **AE Shinity**（中文 **AE 耀盛**）。介面、頁面標題、文件、註解已全部改用新名。
-> 為了不讓已授權的螢幕、已存的設定和雲端作品庫失效，以下**內部識別碼刻意保留舊名**、不要改：`/api/lumina`、`public/lumina-sw.js` 與快取 `lumina-offline-*`、`LUMINA_*` 環境變數、儲存鍵 `ae-lumina*`、Blob 前綴 `ae-lumina`、`window.__lumina`、版本標記 `lumina-r9`，以及 ops/ 底下的檔名。網址 `/gallery`、`/showcase` 與分支名也不變。
+> 程式內部代號也已全部改名（`/api/shinity`、`shinity-sw.js`、`SHINITY_*` 環境變數、`ae-shinity*` 儲存鍵與雲端資料夾、`window.__shinity`、`shinity-r9`）。舊資料自動搬家：雲端作品庫 `ae-lumina/` 第一次被讀取時整批搬到 `ae-shinity/`（複製、確認後刪除舊的）；裝置上的設定與作品也會自動搬過來；舊網址 `/api/lumina` 轉到新的；Vercel 上舊的 `LUMINA_*` 環境變數仍可讀，可之後再改名。網址 `/gallery`、`/showcase` 不含舊名，不變。
 
 產品定位：AE Universe Creation 的數位藝術精品展演服務。低調奢華、單純專注、讓人沉浸在作品裡。
 網址（部署後）：`/gallery`（檔案 `public/gallery.html` + `public/gallery/*`）
@@ -64,18 +64,18 @@ node tests/gallery.smoke.mjs http://localhost:8765 ./shots
 - 限制：R2 的驗證在瀏覽器端，屬「防一般人」等級；工作室加入的作品只存在該台裝置。R3 改為伺服器驗證＋雲端作品庫。
 
 ### 驗收（PV）
-`LUMINA_STUDIO_PASS=<密碼> node tests/gallery.smoke.mjs http://localhost:8765 ./shots`
+`SHINITY_STUDIO_PASS=<密碼> node tests/gallery.smoke.mjs http://localhost:8765 ./shots`
 新增檢查：客戶看不到加入功能、錯誤密碼被拒、長按＋正確密碼可進入、六種模式各自套用正確預設、微調與恢復、六種模式在播放器中實際播放（含四種新音景）零錯誤。
 R2 結果：**111/111 通過**（桌機、iPhone 13、電視 1920×1080）。
 
 ## R3（2026-11-21）— AE 雲端作品庫＋完整展覽功能 ✅
 
 ### 雲端作品庫（AE 工作室）
-- 工作室密碼改由**伺服器驗證**（`api/lumina.js`，密碼只存在 Vercel 環境變數 `LUMINA_STUDIO_PASSWORD`）；登入 12 小時有效，換密碼即全部失效。R2 寫在瀏覽器裡的密碼雜湊已移除。
+- 工作室密碼改由**伺服器驗證**（`api/shinity.js`，密碼只存在 Vercel 環境變數 `SHINITY_STUDIO_PASSWORD`）；登入 12 小時有效，換密碼即全部失效。R2 寫在瀏覽器裡的密碼雜湊已移除。
 - AE 在工作室加入的作品（圖片、GIF、影片）與 AE 曲目存到 **Vercel Blob（私有）**，所有客戶裝置同步。
 - 作品資料：中英文標題、年份、媒材、尺寸、中英文作品說明、對客戶隱藏。館藏 27 幅也可編輯（刪除時改為隱藏）。
 - 排序（往前／往後）、刪除、影片自動擷取封面。
-- 設定步驟見 `ops/LUMINA_SETUP.md`（Owner 需在 Vercel 設定密碼並確認 Blob）。
+- 設定步驟見 `ops/SHINITY_SETUP.md`（Owner 需在 Vercel 設定密碼並確認 Blob）。
 
 ### 靜態展覽
 - **作品賞析**：單幅全螢幕細看，雙擊／滾輪／雙指縮放、拖曳移動，右側（手機在下方）展簽：標題、年份・媒材・尺寸、作品說明；可左右切換，一鍵從這幅開始展演。
@@ -91,14 +91,14 @@ R2 結果：**111/111 通過**（桌機、iPhone 13、電視 1920×1080）。
 - **展演連結（電視／大廳一鍵開播）**：複製連結 `…/gallery?show=<展覽>&mode=<模式>&autoplay=1`，在電視或任何裝置打開即出現「輕觸開始展演」；被隱藏的作品不會出現在客戶的連結中。
 
 ### 驗收（PV）
-`node tests/gallery.smoke.mjs all ./shots` — 測試會自動啟動本機 API（`tests/lumina-dev-server.mjs`，用資料夾代替 Blob）與一組臨時密碼，不需要真實密碼。
+`node tests/gallery.smoke.mjs all ./shots` — 測試會自動啟動本機 API（`tests/shinity-dev-server.mjs`，用資料夾代替 Blob）與一組臨時密碼，不需要真實密碼。
 三種螢幕（桌機 1440×900、iPhone 13、電視 1920×1080）各 34 項：客戶無法加入或編輯、六種模式、畫框模式 1 小時、賞析縮放與切換、六種轉場、作品列跳轉、六種模式實際播放、伺服器拒絕錯誤密碼、長按＋密碼登入、上傳圖片與影片、雙語編輯、排序、建立展覽（含模式與說明）、單幅秒數與轉場、隱藏作品、展演連結、訪客開啟連結、單幅 7 秒生效、影片實際播放、零 console 錯誤。
 R3 結果：**102/102 通過**。
 
 ### 已知限制（R3）
 - 單檔 4MB 上限（Vercel 函式限制）；更大的影片需改為瀏覽器直傳 Blob，排在之後的回合。
 - 作品檔目前任何人有網址即可觀看；R4 會員制會改成驗證典藏權限後才給檔。
-- 需要 Owner 完成 `ops/LUMINA_SETUP.md` 的 Vercel 設定，正式站的工作室才能使用（本機測試已完整驗證）。
+- 需要 Owner 完成 `ops/SHINITY_SETUP.md` 的 Vercel 設定，正式站的工作室才能使用（本機測試已完整驗證）。
 
 ## R4（2026-11-21）— Maison AE「外在沉靜，內在綻放」精品質感 ✅
 
@@ -232,8 +232,8 @@ Owner 決定：手機遙控與聲音反應拆開，先做較容易的聲音反�
   - AE 工作室：新增、編輯一律拒絕（STORAGE_DOWN），並提示「暫停新增與編輯」。
   - 恢復後作品庫完整（模擬停機測試：28 → 28）。
 - **降低免費方案用量**：作品清單由 Vercel 邊緣快取 60 秒，訪客共用一份；瀏覽器每次都確認最新版，不會看到過期內容。圖檔每個檔名只用一次、快取一年；更換封面會換新檔名並刪除舊檔。
-- **文件**：`ops/LUMINA_SETUP.md` 加入免費方案用量說明；新增 `ops/LUMINA_DEVICE_CHECKLIST.md`（實機驗收 13 項）。
-- **Vercel 檢查（唯讀）**：分支推送會自動產生 Preview；`LUMINA_STUDIO_PASSWORD` 尚未設定（由 Owner 自行設定）；Blob 儲存空間依團隊交接信，預計 11/24 13:59（台北）恢復。
+- **文件**：`ops/SHINITY_SETUP.md` 加入免費方案用量說明；新增 `ops/SHINITY_DEVICE_CHECKLIST.md`（實機驗收 13 項）。
+- **Vercel 檢查（唯讀）**：分支推送會自動產生 Preview；`SHINITY_STUDIO_PASSWORD` 尚未設定（由 Owner 自行設定）；Blob 儲存空間依團隊交接信，預計 11/24 13:59（台北）恢復。
 - **曲庫**：尚未收到 7 首曲目，維持原狀。
 
 ### 驗收（PV）
@@ -243,7 +243,7 @@ Owner 決定：手機遙控與聲音反應拆開，先做較容易的聲音反�
 ### 尚未完成（需要 Owner）
 - 合併到正式站：需 Owner 明確同意。
 - 工作室密碼：Owner 在 Vercel 自行設定。
-- 實機驗收：依 `ops/LUMINA_DEVICE_CHECKLIST.md`；觸控、聲音、麥克風在實機測過前不算驗證。
+- 實機驗收：依 `ops/SHINITY_DEVICE_CHECKLIST.md`；觸控、聲音、麥克風在實機測過前不算驗證。
 - 雲端作品庫線上實測：等 Blob 額度恢復後。
 
 ## R10-1 上帝模式（2026-11-22）✅
@@ -297,7 +297,7 @@ Owner 決定：手機遙控與聲音反應拆開，先做較容易的聲音反�
   - 100 BPM 拍手鎖定 100 BPM，燈光落在拍手上，最大誤差約 6 ms；
   - 房間音樂的鈸聲不閃。
 - tests/lock.test.mjs 7/7。
-- 限制：以上是模擬麥克風的結果；實機（Mac 內建麥克風、喇叭距離、房間回音）需 Owner 實測，見 LUMINA_DEVICE_CHECKLIST。
+- 限制：以上是模擬麥克風的結果；實機（Mac 內建麥克風、喇叭距離、房間回音）需 Owner 實測，見 SHINITY_DEVICE_CHECKLIST。
 
 ## 授權：斷網、重開機、複製機器（2026-11-22）✅
 - 每個授權可設定「沒有網路時可播放」1／3／7／14／30 天（預設 3 天）。
@@ -332,7 +332,7 @@ Owner 決定：手機遙控與聲音反應拆開，先做較容易的聲音反�
 ## 第一次三方審查（2026-11-22）✅ bug 已修
 - 授權與資安：修 12 項（離線到期日與改時鐘、同時建立授權不再遺失、螢幕與 AE 同時寫入不再互蓋、必須帶工作階段編號、
   憑證失效自動以啟動碼重新登入、服務中斷與錯誤碼分開顯示、長時間斷線後自動續播、網址不留啟動碼、離線快取只服務展演頁…）。
-  建議另設 Vercel 環境變數 LUMINA_LICENSE_SECRET（由 Owner 設定），之後改工作室密碼不會影響客戶螢幕。tests/license.test.mjs 33/33。
+  建議另設 Vercel 環境變數 SHINITY_LICENSE_SECRET（由 Owner 設定），之後改工作室密碼不會影響客戶螢幕。tests/license.test.mjs 33/33。
 - 聲音與鎖拍：修 8 項（開關聲音互動後仍會閃、快速開關不會留下開著的麥克風、筆電麥克風＋小聲音樂鎖在大鼓不再偏半拍、
   鎖拍不會卡死、說話不易誤鎖、背景回來重新對拍、資源不外漏、一個聲音不會重複餵入）。tests/clap.test.mjs 13/13。
 - LED 燈條：修 9 項（換作品不熄燈、黑幕真的只有燈光、不跟著運鏡歪斜、手機效能（4 倍降速下最差由 349 ms 改善到 18–50 ms）、

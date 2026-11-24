@@ -10,16 +10,16 @@ const buf = Buffer.alloc(44 + n * 2); buf.write('RIFF', 0); buf.writeUInt32LE(36
 for (let i = 0; i < n; i++) buf.writeInt16LE(Math.max(-32767, Math.min(32767, Math.round(d[i] * 32767))), 44 + i * 2);
 fs.writeFileSync(O + '/room.wav', buf);
 const lib = fs.mkdtempSync(O + '/lib-');
-const srv = spawn(process.execPath, [new URL('./lumina-dev-server.mjs', import.meta.url).pathname, '8816'], { env: { ...process.env, LUMINA_FS_DIR: lib, LUMINA_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
+const srv = spawn(process.execPath, [new URL('./shinity-dev-server.mjs', import.meta.url).pathname, '8816'], { env: { ...process.env, SHINITY_FS_DIR: lib, SHINITY_STUDIO_PASSWORD: 'x' }, stdio: 'pipe' });
 await new Promise(r => srv.stdout.on('data', x => String(x).includes('dev server') && r()));
 const b = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-audio-capture=${O}/room.wav`] });
 const p = await (await b.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['microphone'] })).newPage();
-await p.goto('http://localhost:8816/gallery.html', { waitUntil: 'networkidle' }); await p.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length);
+await p.goto('http://localhost:8816/gallery.html', { waitUntil: 'networkidle' }); await p.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length);
 await p.click('#openSettings'); await p.click('.lw-mode[data-mode=party]'); await p.click('#interactToggles [data-opt=listen]'); await p.waitForTimeout(800); await p.click('#closeSettings');
-await p.click('#playBtn'); await p.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
+await p.click('#playBtn'); await p.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 30000 });
 await p.evaluate(() => document.getElementById('musicBtn').click()); // our music off: the room's music leads
 const modes = []; let counts = [];
-for (let k = 0; k < 16; k++) { await p.waitForTimeout(500); const s = await p.evaluate(() => ({ m: window.__lumina.state.laserMode, beats: window.__lumina.state.soundStats.beats })); modes.push(s.m); counts.push(s.beats); }
+for (let k = 0; k < 16; k++) { await p.waitForTimeout(500); const s = await p.evaluate(() => ({ m: window.__shinity.state.laserMode, beats: window.__shinity.state.soundStats.beats })); modes.push(s.m); counts.push(s.beats); }
 const heard = counts.at(-1) - counts[0], ok1 = modes.slice(2).every(m => m === 'room'), ok2 = heard >= 8 && heard <= 20;
 console.log(`${ok1 ? 'PASS' : 'FAIL'}  lasers follow the room's music (our music off, microphone on)  — ${JSON.stringify(modes)}`);
 console.log(`${ok2 ? 'PASS' : 'FAIL'}  the room's kicks are heard at about its tempo  — ${heard} kicks in 8 s (120 BPM)`);

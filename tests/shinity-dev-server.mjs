@@ -1,6 +1,6 @@
-// Local dev/test server for AE Shinity: serves ./public and runs api/lumina.js with a
-// Vercel-like req/res, storing data in LUMINA_FS_DIR instead of Vercel Blob.
-// Usage: LUMINA_FS_DIR=/tmp/lumina LUMINA_STUDIO_PASSWORD=... node tests/lumina-dev-server.mjs [port]
+// Local dev/test server for AE Shinity: serves ./public and runs api/shinity.js with a
+// Vercel-like req/res, storing data in SHINITY_FS_DIR instead of Vercel Blob.
+// Usage: SHINITY_FS_DIR=/tmp/shinity SHINITY_STUDIO_PASSWORD=... node tests/shinity-dev-server.mjs [port]
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
@@ -10,15 +10,15 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pub = path.join(root, 'public');
-const handler = require(path.join(root, 'api', 'lumina.js'));
+const handler = require(path.join(root, 'api', 'shinity.js'));
 const port = Number(process.argv[2] || 8766);
-if (!process.env.LUMINA_FS_DIR) { console.error('Set LUMINA_FS_DIR'); process.exit(1); }
+if (!process.env.SHINITY_FS_DIR) { console.error('Set SHINITY_FS_DIR'); process.exit(1); }
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.mp4': 'video/mp4', '.m4a': 'audio/mp4' };
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
-  if (url.pathname === '/api/lumina') {
+  if (url.pathname === '/api/shinity') {
     req.query = Object.fromEntries(url.searchParams);
     const chunks = [];
     for await (const c of req) chunks.push(c);
@@ -46,4 +46,4 @@ http.createServer(async (req, res) => {
   }
   res.setHeader('Content-Length', String(size));
   fs.createReadStream(file).pipe(res);
-}).listen(port, () => console.log(`lumina dev server on http://localhost:${port}`));
+}).listen(port, () => console.log(`shinity dev server on http://localhost:${port}`));

@@ -21,8 +21,8 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const ctxOpts = which === 'phone' ? { ...devices['iPhone 13'] } : { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 };
 const port = which === 'phone' ? 8782 : 8781;
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-ed-'));
-const srv = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), String(port)], { env: { ...process.env, LUMINA_FS_DIR: dir, LUMINA_STUDIO_PASSWORD: PASS }, stdio: 'pipe' });
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-ed-'));
+const srv = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), String(port)], { env: { ...process.env, SHINITY_FS_DIR: dir, SHINITY_STUDIO_PASSWORD: PASS }, stdio: 'pipe' });
 process.on('exit', () => { try { srv.kill(); } catch { /* ignore */ } });
 await new Promise((res, rej) => { srv.stdout.on('data', d => String(d).includes('dev server') && res()); srv.on('exit', c => rej(new Error('server exited ' + c))); });
 const base = `http://localhost:${port}`;
@@ -35,7 +35,7 @@ try {
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
   await page.goto(base + '/gallery.html', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
+  await page.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0);
   const box = await page.locator('.lw-wordmark').boundingBox();
   page.once('dialog', d => d.accept(PASS));
   await page.mouse.move(box.x + 20, box.y + box.height / 2); await page.mouse.down(); await wait(3300); await page.mouse.up();
@@ -57,14 +57,14 @@ try {
     const buf = new Uint8Array(await new Blob(parts).arrayBuffer()); let s = ''; for (const b of buf) s += String.fromCharCode(b); return btoa(s);
   });
   await page.setInputFiles('#fileInput', { name: 'Golden Breath.webm', mimeType: 'video/webm', buffer: Buffer.from(webm, 'base64') });
-  await page.waitForFunction(() => window.__lumina.state.works === 28, null, { timeout: 20000 });
+  await page.waitForFunction(() => window.__shinity.state.works === 28, null, { timeout: 20000 });
   await page.waitForSelector('#toast', { state: 'hidden', timeout: 8000 }).catch(() => {});
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])');
   await page.click('.lw-mode[data-mode=hotel]'); await page.click('#closeSettings');
 
   // export with nothing selected: hidden (unnamed) works must stay out
-  const keep = await page.evaluate(() => [...window.__lumina.state.settings.selected]);
+  const keep = await page.evaluate(() => [...window.__shinity.state.settings.selected]);
   await page.evaluate(() => document.querySelector('#clearSel').click());
   await page.click('[data-show-act=export]'); await page.waitForSelector('#exportDialog[open]');
   check(`[${which}] exporting everything leaves hidden (unnamed) works out`, /22/.test(await page.textContent('#exportStatus')), await page.textContent('#exportStatus'));
@@ -107,32 +107,32 @@ try {
   await p2.goto('https://nft.example/host.html');
   let fr = null;
   for (let i = 0; i < 50 && !fr; i++) { fr = p2.frames().find(f => f.url().endsWith('/edition.html')); if (!fr) await wait(100); }
-  await fr.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0, null, { timeout: 15000 });
-  const st = await fr.evaluate(() => { const s = window.__lumina.state; return { edition: s.edition, works: s.works, studio: s.studio, cloud: s.cloud, mode: s.settings.mode, origin: self.origin }; });
+  await fr.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0, null, { timeout: 15000 });
+  const st = await fr.evaluate(() => { const s = window.__shinity.state; return { edition: s.edition, works: s.works, studio: s.studio, cloud: s.cloud, mode: s.settings.mode, origin: self.origin }; });
   check(`[${which}] NFT sandbox: edition boots from the embedded manifest (opaque origin)`, st.edition && st.works === 4 && st.cloud === 'edition' && st.origin === 'null', JSON.stringify(st));
   check(`[${which}] NFT sandbox: start gate shows edition 3 / 88 and the motto`, (await fr.isVisible('#startGate')) && /3/.test(await fr.textContent('#gateEdition')) && /88/.test(await fr.textContent('#gateEdition')) && (await fr.textContent('#gateMotto')).includes('外在沉靜'));
   await p2.screenshot({ path: `${out}/${which}-nft-gate.png` });
   check(`[${which}] NFT sandbox: no studio, no upload, no share/export`, !st.studio && !(await fr.isVisible('label.lw-upload')) && (await fr.locator('[data-show-act]').count()) === 0 && (await fr.locator('[data-act=edit], [data-act=download]').count()) === 0);
   await fr.click('#gateBtn');
-  await fr.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 20000 });
-  const ps = await fr.evaluate(() => { const s = window.__lumina.state; return { list: s.list, mode: s.settings.mode, blooms: s.blooms, first: s.curId }; });
+  await fr.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 20000 });
+  const ps = await fr.evaluate(() => { const s = window.__shinity.state; return { list: s.list, mode: s.settings.mode, blooms: s.blooms, first: s.curId }; });
   check(`[${which}] NFT sandbox: the show opens on the first work (Eternal Sun 盛明)`, ps.first === 'ae01', ps.first);
   check(`[${which}] NFT sandbox: show plays in the exported mode (Hotel) with Inner Bloom`, ps.list === 4 && ps.mode === 'hotel' && ps.blooms > 0, JSON.stringify(ps));
   await wait(800); await p2.screenshot({ path: `${out}/${which}-nft-play.png` });
   let trOk = true;
   for (const k of ['innerbloom', 'rings', 'stardust']) {
-    await fr.evaluate((k) => { window.__lumina.state.settings.transition = k; }, k);
-    const b = await fr.evaluate(() => window.__lumina.state.idx);
-    await fr.evaluate(() => window.__lumina.go(1));
-    await fr.waitForFunction((b) => !window.__lumina.state.busy && window.__lumina.state.idx !== b, b, { timeout: 12000 }).catch(() => { trOk = false; });
+    await fr.evaluate((k) => { window.__shinity.state.settings.transition = k; }, k);
+    const b = await fr.evaluate(() => window.__shinity.state.idx);
+    await fr.evaluate(() => window.__shinity.go(1));
+    await fr.waitForFunction((b) => !window.__shinity.state.busy && window.__shinity.state.idx !== b, b, { timeout: 12000 }).catch(() => { trOk = false; });
   }
   check(`[${which}] NFT sandbox: signature transitions run`, trOk);
   check(`[${which}] NFT sandbox: recording is available in the edition`, await fr.evaluate(() => !document.getElementById('recBtn').hidden && !!window.MediaRecorder));
   const vIdx = await fr.evaluate(() => [...document.querySelectorAll('.pl-thumb')].findIndex(b => b.querySelector('span')) );
   const vi = vIdx >= 0 ? vIdx : 3;
-  await fr.evaluate((i) => window.__lumina.jump(i), vi);
-  await fr.waitForFunction((i) => window.__lumina.state.idx === i && !window.__lumina.state.busy, vi, { timeout: 15000 }).catch(() => {});
-  const vid = await fr.evaluate(async () => { const s = window.__lumina.state; const sl = document.querySelectorAll('.pl-slide')[s.cur]; const v = sl.querySelector('video'); await new Promise(r => setTimeout(r, 700)); return { kind: sl.dataset.kind, w: v.videoWidth, t: v.currentTime }; });
+  await fr.evaluate((i) => window.__shinity.jump(i), vi);
+  await fr.waitForFunction((i) => window.__shinity.state.idx === i && !window.__shinity.state.busy, vi, { timeout: 15000 }).catch(() => {});
+  const vid = await fr.evaluate(async () => { const s = window.__shinity.state; const sl = document.querySelectorAll('.pl-slide')[s.cur]; const v = sl.querySelector('video'); await new Promise(r => setTimeout(r, 700)); return { kind: sl.dataset.kind, w: v.videoWidth, t: v.currentTime }; });
   check(`[${which}] NFT sandbox: motion work (embedded video) plays`, vid.kind === 'video' && vid.w > 0 && vid.t > 0, JSON.stringify(vid));
   const vp = p2.viewportSize();
   await p2.mouse.click(vp.width * 0.4, vp.height * 0.4); await wait(200);
@@ -158,9 +158,9 @@ try {
   const net = []; p3.on('request', r => { if (!/^(file|data|blob):/.test(r.url())) net.push(r.url()); });
   const e3 = []; p3.on('pageerror', e => e3.push(String(e)));
   await p3.goto('file://' + path.resolve(file));
-  await p3.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length === 4, null, { timeout: 15000 });
+  await p3.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length === 4, null, { timeout: 15000 });
   await p3.click('#gateBtn');
-  await p3.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 20000 });
+  await p3.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 20000 });
   check(`[${which}] offline file: plays from disk with no network`, net.length === 0 && e3.length === 0, net.concat(e3).slice(0, 2).join(' | '));
   await off.close();
 } catch (e) {

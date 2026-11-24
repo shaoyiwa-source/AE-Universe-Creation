@@ -6,9 +6,9 @@ R3 起，AE 工作室的密碼由網站伺服器驗證，作品存放在 Vercel 
 ## 步驟 1：設定工作室密碼
 1. 登入 Vercel → 進入專案 **ae-universe-creation**。
 2. **Settings → Environment Variables → Add New**。
-3. Key 填 `LUMINA_STUDIO_PASSWORD`，Value 填你自己決定的密碼（建議 16 字以上，例如三個英文單字加四位數字）。
+3. Key 填 `SHINITY_STUDIO_PASSWORD`，Value 填你自己決定的密碼（建議 16 字以上，例如三個英文單字加四位數字）。
 4. Environments 勾選 **Production** 與 **Preview**，按 Save。
-5. （選填）再加一個 `LUMINA_SESSION_SECRET`，填一串隨機長字串；之後換密碼時，舊的登入會自動失效。
+5. （選填）再加一個 `SHINITY_SESSION_SECRET`，填一串隨機長字串；之後換密碼時，舊的登入會自動失效。
 
 > 密碼只存在 Vercel，不在程式碼或 GitHub 裡。要換密碼：改這個值並重新部署即可。
 
@@ -35,7 +35,7 @@ Vercel Blob 免費方案（Hobby）有每月用量上限，額度用完時儲存
 ## 疑難排解
 | 畫面訊息 | 原因 | 處理 |
 |---|---|---|
-| 伺服器尚未設定工作室密碼 | 沒有 `LUMINA_STUDIO_PASSWORD`，或設定後沒重新部署 | 回到步驟 1、3 |
+| 伺服器尚未設定工作室密碼 | 沒有 `SHINITY_STUDIO_PASSWORD`，或設定後沒重新部署 | 回到步驟 1、3 |
 | 雲端作品庫尚未設定 | 專案沒有連到 Blob store | 回到步驟 2 |
 | 密碼不正確 | 密碼打錯 | 重新長按輸入 |
 | 雲端作品庫暫時無法連線 | Blob 儲存空間被暫停（額度用完）或網路問題 | 展示牆不受影響；等額度恢復或到 Storage 查看狀態，恢復後重新整理即可 |

@@ -22,12 +22,12 @@ const ctxOpts = which === 'phone' ? { ...devices['iPhone 13'] } : which === 'tv'
 const port = { desktop: 8796, phone: 8797, tv: 8798 }[which];
 const PASS = 'r9-' + Date.now();
 
-const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-r9-'));
-const srv = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), String(port)], { env: { ...process.env, LUMINA_FS_DIR: lib, LUMINA_STUDIO_PASSWORD: PASS }, stdio: 'pipe' });
+const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-r9-'));
+const srv = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), String(port)], { env: { ...process.env, SHINITY_FS_DIR: lib, SHINITY_STUDIO_PASSWORD: PASS }, stdio: 'pipe' });
 process.on('exit', () => { try { srv.kill(); } catch { /* ignore */ } });
 await new Promise((res, rej) => { srv.stdout.on('data', d => String(d).includes('dev server') && res()); srv.on('exit', c => rej(new Error('server exited ' + c))); });
 const base = `http://localhost:${port}`;
-const api = (q, opt = {}) => fetch(`${base}/api/lumina?${q}`, opt);
+const api = (q, opt = {}) => fetch(`${base}/api/shinity?${q}`, opt);
 
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
 try {
@@ -35,22 +35,22 @@ try {
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
   await page.goto(base + '/gallery.html', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
+  await page.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0);
 
   // ---- 1. titles vs paintings, every work, captions on (Online Exhibition) ----
   await page.click('#openSettings'); await page.waitForSelector('#settings:not([hidden])');
   await page.click('.lw-mode[data-mode=online]'); await page.click('#closeSettings');
   await page.click('#playBtn');
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
-  const n = await page.evaluate(() => window.__lumina.state.list);
+  await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 30000 });
+  const n = await page.evaluate(() => window.__shinity.state.list);
   const bad = [], shrunk = [];
   for (let i = 0; i < n; i++) {
-    await page.evaluate((k) => window.__lumina.jump(k), i);
-    await page.waitForFunction((k) => window.__lumina.state.idx === k && !window.__lumina.state.busy, i, { timeout: 15000 });
+    await page.evaluate((k) => window.__shinity.jump(k), i);
+    await page.waitForFunction((k) => window.__shinity.state.idx === k && !window.__shinity.state.busy, i, { timeout: 15000 });
     await page.waitForFunction(() => !document.getElementById('caption').classList.contains('off'), null, { timeout: 8000 }).catch(() => {});
     await wait(250);
     const g = await page.evaluate(() => {
-      const s = window.__lumina.state, el = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img, video');
+      const s = window.__shinity.state, el = document.querySelectorAll('.pl-slide')[s.cur].querySelector('img, video');
       const a = { x: parseFloat(el.style.left), y: parseFloat(el.style.top), w: parseFloat(el.style.width), h: parseFloat(el.style.height) };
       const cap = document.getElementById('caption'), t = document.getElementById('capTitle').getBoundingClientRect();
       const ix = Math.max(0, Math.min(a.x + a.w, t.right) - Math.max(a.x, t.left)), iy = Math.max(0, Math.min(a.y + a.h, t.bottom) - Math.max(a.y, t.top));
@@ -64,10 +64,10 @@ try {
   check(`[${which}] titles never sit on a painting (${n} works)`, bad.length === 0, bad.slice(0, 6).join(' '));
   check(`[${which}] paintings stay large (≥ 60% of the screen's long side)`, shrunk.length === 0, shrunk.join(' '));
   // captions off → paintings take the full frame again
-  const fullBefore = await page.evaluate(() => { const s = window.__lumina.state; return parseFloat(document.querySelectorAll('.pl-slide')[s.cur].querySelector('img, video').style.width); });
-  await page.evaluate(() => { const s = window.__lumina.state.settings; s.display.captions = false; });
+  const fullBefore = await page.evaluate(() => { const s = window.__shinity.state; return parseFloat(document.querySelectorAll('.pl-slide')[s.cur].querySelector('img, video').style.width); });
+  await page.evaluate(() => { const s = window.__shinity.state.settings; s.display.captions = false; });
   await page.evaluate(() => window.dispatchEvent(new Event('resize'))); await wait(300);
-  const fullAfter = await page.evaluate(() => { const s = window.__lumina.state; return parseFloat(document.querySelectorAll('.pl-slide')[s.cur].querySelector('img, video').style.width); });
+  const fullAfter = await page.evaluate(() => { const s = window.__shinity.state; return parseFloat(document.querySelectorAll('.pl-slide')[s.cur].querySelector('img, video').style.width); });
   check(`[${which}] without titles the painting uses the whole frame`, fullAfter >= fullBefore - 0.5, `${fullBefore.toFixed(0)} → ${fullAfter.toFixed(0)} px`);
   await page.keyboard.press('Escape'); await wait(300); await page.keyboard.press('Escape'); await wait(300);
   check(`[${which}] no page errors while playing`, errs.length === 0, errs.slice(0, 2).join(' | '));
@@ -98,9 +98,9 @@ try {
     // the page during an outage: wall plays, studio is told why
     fs.writeFileSync(path.join(lib, '.down'), '1');
     const c2 = await browser.newContext(ctxOpts); const p2 = await c2.newPage(); const e2 = []; p2.on('pageerror', e => e2.push(String(e)));
-    await p2.goto(base + '/gallery.html', { waitUntil: 'networkidle' }); await p2.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
-    const st = await p2.evaluate(() => ({ cloud: window.__lumina.state.cloud, works: window.__lumina.state.works }));
-    await p2.click('#playBtn'); await p2.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 30000 });
+    await p2.goto(base + '/gallery.html', { waitUntil: 'networkidle' }); await p2.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0);
+    const st = await p2.evaluate(() => ({ cloud: window.__shinity.state.cloud, works: window.__shinity.state.works }));
+    await p2.click('#playBtn'); await p2.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 30000 });
     check('[page] outage: the wall still loads and plays', st.cloud === 'degraded' && st.works >= 10 && e2.length === 0, JSON.stringify(st));
     await p2.keyboard.press('Escape'); await wait(300); await p2.keyboard.press('Escape'); await wait(300);
     const box = await p2.locator('.lw-wordmark').boundingBox();

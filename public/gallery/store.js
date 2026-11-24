@@ -1,5 +1,6 @@
 // AE Shinity — local persistence (IndexedDB for blobs, localStorage for settings)
-const DB_NAME = 'ae-lumina';
+const DB_NAME = 'ae-shinity';
+const OLD_DB = 'ae-lumina'; // before the rename (Lumina Wall → AE Shinity): moved over once, then removed
 const DB_VER = 1;
 let dbPromise = null;
 
@@ -14,13 +15,41 @@ function openDb() {
         if (!db.objectStoreNames.contains('works')) db.createObjectStore('works', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('media')) db.createObjectStore('media', { keyPath: 'id' });
       };
-      req.onsuccess = () => resolve(req.result);
+      req.onsuccess = () => moveOldDb(req.result).then(() => resolve(req.result), () => resolve(req.result));
       req.onerror = () => reject(req.error);
       req.onblocked = () => reject(new Error('IndexedDB blocked'));
     } catch (e) { reject(e); }
   });
   dbPromise.catch(() => { dbPromise = null; });
   return dbPromise;
+}
+
+// one-time move of works saved on this device under the old name
+function moveOldDb(db) {
+  try { if (localStorage.getItem('ae-shinity-db-moved')) return Promise.resolve(); } catch { return Promise.resolve(); }
+  const done = () => { try { localStorage.setItem('ae-shinity-db-moved', '1'); } catch { /* ignore */ } };
+  return new Promise((resolve) => {
+    if (!indexedDB.databases) { done(); resolve(); return; }
+    indexedDB.databases().then((list) => {
+      if (!list.some(d => d.name === OLD_DB)) { done(); resolve(); return; }
+      const r = indexedDB.open(OLD_DB);
+      r.onerror = () => resolve();
+      r.onsuccess = () => {
+        const old = r.result, names = ['works', 'media'].filter(n => old.objectStoreNames.contains(n));
+        if (!names.length) { old.close(); indexedDB.deleteDatabase(OLD_DB); done(); resolve(); return; }
+        const tx = old.transaction(names, 'readonly'), data = {};
+        names.forEach(n => { const q = tx.objectStore(n).getAll(); q.onsuccess = () => { data[n] = q.result || []; }; });
+        tx.oncomplete = () => {
+          old.close();
+          const w = db.transaction(names, 'readwrite');
+          names.forEach(n => data[n].forEach(v => w.objectStore(n).put(v)));
+          w.oncomplete = () => { indexedDB.deleteDatabase(OLD_DB); done(); resolve(); };
+          w.onerror = () => resolve();
+        };
+        tx.onerror = () => resolve();
+      };
+    }, () => resolve());
+  });
 }
 
 function run(storeName, mode, fn) {
@@ -41,10 +70,15 @@ export const db = {
   del: (s, id) => run(s, 'readwrite', st => st.delete(id)),
 };
 
-const SETTINGS_KEY = 'ae-lumina-settings';
+const SETTINGS_KEY = 'ae-shinity-settings';
 export function loadSettings(defaults, key = SETTINGS_KEY) {
   let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
+  try {
+    let raw = localStorage.getItem(key);
+    const oldKey = key.replace(/^ae-shinity/, 'ae-lumina'); // settings saved before the rename (Lumina Wall → AE Shinity)
+    if (raw === null && oldKey !== key) { raw = localStorage.getItem(oldKey); if (raw !== null) { localStorage.setItem(key, raw); localStorage.removeItem(oldKey); } }
+    saved = JSON.parse(raw || '{}') || {};
+  } catch { saved = {}; }
   const out = structuredClone(defaults);
   for (const k of Object.keys(defaults)) {
     if (!(k in saved)) continue;

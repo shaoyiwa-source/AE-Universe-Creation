@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/lumina",
+      "destination": "/api/shinity"
+    },
+    {
       "source": "/gallery",
       "destination": "/gallery.html"
     },

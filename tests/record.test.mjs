@@ -18,8 +18,8 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const phone = which === 'phone';
 const ctxOpts = phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 };
 const port = phone ? 8784 : 8783;
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lumina-rec-'));
-const srv = spawn(process.execPath, [path.join(here, 'lumina-dev-server.mjs'), String(port)], { env: { ...process.env, LUMINA_FS_DIR: dir, LUMINA_STUDIO_PASSWORD: 'x-' + Date.now() }, stdio: 'pipe' });
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'shinity-rec-'));
+const srv = spawn(process.execPath, [path.join(here, 'shinity-dev-server.mjs'), String(port)], { env: { ...process.env, SHINITY_FS_DIR: dir, SHINITY_STUDIO_PASSWORD: 'x-' + Date.now() }, stdio: 'pipe' });
 process.on('exit', () => { try { srv.kill(); } catch { /* ignore */ } });
 await new Promise((res, rej) => { srv.stdout.on('data', d => String(d).includes('dev server') && res()); srv.on('exit', c => rej(new Error('server exited ' + c))); });
 
@@ -30,10 +30,10 @@ try {
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
   await page.goto(`http://localhost:${port}/gallery.html`, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.__lumina && document.querySelectorAll('.screen').length > 0);
+  await page.waitForFunction(() => window.__shinity && document.querySelectorAll('.screen').length > 0);
   for (const n of [1, 3, 10, 12]) await page.locator('.screen').nth(n - 1).locator('.screen-hit').click();
   await page.click('#playBtn');
-  await page.waitForFunction(() => window.__lumina.state.shown, null, { timeout: 20000 });
+  await page.waitForFunction(() => window.__shinity.state.shown, null, { timeout: 20000 });
   const ui = async (sel) => { const v = page.viewportSize(); await page.mouse.move(v.width * 0.5, v.height * 0.25); await wait(150); await page.click(sel); };
 
   const shots = phone ? [['story', 1080, 1920], ['square', 1080, 1080]] : [['story', 1080, 1920], ['wallpaper', 1080, 1920], ['wide', 1920, 1080]];
@@ -48,13 +48,13 @@ try {
     }
     await page.click(`.rec-format[data-format=${format}]`);
     await page.click('#recSecs [data-secs="15"]');
-    await page.evaluate(() => { window.__lumina.rec.secs = 6; }); // shorter clip for the test; the UI offers 15 / 30 s
+    await page.evaluate(() => { window.__shinity.rec.secs = 6; }); // shorter clip for the test; the UI offers 15 / 30 s
     await page.click('#recGo');
     await page.waitForSelector('#recProgress:not([hidden])');
     await wait(3000);
     if (format === 'story') await page.screenshot({ path: `${out}/${which}-rec-progress.png` });
     await page.waitForSelector('#recResult:not([hidden])', { timeout: 60000 });
-    const clip = await page.evaluate(() => window.__lumina.lastClip);
+    const clip = await page.evaluate(() => window.__shinity.lastClip);
     check(`[${which}] ${format}: clip recorded (${clip && clip.mime}), ${format === 'wide' ? '16:9' : format === 'square' ? '1:1' : '9:16'}`, !!clip && clip.size > 60000 && sizeOk(clip.width, clip.height, ew, eh), JSON.stringify(clip));
     const px = await page.evaluate(async () => {
       const v = document.getElementById('recPreview');
@@ -76,7 +76,7 @@ try {
     await page.click('#recDone');
     await wait(400);
   }
-  const st = await page.evaluate(() => ({ playing: window.__lumina.state.playing, shown: window.__lumina.state.shown }));
+  const st = await page.evaluate(() => ({ playing: window.__shinity.state.playing, shown: window.__shinity.state.shown }));
   check(`[${which}] show resumes after recording`, st.playing && st.shown);
   check(`[${which}] no console errors`, errs.length === 0, errs.slice(0, 3).join(' | '));
 } catch (e) {
