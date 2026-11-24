@@ -55,7 +55,7 @@ const T = {
   usingPhoto: ['目前使用你的照片', 'Using your photo'],
   myGallery: ['我的收藏', 'My wallpapers'],
   galleryCount: ['{0} 張', '{0} saved'],
-  galleryEmpty: ['還沒有收藏。完成後在第四步「存進我的收藏」，就會出現在這裡。', 'Nothing saved yet. Save a wallpaper in step 4 and it will appear here.'],
+  galleryEmpty: ['還沒有收藏。做好後按右下角「完成」→「存進我的收藏」，就會出現在這裡。', 'Nothing saved yet. Tap Finish → Save to My wallpapers and it will appear here.'],
   galleryHint: ['點縮圖可以載入繼續編輯。', 'Tap a wallpaper to keep editing it.'],
   current: ['目前', 'Now'],
   delete: ['刪除', 'Delete'],
@@ -171,8 +171,23 @@ const T = {
   fabPeek: ['互動按鈕暫時出現囉', 'The AE button is back for now'],
   fabHidden: ['已隱藏，長按畫面可叫回', 'Hidden — long-press to bring it back'],
   themeIs: ['主題：{0}', 'Theme: {0}'],
-  needMusic: ['先到「風格 → 音樂」匯入音樂喔', 'Add music in Style → Music first'],
+  needMusic: ['先到「音樂」匯入音樂喔', 'Add music in Music first'],
   musicPaused: ['音樂暫停', 'Music paused'],
+
+  // 工具列
+  tPhoto: ['底圖', 'Photo'],
+  tComp: ['元件', 'Companions'],
+  tSym: ['符號', 'Symbols'],
+  tText: ['文字', 'Text'],
+  tDraw: ['畫筆', 'Draw'],
+  tImage: ['圖片', 'Image'],
+  tTheme: ['主題', 'Theme'],
+  tFilter: ['濾鏡', 'Filter'],
+  tMusic: ['音樂', 'Music'],
+  tFinish: ['完成', 'Finish'],
+  startHint: ['點下方的工具開始編輯', 'Tap a tool below to start'],
+  mClear: ['清除全部裝飾', 'Clear all details'],
+  mClearSub: ['移除文字、符號、筆畫與元件（可復原）', 'Remove text, symbols, drawings and companions (undoable)'],
 
   // 物件屬性
   selected: ['已選取：{0}', 'Selected: {0}'],

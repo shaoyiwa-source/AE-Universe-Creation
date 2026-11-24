@@ -1,7 +1,7 @@
 // AE動態桌布 — 離線快取（網路優先，失敗時用快取）
-const CACHE = 'ae-wallpaper-v13';
+const CACHE = 'ae-wallpaper-v17';
 const SHELL = [
-  '/wallpaper/', '/wallpaper/style.css?v=13', '/wallpaper/js/app.js?v=13', '/wallpaper/js/scene.js',
+  '/wallpaper/', '/wallpaper/style.css?v=17', '/wallpaper/js/app.js?v=17', '/wallpaper/js/scene.js',
   '/wallpaper/js/effects.js', '/wallpaper/js/sound.js', '/wallpaper/js/store.js', '/wallpaper/js/i18n.js',
   '/wallpaper/manifest.webmanifest', '/wallpaper/icons/ae-rings.webp',
 ];

@@ -36,13 +36,11 @@ const DEFAULT_BG = defaultBackground();
 let scene = createScene();
 setBase(scene, DEFAULT_BG, false);
 
-const STEPS = ['photo', 'decorate', 'style', 'finish'];
-const STEP_LABEL = { photo: 's1', decorate: 's2', style: 's3', finish: 's4' };
 const ui = {
-  step: 'photo', sub: { decorate: 'comp', style: 'theme' }, tool: 'select', drawMode: 'glow',
+  sheet: null, afterProps: null, tool: 'select', drawMode: 'glow',
   color: '#FF7EB6', size: 16, textColor: '#FF7EB6', textFont: 'round', textOutline: '#fff', removeBg: false,
   selected: null, draft: null,
-  recording: false, gallery: [], recDur: 10, visited: new Set(['photo']),
+  recording: false, gallery: [], recDur: 10,
 };
 const undoStack = [];
 const redoStack = [];
@@ -51,7 +49,7 @@ const canvas = $('#canvas');
 const ctx = canvas.getContext('2d');
 const pCanvas = $('#playerCanvas');
 const pctx = pCanvas.getContext('2d');
-const panel = $('#panel');
+const panel = $('#sheet');
 
 const COLORS = ['#FF7EB6', '#FF4D6D', '#FFB347', '#FFD93D', '#7ED957', '#4DD4C6', '#5AA9FF', '#9B7BFF', '#FFFFFF', '#4A3550'];
 const THEME_SWATCH = {
@@ -164,6 +162,7 @@ function renderMenu() {
     ['settings', 'mSettings', 'mSettingsSub'], ['rotate', 'mRotate', 'mRotateSub'],
     ['lock', 'mLock', 'mLockSub'], ['shortcut', 'mShortcut', 'mShortcutSub'],
   ];
+  items.push(['clear', 'mClear', 'mClearSub']);
   if (!NATIVE) items.push(['install', 'mInstall', 'mInstallSub']);
   $('#menuList').innerHTML = items.map(([id, a, b]) => `<button data-menu="${id}" type="button">${t(a)}<small>${t(b)}</small></button>`).join('')
     + `<a href="/">${t('mSite')}<small>${t('mSiteSub')}</small></a>`;
@@ -177,7 +176,12 @@ $('#btnMenu').onclick = () => {
 };
 $('#menuList').addEventListener('click', (e) => {
   const b = e.target.closest('[data-menu]'); if (!b) return;
-  ({ settings: showSettings, rotate: showRotation, lock: showLockGuide, shortcut: showSetWallpaperGuide, install: showInstallGuide })[b.dataset.menu]();
+  const clearAll = () => {
+    closeMenu();
+    if (!scene.objects.length || !confirm(t('confirmClear'))) return;
+    pushHistory(); scene.objects = []; select(null); autosave();
+  };
+  ({ settings: showSettings, rotate: showRotation, lock: showLockGuide, shortcut: showSetWallpaperGuide, install: showInstallGuide, clear: clearAll })[b.dataset.menu]();
 });
 
 // ======================================================================
@@ -197,31 +201,25 @@ function triggerTap(o, withSound = true) {
 // ======================================================================
 // 選取：依物件類型自動切到對應的面板
 // ======================================================================
-function select(o) {
+// showProps：在畫面上點選時打開屬性小面板；從工具面板新增物件時不切換面板
+function select(o, quiet = false, showProps = false) {
   const changed = ui.selected !== o;
   ui.selected = o;
-  $('#selBar').hidden = !o;
-  if (!changed) return;
-  if (o && ui.step === 'decorate') {
-    if (o.type === 'comp') ui.sub.decorate = 'comp';
-    else if (o.type === 'text') ui.sub.decorate = 'text';
+  if (quiet) return;
+  if (o && showProps) {
+    if (ui.sheet === 'props' && !changed) return;
+    if (ui.sheet !== 'props') ui.afterProps = ui.sheet === 'draw' ? null : ui.sheet;
+    ui.sheet = 'props';
+    updateTool();
+    renderSteps(); renderPanel();
+  } else if (!o && ui.sheet === 'props') {
+    ui.sheet = ui.afterProps || (isDesktop() ? 'photo' : null);
+    ui.afterProps = null;
+    renderSteps(); renderPanel();
+  } else if (changed && ui.sheet === 'props') {
+    renderPanel();
   }
-  if (ui.step === 'decorate') renderPanel();
 }
-
-$('#selBar').addEventListener('click', (e) => {
-  const b = e.target.closest('button'); if (!b || !ui.selected) return;
-  const o = ui.selected;
-  const act = b.dataset.sel;
-  pushHistory();
-  if (act === 'smaller') o.scale = Math.max(0.2, o.scale * 0.85);
-  if (act === 'bigger') o.scale = Math.min(6, o.scale * 1.18);
-  if (act === 'rotl') o.rot = (o.rot || 0) - Math.PI / 12;
-  if (act === 'rotr') o.rot = (o.rot || 0) + Math.PI / 12;
-  if (act === 'front') { scene.objects.splice(scene.objects.indexOf(o), 1); scene.objects.push(o); }
-  if (act === 'delete') { scene.objects.splice(scene.objects.indexOf(o), 1); select(null); }
-  autosave();
-});
 
 function addObject(o) {
   pushHistory();
@@ -231,7 +229,7 @@ function addObject(o) {
   o.x = o.x ?? W / 2 + (Math.random() - 0.5) * 240;
   o.y = o.y ?? H * 0.55 + (Math.random() - 0.5) * 420;
   scene.objects.push(o);
-  select(o);
+  select(o, true);
   autosave();
   return o;
 }
@@ -271,7 +269,8 @@ canvas.addEventListener('pointerdown', (e) => {
     return;
   }
   const hit = hitTest(scene.objects, p.x, p.y);
-  if (hit !== ui.selected) select(hit);
+  if (hit) select(hit, false, true);
+  else if (ui.selected) select(null);
   gesture = hit ? { type: 'drag', o: hit, ox: hit.x - p.x, oy: hit.y - p.y, sx: p.x, sy: p.y, moved: false, snap: snapshot() } : null;
 });
 
@@ -413,42 +412,59 @@ $('#fileMusic').addEventListener('change', async (e) => {
 });
 
 // ======================================================================
-// 步驟與面板
+// 工具列與小面板：平常畫布全螢幕，點工具才從底部滑出精簡面板
 // ======================================================================
+const TOOLS = [
+  ['photo', 'tPhoto', '<rect x="3" y="4" width="18" height="16"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>'],
+  ['comp', 'tComp', '<circle cx="12" cy="12" r="8"/><path d="M9.5 14.5c1.4 1.2 3.6 1.2 5 0"/><path d="M9 10h.01M15 10h.01"/>'],
+  ['sym', 'tSym', '<path d="M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.4-7 10-7 10z"/>'],
+  ['text', 'tText', '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>'],
+  ['draw', 'tDraw', '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/>'],
+  ['image', 'tImage', '<rect x="3" y="3" width="18" height="18"/><path d="M12 8v8M8 12h8"/>'],
+  ['theme', 'tTheme', '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>'],
+  ['filter', 'tFilter', '<circle cx="9" cy="10" r="5"/><circle cx="15" cy="10" r="5"/><circle cx="12" cy="15" r="5"/>'],
+  ['music', 'tMusic', '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>'],
+];
+const SHEET_TITLE = { photo: 'tPhoto', comp: 'tComp', sym: 'tSym', text: 'tText', draw: 'tDraw', image: 'tImage', theme: 'tTheme', filter: 'tFilter', music: 'tMusic', finish: 'h4' };
+const isDesktop = () => matchMedia('(min-width: 900px)').matches;
+
 function renderSteps() {
-  $('#steps').innerHTML = STEPS.map((s, i) => `
-    <button type="button" data-step="${s}" class="${ui.step === s ? 'on' : ''}" aria-current="${ui.step === s ? 'step' : 'false'}">
-      <b>0${i + 1}</b><span>${t(STEP_LABEL[s])}</span>${ui.step === s ? `<i class="chev" aria-hidden="true">${panel.classList.contains('collapsed') ? '▲' : '▼'}</i>` : ''}
-    </button>`).join('');
+  $('#dock').innerHTML = `
+    <div class="dock-scroll">${TOOLS.map(([id, key, icon]) => `
+      <button type="button" data-tool="${id}" class="${ui.sheet === id ? 'on' : ''}" aria-pressed="${ui.sheet === id}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${t(key)}</span>
+      </button>`).join('')}</div>
+    <button type="button" class="dock-finish ${ui.sheet === 'finish' ? 'on' : ''}" data-tool="finish">${t('tFinish')}</button>`;
 }
-$('#steps').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-step]'); if (b) goStep(b.dataset.step);
+$('#dock').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tool]'); if (b) openSheet(b.dataset.tool);
 });
 
-function goStep(step) {
+function openSheet(id) {
   if (ui.recording) return;
-  // 再點一次目前的步驟：收起／展開面板，讓畫布變大
-  if (step === ui.step && panel.innerHTML) {
-    panel.classList.toggle('collapsed');
-    renderSteps();
-    return;
-  }
-  panel.classList.remove('collapsed');
-  ui.step = step;
-  ui.visited.add(step);
+  if (ui.sheet === id && !isDesktop()) return closeSheet();
+  ui.sheet = id;
+  ui.afterProps = null;
+  if (ui.selected && id !== 'text') select(null, true);
   updateTool();
-  if (step !== 'decorate') select(null);
   renderSteps();
   renderPanel();
   panel.scrollTop = 0;
 }
+function closeSheet() {
+  ui.sheet = isDesktop() ? 'photo' : null;
+  updateTool();
+  renderSteps();
+  renderPanel();
+}
+// 相容舊的呼叫
+const goStep = (id) => openSheet(id === 'decorate' ? 'comp' : id === 'style' ? 'theme' : id);
 
-// 畫筆只在「裝飾 → 畫筆」時啟用，其他時候都是選取模式
+// 畫筆只在畫筆面板打開時啟用，其他時候都是選取模式
 function updateTool() {
-  const drawing = ui.step === 'decorate' && ui.sub.decorate === 'draw';
+  const drawing = ui.sheet === 'draw';
   // ui.drawMode: glow | rainbow | pen | eraser
   ui.tool = drawing ? ui.drawMode : 'select';
-  if (drawing) select(null);
 }
 
 let filterThumbs = null;
@@ -473,30 +489,22 @@ function colorRow(current, attr) {
   return `<div class="colors">${COLORS.map((c) => `<button type="button" data-${attr}="${c}" class="${c === current ? 'on' : ''}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>`;
 }
 
-function head(n, h, p) {
-  return `<div class="step-head"><div class="eyebrow">${t('stepOf', n)}</div><h3>${t(h)}</h3>${p ? `<p>${t(p)}</p>` : ''}</div>`;
-}
-function subtabs(group, list) {
-  return `<div class="subtabs" role="tablist">${list.map(([id, key]) => `<button type="button" role="tab" data-sub="${group}:${id}" class="${ui.sub[group] === id ? 'on' : ''}" aria-selected="${ui.sub[group] === id}">${t(key)}</button>`).join('')}</div>`;
-}
-function foot(i) {
-  const prev = i > 0 ? `<button type="button" class="text-link muted" data-go="${STEPS[i - 1]}">${t('back')}</button>` : '<span></span>';
-  const next = i < STEPS.length - 1
-    ? `<button type="button" class="btn solid" data-go="${STEPS[i + 1]}">${t('next', t(STEP_LABEL[STEPS[i + 1]]))} →</button>`
-    : `<button type="button" class="text-link muted" data-go="photo">${t('startOver')}</button>`;
-  return `<div class="step-foot">${prev}${next}</div>`;
-}
-
 function renderPanel() {
-  const fn = PANELS[ui.step];
-  panel.innerHTML = fn.html();
-  panel.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => goStep(b.dataset.go));
-  panel.querySelectorAll('[data-sub]').forEach((b) => b.onclick = () => {
-    const [group, id] = b.dataset.sub.split(':');
-    ui.sub[group] = id;
-    updateTool();
-    renderPanel();
-  });
+  const id = ui.sheet;
+  panel.hidden = !id;
+  if (!id) { panel.innerHTML = ''; return; }
+  const fn = SHEETS[id];
+  const title = id === 'props' ? esc(t('selected', objName(ui.selected))) : t(SHEET_TITLE[id]);
+  const close = id === 'props' ? t('deselect') : '';
+  panel.className = `sheet sheet-${id}${id === 'finish' ? ' tall' : ''}`;
+  panel.innerHTML = `
+    <div class="sheet-head"><h4>${title}</h4>
+      <button type="button" class="${close ? 'text-link muted' : 'icon-btn sheet-x'}" data-close aria-label="${t('close')}">${close || ICON_X}</button></div>
+    ${fn.html()}`;
+  $('[data-close]', panel).onclick = () => {
+    if (id === 'props') { select(null); return; }
+    closeSheet();
+  };
   fn.bind && fn.bind(panel);
 }
 
@@ -506,97 +514,66 @@ async function loadTextFont(o) {
 
 const OBJ_LABEL = { comp: 'objComp', text: 'objText', emoji: 'objEmoji', image: 'objImage', stroke: 'objStroke' };
 function objName(o) {
+  if (!o) return '';
   if (o.type === 'comp') return nm('comp', COMPONENTS.find((c) => c.id === o.kind)).name;
   if (o.type === 'emoji') return o.char;
   if (o.type === 'text') return `「${o.text.slice(0, 8)}${o.text.length > 8 ? '…' : ''}」`;
   return t(OBJ_LABEL[o.type]);
 }
 
-// 選取物件時的屬性面板：大小、旋轉、透明度與排列
-function propsCard() {
-  const o = ui.selected;
-  if (!o) return '';
-  const deg = Math.round((((o.rot || 0) * 180) / Math.PI + 540) % 360 - 180);
+function textOptions(sel) {
+  const font = sel ? (sel.font || 'round') : ui.textFont;
+  const outline = sel ? (sel.outline || '#fff') : ui.textOutline;
   return `
-  <div class="card props">
-    <div class="props-head"><h4>${esc(t('selected', objName(o)))}</h4>
-      <button type="button" class="text-link muted" data-prop="done">${t('deselect')}</button></div>
-    <div class="row"><span class="label">${t('propSize')}</span><input type="range" data-slider="scale" min="0.2" max="4" step="0.02" value="${o.scale}"></div>
-    <div class="row"><span class="label">${t('propRotate')}</span><input type="range" data-slider="rot" min="-180" max="180" step="1" value="${deg}"></div>
-    <div class="row"><span class="label">${t('propOpacity')}</span><input type="range" data-slider="alpha" min="0.15" max="1" step="0.01" value="${o.alpha ?? 1}"></div>
-    <div class="row props-actions">
-      <button type="button" class="chip" data-prop="dup">${t('duplicate')}</button>
-      <button type="button" class="chip" data-prop="flip">${t('flip')}</button>
-      <button type="button" class="chip" data-prop="up">${t('forward')}</button>
-      <button type="button" class="chip" data-prop="down">${t('backward')}</button>
-      <button type="button" class="chip danger" data-prop="del">${t('delete')}</button>
-    </div>
-  </div>`;
+    <div class="row nowrap"><span class="label">${t('fontLabel')}</span>
+      ${[['round', 'fontRound'], ['serif', 'fontSerif'], ['sans', 'fontSans']].map(([id, k]) => `<button type="button" class="chip font-${id} ${font === id ? 'on' : ''}" data-font="${id}">${t(k)}</button>`).join('')}</div>
+    <div class="row nowrap"><span class="label">${t('outlineLabel')}</span>
+      ${[['#fff', 'outlineWhite'], ['#202622', 'outlineDark'], ['none', 'outlineNone']].map(([id, k]) => `<button type="button" class="chip ${outline === id ? 'on' : ''}" data-outline="${id}">${t(k)}</button>`).join('')}</div>
+    <div class="row">${colorRow(sel ? sel.color : ui.textColor, 'tcolor')}</div>`;
 }
 
-function bindProps(p) {
-  let sliding = false;
-  p.querySelectorAll('[data-slider]').forEach((r) => {
-    r.addEventListener('input', () => {
-      const o = ui.selected; if (!o) return;
-      if (!sliding) { pushHistory(); sliding = true; }
-      const v = +r.value;
-      if (r.dataset.slider === 'scale') o.scale = v;
-      if (r.dataset.slider === 'rot') o.rot = (v * Math.PI) / 180;
-      if (r.dataset.slider === 'alpha') o.alpha = v;
-    });
-    r.addEventListener('change', () => { sliding = false; autosave(); });
-  });
-  p.querySelectorAll('[data-prop]').forEach((b) => b.onclick = () => {
-    const o = ui.selected; if (!o) return;
-    const act = b.dataset.prop;
-    if (act === 'done') { select(null); renderPanel(); return; }
-    pushHistory();
-    const i = scene.objects.indexOf(o);
-    if (act === 'dup') {
-      const copy = JSON.parse(JSON.stringify(serializeObjects([o])[0]));
-      copy.id = uid(); copy.x += 60; copy.y += 60;
-      scene.objects.splice(i + 1, 0, copy);
-      select(copy);
-    } else if (act === 'flip') {
-      o.flip = !o.flip;
-    } else if (act === 'up' && i < scene.objects.length - 1) {
-      scene.objects.splice(i, 1); scene.objects.splice(i + 1, 0, o);
-    } else if (act === 'down' && i > 0) {
-      scene.objects.splice(i, 1); scene.objects.splice(i - 1, 0, o);
-    } else if (act === 'del') {
-      scene.objects.splice(i, 1); select(null);
-    }
-    autosave();
+function bindTextOptions(p) {
+  p.querySelectorAll('[data-font]').forEach((b) => b.onclick = async () => {
+    ui.textFont = b.dataset.font;
+    const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
+    if (sel) { pushHistory(); sel.font = ui.textFont; await loadTextFont(sel); autosave(); }
     renderPanel();
   });
+  p.querySelectorAll('[data-outline]').forEach((b) => b.onclick = () => {
+    ui.textOutline = b.dataset.outline;
+    const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
+    if (sel) { pushHistory(); sel.outline = ui.textOutline; autosave(); }
+    renderPanel();
+  });
+  p.querySelectorAll('[data-tcolor]').forEach((b) => b.onclick = () => {
+    ui.textColor = b.dataset.tcolor;
+    if (ui.selected && ui.selected.type === 'text') { pushHistory(); ui.selected.color = ui.textColor; autosave(); }
+    p.querySelectorAll('[data-tcolor]').forEach((x) => x.classList.toggle('on', x === b));
+  });
 }
 
-const PANELS = {
-  // ---------------- 01 底圖 ----------------
+const SHEETS = {
+  // ---------------- 底圖 ----------------
   photo: {
     html() {
       const rot = rotationInfo();
       return `
-      ${head(1, 'h1', 'p1')}
       <div class="row">
         <button type="button" class="btn solid" id="pickBase">${t('importPhoto')}</button>
         <button type="button" class="btn quiet" id="useDefault">${t('defaultBg')}</button>
       </div>
-      <p class="hint">${scene.hasPhoto ? t('usingPhoto') : t('usingDefault')}</p>
       <div class="section-title"><h4>${t('myGallery')}</h4><small>${t('galleryCount', ui.gallery.length)}</small></div>
-      ${ui.gallery.length ? `<div class="gallery">
+      ${ui.gallery.length ? `<div class="hscroll gallery-row">
         ${ui.gallery.map((g, i) => `<div class="g ${rot && rot.index === i ? 'current' : ''}" data-load="${g.id}" role="button" tabindex="0">
             <img src="${g.thumb}" alt="">
             <button type="button" class="del" data-del="${g.id}" aria-label="${t('delete')}">${ICON_X}</button>
             ${rot && rot.index === i ? `<span class="badge">${t('current')}</span>` : ''}
           </div>`).join('')}
-      </div><p class="hint">${t('galleryHint')}</p>` : `<div class="empty">${t('galleryEmpty')}</div>`}
-      ${foot(0)}`;
+      </div>` : `<p class="hint">${t('galleryEmpty')}</p>`}`;
     },
     bind(p) {
       $('#pickBase', p).onclick = () => $('#fileBase').click();
-      $('#useDefault', p).onclick = () => { setBase(scene, DEFAULT_BG, false); filterThumbs = null; autosave(); renderPanel(); };
+      $('#useDefault', p).onclick = () => { setBase(scene, DEFAULT_BG, false); filterThumbs = null; autosave(); };
       p.querySelectorAll('[data-del]').forEach((b) => b.onclick = async (e) => {
         e.stopPropagation();
         if (!confirm(t('confirmDelete'))) return;
@@ -610,87 +587,51 @@ const PANELS = {
         scene = await deserializeScene(item.data, DEFAULT_BG);
         filterThumbs = null; select(null); autosave();
         toast(t('loaded'));
-        renderPanel();
       });
     },
   },
 
-  // ---------------- 02 裝飾 ----------------
-  decorate: {
+  // ---------------- 動態元件 ----------------
+  comp: {
     html() {
-      const sub = ui.sub.decorate;
-      let body = '';
-      if (sub === 'comp') {
-        const sel = ui.selected && ui.selected.type === 'comp' ? ui.selected : null;
-        body = `
-        <div class="hscroll">${COMPONENTS.map((c) => { const n = nm('comp', c); return `
-          <button type="button" class="tile ${sel && sel.kind === c.id ? 'on' : ''}" data-comp="${c.id}">
-            <canvas width="150" height="150" data-icon="${c.id}"></canvas>${esc(n.name)}<small>${esc(n.desc)}</small>
-          </button>`; }).join('')}</div>
-        ${sel ? `<div class="section-title"><h4>${t('compSound')}</h4><small>${esc(nm('comp', COMPONENTS.find((c) => c.id === sel.kind)).name)}</small></div>
-          <div class="row">${SOUNDS.map((s) => `<button type="button" class="chip ${S.compSounds[sel.kind] === s.id ? 'on' : ''}" data-snd="${sel.kind}:${s.id}">${esc(nm('sound', s).name)}</button>`).join('')}
-            <button type="button" class="chip ${S.compSounds[sel.kind] === 'none' ? 'on' : ''}" data-snd="${sel.kind}:none">${t('mute')}</button></div>`
-          : `<p class="hint">${t('compSoundHint')}</p>`}`;
-      } else if (sub === 'sym') {
-        body = `<div class="sym-grid">${SYMBOLS.map((s) => `<button type="button" data-sym="${s[0]}" aria-label="${esc(symLabel(s))}"><div>${s[0]}<span>${esc(symLabel(s))}</span></div></button>`).join('')}</div>`;
-      } else if (sub === 'text') {
-        const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
-        const font = sel ? (sel.font || 'round') : ui.textFont;
-        const outline = sel ? (sel.outline || '#fff') : ui.textOutline;
-        body = `
-        <textarea id="txtInput" rows="2" placeholder="${esc(t('textPh'))}">${sel ? esc(sel.text) : ''}</textarea>
-        <div class="row" style="margin-top:10px"><span class="label">${t('fontLabel')}</span>
-          ${[['round', 'fontRound'], ['serif', 'fontSerif'], ['sans', 'fontSans']].map(([id, k]) => `<button type="button" class="chip font-${id} ${font === id ? 'on' : ''}" data-font="${id}">${t(k)}</button>`).join('')}</div>
-        <div class="row"><span class="label">${t('outlineLabel')}</span>
-          ${[['#fff', 'outlineWhite'], ['#202622', 'outlineDark'], ['none', 'outlineNone']].map(([id, k]) => `<button type="button" class="chip ${outline === id ? 'on' : ''}" data-outline="${id}">${t(k)}</button>`).join('')}</div>
-        <div class="row">${colorRow(sel ? sel.color : ui.textColor, 'tcolor')}</div>
-        <div class="row"><button type="button" class="btn solid" id="addText">${sel ? t('updateText') : t('addText')}</button></div>`;
-      } else if (sub === 'draw') {
-        body = `
-        <div class="row">
-          ${[['glow', 'glow'], ['rainbow', 'rainbow'], ['pen', 'pen'], ['eraser', 'eraser']].map(([id, k]) => `<button type="button" class="chip ${ui.drawMode === id ? 'on' : ''}" data-mode="${id}">${t(k)}</button>`).join('')}
-        </div>
-        ${ui.drawMode === 'eraser' ? `<p class="hint">${t('eraserHint')}</p>` : `
-        ${ui.drawMode !== 'rainbow' ? `<div class="row">${colorRow(ui.color, 'color')}</div>` : ''}
-        <div class="row"><span class="label">${t('brush')}</span><input type="range" id="size" min="4" max="48" value="${ui.size}"></div>
-        <p class="hint">${t('drawHint')}</p>`}`;
-      } else if (sub === 'image') {
-        body = `
-        <label class="set-item" style="padding-top:0"><div><b>${t('removeBg')}</b></div>
-          <span class="switch"><input type="checkbox" id="removeBg" ${ui.removeBg ? 'checked' : ''}><span></span></span></label>
-        <div class="row" style="margin-top:12px"><button type="button" class="btn solid" id="pickSticker">${t('importImage')}</button></div>
-        <p class="hint">${t('imageHint')}</p>`;
-      }
-      return `
-      ${head(2, 'h2', 'p2')}
-      ${propsCard()}
-      ${subtabs('decorate', [['comp', 'subComp'], ['sym', 'subSym'], ['text', 'subText'], ['draw', 'subDraw'], ['image', 'subImage']])}
-      ${body}
-      ${scene.objects.length ? `<div class="row"><button type="button" class="text-link muted" id="clearAll">${t('clearAll')}</button></div>` : ''}
-      ${foot(1)}`;
+      return `<div class="hscroll">${COMPONENTS.map((c) => `
+        <button type="button" class="tile" data-comp="${c.id}">
+          <canvas width="150" height="150" data-icon="${c.id}"></canvas>${esc(nm('comp', c).name)}
+        </button>`).join('')}</div>
+        <p class="hint">${t('compSoundHint')}</p>`;
     },
     bind(p) {
       p.querySelectorAll('[data-comp]').forEach((b) => b.onclick = () => {
         const o = addObject({ type: 'comp', kind: b.dataset.comp, seed: Math.random() * 10, scale: 1.4 });
         triggerTap(o);
       });
-      p.querySelectorAll('[data-snd]').forEach((b) => b.onclick = () => {
-        const [kind, snd] = b.dataset.snd.split(':');
-        S.compSounds[kind] = snd; persistSettings();
-        playSound(snd);
-        renderPanel();
-      });
+    },
+  },
+
+  // ---------------- 符號 ----------------
+  sym: {
+    html() {
+      return `<div class="sym-row">${SYMBOLS.map((s) => `<button type="button" data-sym="${s[0]}" aria-label="${esc(symLabel(s))}"><div>${s[0]}<span>${esc(symLabel(s))}</span></div></button>`).join('')}</div>`;
+    },
+    bind(p) {
       p.querySelectorAll('[data-sym]').forEach((b) => b.onclick = () => addObject({ type: 'emoji', char: b.dataset.sym, scale: 1.6 }));
-      p.querySelectorAll('[data-mode]').forEach((b) => b.onclick = () => { ui.drawMode = b.dataset.mode; updateTool(); renderPanel(); });
-      p.querySelectorAll('[data-color]').forEach((b) => b.onclick = () => { ui.color = b.dataset.color; renderPanel(); });
-      $('#size', p)?.addEventListener('input', (e) => { ui.size = +e.target.value; });
-      p.querySelectorAll('[data-tcolor]').forEach((b) => b.onclick = () => {
-        ui.textColor = b.dataset.tcolor;
-        if (ui.selected && ui.selected.type === 'text') { pushHistory(); ui.selected.color = ui.textColor; autosave(); }
-        p.querySelectorAll('[data-tcolor]').forEach((x) => x.classList.toggle('on', x === b));
-      });
-      const addText = $('#addText', p);
-      if (addText) addText.onclick = async () => {
+    },
+  },
+
+  // ---------------- 文字 ----------------
+  text: {
+    html() {
+      const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
+      return `
+      <div class="row nowrap text-row">
+        <input type="text" id="txtInput" placeholder="${esc(t('textPh'))}" value="${sel ? esc(sel.text) : ''}">
+        <button type="button" class="btn solid" id="addText">${sel ? t('updateText') : t('addText')}</button>
+      </div>
+      ${textOptions(sel)}`;
+    },
+    bind(p) {
+      bindTextOptions(p);
+      const submit = async () => {
         const text = $('#txtInput', p).value.trim();
         if (!text) return toast(t('needText'));
         if (ui.selected && ui.selected.type === 'text') {
@@ -700,91 +641,182 @@ const PANELS = {
           await loadTextFont(o);
           const n = scene.objects.filter((x) => x.type === 'text').length;
           addObject({ ...o, x: W / 2, y: H * (0.42 + (n % 4) * 0.08) });
+          $('#txtInput', p).value = '';
         }
-        renderPanel();
+        $('#txtInput', p).blur();
       };
-      $('#pickSticker', p)?.addEventListener('click', () => $('#fileSticker').click());
-      $('#removeBg', p)?.addEventListener('change', (e) => { ui.removeBg = e.target.checked; });
-      p.querySelectorAll('[data-font]').forEach((b) => b.onclick = async () => {
-        ui.textFont = b.dataset.font;
-        const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
-        if (sel) { pushHistory(); sel.font = ui.textFont; await loadTextFont(sel); autosave(); }
-        renderPanel();
+      $('#addText', p).onclick = submit;
+      $('#txtInput', p).addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+    },
+  },
+
+  // ---------------- 畫筆 ----------------
+  draw: {
+    html() {
+      return `
+      <div class="row nowrap">
+        ${[['glow', 'glow'], ['rainbow', 'rainbow'], ['pen', 'pen'], ['eraser', 'eraser']].map(([id, k]) => `<button type="button" class="chip ${ui.drawMode === id ? 'on' : ''}" data-mode="${id}">${t(k)}</button>`).join('')}
+      </div>
+      ${ui.drawMode === 'eraser' ? `<p class="hint">${t('eraserHint')}</p>` : `
+      ${ui.drawMode !== 'rainbow' ? `<div class="row">${colorRow(ui.color, 'color')}</div>` : ''}
+      <div class="row"><span class="label">${t('brush')}</span><input type="range" id="size" min="4" max="48" value="${ui.size}"></div>`}`;
+    },
+    bind(p) {
+      p.querySelectorAll('[data-mode]').forEach((b) => b.onclick = () => { ui.drawMode = b.dataset.mode; updateTool(); renderPanel(); });
+      p.querySelectorAll('[data-color]').forEach((b) => b.onclick = () => { ui.color = b.dataset.color; renderPanel(); });
+      $('#size', p)?.addEventListener('input', (e) => { ui.size = +e.target.value; });
+    },
+  },
+
+  // ---------------- 圖片 ----------------
+  image: {
+    html() {
+      return `
+      <label class="set-item" style="padding-top:0"><div><b>${t('removeBg')}</b><small>${t('imageHint')}</small></div>
+        <span class="switch"><input type="checkbox" id="removeBg" ${ui.removeBg ? 'checked' : ''}><span></span></span></label>
+      <div class="row" style="margin-top:12px"><button type="button" class="btn solid" id="pickSticker">${t('importImage')}</button></div>`;
+    },
+    bind(p) {
+      $('#pickSticker', p).onclick = () => $('#fileSticker').click();
+      $('#removeBg', p).onchange = (e) => { ui.removeBg = e.target.checked; };
+    },
+  },
+
+  // ---------------- 動態主題 ----------------
+  theme: {
+    html() {
+      return `
+      <div class="hscroll">${THEMES.map((th) => `
+        <button type="button" class="tile ${scene.theme === th.id ? 'on' : ''}" data-theme="${th.id}">
+          <div class="swatch" style="background:${THEME_SWATCH[th.id]}"></div>${esc(nm('theme', th).name)}
+        </button>`).join('')}</div>
+      <div class="row"><span class="label">${t('intensity')}</span><input type="range" id="intensity" min="0.1" max="1" step="0.05" value="${scene.intensity}"></div>`;
+    },
+    bind(p) {
+      p.querySelectorAll('[data-theme]').forEach((b) => b.onclick = () => {
+        scene.theme = b.dataset.theme; autosave();
+        p.querySelectorAll('[data-theme]').forEach((x) => x.classList.toggle('on', x === b));
       });
-      p.querySelectorAll('[data-outline]').forEach((b) => b.onclick = () => {
-        ui.textOutline = b.dataset.outline;
-        const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
-        if (sel) { pushHistory(); sel.outline = ui.textOutline; autosave(); }
-        renderPanel();
-      });
-      bindProps(p);
-      $('#clearAll', p)?.addEventListener('click', () => {
-        if (!confirm(t('confirmClear'))) return;
-        pushHistory(); scene.objects = []; select(null); autosave(); renderPanel();
+      $('#intensity', p).addEventListener('input', (e) => { scene.intensity = +e.target.value; autosave(); });
+    },
+  },
+
+  // ---------------- 濾鏡 ----------------
+  filter: {
+    html() {
+      if (!filterThumbs) makeFilterThumbs();
+      return `<div class="hscroll">${FILTERS.map((f) => `
+        <button type="button" class="tile ${scene.filter === f.id ? 'on' : ''}" data-filter="${f.id}">
+          <img class="swatch" src="${filterThumbs[f.id]}" alt="">${esc(nm('filter', f).name)}
+        </button>`).join('')}</div>`;
+    },
+    bind(p) {
+      p.querySelectorAll('[data-filter]').forEach((b) => b.onclick = () => {
+        setFilter(scene, b.dataset.filter); autosave();
+        p.querySelectorAll('[data-filter]').forEach((x) => x.classList.toggle('on', x === b));
       });
     },
   },
 
-  // ---------------- 03 風格 ----------------
-  style: {
+  // ---------------- 音樂 ----------------
+  music: {
     html() {
-      const sub = ui.sub.style;
-      let body = '';
-      if (sub === 'theme') {
-        body = `
-        <div class="hscroll">${THEMES.map((th) => { const n = nm('theme', th); return `
-          <button type="button" class="tile ${scene.theme === th.id ? 'on' : ''}" data-theme="${th.id}">
-            <div class="swatch" style="background:${THEME_SWATCH[th.id]}"></div>${esc(n.name)}<small>${esc(n.desc)}</small>
-          </button>`; }).join('')}</div>
-        <div class="row"><span class="label">${t('intensity')}</span><input type="range" id="intensity" min="0.1" max="1" step="0.05" value="${scene.intensity}"></div>`;
-      } else if (sub === 'filter') {
-        if (!filterThumbs) makeFilterThumbs();
-        body = `
-        <div class="hscroll">${FILTERS.map((f) => { const n = nm('filter', f); return `
-          <button type="button" class="tile ${scene.filter === f.id ? 'on' : ''}" data-filter="${f.id}">
-            <img class="swatch" src="${filterThumbs[f.id]}" alt="">${esc(n.name)}<small>${esc(n.desc)}</small>
-          </button>`; }).join('')}</div>`;
-      } else if (sub === 'music') {
-        body = `
-        ${music.el ? `<div class="music-card">
-            <div class="eq ${music.playing ? 'on' : ''}"><i></i><i></i><i></i><i></i></div>
-            <div class="name">${esc(music.name)}</div>
-            <button type="button" class="btn solid" id="mToggle">${music.playing ? t('pause') : t('play')}</button>
-          </div>` : `<p class="hint">${t('noMusic')}</p>`}
-        <div class="row"><button type="button" class="btn ${music.el ? 'quiet' : 'solid'}" id="pickMusic">${music.el ? t('changeMusic') : t('importMusic')}</button></div>
-        <div class="row"><span class="label">${t('musicVol')}</span><input type="range" id="mVol" min="0" max="1" step="0.05" value="${S.musicVolume}"></div>
-        <div class="section-title"><h4>${t('sfx')}</h4></div>
-        <div class="row">${SOUNDS.map((s) => `<button type="button" class="chip" data-try="${s.id}">${esc(nm('sound', s).name)}</button>`).join('')}</div>
-        <div class="row"><span class="label">${t('sfxVol')}</span><input type="range" id="sVol" min="0" max="1" step="0.05" value="${S.sfxVolume}"></div>
-        <p class="hint">${t('musicHint')}</p>`;
-      }
       return `
-      ${head(3, 'h3', 'p3')}
-      ${subtabs('style', [['theme', 'subTheme'], ['filter', 'subFilter'], ['music', 'subMusic']])}
-      ${body}
-      ${foot(2)}`;
+      ${music.el ? `<div class="music-card">
+          <div class="eq ${music.playing ? 'on' : ''}"><i></i><i></i><i></i><i></i></div>
+          <div class="name">${esc(music.name)}</div>
+          <button type="button" class="btn solid" id="mToggle">${music.playing ? t('pause') : t('play')}</button>
+        </div>` : `<p class="hint">${t('noMusic')}</p>`}
+      <div class="row"><button type="button" class="btn ${music.el ? 'quiet' : 'solid'}" id="pickMusic">${music.el ? t('changeMusic') : t('importMusic')}</button></div>
+      <div class="row"><span class="label">${t('musicVol')}</span><input type="range" id="mVol" min="0" max="1" step="0.05" value="${S.musicVolume}"></div>
+      <div class="section-title"><h4>${t('sfx')}</h4></div>
+      <div class="row nowrap">${SOUNDS.map((s) => `<button type="button" class="chip" data-try="${s.id}">${esc(nm('sound', s).name)}</button>`).join('')}</div>
+      <div class="row"><span class="label">${t('sfxVol')}</span><input type="range" id="sVol" min="0" max="1" step="0.05" value="${S.sfxVolume}"></div>`;
     },
     bind(p) {
-      p.querySelectorAll('[data-theme]').forEach((b) => b.onclick = () => { scene.theme = b.dataset.theme; autosave(); renderPanel(); });
-      $('#intensity', p)?.addEventListener('input', (e) => { scene.intensity = +e.target.value; autosave(); });
-      p.querySelectorAll('[data-filter]').forEach((b) => b.onclick = () => { setFilter(scene, b.dataset.filter); autosave(); renderPanel(); });
-      $('#pickMusic', p)?.addEventListener('click', () => $('#fileMusic').click());
+      $('#pickMusic', p).onclick = () => $('#fileMusic').click();
       $('#mToggle', p)?.addEventListener('click', () => { music.toggle(); setTimeout(renderPanel, 80); });
-      $('#mVol', p)?.addEventListener('input', (e) => { S.musicVolume = +e.target.value; music.setVolume(S.musicVolume); persistSettings(); });
-      $('#sVol', p)?.addEventListener('input', (e) => { S.sfxVolume = +e.target.value; setSfxVolume(S.sfxVolume); persistSettings(); });
+      $('#mVol', p).addEventListener('input', (e) => { S.musicVolume = +e.target.value; music.setVolume(S.musicVolume); persistSettings(); });
+      $('#sVol', p).addEventListener('input', (e) => { S.sfxVolume = +e.target.value; setSfxVolume(S.sfxVolume); persistSettings(); });
       p.querySelectorAll('[data-try]').forEach((b) => b.onclick = () => playSound(b.dataset.try));
     },
   },
 
-  // ---------------- 04 完成 ----------------
+  // ---------------- 選取物件的屬性 ----------------
+  props: {
+    html() {
+      const o = ui.selected;
+      if (!o) return '';
+      const deg = Math.round((((o.rot || 0) * 180) / Math.PI + 540) % 360 - 180);
+      return `
+      <div class="row"><span class="label">${t('propSize')}</span><input type="range" data-slider="scale" min="0.2" max="4" step="0.02" value="${o.scale}"></div>
+      <div class="row"><span class="label">${t('propRotate')}</span><input type="range" data-slider="rot" min="-180" max="180" step="1" value="${deg}"></div>
+      <div class="row"><span class="label">${t('propOpacity')}</span><input type="range" data-slider="alpha" min="0.15" max="1" step="0.01" value="${o.alpha ?? 1}"></div>
+      <div class="row nowrap">
+        ${o.type === 'text' ? `<button type="button" class="chip" data-prop="edit">${t('updateText')}</button>` : ''}
+        <button type="button" class="chip" data-prop="dup">${t('duplicate')}</button>
+        <button type="button" class="chip" data-prop="flip">${t('flip')}</button>
+        <button type="button" class="chip" data-prop="up">${t('forward')}</button>
+        <button type="button" class="chip" data-prop="down">${t('backward')}</button>
+        <button type="button" class="chip danger" data-prop="del">${t('delete')}</button>
+      </div>
+      ${o.type === 'comp' ? `<div class="section-title"><h4>${t('compSound')}</h4></div>
+        <div class="row nowrap">${SOUNDS.map((s) => `<button type="button" class="chip ${S.compSounds[o.kind] === s.id ? 'on' : ''}" data-snd="${o.kind}:${s.id}">${esc(nm('sound', s).name)}</button>`).join('')}
+          <button type="button" class="chip ${S.compSounds[o.kind] === 'none' ? 'on' : ''}" data-snd="${o.kind}:none">${t('mute')}</button></div>` : ''}
+      ${o.type === 'text' ? textOptions(o) : ''}`;
+    },
+    bind(p) {
+      let sliding = false;
+      p.querySelectorAll('[data-slider]').forEach((r) => {
+        r.addEventListener('input', () => {
+          const o = ui.selected; if (!o) return;
+          if (!sliding) { pushHistory(); sliding = true; }
+          const v = +r.value;
+          if (r.dataset.slider === 'scale') o.scale = v;
+          if (r.dataset.slider === 'rot') o.rot = (v * Math.PI) / 180;
+          if (r.dataset.slider === 'alpha') o.alpha = v;
+        });
+        r.addEventListener('change', () => { sliding = false; autosave(); });
+      });
+      p.querySelectorAll('[data-snd]').forEach((b) => b.onclick = () => {
+        const [kind, snd] = b.dataset.snd.split(':');
+        S.compSounds[kind] = snd; persistSettings();
+        playSound(snd);
+        p.querySelectorAll('[data-snd]').forEach((x) => x.classList.toggle('on', x === b));
+      });
+      if (ui.selected && ui.selected.type === 'text') bindTextOptions(p);
+      p.querySelectorAll('[data-prop]').forEach((b) => b.onclick = () => {
+        const o = ui.selected; if (!o) return;
+        const act = b.dataset.prop;
+        if (act === 'edit') { ui.sheet = 'text'; renderSteps(); renderPanel(); setTimeout(() => $('#txtInput')?.focus(), 50); return; }
+        pushHistory();
+        const i = scene.objects.indexOf(o);
+        if (act === 'dup') {
+          const copy = JSON.parse(JSON.stringify(serializeObjects([o])[0]));
+          copy.id = uid(); copy.x += 60; copy.y += 60;
+          scene.objects.splice(i + 1, 0, copy);
+          select(copy);
+        } else if (act === 'flip') {
+          o.flip = !o.flip;
+        } else if (act === 'up' && i < scene.objects.length - 1) {
+          scene.objects.splice(i, 1); scene.objects.splice(i + 1, 0, o);
+        } else if (act === 'down' && i > 0) {
+          scene.objects.splice(i, 1); scene.objects.splice(i - 1, 0, o);
+        } else if (act === 'del') {
+          scene.objects.splice(i, 1); select(null);
+        }
+        autosave();
+      });
+    },
+  },
+
+  // ---------------- 完成 ----------------
   finish: {
     html() {
       const canRec = pickMime() !== null && !!canvas.captureStream;
       return `
-      ${head(4, 'h4', 'p4')}
       <div class="row"><button type="button" class="btn block" id="fPlay">
         <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;stroke:none"><path d="M8 5v14l11-7z"/></svg>${t('fullPreview')}</button></div>
-
       <div class="card">
         <h4>${t('setTitle')}</h4>
         <p>${t('setText')}</p>
@@ -793,13 +825,11 @@ const PANELS = {
           <button type="button" class="text-link" id="fSetGuide">${t('setGuide')}</button>
         </div>
       </div>
-
       ${NATIVE ? `<div class="card">
         <h4>${t('liveTitle')}</h4>
         <p>${t('liveText')}</p>
         <div class="row"><button type="button" class="btn solid" id="fLive">${t('liveBtn')}</button><span id="liveOut"></span></div>
       </div>` : ''}
-
       <div class="card">
         <h4>${t('saveTitle')}</h4>
         <p>${t('saveText')}</p>
@@ -811,8 +841,7 @@ const PANELS = {
         : `<p class="hint">${t('noRec')}</p>`}
         <div class="row"><button type="button" class="btn quiet" id="fGallery">${t('saveGallery')}</button></div>
       </div>
-      <div class="note">${NATIVE ? t('finishNoteNative') : t('finishNote')}</div>
-      ${foot(3)}`;
+      <div class="note">${NATIVE ? t('finishNoteNative') : t('finishNote')}</div>`;
     },
     bind(p) {
       $('#fPlay', p).onclick = enterPlayer;
@@ -845,7 +874,7 @@ const PANELS = {
 // ======================================================================
 async function refreshGallery() {
   ui.gallery = await galleryAll();
-  if (ui.step === 'photo') renderPanel();
+  if (ui.sheet === 'photo') renderPanel();
 }
 
 async function makeThumb(sc) {
@@ -1027,7 +1056,7 @@ function showSetWallpaperGuide() {
     ${copyBtn(SHORTCUT_NAME)}
     <div class="note">The first time it runs, iPhone asks for permission to read the clipboard and change the wallpaper — choose “Always Allow”.</div>` : `
     <h2>建立「${SHORTCUT_NAME}」捷徑</h2>
-    <p class="hint">只需要做一次。之後在第四步按「設為桌布」，就會把目前畫面設成 iPhone 桌布。</p>
+    <p class="hint">只需要做一次。之後按「完成」→「設為桌布」，就會把目前畫面設成 iPhone 桌布。</p>
     <ol>
       <li>打開「捷徑」App → 右上角「＋」</li>
       <li>點「加入動作」，搜尋「<b>取得剪貼板</b>」並加入</li>
@@ -1235,7 +1264,7 @@ function loop(ms) {
     renderScene(pctx, player.scene, time);
   } else {
     renderScene(ctx, scene, time, { draft: ui.draft, selected: ui.recording ? null : ui.selected });
-    if (ui.step === 'decorate' && ui.sub.decorate === 'comp') $$('canvas[data-icon]', panel).forEach((c) => drawComponentIcon(c, c.dataset.icon, time));
+    if (ui.sheet === 'comp') $$('canvas[data-icon]', panel).forEach((c) => drawComponentIcon(c, c.dataset.icon, time));
   }
   requestAnimationFrame(loop);
 }
@@ -1260,8 +1289,10 @@ async function boot() {
   }
   ui.gallery = await galleryAll();
   applyStaticText();
+  ui.sheet = isDesktop() ? 'photo' : null;
   renderSteps();
   renderPanel();
+  if (!saved && !isDesktop()) setTimeout(() => toast(t('startHint')), 800);
   updateHistoryButtons();
   requestAnimationFrame(loop);
   try { await document.fonts.load('900 96px "Zen Maru Gothic"', 'AE動態桌布'); } catch (e) { /* offline */ }

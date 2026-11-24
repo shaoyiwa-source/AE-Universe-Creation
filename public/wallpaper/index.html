@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Zen+Maru+Gothic:wght@900&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem('ae-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="/wallpaper/style.css?v=13">
+<link rel="stylesheet" href="/wallpaper/style.css?v=17">
 </head>
 <body>
 <div id="app">
@@ -52,20 +52,12 @@
     </div>
     <div class="canvas-wrap" id="canvasWrap">
       <canvas id="canvas" width="1080" height="2340"></canvas>
-      <div class="sel-bar" id="selBar" hidden>
-        <button data-sel="smaller" data-i18n-aria="smaller"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
-        <button data-sel="bigger" data-i18n-aria="bigger"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
-        <button data-sel="rotl" data-i18n-aria="rotl"><svg viewBox="0 0 24 24"><path d="M4 4v6h6"/><path d="M5 14a7 7 0 1 0 2-7L4 10"/></svg></button>
-        <button data-sel="rotr" data-i18n-aria="rotr"><svg viewBox="0 0 24 24"><path d="M20 4v6h-6"/><path d="M19 14a7 7 0 1 1-2-7l3 3"/></svg></button>
-        <button data-sel="front" data-i18n-aria="front"><svg viewBox="0 0 24 24"><path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/></svg></button>
-        <button data-sel="delete" class="danger" data-i18n-aria="delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
-      </div>
     </div>
   </main>
 
-  <section class="panel" id="panel" aria-live="polite"></section>
+  <section class="sheet" id="sheet" hidden></section>
 
-  <nav class="steps" id="steps" aria-label="steps"></nav>
+  <nav class="dock" id="dock" aria-label="tools"></nav>
 </div>
 
 <!-- 選單（與官網相同的樣式） -->
@@ -104,6 +96,6 @@
 <input type="file" id="fileSticker" accept="image/*" hidden>
 <input type="file" id="fileMusic" accept="audio/*" hidden>
 
-<script type="module" src="/wallpaper/js/app.js?v=13"></script>
+<script type="module" src="/wallpaper/js/app.js?v=17"></script>
 </body>
 </html>
