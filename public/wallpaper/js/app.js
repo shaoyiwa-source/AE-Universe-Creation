@@ -5,7 +5,7 @@ import {
 import { SOUNDS, playSound, audio, music, setSfxVolume, recordingDestination } from './sound.js';
 import {
   createScene, setBase, setFilter, coverCanvas, hitTest, renderScene, images, serializeScene,
-  deserializeScene, serializeObjects, loadImage, canvasToBlob,
+  deserializeScene, serializeObjects, loadImage, canvasToBlob, textFont,
 } from './scene.js';
 import { kvGet, kvSet, galleryAll, galleryPut, galleryDel, loadSettings, saveSettings } from './store.js';
 import { t, nm, getLang, setLang, SYMBOLS, symLabel } from './i18n.js';
@@ -40,7 +40,8 @@ const STEPS = ['photo', 'decorate', 'style', 'finish'];
 const STEP_LABEL = { photo: 's1', decorate: 's2', style: 's3', finish: 's4' };
 const ui = {
   step: 'photo', sub: { decorate: 'comp', style: 'theme' }, tool: 'select', drawMode: 'glow',
-  color: '#FF7EB6', size: 16, textColor: '#FF7EB6', selected: null, draft: null,
+  color: '#FF7EB6', size: 16, textColor: '#FF7EB6', textFont: 'round', textOutline: '#fff', removeBg: false,
+  selected: null, draft: null,
   recording: false, gallery: [], recDur: 10, visited: new Set(['photo']),
 };
 const undoStack = [];
@@ -147,10 +148,8 @@ $('#btnLang').onclick = () => {
   renderPanel();
 };
 
-function isDark() {
-  const root = document.documentElement;
-  return (root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
-}
+// 與官網相同：預設淺色，選了深色（ae-theme=dark）才切換
+function isDark() { return document.documentElement.dataset.theme === 'dark'; }
 function toggleDark() {
   const next = isDark() ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
@@ -261,8 +260,13 @@ canvas.addEventListener('pointerdown', (e) => {
     return;
   }
   if (pointers.size > 1) return;
-  if (ui.tool === 'pen' || ui.tool === 'glow') {
-    ui.draft = { type: 'stroke', id: uid(), mode: ui.tool, color: ui.color, size: ui.tool === 'glow' ? ui.size * 1.4 : ui.size, points: [[p.x, p.y]] };
+  if (ui.tool === 'eraser') {
+    gesture = { type: 'erase', snap: snapshot(), changed: false };
+    eraseAt(p);
+    return;
+  }
+  if (ui.tool === 'pen' || ui.tool === 'glow' || ui.tool === 'rainbow') {
+    ui.draft = { type: 'stroke', id: uid(), mode: ui.tool, color: ui.color, size: ui.tool === 'pen' ? ui.size : ui.size * 1.4, points: [[p.x, p.y]] };
     gesture = { type: 'draw' };
     return;
   }
@@ -288,8 +292,22 @@ canvas.addEventListener('pointermove', (e) => {
   } else if (gesture.type === 'draw' && ui.draft) {
     const pts = ui.draft.points; const l = pts[pts.length - 1];
     if (Math.hypot(p.x - l[0], p.y - l[1]) > 4) pts.push([p.x, p.y]);
+  } else if (gesture.type === 'erase') {
+    eraseAt(p);
   }
 });
+
+// 橡皮擦：抹過的筆畫整條移除
+function eraseAt(p) {
+  const r = 36;
+  const before = scene.objects.length;
+  scene.objects = scene.objects.filter((o) => {
+    if (o.type !== 'stroke') return true;
+    const reach = r + o.size;
+    return !o.points.some(([x, y]) => Math.abs(x - p.x) < reach && Math.abs(y - p.y) < reach && Math.hypot(x - p.x, y - p.y) < reach);
+  });
+  if (scene.objects.length !== before && gesture) gesture.changed = true;
+}
 
 function endPointer(e) {
   if (!pointers.has(e.pointerId)) return;
@@ -297,6 +315,9 @@ function endPointer(e) {
   if (!gesture) return;
   if (gesture.type === 'draw') {
     if (ui.draft) { pushHistory(); scene.objects.push(ui.draft); ui.draft = null; autosave(); }
+    gesture = null;
+  } else if (gesture.type === 'erase') {
+    if (gesture.changed) { pushHistory(gesture.snap); autosave(); renderPanel(); }
     gesture = null;
   } else if (gesture.type === 'drag') {
     if (gesture.moved) { pushHistory(gesture.snap); autosave(); } else triggerTap(gesture.o);
@@ -342,6 +363,7 @@ $('#fileSticker').addEventListener('change', async (e) => {
     const cv = document.createElement('canvas');
     cv.width = Math.round(img.naturalWidth * s); cv.height = Math.round(img.naturalHeight * s);
     cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    if (ui.removeBg) removeWhiteBackground(cv);
     const small = await loadImage(cv.toDataURL('image/png'));
     const id = uid();
     images.set(id, small);
@@ -349,6 +371,37 @@ $('#fileSticker').addEventListener('change', async (e) => {
     toast(t('imageAdded'));
   } catch (err) { toast(t('badImage')); } finally { URL.revokeObjectURL(url); }
 });
+
+// 從圖片邊緣開始，把相連的白色（接近白、低彩度）背景變透明，邊緣柔化
+function removeWhiteBackground(cv) {
+  const c = cv.getContext('2d');
+  const { width: w, height: h } = cv;
+  const img = c.getImageData(0, 0, w, h);
+  const d = img.data;
+  const whiteness = (i) => {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    return mn >= 205 && mx - mn <= 40 ? (mn - 205) / 40 : -1; // -1 = 不是背景
+  };
+  const seen = new Uint8Array(w * h);
+  const stack = [];
+  for (let x = 0; x < w; x++) { stack.push(x, (h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { stack.push(y * w, y * w + w - 1); }
+  while (stack.length) {
+    const k = stack.pop();
+    if (seen[k]) continue;
+    seen[k] = 1;
+    const v = whiteness(k * 4);
+    if (v < 0) continue;
+    d[k * 4 + 3] = Math.round(d[k * 4 + 3] * Math.max(0, 1 - Math.min(1, v * 1.6)));
+    const x = k % w, y = (k - x) / w;
+    if (x > 0) stack.push(k - 1);
+    if (x < w - 1) stack.push(k + 1);
+    if (y > 0) stack.push(k - w);
+    if (y < h - 1) stack.push(k + w);
+  }
+  c.putImageData(img, 0, 0);
+}
 
 $('#fileMusic').addEventListener('change', async (e) => {
   const f = e.target.files[0]; e.target.value = '';
@@ -393,6 +446,7 @@ function goStep(step) {
 // 畫筆只在「裝飾 → 畫筆」時啟用，其他時候都是選取模式
 function updateTool() {
   const drawing = ui.step === 'decorate' && ui.sub.decorate === 'draw';
+  // ui.drawMode: glow | rainbow | pen | eraser
   ui.tool = drawing ? ui.drawMode : 'select';
   if (drawing) select(null);
 }
@@ -444,6 +498,78 @@ function renderPanel() {
     renderPanel();
   });
   fn.bind && fn.bind(panel);
+}
+
+async function loadTextFont(o) {
+  try { await document.fonts.load(textFont({ ...o, size: 96 }), o.text || 'AE'); } catch (e) { /* offline */ }
+}
+
+const OBJ_LABEL = { comp: 'objComp', text: 'objText', emoji: 'objEmoji', image: 'objImage', stroke: 'objStroke' };
+function objName(o) {
+  if (o.type === 'comp') return nm('comp', COMPONENTS.find((c) => c.id === o.kind)).name;
+  if (o.type === 'emoji') return o.char;
+  if (o.type === 'text') return `「${o.text.slice(0, 8)}${o.text.length > 8 ? '…' : ''}」`;
+  return t(OBJ_LABEL[o.type]);
+}
+
+// 選取物件時的屬性面板：大小、旋轉、透明度與排列
+function propsCard() {
+  const o = ui.selected;
+  if (!o) return '';
+  const deg = Math.round((((o.rot || 0) * 180) / Math.PI + 540) % 360 - 180);
+  return `
+  <div class="card props">
+    <div class="props-head"><h4>${esc(t('selected', objName(o)))}</h4>
+      <button type="button" class="text-link muted" data-prop="done">${t('deselect')}</button></div>
+    <div class="row"><span class="label">${t('propSize')}</span><input type="range" data-slider="scale" min="0.2" max="4" step="0.02" value="${o.scale}"></div>
+    <div class="row"><span class="label">${t('propRotate')}</span><input type="range" data-slider="rot" min="-180" max="180" step="1" value="${deg}"></div>
+    <div class="row"><span class="label">${t('propOpacity')}</span><input type="range" data-slider="alpha" min="0.15" max="1" step="0.01" value="${o.alpha ?? 1}"></div>
+    <div class="row props-actions">
+      <button type="button" class="chip" data-prop="dup">${t('duplicate')}</button>
+      <button type="button" class="chip" data-prop="flip">${t('flip')}</button>
+      <button type="button" class="chip" data-prop="up">${t('forward')}</button>
+      <button type="button" class="chip" data-prop="down">${t('backward')}</button>
+      <button type="button" class="chip danger" data-prop="del">${t('delete')}</button>
+    </div>
+  </div>`;
+}
+
+function bindProps(p) {
+  let sliding = false;
+  p.querySelectorAll('[data-slider]').forEach((r) => {
+    r.addEventListener('input', () => {
+      const o = ui.selected; if (!o) return;
+      if (!sliding) { pushHistory(); sliding = true; }
+      const v = +r.value;
+      if (r.dataset.slider === 'scale') o.scale = v;
+      if (r.dataset.slider === 'rot') o.rot = (v * Math.PI) / 180;
+      if (r.dataset.slider === 'alpha') o.alpha = v;
+    });
+    r.addEventListener('change', () => { sliding = false; autosave(); });
+  });
+  p.querySelectorAll('[data-prop]').forEach((b) => b.onclick = () => {
+    const o = ui.selected; if (!o) return;
+    const act = b.dataset.prop;
+    if (act === 'done') { select(null); renderPanel(); return; }
+    pushHistory();
+    const i = scene.objects.indexOf(o);
+    if (act === 'dup') {
+      const copy = JSON.parse(JSON.stringify(serializeObjects([o])[0]));
+      copy.id = uid(); copy.x += 60; copy.y += 60;
+      scene.objects.splice(i + 1, 0, copy);
+      select(copy);
+    } else if (act === 'flip') {
+      o.flip = !o.flip;
+    } else if (act === 'up' && i < scene.objects.length - 1) {
+      scene.objects.splice(i, 1); scene.objects.splice(i + 1, 0, o);
+    } else if (act === 'down' && i > 0) {
+      scene.objects.splice(i, 1); scene.objects.splice(i - 1, 0, o);
+    } else if (act === 'del') {
+      scene.objects.splice(i, 1); select(null);
+    }
+    autosave();
+    renderPanel();
+  });
 }
 
 const PANELS = {
@@ -509,26 +635,35 @@ const PANELS = {
         body = `<div class="sym-grid">${SYMBOLS.map((s) => `<button type="button" data-sym="${s[0]}" aria-label="${esc(symLabel(s))}"><div>${s[0]}<span>${esc(symLabel(s))}</span></div></button>`).join('')}</div>`;
       } else if (sub === 'text') {
         const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
+        const font = sel ? (sel.font || 'round') : ui.textFont;
+        const outline = sel ? (sel.outline || '#fff') : ui.textOutline;
         body = `
         <textarea id="txtInput" rows="2" placeholder="${esc(t('textPh'))}">${sel ? esc(sel.text) : ''}</textarea>
-        <div class="row" style="margin-top:10px">${colorRow(sel ? sel.color : ui.textColor, 'tcolor')}</div>
+        <div class="row" style="margin-top:10px"><span class="label">${t('fontLabel')}</span>
+          ${[['round', 'fontRound'], ['serif', 'fontSerif'], ['sans', 'fontSans']].map(([id, k]) => `<button type="button" class="chip font-${id} ${font === id ? 'on' : ''}" data-font="${id}">${t(k)}</button>`).join('')}</div>
+        <div class="row"><span class="label">${t('outlineLabel')}</span>
+          ${[['#fff', 'outlineWhite'], ['#202622', 'outlineDark'], ['none', 'outlineNone']].map(([id, k]) => `<button type="button" class="chip ${outline === id ? 'on' : ''}" data-outline="${id}">${t(k)}</button>`).join('')}</div>
+        <div class="row">${colorRow(sel ? sel.color : ui.textColor, 'tcolor')}</div>
         <div class="row"><button type="button" class="btn solid" id="addText">${sel ? t('updateText') : t('addText')}</button></div>`;
       } else if (sub === 'draw') {
         body = `
         <div class="row">
-          <button type="button" class="chip ${ui.drawMode === 'glow' ? 'on' : ''}" data-mode="glow">${t('glow')}</button>
-          <button type="button" class="chip ${ui.drawMode === 'pen' ? 'on' : ''}" data-mode="pen">${t('pen')}</button>
+          ${[['glow', 'glow'], ['rainbow', 'rainbow'], ['pen', 'pen'], ['eraser', 'eraser']].map(([id, k]) => `<button type="button" class="chip ${ui.drawMode === id ? 'on' : ''}" data-mode="${id}">${t(k)}</button>`).join('')}
         </div>
-        <div class="row">${colorRow(ui.color, 'color')}</div>
+        ${ui.drawMode === 'eraser' ? `<p class="hint">${t('eraserHint')}</p>` : `
+        ${ui.drawMode !== 'rainbow' ? `<div class="row">${colorRow(ui.color, 'color')}</div>` : ''}
         <div class="row"><span class="label">${t('brush')}</span><input type="range" id="size" min="4" max="48" value="${ui.size}"></div>
-        <p class="hint">${t('drawHint')}</p>`;
+        <p class="hint">${t('drawHint')}</p>`}`;
       } else if (sub === 'image') {
         body = `
-        <div class="row"><button type="button" class="btn solid" id="pickSticker">${t('importImage')}</button></div>
+        <label class="set-item" style="padding-top:0"><div><b>${t('removeBg')}</b></div>
+          <span class="switch"><input type="checkbox" id="removeBg" ${ui.removeBg ? 'checked' : ''}><span></span></span></label>
+        <div class="row" style="margin-top:12px"><button type="button" class="btn solid" id="pickSticker">${t('importImage')}</button></div>
         <p class="hint">${t('imageHint')}</p>`;
       }
       return `
       ${head(2, 'h2', 'p2')}
+      ${propsCard()}
       ${subtabs('decorate', [['comp', 'subComp'], ['sym', 'subSym'], ['text', 'subText'], ['draw', 'subDraw'], ['image', 'subImage']])}
       ${body}
       ${scene.objects.length ? `<div class="row"><button type="button" class="text-link muted" id="clearAll">${t('clearAll')}</button></div>` : ''}
@@ -558,15 +693,31 @@ const PANELS = {
       if (addText) addText.onclick = async () => {
         const text = $('#txtInput', p).value.trim();
         if (!text) return toast(t('needText'));
-        try { await document.fonts.load('900 96px "Zen Maru Gothic"', text); } catch (e) { /* offline */ }
         if (ui.selected && ui.selected.type === 'text') {
-          pushHistory(); ui.selected.text = text; autosave(); toast(t('textUpdated'));
+          pushHistory(); ui.selected.text = text; await loadTextFont(ui.selected); autosave(); toast(t('textUpdated'));
         } else {
-          addObject({ type: 'text', text, color: ui.textColor, size: 120, y: H * 0.55, x: W / 2 });
+          const o = { type: 'text', text, color: ui.textColor, size: 120, font: ui.textFont, outline: ui.textOutline };
+          await loadTextFont(o);
+          const n = scene.objects.filter((x) => x.type === 'text').length;
+          addObject({ ...o, x: W / 2, y: H * (0.42 + (n % 4) * 0.08) });
         }
         renderPanel();
       };
       $('#pickSticker', p)?.addEventListener('click', () => $('#fileSticker').click());
+      $('#removeBg', p)?.addEventListener('change', (e) => { ui.removeBg = e.target.checked; });
+      p.querySelectorAll('[data-font]').forEach((b) => b.onclick = async () => {
+        ui.textFont = b.dataset.font;
+        const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
+        if (sel) { pushHistory(); sel.font = ui.textFont; await loadTextFont(sel); autosave(); }
+        renderPanel();
+      });
+      p.querySelectorAll('[data-outline]').forEach((b) => b.onclick = () => {
+        ui.textOutline = b.dataset.outline;
+        const sel = ui.selected && ui.selected.type === 'text' ? ui.selected : null;
+        if (sel) { pushHistory(); sel.outline = ui.textOutline; autosave(); }
+        renderPanel();
+      });
+      bindProps(p);
       $('#clearAll', p)?.addEventListener('click', () => {
         if (!confirm(t('confirmClear'))) return;
         pushHistory(); scene.objects = []; select(null); autosave(); renderPanel();

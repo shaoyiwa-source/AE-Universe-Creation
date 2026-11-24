@@ -645,7 +645,8 @@ function face(ctx, t, seed, y = 0, scale = 1, eye = '#3B2A3F') {
 export function drawComponent(ctx, o, t, live = true) {
   const tap = o.tapT != null ? Math.exp(-(t - o.tapT) * 4.5) : 0;
   ctx.save();
-  ctx.translate(o.x, o.y); ctx.rotate(o.rot || 0); ctx.scale(o.scale, o.scale);
+  ctx.globalAlpha = o.alpha ?? 1;
+  ctx.translate(o.x, o.y); ctx.rotate(o.rot || 0); ctx.scale(o.scale * (o.flip ? -1 : 1), o.scale);
   const tapAge = o.tapT != null ? t - o.tapT : 99;
   if (o.kind === 'cloud') drawCloud(ctx, o, t, tap, live);
   else if (o.kind === 'star') drawStar(ctx, o, t, tap, live);

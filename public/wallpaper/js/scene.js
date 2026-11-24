@@ -9,6 +9,14 @@ export const EMOJI_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Em
 
 export const images = new Map(); // id -> HTMLImageElement（匯入的可愛圖片）
 
+// 文字字型：圓體（可愛）、明體（與官網標題相同）、黑體（與官網內文相同）
+export const TEXT_FONTS = {
+  round: (px) => `900 ${px}px "Zen Maru Gothic", "PingFang TC", sans-serif`,
+  serif: (px) => `600 ${px}px "Cormorant Garamond", "Noto Serif TC", "Songti TC", serif`,
+  sans: (px) => `700 ${px}px Arial, "PingFang TC", "Noto Sans TC", sans-serif`,
+};
+export const textFont = (o) => (TEXT_FONTS[o.font] || TEXT_FONTS.round)(o.size || 96);
+
 export function createScene() {
   return {
     baseRaw: null,       // 未加濾鏡的底圖 canvas
@@ -56,7 +64,7 @@ export function objHalfSize(o) {
     return [img.naturalWidth * s / 2, img.naturalHeight * s / 2];
   }
   if (o.type === 'text') {
-    measureCtx.font = `900 ${o.size || 96}px ${FONT}`;
+    measureCtx.font = textFont(o);
     const lines = o.text.split('\n');
     const w = Math.max(...lines.map((l) => measureCtx.measureText(l).width));
     return [w / 2 + 16, (lines.length * (o.size || 96) * 1.2) / 2 + 10];
@@ -93,24 +101,43 @@ function tracePath(ctx, pts) {
 
 function drawStroke(ctx, o, t) {
   ctx.save();
+  ctx.globalAlpha = o.alpha ?? 1;
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (o.mode === 'rainbow') {
+    // 彩虹光紋：沿著筆畫變換顏色，並緩緩流動
+    const pts = o.points;
+    const base = ctx.globalAlpha;
+    for (let i = 1; i < pts.length; i++) {
+      const hue = (i * 9 + t * 90) % 360;
+      ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.strokeStyle = `hsl(${hue},100%,70%)`;
+      ctx.globalAlpha = base * 0.25; ctx.lineWidth = o.size * 2.4; ctx.stroke();
+      ctx.globalAlpha = base; ctx.lineWidth = o.size * 0.9; ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    tracePath(ctx, pts);
+    ctx.strokeStyle = '#fff'; ctx.globalAlpha = base * 0.85; ctx.lineWidth = o.size * 0.25; ctx.stroke();
+    ctx.restore();
+    return;
+  }
   tracePath(ctx, o.points);
+  const a0 = ctx.globalAlpha;
   if (o.mode === 'pen') {
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = o.size + 8; ctx.globalAlpha = 0.85; ctx.stroke();
-    ctx.globalAlpha = 1; ctx.strokeStyle = o.color; ctx.lineWidth = o.size; ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = o.size + 8; ctx.globalAlpha = 0.85 * a0; ctx.stroke();
+    ctx.globalAlpha = a0; ctx.strokeStyle = o.color; ctx.lineWidth = o.size; ctx.stroke();
   } else {
     // 光紋：多層光暈＋流動亮點
     const pulse = 0.82 + 0.18 * Math.sin(t * 3 + o.points.length);
     ctx.strokeStyle = o.color;
     [[3.4, 0.12], [2.2, 0.2], [1.3, 0.45]].forEach(([w, a]) => {
-      ctx.globalAlpha = a * pulse; ctx.lineWidth = o.size * w; ctx.stroke();
+      ctx.globalAlpha = a * pulse * a0; ctx.lineWidth = o.size * w; ctx.stroke();
     });
-    ctx.globalAlpha = 1; ctx.lineWidth = o.size * 0.75; ctx.stroke();
+    ctx.globalAlpha = a0; ctx.lineWidth = o.size * 0.75; ctx.stroke();
     ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = '#fff'; ctx.globalAlpha = 0.9; ctx.lineWidth = o.size * 0.28; ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.globalAlpha = 0.9 * a0; ctx.lineWidth = o.size * 0.28; ctx.stroke();
     ctx.setLineDash([o.size * 1.2, o.size * 5]);
     ctx.lineDashOffset = -t * 260;
-    ctx.globalAlpha = 0.9; ctx.lineWidth = o.size * 0.75; ctx.stroke();
+    ctx.globalAlpha = 0.9 * a0; ctx.lineWidth = o.size * 0.75; ctx.stroke();
   }
   ctx.restore();
 }
@@ -120,7 +147,8 @@ export function drawObject(ctx, o, t, live) {
   if (o.type === 'stroke') return drawStroke(ctx, o, t);
   if (o.type === 'comp') return drawComponent(ctx, o, t, live);
   ctx.save();
-  ctx.translate(o.x, o.y); ctx.rotate(o.rot || 0); ctx.scale(o.scale, o.scale);
+  ctx.globalAlpha = o.alpha ?? 1;
+  ctx.translate(o.x, o.y); ctx.rotate(o.rot || 0); ctx.scale(o.scale * (o.flip ? -1 : 1), o.scale);
   if (o.tapT != null) { const k = Math.exp(-(t - o.tapT) * 5); ctx.scale(1 + k * 0.2, 1 + k * 0.2); }
   if (o.type === 'emoji') {
     ctx.font = `110px ${EMOJI_FONT}`;
@@ -136,13 +164,14 @@ export function drawObject(ctx, o, t, live) {
     }
   } else if (o.type === 'text') {
     const size = o.size || 96;
-    ctx.font = `900 ${size}px ${FONT}`;
+    if (o.flip) ctx.scale(-1, 1); // 文字不鏡像
+    ctx.font = textFont(o);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     const lines = o.text.split('\n');
     const lh = size * 1.2;
     lines.forEach((l, i) => {
       const y = (i - (lines.length - 1) / 2) * lh;
-      ctx.lineWidth = size * 0.22; ctx.strokeStyle = o.outline || '#fff'; ctx.strokeText(l, 0, y);
+      if (o.outline !== 'none') { ctx.lineWidth = size * 0.22; ctx.strokeStyle = o.outline || '#fff'; ctx.strokeText(l, 0, y); }
       ctx.fillStyle = o.color; ctx.fillText(l, 0, y);
     });
   }
