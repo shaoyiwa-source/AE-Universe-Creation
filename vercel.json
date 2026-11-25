@@ -125,6 +125,11 @@
       "source": "/soul-cards.html",
       "destination": "/color-moment",
       "permanent": false
+    },
+    {
+      "source": "/game",
+      "destination": "/game/",
+      "permanent": false
     }
   ]
 }
