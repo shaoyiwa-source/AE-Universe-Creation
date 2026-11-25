@@ -130,6 +130,11 @@
       "source": "/game",
       "destination": "/game/",
       "permanent": false
+    },
+    {
+      "source": "/13th-light",
+      "destination": "/13th-light/",
+      "permanent": false
     }
   ]
 }
