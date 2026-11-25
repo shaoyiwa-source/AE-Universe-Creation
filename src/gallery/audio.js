@@ -1,0 +1,599 @@
+import { ETERNAL } from './beats-eternal.js';
+// AE Shinity — generative healing soundscapes + touch chimes (Web Audio, no external files)
+// Everything is tuned to C major pentatonic so music and touch chimes are always consonant.
+
+const PENTA = [0, 2, 4, 7, 9]; // C D E G A
+const midi = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+export class Sound {
+  constructor() {
+    this.ctx = null;
+    this.preset = 'none';
+    this.volume = 0.6;
+    this.timers = [];
+    this.voices = new Set();
+    this.customEl = null;
+    this.customUrl = null;
+    this.customNode = null;
+    this.chimeOn = true;
+  }
+
+  ensure() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      const ctx = this.ctx = new AC();
+      this.master = ctx.createGain();
+      this.master.gain.value = this.volume;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.ratio.value = 3; comp.attack.value = 0.02; comp.release.value = 0.4;
+      this.master.connect(comp).connect(ctx.destination);
+      this.an = ctx.createAnalyser(); this.an.fftSize = 2048; this.an.smoothingTimeConstant = 0.2; this.master.connect(this.an); // what we play, for lights that dance to it
+      this.comp = comp;
+      this.reverb = ctx.createConvolver();
+      this.reverb.buffer = this._impulse(4.2, 2.6);
+      this.wet = ctx.createGain(); this.wet.gain.value = 0.55;
+      this.reverb.connect(this.wet).connect(this.master);
+      this.musicBus = ctx.createGain(); this.musicBus.gain.value = 0;
+      this.musicBus.connect(this.master);
+      this.musicBus.connect(this.reverb);
+      this.beatBus = ctx.createGain(); this.beatBus.gain.value = 0; // dry (no reverb) for rhythm
+      this.beatBus.connect(this.master);
+      this.sfxBus = ctx.createGain(); this.sfxBus.gain.value = 0.5;
+      this.sfxBus.connect(this.master);
+      this.sfxBus.connect(this.reverb);
+    }
+    if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume().catch(() => {});
+    return true;
+  }
+
+  _impulse(seconds, decay) {
+    const ctx = this.ctx, rate = ctx.sampleRate, len = Math.floor(rate * seconds);
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+
+  // A MediaStream of everything we play (music + chimes) — used to put sound into recorded clips
+  captureStream() {
+    if (!this.ensure()) return null;
+    if (!this.capDest) { this.capDest = this.ctx.createMediaStreamDestination(); this.comp.connect(this.capDest); }
+    return this.capDest.stream;
+  }
+
+  setVolume(v) {
+    this.volume = v;
+    if (this.ctx) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.1);
+  }
+
+  // src: a URL string (AE cloud track) or a Blob
+  setCustom(src) {
+    if (this.customUrl && this._ownUrl) URL.revokeObjectURL(this.customUrl);
+    this._ownUrl = !!src && typeof src !== 'string';
+    this.customUrl = !src ? null : typeof src === 'string' ? src : URL.createObjectURL(src);
+    if (this.customEl) { this.customEl.pause(); this.customEl.src = this.customUrl || ''; }
+  }
+
+  play(preset) {
+    if (!this.ensure()) return;
+    this.stop(true);
+    this.preset = preset;
+    const t = this.ctx.currentTime;
+    this.musicBus.gain.cancelScheduledValues(t);
+    this.musicBus.gain.setValueAtTime(this.musicBus.gain.value, t);
+    this.musicBus.gain.linearRampToValueAtTime(preset === 'custom' ? 1 : 0.9, t + 3);
+    this.beatBus.gain.cancelScheduledValues(t);
+    this.beatBus.gain.setValueAtTime(this.beatBus.gain.value, t);
+    this.beatBus.gain.linearRampToValueAtTime(preset === 'pulse' ? 1 : 0, t + 2);
+    if (preset === 'hall') this._hall();
+    else if (preset === 'nature') this._nature();
+    else if (preset === 'lounge') this._lounge();
+    else if (preset === 'pulse') this._pulse();
+    else if (preset === 'celestial') this._celestial();
+    else if (preset === 'ocean') this._ocean();
+    else if (preset === 'dawn') this._dawn();
+    else if (preset === 'hearth') this._hearth();
+    else if (preset === 'eternal') this._eternal();
+    else if (preset === 'custom') this._custom();
+  }
+
+  stop(immediate = false) {
+    this.timers.forEach(clearTimeout); this.timers = [];
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const fade = immediate ? 0.6 : 2;
+    this.beatBus.gain.cancelScheduledValues(t);
+    this.beatBus.gain.setValueAtTime(this.beatBus.gain.value, t);
+    this.beatBus.gain.linearRampToValueAtTime(0, t + fade);
+    for (const v of this.voices) {
+      try { v.gain.gain.cancelScheduledValues(t); v.gain.gain.setValueAtTime(v.gain.gain.value, t); v.gain.gain.linearRampToValueAtTime(0, t + fade); v.stopAt(t + fade + 0.1); } catch { /* ignore */ }
+    }
+    this.voices.clear();
+    if (this.customEl && !this.customEl.paused) {
+      const el = this.customEl;
+      const start = el.volume; let k = 0;
+      clearInterval(this.fadeIv);
+      this.fadeIv = setInterval(() => { k++; el.volume = Math.max(0, start * (1 - k / 10)); if (k >= 10) { clearInterval(this.fadeIv); el.pause(); el.volume = 1; } }, fade * 100);
+    }
+    this.preset = 'none';
+  }
+
+  suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {}); }
+  resume() { if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume().catch(() => {}); }
+  // the most recent kick drum that has actually sounded: { live, pulse, count }
+  beat() {
+    if (this.preset === 'eternal' && this.customEl && this.rhythm) {
+      // the light must flash when the kick is HEARD: subtract the time the sound still needs to reach the speaker
+      // (Web Audio + device/Bluetooth output latency) and draw one frame ahead (like the homepage show)
+      const lat = this.ctx ? (this.ctx.outputLatency || 0) + (this.ctx.baseLatency || 0) : 0;
+      const tt = Math.max(0, (this.customEl.currentTime || 0) - lat + (this.visualLead || 0.016));
+      this.lastBeatClock = { media: this.customEl.currentTime || 0, lat, tt };
+      const energy = energyAt(tt);
+      const b = this.rhythm.update(energy, tt);
+      return { live: !this.customEl.paused, energy, ...b };
+    }
+    if (!this.ctx || this.preset !== 'pulse' || !this.kickTimes || !this.kickTimes.length) return { live: false, pulse: 0, count: 0 };
+    const now = this.ctx.currentTime; let last = -1, n = 0;
+    for (const k of this.kickTimes) if (k <= now) { last = k; n++; }
+    this.kickCount = (this.kickCount || 0); if (last > 0 && last !== this._lastKickSeen) { this._lastKickSeen = last; this.kickCount++; }
+    return { live: last > 0, pulse: last > 0 ? Math.exp(-(now - last) / 0.11) : 0, count: this.kickCount };
+  }
+  get running() { return !!this.ctx && this.ctx.state === 'running'; }
+
+  // schedule the next phrase; while the audio is paused/interrupted, wait instead of piling phrases up
+  // (otherwise every missed bar would sound at once when the phone resumes)
+  _later(fn, ms) {
+    const run = () => { if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.timers.push(setTimeout(run, 400)); else fn(); };
+    const id = setTimeout(run, ms); this.timers.push(id); return id;
+  }
+
+  _track(gain, nodes) {
+    const v = { gain, stopAt: (when) => nodes.forEach(n => { try { n.stop(when); } catch { /* ignore */ } }) };
+    this.voices.add(v);
+    return v;
+  }
+
+  // Warm detuned pad voice
+  _pad(freq, start, dur, level = 0.05, type = 'sine', cutoff = 1400) {
+    const ctx = this.ctx;
+    const g = ctx.createGain();
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.3;
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+    o1.type = type; o2.type = 'triangle';
+    o1.frequency.value = freq; o2.frequency.value = freq * 1.003;
+    const lfo = ctx.createOscillator(), lfoG = ctx.createGain();
+    lfo.frequency.value = 0.08 + Math.random() * 0.1; lfoG.gain.value = freq * 0.002;
+    lfo.connect(lfoG).connect(o1.frequency);
+    const g2 = ctx.createGain(); g2.gain.value = 0.45;
+    o1.connect(f); o2.connect(g2).connect(f); f.connect(g).connect(this.musicBus);
+    const atk = Math.min(4, dur * 0.4);
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(level, start + atk);
+    g.gain.setValueAtTime(level, start + dur - atk);
+    g.gain.linearRampToValueAtTime(0, start + dur + 1.5);
+    [o1, o2, lfo].forEach(o => { o.start(start); o.stop(start + dur + 1.7); });
+    const v = this._track(g, [o1, o2, lfo]);
+    o1.onended = () => this.voices.delete(v);
+  }
+
+  _bell(freq, when, level = 0.05, decay = 3.2, bus = this.musicBus, ratio = 2.756) {
+    const ctx = this.ctx;
+    const g = ctx.createGain();
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o.type = 'sine'; o2.type = 'sine';
+    o.frequency.value = freq; o2.frequency.value = freq * ratio;
+    g2.gain.value = 0.18;
+    o.connect(g); o2.connect(g2).connect(g); g.connect(bus);
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(level, when + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + decay);
+    o.start(when); o2.start(when); o.stop(when + decay + 0.1); o2.stop(when + decay + 0.1);
+    if (bus === this.musicBus) { const v = this._track(g, [o, o2]); o.onended = () => this.voices.delete(v); }
+  }
+
+  // warm electric-piano voice: harmonic partials only (always in tune) with a soft tine;
+  // all keys share one bus with one slow tremolo (half the cost of a tremolo per note)
+  _keysBus() {
+    if (this.keysBus && this.keysBus.context === this.ctx) return this.keysBus;
+    const ctx = this.ctx, bus = ctx.createGain(), f = ctx.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = 2200; f.Q.value = 0.2;
+    bus.gain.value = 1;
+    const trem = ctx.createOscillator(), tg = ctx.createGain(); trem.frequency.value = 4.2; tg.gain.value = 0.1;
+    trem.connect(tg).connect(bus.gain); trem.start();
+    bus.connect(f).connect(this.musicBus);
+    return (this.keysBus = bus);
+  }
+  _keys(freq, when, level = 0.03, decay = 4.5) {
+    const ctx = this.ctx, bus = this._keysBus();
+    const g = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o1.type = 'sine'; o2.type = 'sine';
+    o1.frequency.value = freq; o2.frequency.value = freq * 2;
+    g2.gain.setValueAtTime(0.24, when); g2.gain.exponentialRampToValueAtTime(0.02, when + 0.6);
+    o1.connect(g); o2.connect(g2).connect(g); g.connect(bus);
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(level, when + 0.012);
+    g.gain.exponentialRampToValueAtTime(level * 0.35, when + 1.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + decay);
+    [o1, o2].forEach(o => { o.start(when); o.stop(when + decay + 0.1); });
+    const v = this._track(g, [o1, o2]); o1.onended = () => this.voices.delete(v);
+  }
+
+  _noise(seconds = 4) {
+    if (this._noiseBuf) return this._noiseBuf;
+    const ctx = this.ctx, len = ctx.sampleRate * seconds;
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c); let b0 = 0, b1 = 0, b2 = 0;
+      for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = 0.997 * b0 + w * 0.029; b1 = 0.985 * b1 + w * 0.032; b2 = 0.95 * b2 + w * 0.048; d[i] = (b0 + b1 + b2) * 0.9 + w * 0.04; }
+    }
+    return (this._noiseBuf = buf);
+  }
+
+  // 展廳迴響 Gallery Hall — almost silent, very slow drones and rare distant bells
+  _hall() {
+    const chords = [[36, 43, 52, 59], [33, 40, 48, 55], [29, 36, 45, 52], [31, 38, 47, 55]];
+    let i = 0;
+    const step = () => {
+      if (this.preset !== 'hall') return;
+      const t = this.ctx.currentTime + 0.05;
+      chords[i % chords.length].forEach((m, k) => this._pad(midi(m + 12), t + k * 0.6, 17, k === 0 ? 0.03 : 0.018, 'sine', 800));
+      i++; this._later(step, 16000);
+    };
+    const bell = () => {
+      if (this.preset !== 'hall') return;
+      this._bell(midi(72 + PENTA[Math.floor(Math.random() * 5)]), this.ctx.currentTime + 0.05, 0.014, 7);
+      this._later(bell, 7000 + Math.random() * 8000);
+    };
+    step(); this._later(bell, 5000);
+  }
+
+  // 自然療癒 Nature — flowing stream, wind gusts and wind chimes
+  _nature() {
+    const ctx = this.ctx, t = ctx.currentTime;
+    const out = ctx.createGain(); out.gain.value = 1; out.connect(this.musicBus);
+    // stream
+    const s1 = ctx.createBufferSource(); s1.buffer = this._noise(); s1.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.9;
+    const sg = ctx.createGain(); sg.gain.value = 0.12;
+    s1.connect(bp).connect(sg).connect(out);
+    const s2 = ctx.createBufferSource(); s2.buffer = this._noise(); s2.loop = true; s2.playbackRate.value = 0.83;
+    const lp2 = ctx.createBiquadFilter(); lp2.type = 'lowpass'; lp2.frequency.value = 900;
+    const sg2 = ctx.createGain(); sg2.gain.value = 0.09;
+    s2.connect(lp2).connect(sg2).connect(out);
+    // wind
+    const w = ctx.createBufferSource(); w.buffer = this._noise(); w.loop = true; w.playbackRate.value = 0.6;
+    const wl = ctx.createBiquadFilter(); wl.type = 'bandpass'; wl.frequency.value = 420; wl.Q.value = 0.5;
+    const wg = ctx.createGain(); wg.gain.value = 0.02;
+    w.connect(wl).connect(wg).connect(out);
+    s1.start(t); s2.start(t + 0.7); w.start(t + 1.3);
+    this._track(out, [s1, s2, w]);
+    const babble = () => {
+      if (this.preset !== 'nature') return;
+      const n = this.ctx.currentTime;
+      bp.frequency.setTargetAtTime(1300 + Math.random() * 1700, n, 0.05);
+      sg.gain.setTargetAtTime(0.08 + Math.random() * 0.07, n, 0.07);
+      this._later(babble, 90 + Math.random() * 140);
+    };
+    const chimes = (count) => {
+      const n = this.ctx.currentTime + 0.05;
+      for (let k = 0; k < count; k++) {
+        const m = 84 + PENTA[Math.floor(Math.random() * 5)] + (Math.random() < 0.35 ? 12 : 0);
+        this._bell(midi(m), n + k * (0.12 + Math.random() * 0.35), 0.018 + Math.random() * 0.02, 6.5);
+      }
+    };
+    const gust = () => {
+      if (this.preset !== 'nature') return;
+      const n = this.ctx.currentTime, peak = 0.08 + Math.random() * 0.1, up = 2.5 + Math.random() * 2;
+      wg.gain.cancelScheduledValues(n); wg.gain.setValueAtTime(wg.gain.value, n);
+      wg.gain.linearRampToValueAtTime(peak, n + up); wg.gain.linearRampToValueAtTime(0.02, n + up + 4 + Math.random() * 3);
+      wl.frequency.setTargetAtTime(500 + Math.random() * 600, n, up / 2);
+      wl.frequency.setTargetAtTime(380, n + up, 2);
+      this._later(() => { if (this.preset === 'nature') chimes(3 + Math.floor(Math.random() * 4)); }, up * 1000 - 400);
+      this._later(gust, 9000 + Math.random() * 9000);
+    };
+    const drone = () => {
+      if (this.preset !== 'nature') return;
+      const n = this.ctx.currentTime + 0.05;
+      [48, 55, 64].forEach((m, k) => this._pad(midi(m), n + k * 0.8, 20, 0.014, 'sine', 700));
+      this._later(drone, 19000);
+    };
+    babble(); drone(); this._later(gust, 2500); this._later(() => chimes(2), 6000);
+  }
+
+  // 大廳雅韻 Lounge — warm electric-piano ninth chords with a soft walking bass
+  _ep(freq, when, level, decay = 4) {
+    const ctx = this.ctx, g = ctx.createGain();
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o.type = 'sine'; o2.type = 'sine'; o.frequency.value = freq; o2.frequency.value = freq * 2.001; g2.gain.value = 0.22;
+    const trem = ctx.createOscillator(), tg = ctx.createGain(); trem.frequency.value = 4.6; tg.gain.value = level * 0.18;
+    trem.connect(tg).connect(g.gain);
+    o.connect(g); o2.connect(g2).connect(g); g.connect(this.musicBus);
+    g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(level, when + 0.012);
+    g.gain.exponentialRampToValueAtTime(level * 0.25, when + 1.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + decay);
+    [o, o2, trem].forEach(x => { x.start(when); x.stop(when + decay + 0.1); });
+    const v = this._track(g, [o, o2, trem]); o.onended = () => this.voices.delete(v);
+  }
+  _lounge() {
+    const prog = [[50, 54, 57, 61, 64], [47, 50, 54, 57, 61], [43, 47, 50, 54, 57], [45, 49, 52, 55, 59]];
+    let bar = 0;
+    const play = () => {
+      if (this.preset !== 'lounge') return;
+      const t = this.ctx.currentTime + 0.05, ch = prog[bar % prog.length], beat = 0.95;
+      ch.slice(1).forEach((m, k) => this._ep(midi(m), t + k * 0.03, 0.028, 4.2));
+      ch.slice(2).forEach((m, k) => this._ep(midi(m), t + beat * 2.5 + k * 0.03, 0.018, 2.6));
+      [0, 7, 12, 7].forEach((iv, k) => this._ep(midi(ch[0] - 12 + iv), t + k * beat, 0.04, 1.4));
+      if (Math.random() < 0.6) this._bell(midi(ch[4] + 12), t + beat * 3, 0.012, 3.5);
+      bar++; this._later(play, beat * 4 * 1000);
+    };
+    play();
+  }
+
+  // 夜光派對 Night Pulse — 116 BPM soft-house groove, still consonant with the touch chimes
+  _kick(t) {
+    (this.kickTimes = this.kickTimes || []).push(t); if (this.kickTimes.length > 16) this.kickTimes.shift(); // for light that follows the beat
+    const ctx = this.ctx, o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.42, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+    o.connect(g).connect(this.beatBus); o.start(t); o.stop(t + 0.4);
+  }
+  _hat(t, level) {
+    const ctx = this.ctx, src = ctx.createBufferSource(); src.buffer = this._noise();
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
+    const g = ctx.createGain(); g.gain.setValueAtTime(level, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    src.connect(hp).connect(g).connect(this.beatBus); src.start(t, Math.random() * 3); src.stop(t + 0.06);
+  }
+  _bass(f, t, d) {
+    const ctx = this.ctx, o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = 420;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(lp).connect(g).connect(this.beatBus); o.start(t); o.stop(t + d + 0.05);
+  }
+  _pulse() {
+    const ctx = this.ctx, beat = 60 / 116, sixteenth = beat / 4;
+    const prog = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]];
+    let next = ctx.currentTime + 0.15, step = 0;
+    const sched = () => {
+      if (this.preset !== 'pulse') return;
+      while (next < this.ctx.currentTime + 0.35) {
+        const s = step % 16, ch = prog[Math.floor(step / 16) % 4];
+        if (s % 4 === 0) this._kick(next);
+        if (s % 4 === 2) { this._hat(next, 0.07); this._bass(midi(ch[0] - 24), next, sixteenth * 1.8); }
+        else if (s % 2 === 1) this._hat(next, 0.025);
+        if (s === 0) ch.forEach((m, k) => this._pad(midi(m), next + k * 0.01, beat * 4 - 0.3, 0.02, 'triangle', 1500));
+        if (s % 2 === 0 && Math.random() < 0.16) this._bell(midi(ch[Math.floor(Math.random() * 3)] + 24), next, 0.022, 1.4);
+        next += sixteenth; step++;
+      }
+      this._later(sched, 90);
+    };
+    sched();
+  }
+
+  // 星河冥想 Celestial Meditation — slow major-seventh pads + sparse pentatonic bells
+  _celestial() {
+    const chords = [
+      [48, 55, 59, 62, 64], // Cmaj9
+      [45, 52, 55, 59, 60], // Am9
+      [41, 48, 52, 57, 59], // Fmaj7#11
+      [43, 50, 57, 60, 64], // G6/9sus
+    ];
+    let i = 0;
+    const step = () => {
+      if (this.preset !== 'celestial') return;
+      const t = this.ctx.currentTime + 0.05;
+      chords[i % chords.length].forEach((m, k) => this._pad(midi(m), t + k * 0.12, 11, k === 0 ? 0.05 : 0.032, 'sine', 1100));
+      i++;
+      this._later(step, 9500);
+    };
+    const bells = () => {
+      if (this.preset !== 'celestial') return;
+      const m = 72 + PENTA[Math.floor(Math.random() * 5)] + (Math.random() < 0.3 ? 12 : 0);
+      this._bell(midi(m), this.ctx.currentTime + 0.05, 0.028 + Math.random() * 0.02, 4.5);
+      this._later(bells, 1800 + Math.random() * 3800);
+    };
+    step(); this._later(bells, 2500);
+  }
+
+  // 海潮呼吸 Ocean Breath — filtered noise swelling on a 10s (6 breaths/min) cycle + low drone
+  _ocean() {
+    const ctx = this.ctx;
+    const len = ctx.sampleRate * 4;
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c); let b0 = 0, b1 = 0, b2 = 0;
+      for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = 0.997 * b0 + w * 0.029; b1 = 0.985 * b1 + w * 0.032; b2 = 0.95 * b2 + w * 0.048; d[i] = (b0 + b1 + b2) * 0.9; }
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 500; f.Q.value = 0.6;
+    const g = ctx.createGain(); g.gain.value = 0;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.1;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.09;
+    const lfoF = ctx.createGain(); lfoF.gain.value = 380;
+    const base = ctx.createConstantSource ? ctx.createConstantSource() : null;
+    lfo.connect(lfoGain).connect(g.gain);
+    lfo.connect(lfoF).connect(f.frequency);
+    const out = ctx.createGain(); out.gain.value = 1;
+    src.connect(f).connect(g).connect(out).connect(this.musicBus);
+    const t = ctx.currentTime;
+    if (base) { base.offset.value = 0.11; base.connect(g.gain); base.start(t); }
+    src.start(t); lfo.start(t);
+    this._track(out, [src, lfo, base].filter(Boolean));
+    const drone = () => {
+      if (this.preset !== 'ocean') return;
+      const s = this.ctx.currentTime + 0.05;
+      [36, 43, 52].forEach((m, k) => this._pad(midi(m), s + k * 0.4, 18, 0.028, 'sine', 700));
+      this._later(drone, 17000);
+    };
+    const gull = () => {
+      if (this.preset !== 'ocean') return;
+      const m = 79 + PENTA[Math.floor(Math.random() * 5)];
+      this._bell(midi(m), this.ctx.currentTime + 0.05, 0.016, 6);
+      this._later(gull, 5000 + Math.random() * 7000);
+    };
+    drone(); this._later(gull, 4000);
+  }
+
+  // 晨光花園 Dawn Garden — gentle arpeggiated music-box over a soft pad
+  _dawn() {
+    const prog = [[60, 64, 67, 72, 76], [57, 60, 64, 69, 72], [53, 57, 60, 65, 69], [55, 59, 62, 67, 74]];
+    let bar = 0;
+    const play = () => {
+      if (this.preset !== 'dawn') return;
+      const t = this.ctx.currentTime + 0.05;
+      const ch = prog[bar % prog.length];
+      this._pad(midi(ch[0] - 12), t, 7.6, 0.035, 'sine', 900);
+      this._pad(midi(ch[2] - 12), t + 0.2, 7.6, 0.022, 'sine', 900);
+      // a gentle music box, in tune (harmonic partial), one octave lower than before, no stumbling notes
+      const order = bar % 2 ? [0, 2, 1, 3, 4, 3, 2] : [0, 2, 4, 3, 1, 2];
+      const lead = bar === 0 ? 2.2 : 0, step = (7.6 - lead) / order.length; // first bar: the pad blooms, then the music box joins
+      order.forEach((n, k) => this._bell(midi(ch[n]), t + lead + k * step + (k % 2) * 0.05, 0.02, 3.4, this.musicBus, 2));
+      bar++;
+      this._later(play, 7600);
+    };
+    play();
+  }
+
+  // 暖居時光 Warm Home — for private residences: unhurried electric-piano chords with soft jazz colour,
+  // a warm low pad and an occasional melody note, played with a human touch (never mechanical)
+  _hearth() {
+    // Fmaj9 → Em7 → Dm9 → Cmaj9 (gently descending, settling), bass + four-note voicings
+    const prog = [
+      { bass: 41, v: [57, 60, 64, 67], mel: [72, 69, 67] },
+      { bass: 40, v: [55, 59, 62, 64], mel: [71, 67, 64] },
+      { bass: 38, v: [53, 57, 60, 64], mel: [69, 65, 64] },
+      { bass: 36, v: [55, 59, 62, 64], mel: [67, 64, 62] },
+    ];
+    let bar = 0;
+    const play = () => {
+      if (this.preset !== 'hearth') return;
+      const t = this.ctx.currentTime + 0.05, c = prog[bar % prog.length], L = 9;
+      const lead = bar === 0 ? 2.6 : 0.08; // the very beginning: let the warm floor bloom before the first chord
+      this._pad(midi(c.bass), t, L, 0.03, 'sine', 500);
+      this._pad(midi(c.bass + 12), t + 0.3, L, 0.012, 'sine', 700);
+      // the chord, rolled softly from the bottom like a hand on the keys
+      c.v.forEach((m, k) => this._keys(midi(m), t + lead + k * 0.07 + Math.random() * 0.02, (0.022 - k * 0.002) * (bar === 0 ? 0.8 : 1), 6));
+      // half-way: the chord again, quieter, a little higher voicing
+      c.v.slice(1).forEach((m, k) => this._keys(midi(m + (k === 2 ? 12 : 0)), t + 4.4 + k * 0.09 + Math.random() * 0.03, 0.013, 4.5));
+      // a few melody notes, not every bar
+      if (bar % 4 !== 3) c.mel.forEach((m, k) => { if (k < 2 || bar % 2) this._keys(midi(m), t + 2.2 + k * 1.35 + Math.random() * 0.12, 0.016 - k * 0.003, 4); });
+      bar++;
+      this._later(play, L * 1000);
+    };
+    play();
+  }
+
+  // 盛明電音 — the homepage show's own track (Aurelia Techno Eternal, 148 BPM). It opens at the homepage's cue
+  // (mid-build, the drop arrives within seconds), then loops; lights follow its measured beat timeline.
+  _eternal() {
+    this.setCustom(ETERNAL_URL);
+    this._custom();
+    const el = this.customEl; if (!el) return;
+    const cue = () => { try { if (el.currentTime < 1) el.currentTime = ETERNAL.cue || 0; } catch { /* ignore */ } };
+    if (el.readyState >= 1) cue(); else el.addEventListener('loadedmetadata', cue, { once: true });
+    this.rhythm = createRhythm(ETERNAL.events, ETERNAL.accents, ETERNAL.sections);
+  }
+
+  // iPhone/iPad allow a track to start later (without a tap) only if it was started once inside a tap: call this in the
+  // tap, it plays the theme track silently for an instant and stops — the track is then free to play when the show needs it
+  unlockEternal() {
+    if (!this.ensure()) return;
+    if (!this.customEl) { this.customEl = new Audio(); this.customEl.loop = true; if (!IOS) { try { this.customNode = this.ctx.createMediaElementSource(this.customEl); this.customNode.connect(this.master); } catch { /* element output */ } } }
+    const el = this.customEl, abs = new URL(ETERNAL_URL, location.href).href;
+    if (el.src !== abs) el.src = abs;
+    el.muted = true;
+    const p = el.play(); if (p && p.then) p.then(() => { if (this.preset !== 'eternal') el.pause(); el.muted = false; }).catch(() => { el.muted = false; }); else el.muted = false;
+  }
+  // the track should be playing but is not (blocked or interrupted): try again — inside a tap this always works
+  nudgeTrack() { const el = this.customEl; if (el && (this.preset === 'eternal' || this.preset === 'custom') && el.paused) { el.muted = false; el.play().catch(() => {}); return true; } return false; }
+
+  _custom() {
+    if (!this.customUrl) return;
+    if (!this.customEl) {
+      this.customEl = new Audio();
+      this.customEl.loop = true;
+      if (!IOS) { try { this.customNode = this.ctx.createMediaElementSource(this.customEl); this.customNode.connect(this.master); } catch { /* fallback to element output */ } }
+    }
+    clearInterval(this.fadeIv);
+    const abs = new URL(this.customUrl, location.href).href;
+    if (this.customEl.src !== abs) this.customEl.src = abs;
+    this.customEl.volume = 1;
+    this.customEl.play().catch(() => {});
+  }
+
+  // ---- one-tap effect sounds (homepage chime family) ----
+  _partial(t, freq, peak, decay, type = 'sine', detune = 0) {
+    const ctx = this.ctx, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t); if (detune) o.detune.setValueAtTime(detune, t);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    o.connect(g).connect(this.sfxBus); o.start(t); o.stop(t + decay + 0.05);
+  }
+  glowChime() {
+    if (!this.ensure()) return; const t = this.ctx.currentTime, notes = [523.25, 659.25, 783.99, 987.77, 1318.5];
+    notes.forEach((f, i) => { this._partial(t + i * 0.07, f, 0.09, 1.6 - i * 0.12); this._partial(t + i * 0.07, f * 2, 0.024, 0.7, 'sine', 6); });
+    for (let i = 0; i < 6; i++) this._partial(t + 0.2 + i * 0.09, 2093 * 2 ** ((i % 3) * 4 / 12), 0.016, 0.5, 'sine', i % 2 ? 8 : -8);
+  }
+  coinChime(i = 0) {
+    if (!this.ensure()) return; const t = this.ctx.currentTime, f = 1900 + ((i * 137) % 9) * 130;
+    this._partial(t, f, 0.08, 0.28); this._partial(t, f * 2.76, 0.032, 0.16); this._partial(t + 0.045, f * 1.5, 0.036, 0.2);
+  }
+  zapChime(i = 0) {
+    if (!this.ensure()) return;
+    const ctx = this.ctx, t = ctx.currentTime, o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), start = 1700 + (i % 4) * 220;
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(start, t); o.frequency.exponentialRampToValueAtTime(140, t + 0.24);
+    f.type = 'lowpass'; f.frequency.setValueAtTime(4200, t); f.frequency.exponentialRampToValueAtTime(600, t + 0.24); f.Q.value = 6;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+    o.connect(f).connect(g).connect(this.sfxBus); o.start(t); o.stop(t + 0.3);
+    this._partial(t, start / 2, 0.024, 0.12, 'triangle');
+  }
+
+  // Touch chime: x (0..1) picks pentatonic degree, y (0..1) picks octave
+  chime(x, y, chord = false) {
+    if (!this.chimeOn || !this.ensure()) return;
+    const deg = Math.min(9, Math.floor(x * 10));
+    const oct = y < 0.33 ? 84 : y < 0.66 ? 72 : 60;
+    const m = oct + PENTA[deg % 5] + (deg >= 5 ? 12 : 0) - (oct === 84 ? 12 : 0);
+    const t = this.ctx.currentTime + 0.01;
+    this._bell(midi(m), t, 0.11, 2.8, this.sfxBus);
+    if (chord) {
+      this._bell(midi(m + 7), t + 0.09, 0.07, 3.2, this.sfxBus);
+      this._bell(midi(m + 12), t + 0.18, 0.06, 3.6, this.sfxBus);
+    }
+  }
+}
+
+// iPhone/iPad: when the microphone opens, iOS switches the audio hardware; anything played through Web Audio can then run
+// fast and high for a while. Tracks therefore play straight from their own element there (beats still follow the
+// track's clock; the lights hear it through the microphone).
+export const IOS = typeof navigator !== 'undefined' && (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+export const ETERNAL_URL = 'media/aurelia-techno-eternal-148bpm.m4a';
+// pre-measured 40–180 Hz energy of the track (no live analyser needed)
+function energyAt(time) {
+  const e = ETERNAL.energy; if (!e || !e.data) return 0;
+  const i = Math.floor(time / e.hop); if (i < 0 || i >= e.data.length) return 0;
+  const c = e.data.charCodeAt(i); return (c < 58 ? c - 48 : c - 87) / 35;
+}
+// the homepage show's rhythm: kicks, accents and the build → drop sections of the track
+function createRhythm(events, accents = [], sections = []) {
+  let last = -10, count = 0, interval = 60 / 148, accentCount = 0, lastTime = -10;
+  const passed = (list, time) => { let lo = 0, hi = list.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (list[mid] <= time) lo = mid + 1; else hi = mid; } return lo; };
+  return {
+    update(level, time) {
+      if (time < lastTime) { count = accentCount = 0; } lastTime = time;
+      const nextCount = passed(events, time), beat = nextCount > count; count = nextCount; last = count ? events[count - 1] : -10;
+      if (count > 1) { const gap = last - events[count - 2]; if (gap > 0.24 && gap < 0.9) interval = gap; }
+      const nextAccent = passed(accents, time), accentBeat = nextAccent > accentCount; accentCount = nextAccent;
+      const accentTime = accentCount ? accents[accentCount - 1] : -10;
+      const accentPulse = accentCount ? Math.exp(-Math.max(0, time - accentTime) / 0.04) : 0;
+      const section = sections.find(x => time >= x.start && time < x.end);
+      const stage = section ? (time < section.drop ? 'build' : 'drop') : 'groove';
+      const buildProgress = stage === 'build' ? (time - section.start) / (section.drop - section.start) : 0;
+      const dropPulse = stage === 'drop' ? Math.exp(-(time - section.drop) / 0.55) : 0;
+      const kickPulse = count ? Math.exp(-Math.max(0, time - last) / 0.095) : 0;
+      const pulse = stage === 'build' ? Math.max(kickPulse * 0.45, accentPulse * (0.8 + buildProgress * 0.15)) : Math.max(kickPulse, dropPulse);
+      return { beat, count, interval, pulse, phase: count ? Math.min(1, Math.max(0, time - last) / interval) : 0, accentBeat, accentCount, accentPulse, stage, buildProgress, dropPulse, sweep: time / (60 / 148), level };
+    },
+  };
+}
