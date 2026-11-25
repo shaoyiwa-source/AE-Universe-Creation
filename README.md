@@ -1,24 +1,15 @@
-# AE Universe Creation
+# AE Universe Creation official site — Production snapshot
 
-Official website repository for AE Universe Creation / 朝軒宇宙創造.
-Created by 13th Aurelia × 14th Elion.
+This repository mirrors the official website **as it runs in Production**, taken from Vercel deployment `dpl_By4npMgbv7u44QhixovExZsjmk5n` (released 2026-11-19, Taipei). Production domains: `ae-universe-creation.vercel.app` and `ae-universe-creation-one.vercel.app`.
 
-Brand: Action Creates Infinity ♾️ / 行動創造無限♾️
+This repo is a baseline for future updates. It is **not** auto-deployed. Any Production deploy still needs our review and the Owner's yes.
 
-Live site: https://ae-universe-creation.vercel.app
+One Production file is omitted: `api/ecpay/_lib.js`, because it contained a hardcoded non-public ECPay HashKey. Live payment credentials stay in Vercel environment variables and are not in this repository.
 
-## Current note
+# 這份程式碼對應官網正式站
 
-This repo currently holds an earlier single-file `index.html`.
-The reviewed v236 package lives as a folder: `index.html` + `assets/` (webp images).
+此倉庫對應 Vercel 正式部署 `dpl_By4npMgbv7u44QhixovExZsjmk5n`（2026-11-19 台北時間發布）。正式站域名：`ae-universe-creation.vercel.app`、`ae-universe-creation-one.vercel.app`。
 
-To publish v236:
+這是後續更新的基準，**不會**自動上正式站。要上正式站，仍須經過我們審查，並得到 Owner 同意。
 
-1. Unzip `AE_Universe_v236_review.zip`.
-2. On GitHub, open this repo → Add file → Upload files.
-3. Drag `index.html` and the whole `assets` folder.
-4. Commit to `main`.
-5. Connect this repo to the existing Vercel project so the same URL updates automatically.
-
-
-Prototype: `/today` — 看畫 → 抽一次 → 帶走畫和一句今日句.
+正式站檔案 `api/ecpay/_lib.js` 未放入本倉庫，因為其中有寫死的非公開綠界 HashKey。正式金鑰只存在 Vercel 環境變數，不在這個倉庫裡。

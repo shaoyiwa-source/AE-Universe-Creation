@@ -1,9 +1,11 @@
+const { paymentClosedResponse, stageTestAllowed } = require('../../_payment-gate');
 const {
   decodeEnvelope, parseJsonBody, validateCallbackData, queryOrder, validateQueryData,
   getAssetRecord, writeOrderState, privateBlobReady,
 } = require('./_lib');
 
 module.exports = async function handler(req, res) {
+  if (paymentClosedResponse(res)) return;
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).send('0|METHOD_NOT_ALLOWED');
@@ -59,8 +61,10 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     return res.status(200).send('1|OK');
   } catch (error) {
+    if (!stageTestAllowed()) return paymentClosedResponse(res);
     console.error('ECPay ReturnURL rejected', error && error.message);
-    // Acknowledge receipt to prevent retry storms; fulfillment remains fail-closed because verification failed.
+    // Intentional stage tests only: acknowledge so the stage gateway does not retry.
+    // Fulfillment stays unverified. Production and unset mode never reach this line.
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     return res.status(200).send('1|OK');
   }

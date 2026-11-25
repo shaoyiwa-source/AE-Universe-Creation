@@ -1,0 +1,26 @@
+/* AE surface finish. Artwork pixels, gameplay and exported cards stay untouched. */
+:root{--vi-sheen:rgba(255,248,218,.13);--vi-soft:rgba(255,255,255,.035);--vi-edge:rgba(230,213,165,.32);--vi-shadow:rgba(0,0,0,.28);--vi-gold:rgba(220,187,101,.10);--vi-teal:rgba(87,176,162,.065);--vi-violet:rgba(145,124,193,.07);}
+html:not([data-theme="dark"]){--vi-sheen:rgba(255,255,255,.94);--vi-soft:rgba(255,255,255,.36);--vi-edge:rgba(145,120,70,.29);--vi-shadow:rgba(45,55,43,.10);--vi-gold:rgba(215,178,86,.14);--vi-teal:rgba(74,147,136,.085);--vi-violet:rgba(147,124,191,.09);}
+html body.ae-polish :is(.ae-intro,.ivory,.ae-shop,.dark-section,.manifesto,.section-soft-wash,.gallery-section,.selected-works-section,.brand-story,.story-section,.concepts-section,.nft-universe){background-image:radial-gradient(ellipse at 95% 4%,var(--vi-gold),transparent 48%),radial-gradient(ellipse at 2% 90%,var(--vi-teal),transparent 50%),linear-gradient(142deg,var(--vi-soft),transparent 44%);}
+html body.ae-polish :is(.page-heading,.world-intro,.series-main,.opening){background-image:radial-gradient(ellipse at 85% 0,var(--vi-gold),transparent 55%),radial-gradient(ellipse at 0 85%,var(--vi-violet),transparent 50%);}
+html body.ae-polish :is(.home-product-grid article,.ae-activity-grid>a,.sku,.story-card,.nft-series,.checkout-panel,.product-panel,.soul-sample,.visit-progress,.companion-panel,.cm-panel,.cm-save-panel,.form,.ask,.ui){border:1px solid var(--vi-edge);border-radius:22px;background-image:linear-gradient(145deg,var(--vi-sheen),transparent 31%,var(--vi-soft) 75%,transparent),radial-gradient(ellipse at 100% 0,var(--vi-violet),transparent 65%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.035),0 14px 34px -18px var(--vi-shadow),0 2px 8px -5px var(--vi-shadow);}
+html body.ae-polish :is(.ask,.ui),html body.ae-polish .result :is(.visit-progress,.companion-panel){--vi-sheen:rgba(255,248,218,.13);--vi-soft:rgba(255,255,255,.035);--vi-edge:rgba(230,213,165,.32);--vi-shadow:rgba(0,0,0,.28);--vi-violet:rgba(145,124,193,.07);}
+html body.ae-polish :is(.home-product-grid article,.ae-activity-grid>a,.sku,.story-card,.nft-series){transition:box-shadow .22s ease,border-color .22s ease;}
+html body.ae-polish :is(.home-product-grid article,.ae-activity-grid>a,.sku,.story-card,.nft-series):hover{border-color:rgba(207,178,113,.62);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 20px 45px -20px var(--vi-shadow),0 0 20px -10px var(--vi-gold);}
+html body.ae-polish :is(.selected-art,.home-work-gallery figure,.edition-art){padding:12px;border:1px solid var(--vi-edge);border-radius:18px;background-image:linear-gradient(145deg,var(--vi-sheen),transparent 38%,var(--vi-soft));box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 16px 38px -22px var(--vi-shadow);}
+html body.ae-polish :is(.selected-art,.home-work-gallery figure,.edition-art) img{border-radius:10px;}
+html body.ae-polish .selected-art .cap{padding:16px 8px 4px;}
+html body.ae-polish .home-work-gallery figcaption{padding:16px 8px 4px;}
+html body.ae-polish .home-product-grid article{overflow:hidden;}
+html body.ae-polish .home-product-body{padding-top:26px;}
+html body.ae-polish .ae-activity-grid>a{background-color:var(--ae-paper,var(--paper,#121814));}
+html body.ae-polish :is(.button,.btn,.cta,.soul-intro-actions>.button){background-image:linear-gradient(160deg,rgba(255,255,255,.24),transparent 42%,rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 7px 20px -12px var(--vi-shadow);}
+html body.ae-polish :is(.button,.btn,.cta):hover{opacity:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 10px 24px -12px var(--vi-shadow);}
+html body.ae-polish :is(.site-header,.menu-panel,.drawer-panel){background-image:linear-gradient(115deg,var(--vi-soft),transparent 58%);box-shadow:inset 0 -1px 0 var(--vi-edge),0 8px 24px -20px var(--vi-shadow);}
+html body.ae-polish .site-header{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+html body.ae-polish :is(.site-footer,.footer){background-image:radial-gradient(ellipse at 50% 0,var(--vi-gold),transparent 70%);border-top-color:var(--vi-edge);}
+html body.ae-polish :is(.manifesto-inner,.home-intro-grid,.section-topline){border-color:var(--vi-edge);}
+html body.ae-polish :is(a,button,input,select,textarea):focus-visible{outline:2px solid var(--accent,var(--ae-gold,#b18d45));outline-offset:4px;}
+@media(max-width:760px){html body.ae-polish :is(.selected-art,.home-work-gallery figure,.edition-art){padding:9px;border-radius:15px;}html body.ae-polish :is(.home-product-grid article,.ae-activity-grid>a,.sku,.story-card,.nft-series,.soul-sample){border-radius:18px;}html body.ae-polish .site-header{backdrop-filter:none;-webkit-backdrop-filter:none;}}
+@media(prefers-reduced-motion:reduce){html body.ae-polish :is(.home-product-grid article,.ae-activity-grid>a,.sku,.story-card,.nft-series){transition:none;}}
+@media(prefers-color-scheme:dark){html:not([data-theme]){--vi-sheen:rgba(255,248,218,.13);--vi-soft:rgba(255,255,255,.035);--vi-edge:rgba(230,213,165,.32);--vi-shadow:rgba(0,0,0,.28);--vi-gold:rgba(220,187,101,.10);--vi-teal:rgba(87,176,162,.065);--vi-violet:rgba(145,124,193,.07);}}

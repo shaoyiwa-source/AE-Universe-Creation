@@ -1,0 +1,135 @@
+[
+  {
+    "id": "bonus-texture-exp04-center",
+    "src": "src/assets/experience-hires/ae-exp-04.webp",
+    "box": [
+      0.28,
+      0.3,
+      0.78,
+      0.72
+    ],
+    "kind": "texture",
+    "note_zh": "ae-exp-04 原作高解析局部特寫（約中央偏上色塊紋理），裁切後輸出 1080×1920；原檔未改。",
+    "note_en": "Close-up crop of ae-exp-04 hires mid-field texture → 1080×1920. Original file untouched.",
+    "out": "src/assets/experience-bonus/bonus-texture-exp04-center.webp",
+    "bytes": 367898,
+    "size": [
+      1080,
+      1920
+    ]
+  },
+  {
+    "id": "bonus-texture-exp06-lower",
+    "src": "src/assets/experience-hires/ae-exp-06.webp",
+    "box": [
+      0.18,
+      0.45,
+      0.82,
+      0.88
+    ],
+    "kind": "texture",
+    "note_zh": "ae-exp-06 原作下半部筆觸／色彩密紋特寫。",
+    "note_en": "Lower-field brush/colour density crop from ae-exp-06 hires.",
+    "out": "src/assets/experience-bonus/bonus-texture-exp06-lower.webp",
+    "bytes": 411698,
+    "size": [
+      1080,
+      1920
+    ]
+  },
+  {
+    "id": "bonus-texture-exp02-heart",
+    "src": "src/assets/experience-hires/ae-exp-02.webp",
+    "box": [
+      0.22,
+      0.22,
+      0.78,
+      0.62
+    ],
+    "kind": "texture",
+    "note_zh": "ae-exp-02 原作上中區域細節特寫（避免盛明）。",
+    "note_en": "Upper-mid detail crop from ae-exp-02 hires (not Eternal Sun).",
+    "out": "src/assets/experience-bonus/bonus-texture-exp02-heart.webp",
+    "bytes": 410514,
+    "size": [
+      1080,
+      1920
+    ]
+  },
+  {
+    "id": "bonus-texture-natures-core",
+    "src": "src/assets/selected-works-v2/natures-strength.webp",
+    "box": [
+      0.15,
+      0.2,
+      0.85,
+      0.7
+    ],
+    "kind": "texture",
+    "note_zh": "natures-strength 原作核心區塊裁切為直式桌布。",
+    "note_en": "Core region of natures-strength fitted to portrait wallpaper.",
+    "out": "src/assets/experience-bonus/bonus-texture-natures-core.webp",
+    "bytes": 390328,
+    "size": [
+      1080,
+      1920
+    ]
+  },
+  {
+    "id": "bonus-lightprint-exp08",
+    "src": "src/assets/experience-hires/ae-exp-08.webp",
+    "box": [
+      0.05,
+      0.02,
+      0.95,
+      0.98
+    ],
+    "kind": "lightprint",
+    "note_zh": "ae-exp-08 高解析近全幅＋僅疊加金色光紋框／柔光暈（畫作像素本身未濾鏡、未重繪）。",
+    "note_en": "ae-exp-08 hires near-full + gold lightprint frame/glow overlay only; painting pixels unfiltered.",
+    "out": "src/assets/experience-bonus/bonus-lightprint-exp08.webp",
+    "bytes": 582732,
+    "size": [
+      1080,
+      1920
+    ]
+  },
+  {
+    "id": "bonus-lightprint-flower-heart",
+    "src": "src/assets/selected-works-v2/flower-heart-bloom.webp",
+    "box": [
+      0.05,
+      0.02,
+      0.95,
+      0.98
+    ],
+    "kind": "lightprint",
+    "note_zh": "flower-heart-bloom 直式適配＋光紋框疊加（非盛明）。",
+    "note_en": "flower-heart-bloom portrait fit + lightprint frame overlay (not Eternal Sun).",
+    "out": "src/assets/experience-bonus/bonus-lightprint-flower-heart.webp",
+    "bytes": 664248,
+    "size": [
+      1080,
+      1920
+    ]
+  },
+  {
+    "id": "bonus-lightprint-color-flow",
+    "src": "src/assets/selected-works-v2/colorful-flow.webp",
+    "box": [
+      0.2,
+      0.0,
+      0.8,
+      1.0
+    ],
+    "kind": "lightprint",
+    "note_zh": "colorful-flow 取中央直幅後加光紋框疊加。",
+    "note_en": "Center vertical band of colorful-flow + lightprint overlay.",
+    "out": "src/assets/experience-bonus/bonus-lightprint-color-flow.webp",
+    "bytes": 432346,
+    "size": [
+      1080,
+      1920
+    ]
+  }
+]

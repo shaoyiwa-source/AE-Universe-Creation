@@ -3,6 +3,6 @@
   "private": true,
   "version": "0.0.0-preview",
   "dependencies": {
-    "@vercel/blob": "latest"
+    "@vercel/blob": "^2.9.0"
   }
 }

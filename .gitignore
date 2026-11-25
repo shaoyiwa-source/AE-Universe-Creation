@@ -1,0 +1,7 @@
+.env
+.env.*
+.vercel/
+*.pem
+id_rsa
+id_rsa.pub
+*.p12
