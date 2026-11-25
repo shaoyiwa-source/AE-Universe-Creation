@@ -56,6 +56,33 @@
   #vcap .d{font-size:14px;color:var(--mute);line-height:1.7;outline:none;margin-top:2px;min-height:1.2em}
   #vcap [contenteditable=true]:empty::before{content:attr(data-ph);color:var(--mute);opacity:.6}
   #vcap [contenteditable=true]:focus{box-shadow:0 1px 0 var(--birch)}
+  /* import studio */
+  #imp{position:fixed;inset:0;z-index:70;background:var(--stone);display:none;flex-direction:column}
+  #imp.open{display:flex}
+  #imp .top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--rule)}
+  #imp .top b{font:700 17px "Noto Serif TC",serif;letter-spacing:.04em}
+  #imp .set{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--rule);font-size:13px}
+  #imp .set label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  #imp .set input[type=checkbox]{width:18px;height:18px;accent-color:var(--birch)}
+  #imp .set .seg button{padding:6px 10px;font-size:13px}
+  #imp .set .off{color:var(--mute)}
+  #imp .grid{flex:1;overflow:auto;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;align-content:start}
+  #imp .card{position:relative;background:var(--basalt);border-radius:10px;overflow:hidden;cursor:pointer;border:1px solid transparent}
+  #imp .card.on{border-color:var(--birch)}
+  #imp .card img{display:block;width:100%;aspect-ratio:1;object-fit:contain;background:#16181a}
+  #imp .card .st{position:absolute;left:6px;top:6px;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(20,21,23,.8)}
+  #imp .card .ck{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:50%;background:var(--birch);color:var(--stone);font-size:13px;display:flex;align-items:center;justify-content:center}
+  #imp .card:not(.on) .ck{background:rgba(20,21,23,.7);color:transparent;border:1px solid var(--mute)}
+  #imp .bot{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:12px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--rule)}
+  #ied{position:fixed;inset:0;z-index:75;background:#111214;display:none;flex-direction:column}
+  #ied.open{display:flex}
+  #ied .pv{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;position:relative}
+  #ied canvas{max-width:100%;max-height:100%;object-fit:contain}
+  #ied .cmp{position:absolute;right:14px;top:12px;font-size:12px}
+  #ied .sl{padding:10px 18px;display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center;font-size:13px;max-height:42vh;overflow:auto}
+  #ied .sl input{width:100%;accent-color:var(--birch)}
+  #ied .sl span.v{min-width:34px;text-align:right;color:var(--mute)}
+  #ied .bar{display:flex;gap:8px;justify-content:space-between;padding:10px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--rule)}
   /* wall */
   #wall{display:grid;gap:3px;background:var(--stone);padding:3px}
   #wall.masonry{display:block;column-gap:3px}
@@ -273,7 +300,7 @@
   <div class="row"><span class="lbl">版本</span><button id="verBtn"></button></div>
   <div class="row"><span class="lbl">展覽</span><span id="showBtns"></span></div>
   <div class="row actions">
-    <button class="primary" id="upBtn">上傳畫作</button>
+    <button class="primary" id="upBtn">匯入畫作</button>
     <button id="selBtn">選畫作做展覽</button>
     <button id="tidyBtn">整理重複</button>
     <button id="fsBtn">全螢幕</button>
@@ -313,6 +340,27 @@
 <div id="show"></div>
 <div id="lb"><img alt=""></div>
 <div id="modal"><div id="mbox"></div></div>
+<div id="imp" role="dialog" aria-label="匯入整理">
+  <div class="top"><button id="impClose">取消</button><b>匯入整理</b><span class="meta" id="impCount" style="margin:0"></span></div>
+  <div class="set">
+    <label><input type="checkbox" id="oStraight" checked>自動轉正</label>
+    <label><input type="checkbox" id="oEnhance" checked>自動修圖</label>
+    <span class="seg" id="oRatio"></span>
+    <label><input type="checkbox" id="oWall" checked>放上作品牆</label>
+    <label class="off" title="Google Drive 連接還在設定中"><input type="checkbox" id="oDrive" disabled>存 Google Drive（設定中）</label>
+  </div>
+  <div class="grid" id="impGrid"></div>
+  <div class="bot">
+    <span class="meta" id="impHint" style="margin:0 auto 0 0;align-self:center">點一張可以微調；右上角勾勾決定要不要這張</span>
+    <button id="impAlbum">存回手機相簿</button>
+    <button class="primary" id="impGo">上傳</button>
+  </div>
+</div>
+<div id="ied" role="dialog" aria-label="微調">
+  <div class="pv"><canvas id="iedCv"></canvas><button class="cmp" id="iedCmp">按住看原圖</button></div>
+  <div class="sl" id="iedSl"></div>
+  <div class="bar"><button id="iedReset">還原自動</button><span style="display:flex;gap:8px"><button id="iedAll">套用到全部</button><button class="primary" id="iedOk">完成</button></span></div>
+</div>
 <div id="toast"></div>
 <div id="lg" role="dialog" aria-modal="true" aria-labelledby="lgT"><div class="box">
   <h3 id="lgT">登入萌創</h3>
@@ -1076,6 +1124,183 @@ $('#file').onchange=async e=>{
   toast(`新增 ${added} 張`+(skipped?`，略過重複 ${skipped} 張`:'')+(failed?`，${failed} 張失敗`:''));
 };
 
+
+/* ---------- 匯入整理：自動轉正、自動修圖、比例、微調、存回相簿、上傳 ---------- */
+const Imp=(()=>{
+  const PREF_KEY='oc_imp_prefs';
+  let prefs={straight:true,enhance:true,ratio:'orig',wall:true};
+  try{ Object.assign(prefs,JSON.parse(localStorage.getItem(PREF_KEY)||'{}')); }catch(e){}
+  const save=()=>{ try{ localStorage.setItem(PREF_KEY,JSON.stringify(prefs)); }catch(e){} };
+  const RATIOS=[['orig','原比例'],['4:3','4:3'],['16:9','16:9'],['1:1','1:1']];
+  const SL=[['exposure','曝光'],['brightness','亮度'],['contrast','對比'],['saturation','飽和度'],['highlights','亮部'],['shadows','暗部'],['warmth','色溫']];
+  let list=[], cur=-1;
+
+  /* -- 純影像處理 -- */
+  function toCanvas(src,max){ const W=src.width||src.naturalWidth, H=src.height||src.naturalHeight, s=Math.min(1,max/Math.max(W,H));
+    const c=document.createElement('canvas'); c.width=Math.round(W*s); c.height=Math.round(H*s); c.getContext('2d').drawImage(src,0,0,c.width,c.height); return c; }
+  function quadOf(c){
+    const M=320, sc=Math.min(1,M/Math.max(c.width,c.height)), w=Math.round(c.width*sc), h=Math.round(c.height*sc);
+    const t=document.createElement('canvas'); t.width=w; t.height=h; const x=t.getContext('2d',{willReadFrequently:true}); x.filter='blur(1.5px)'; x.drawImage(c,0,0,w,h);
+    const d=x.getImageData(0,0,w,h).data, m=new Float32Array(w*h); let mx=0;
+    for(let y=1;y<h-1;y++) for(let xx=1;xx<w-1;xx++){ const i=y*w+xx; let best=0;
+      for(let k=0;k<3;k++){ const gx=d[(i+1)*4+k]-d[(i-1)*4+k], gy=d[(i+w)*4+k]-d[(i-w)*4+k]; const v=gx*gx+gy*gy; if(v>best) best=v; }
+      m[i]=Math.sqrt(best); if(m[i]>mx) mx=m[i]; }
+    const thr=mx*.14, side=[[],[],[],[]], lim=.45;
+    for(let k=0;k<60;k++){ const f=.1+.8*k/59, yy=Math.round(f*(h-1)), xx=Math.round(f*(w-1));
+      for(let a=2;a<w*lim;a++) if(m[yy*w+a]>thr){ side[3].push([a,yy]); break; }
+      for(let a=w-3;a>w*(1-lim);a--) if(m[yy*w+a]>thr){ side[1].push([a,yy]); break; }
+      for(let a=2;a<h*lim;a++) if(m[a*w+xx]>thr){ side[0].push([xx,a]); break; }
+      for(let a=h-3;a>h*(1-lim);a--) if(m[a*w+xx]>thr){ side[2].push([xx,a]); break; } }
+    function fit(P,vert){ if(P.length<8) return null;
+      const f=Q=>{ let n=Q.length,sa=0,sb=0,saa=0,sab=0; Q.forEach(p=>{ const a=vert?p[1]:p[0], b=vert?p[0]:p[1]; sa+=a; sb+=b; saa+=a*a; sab+=a*b; }); const k=(n*sab-sa*sb)/((n*saa-sa*sa)||1); return {k,b:(sb-k*sa)/n}; };
+      const L=f(P); const r=P.map(p=>({p,e:Math.abs((vert?p[0]:p[1])-(L.k*(vert?p[1]:p[0])+L.b))})).sort((a,b)=>a.e-b.e);
+      return f(r.slice(0,Math.ceil(r.length*.7)).map(q=>q.p)); }
+    const T=fit(side[0],false), B=fit(side[2],false), Lf=fit(side[3],true), Rt=fit(side[1],true);
+    if(!T||!B||!Lf||!Rt) return null;
+    const meet=(H,V)=>{ const y=(H.k*V.b+H.b)/(1-H.k*V.k), x=V.k*y+V.b; return [x/sc,y/sc]; };
+    const q=[meet(T,Lf),meet(T,Rt),meet(B,Rt),meet(B,Lf)].map(p=>[Math.max(0,Math.min(c.width,p[0])),Math.max(0,Math.min(c.height,p[1]))]);
+    const area=Math.abs(q.reduce((s,p,i)=>{ const n=q[(i+1)%4]; return s+p[0]*n[1]-n[0]*p[1]; },0))/2;
+    if(!(area>c.width*c.height*.15 && area<c.width*c.height*.985)) return null;
+    const cx0=q.reduce((s,p)=>s+p[0],0)/4, cy0=q.reduce((s,p)=>s+p[1],0)/4;   // 往內收一點點，切掉邊緣殘留的桌面
+    return q.map(p=>[p[0]+(cx0-p[0])*.012, p[1]+(cy0-p[1])*.012]);
+  }
+  function homog(from,to){ const A=[],bb=[]; for(let i=0;i<4;i++){ const [x,y]=from[i],[u,v]=to[i]; A.push([x,y,1,0,0,0,-u*x,-u*y]); bb.push(u); A.push([0,0,0,x,y,1,-v*x,-v*y]); bb.push(v); }
+    for(let c=0;c<8;c++){ let pv=c; for(let r=c+1;r<8;r++) if(Math.abs(A[r][c])>Math.abs(A[pv][c])) pv=r; [A[c],A[pv]]=[A[pv],A[c]]; [bb[c],bb[pv]]=[bb[pv],bb[c]];
+      for(let r=0;r<8;r++){ if(r===c) continue; const f=A[r][c]/A[c][c]; for(let k=c;k<8;k++) A[r][k]-=f*A[c][k]; bb[r]-=f*bb[c]; } }
+    return [...bb.map((v,i)=>v/A[i][i]),1]; }
+  function warpQ(c,P){ const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+    let W=Math.round(Math.max(dist(P[0],P[1]),dist(P[3],P[2]))), H=Math.round(Math.max(dist(P[0],P[3]),dist(P[1],P[2])));
+    const hm=homog([[0,0],[W,0],[W,H],[0,H]],P), sd=c.getContext('2d').getImageData(0,0,c.width,c.height).data, sw=c.width, sh=c.height;
+    const out=document.createElement('canvas'); out.width=W; out.height=H; const ox=out.getContext('2d'), od=ox.createImageData(W,H), o=od.data;
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const z=hm[6]*x+hm[7]*y+1, sx=(hm[0]*x+hm[1]*y+hm[2])/z, sy=(hm[3]*x+hm[4]*y+hm[5])/z;
+      const x0=Math.max(0,Math.min(sw-2,sx|0)), y0=Math.max(0,Math.min(sh-2,sy|0)), fx=Math.min(1,Math.max(0,sx-x0)), fy=Math.min(1,Math.max(0,sy-y0));
+      const i00=(y0*sw+x0)*4, i10=i00+4, i01=i00+sw*4, i11=i01+4, oi=(y*W+x)*4;
+      for(let ch=0;ch<3;ch++) o[oi+ch]=(sd[i00+ch]*(1-fx)+sd[i10+ch]*fx)*(1-fy)+(sd[i01+ch]*(1-fx)+sd[i11+ch]*fx)*fy; o[oi+3]=255; }
+    ox.putImageData(od,0,0); return out; }
+  function cropRatio(c,r){ if(r==='orig') return c; let [a,b]=r.split(':').map(Number); if(c.height>c.width&&a>b) [a,b]=[b,a];
+    const want=a/b, have=c.width/c.height; let w=c.width,h=c.height; if(have>want) w=Math.round(h*want); else h=Math.round(w/want);
+    const o=document.createElement('canvas'); o.width=w; o.height=h; o.getContext('2d').drawImage(c,(c.width-w)/2,(c.height-h)/2,w,h,0,0,w,h); return o; }
+  /* 自動修圖：白點校正（讓白紙變白）、黑白點拉開、微加飽和 */
+  function autoParams(c){
+    const s=Math.min(1,256/Math.max(c.width,c.height)), w=Math.max(1,Math.round(c.width*s)), h=Math.max(1,Math.round(c.height*s));
+    const t=document.createElement('canvas'); t.width=w; t.height=h; const x=t.getContext('2d',{willReadFrequently:true}); x.drawImage(c,0,0,w,h);
+    const d=x.getImageData(0,0,w,h).data, n=w*h, R=[],G=[],B=[],L=[];
+    for(let i=0;i<n;i++){ R.push(d[i*4]); G.push(d[i*4+1]); B.push(d[i*4+2]); L.push(.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2]); }
+    const pct=(A,p)=>{ const s=A.slice().sort((a,b)=>a-b); return s[Math.min(s.length-1,Math.floor(p*s.length))]; };
+    const wr=pct(R,.985), wg=pct(G,.985), wb=pct(B,.985), wm=Math.max(wr,wg,wb);
+    const lo=Math.min(40,pct(L,.005)), hi=Math.max(200,pct(L,.995));
+    const cap=v=>Math.max(1,Math.min(1.25,v));
+    return {gain:[cap(wm/Math.max(1,wr)),cap(wm/Math.max(1,wg)),cap(wm/Math.max(1,wb))],lo,hi,sat:.08};
+  }
+  function render(c,auto,adj){
+    const o=document.createElement('canvas'); o.width=c.width; o.height=c.height; const ox=o.getContext('2d'); ox.drawImage(c,0,0);
+    const im=ox.getImageData(0,0,o.width,o.height), d=im.data;
+    const A=auto||{gain:[1,1,1],lo:0,hi:255,sat:0}, g=A.gain, lo=A.lo, sc=255/Math.max(1,A.hi-A.lo);
+    const ex=Math.pow(2,(adj.exposure||0)*1.5), br=(adj.brightness||0)*.25, ct=1+(adj.contrast||0)*.8, st=1+A.sat+(adj.saturation||0),
+          hl=(adj.highlights||0)*.35, sh=(adj.shadows||0)*.35, wm=(adj.warmth||0)*.12;
+    for(let i=0;i<d.length;i+=4){
+      let r=(d[i]*g[0]-lo)*sc/255, gg=(d[i+1]*g[1]-lo)*sc/255, b=(d[i+2]*g[2]-lo)*sc/255;
+      r*=ex; gg*=ex; b*=ex; r+=br; gg+=br; b+=br;
+      r=(r-.5)*ct+.5; gg=(gg-.5)*ct+.5; b=(b-.5)*ct+.5;
+      const l=.299*r+.587*gg+.114*b;
+      const dl = l>.5 ? hl*(l-.5)*2 : sh*(.5-l)*2;
+      r+=dl; gg+=dl; b+=dl;
+      const l2=.299*r+.587*gg+.114*b; r=l2+(r-l2)*st; gg=l2+(gg-l2)*st; b=l2+(b-l2)*st;
+      r+=wm; b-=wm;
+      d[i]=r*255; d[i+1]=gg*255; d[i+2]=b*255;
+    }
+    ox.putImageData(im,0,0); return o;
+  }
+  /* 一張照片的完整流程 */
+  function build(e,max){
+    let c=toCanvas(e.src,max);
+    if(prefs.straight&&e.straight!==false){ const k=c.width/e.base.width; const q=e.quad&&e.quad.map(p=>[p[0]*k,p[1]*k]); if(q) c=warpQ(c,q); }
+    c=cropRatio(c,prefs.ratio);
+    const auto=prefs.enhance? autoParams(c) : null;
+    return render(c,auto,e.adj);
+  }
+
+  /* -- 介面 -- */
+  function bars(){
+    const rb=$('#oRatio'); rb.innerHTML=''; RATIOS.forEach(([v,t])=>{ const b=document.createElement('button'); b.textContent=t; if(prefs.ratio===v) b.className='on'; b.onclick=()=>{ prefs.ratio=v; save(); bars(); refreshAll(); }; rb.appendChild(b); });
+    $('#oStraight').checked=prefs.straight; $('#oEnhance').checked=prefs.enhance; $('#oWall').checked=prefs.wall;
+    const n=list.filter(e=>e.keep).length; $('#impCount').textContent=`${n} / ${list.length} 張`;
+    $('#impGo').textContent=prefs.wall?`上傳 ${n} 張到作品牆`:'上傳'; $('#impGo').disabled=!n||!prefs.wall;
+  }
+  $('#oStraight').onchange=e=>{ prefs.straight=e.target.checked; save(); refreshAll(); };
+  $('#oEnhance').onchange=e=>{ prefs.enhance=e.target.checked; save(); refreshAll(); };
+  $('#oWall').onchange=e=>{ prefs.wall=e.target.checked; save(); bars(); };
+  function card(e,i){
+    const d=document.createElement('div'); d.className='card'+(e.keep?' on':'');
+    d.innerHTML=`<img alt=""><span class="st"></span><span class="ck">✓</span>`;
+    d.querySelector('.ck').onclick=ev=>{ ev.stopPropagation(); e.keep=!e.keep; d.classList.toggle('on',e.keep); bars(); };
+    d.onclick=()=>openEd(i); e.el=d; return d;
+  }
+  function refresh(e){ if(!e.el) return; const c=build(e,520); e.el.querySelector('img').src=c.toDataURL('image/jpeg',.8);
+    e.el.querySelector('.st').textContent=e.dup?'重複，已取消勾選':(prefs.straight&&e.quad&&e.straight!==false?'已轉正':(prefs.straight?'找不到邊，保持原樣':'原樣')); }
+  async function refreshAll(){ for(const e of list){ refresh(e); await new Promise(r=>setTimeout(r,0)); } }
+  async function open(files){
+    list=[]; $('#impGrid').innerHTML=''; $('#imp').classList.add('open'); $('#sheet').classList.remove('open'); bars();
+    progress('讀取照片…',0);
+    const known=[...items];
+    for(let i=0;i<files.length;i++){
+      try{ const src=await loadImage(files[i]); const base=toCanvas(src,1600); const q=quadOf(base);
+        const an=analyze(base); const dup=known.some(k=>isDup(k,{...an,w:base.width,h:base.height}));
+        const e={file:files[i],src,base,quad:q,adj:{},keep:!dup,dup,name:files[i].name||''}; list.push(e); known.push({...an,w:base.width,h:base.height});
+        $('#impGrid').appendChild(card(e,list.length-1)); refresh(e); bars();
+      }catch(err){ toast('有一張讀不出來，已略過'); }
+      progress(`讀取照片 ${i+1}/${files.length}`,(i+1)/files.length); await new Promise(r=>setTimeout(r,0));
+    }
+    progress(null);
+  }
+  function close(){ $('#imp').classList.remove('open'); list.forEach(e=>e.src&&e.src.close&&e.src.close()); list=[]; }
+  $('#impClose').onclick=()=>{ if(list.some(e=>e.keep)) ask('<h3>不匯入了嗎？</h3><div class="meta">這些照片還沒上傳，關掉就不會存。手機相簿裡的原檔不受影響。</div>','關掉',close); else close(); };
+
+  /* 微調 */
+  let edBase=null, edAuto=null;
+  function edDraw(orig){ const e=list[cur]; const cv=$('#iedCv'), out=orig? edBase : render(edBase,edAuto,e.adj); cv.width=out.width; cv.height=out.height; cv.getContext('2d').drawImage(out,0,0); }
+  function openEd(i){ cur=i; const e=list[i];
+    let c=toCanvas(e.src,1100); if(prefs.straight&&e.straight!==false&&e.quad){ const k=c.width/e.base.width; c=warpQ(c,e.quad.map(p=>[p[0]*k,p[1]*k])); }
+    edBase=cropRatio(c,prefs.ratio); edAuto=prefs.enhance?autoParams(edBase):null;
+    const sl=$('#iedSl'); sl.innerHTML='';
+    const row=(key,label,min,max,step,val,fmt,on)=>{ const l=document.createElement('label'); l.textContent=label; const r=document.createElement('input'); r.type='range'; r.min=min; r.max=max; r.step=step; r.value=val; const v=document.createElement('span'); v.className='v'; v.textContent=fmt(val);
+      r.oninput=()=>{ v.textContent=fmt(+r.value); on(+r.value); }; sl.append(l,r,v); };
+    SL.forEach(([k,t])=>row(k,t,-1,1,.02,e.adj[k]||0,x=>Math.round(x*100),x=>{ e.adj[k]=x; clearTimeout(openEd.t); openEd.t=setTimeout(()=>edDraw(false),40); }));
+    const sw=document.createElement('label'); sw.textContent='這張轉正'; const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=e.straight!==false; cb.disabled=!e.quad||!prefs.straight; cb.style.justifySelf='start';
+    cb.onchange=()=>{ e.straight=cb.checked; openEd(i); }; sl.append(sw,cb,document.createElement('span'));
+    $('#ied').classList.add('open'); edDraw(false);
+  }
+  const cmp=$('#iedCmp'); ['pointerdown'].forEach(ev=>cmp.addEventListener(ev,()=>edDraw(true))); ['pointerup','pointerleave','pointercancel'].forEach(ev=>cmp.addEventListener(ev,()=>edDraw(false)));
+  $('#iedReset').onclick=()=>{ list[cur].adj={}; openEd(cur); };
+  $('#iedAll').onclick=()=>{ const a={...list[cur].adj}; list.forEach(e=>e.adj={...a}); toast('已套用到全部'); };
+  $('#iedOk').onclick=()=>{ $('#ied').classList.remove('open'); refreshAll(); };
+
+  /* 存回手機相簿（用手機的分享選單，一次存全部） */
+  $('#impAlbum').onclick=async()=>{
+    const sel=list.filter(e=>e.keep); if(!sel.length){ toast('先勾選要存的照片'); return; }
+    progress('處理中…',0); const files=[];
+    for(let i=0;i<sel.length;i++){ const c=build(sel[i],4000); const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.92));
+      files.push(new File([b],(sel[i].name.replace(/\.\w+$/,'')||'onecreator')+'-萌創.jpg',{type:'image/jpeg'})); progress(`處理中 ${i+1}/${sel.length}`,(i+1)/sel.length); }
+    progress(null);
+    if(navigator.canShare && navigator.canShare({files})){ try{ await navigator.share({files}); }catch(e){} }
+    else files.forEach(f=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(f); a.download=f.name; a.click(); });
+  };
+  /* 上傳到作品牆：處理後的圖＋保留原圖 */
+  $('#impGo').onclick=async()=>{
+    if(!canEdit){ toast('要先登入才能上傳'); return; }
+    const sel=list.filter(e=>e.keep); let ok=0, bad=0;
+    for(let i=0;i<sel.length;i++){ const e=sel[i]; progress(`上傳中 ${i+1}/${sel.length}`,i/sel.length);
+      try{ const c=build(e,2400); const an=analyze(c);
+        const full=await toBlob(c,2400,.88), thumb=await toBlob(c,720,.8), of=await toBlob(e.src,2000,.86), ot=await toBlob(e.src,720,.8);
+        const [a1,a2,a3,a4]=await Promise.all([assets.upload(full),assets.upload(thumb),assets.upload(of),assets.upload(ot)]);
+        await db.collection('art').doc().set({full:a1.id,thumb:a2.id,orig:a3.id,origThumb:a4.id,w:c.width,h:c.height,...an,name:e.name.slice(0,120),t:Date.now()});
+        ok++; }catch(err){ bad++; }
+    }
+    progress(null); toast(`已上傳 ${ok} 張`+(bad?`，${bad} 張失敗`:'')+'，原圖都有保留'); if(!bad) close();
+  };
+  return {open};
+})();
+$('#file').onchange=async e=>{ const files=[...e.target.files]; e.target.value=''; if(files.length) Imp.open(files); };
 
 /* ---------- 登入 ---------- */
 async function renderAcct(){
