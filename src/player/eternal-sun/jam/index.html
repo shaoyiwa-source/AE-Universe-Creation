@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>音樂共創 Jam（測試版）· 聲光藝廊 Light Player · AE Universe Creation</title>
+<meta name="description" content="盛明 Eternal Sun 音樂共創測試版：點格子加入聲音，每一格都會跟著節拍。">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="stylesheet" href="/player/eternal-sun/jam/jam.css?v=2476.54">
+</head>
+<body>
+<header class="jam-top">
+  <a class="jam-back" href="/player/eternal-sun/" data-i18n="back">← 返回聲光藝廊</a>
+  <span class="jam-brand" translate="no">AE UNIVERSE CREATION</span>
+  <button class="jam-lang" type="button" data-lang-toggle>EN</button>
+</header>
+<main id="jam" class="jam" aria-labelledby="jam-title">
+  <div class="jam-head">
+    <p class="jam-badge" data-i18n="badge">測試版 · 音樂為自製測試音訊</p>
+    <h1 id="jam-title"><span data-i18n="title">音樂共創</span> <small translate="no">盛明 Eternal Sun</small></h1>
+    <p class="jam-howto" data-i18n="howto">點格子加入聲音，每一格都會跟著節拍</p>
+  </div>
+  <div class="jam-layout">
+    <div class="jam-stage" id="jam-stage">
+      <canvas id="jam-canvas" role="img" aria-label="盛明 Eternal Sun 原作與光效" data-i18n-aria="canvasLabel"></canvas>
+      <div class="jam-overlay" id="jam-overlay">
+        <button class="jam-start" id="jam-start" type="button"><span class="jam-start-main"><span aria-hidden="true">▶</span> <span data-i18n="start">開始共創</span></span><small data-i18n="startSub">Start jamming</small></button>
+      </div>
+      <div class="jam-hud" id="jam-hud" hidden>
+        <span class="jam-timer" id="jam-timer" role="timer" aria-live="off">30</span>
+        <span class="jam-rec" id="jam-rec"><i aria-hidden="true"></i><span data-i18n="rec">錄音中</span></span>
+      </div>
+    </div>
+    <section class="jam-board" aria-labelledby="jam-board-title">
+      <h2 id="jam-board-title" class="jam-board-title" data-i18n="boardTitle">5 種聲音 × 5 種變化</h2>
+      <div class="jam-grid" id="jam-grid" role="group" aria-labelledby="jam-board-title"></div>
+      <p class="jam-tip" id="jam-tip" data-i18n="tipIdle">按「開始共創」後，就能點格子。</p>
+      <p class="jam-status" id="jam-status" role="status" aria-live="polite"></p>
+    </section>
+  </div>
+  <section class="jam-result" id="jam-result" hidden aria-labelledby="jam-result-title" tabindex="-1">
+    <h2 id="jam-result-title" data-i18n="resultTitle">我的盛明版本</h2>
+    <p class="jam-badge" data-i18n="resultBadge">測試版錄音 · 音樂為自製測試音訊，非正式曲目</p>
+    <div class="jam-media" id="jam-media"></div>
+    <div class="jam-actions">
+      <button type="button" class="jam-btn" id="jam-replay" data-i18n="replay">▶ 重播</button>
+      <a class="jam-btn jam-btn-gold" id="jam-download" href="#" download data-i18n="download">下載「我的盛明版本」</a>
+      <button type="button" class="jam-btn" id="jam-again" data-i18n="again">再共創一次</button>
+    </div>
+    <p class="jam-note" id="jam-kind"></p>
+  </section>
+</main>
+<footer class="jam-foot">
+  <p data-i18n="foot">聲光藝廊 · 音樂共創 測試版</p>
+  <p class="jam-foot-note" data-i18n="footNote">畫作為 AE 原作，僅以光效疊加，不改變原作顏色。</p>
+</footer>
+<script src="/player/eternal-sun/jam/jam.js?v=2476.54"></script>
+<script src="/ae-version.js" defer></script>
+</body>
+</html>

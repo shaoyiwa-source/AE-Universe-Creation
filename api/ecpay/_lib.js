@@ -1,5 +1,21 @@
+'use strict';
+
+// ECPay AIO helpers for the production shop.
+// MerchantID, HashKey and HashIV are never stored in this file.
+// Production needs:
+//   ECPAY_MODE=live
+//   ECPAY_MERCHANT_ID
+//   ECPAY_HASH_KEY
+//   ECPAY_HASH_IV
+// Stage previews use the same three credential variables with ECPAY_MODE=stage.
+// Checkout host is chosen from ECPAY_MODE. It is not a secret.
+
 const crypto = require('crypto');
 const querystring = require('querystring');
+const { paymentAllowed, paymentMode } = require('../_payment-gate');
+
+const LIVE_AIO_CHECKOUT = 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5';
+const STAGE_AIO_CHECKOUT = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5';
 
 function phpUrlEncode(value) {
   // Match the encoding ECPay documents for AioCheckOut CheckMacValue:
@@ -62,13 +78,6 @@ function formatTaipeiDate(date = new Date()) {
   return `${parts.year}/${parts.month}/${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
 }
 
-function makeMerchantTradeNo() {
-  // <=20 chars, alphanumeric, unique enough for stage; prefix identifies AE.
-  const now = Date.now().toString(36).toUpperCase();
-  const rnd = crypto.randomBytes(3).toString('hex').toUpperCase();
-  return (`AE${now}${rnd}`).slice(0, 20);
-}
-
 function getBaseUrl(req) {
   const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
@@ -89,7 +98,37 @@ function autoSubmitForm(action, fields) {
   const inputs = Object.entries(fields)
     .map(([k, v]) => `<input type="hidden" name="${htmlEscape(k)}" value="${htmlEscape(v)}">`)
     .join('\n');
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Redirecting to ECPay…</title></head><body><p>Redirecting to ECPay Stage… / 正在前往綠界測試付款頁…</p><form id="ecpay" method="post" action="${htmlEscape(action)}">${inputs}<noscript><button type="submit">Continue / 繼續</button></noscript></form><script>document.getElementById('ecpay').submit();</script></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Redirecting to ECPay…</title></head><body><p>Redirecting to ECPay… / 正在前往綠界付款頁…</p><form id="ecpay" method="post" action="${htmlEscape(action)}">${inputs}<noscript><button type="submit">Continue / 繼續</button></noscript></form><script>document.getElementById('ecpay').submit();</script></body></html>`;
+}
+
+function credentialsFromEnv() {
+  return {
+    merchantID: String(process.env.ECPAY_MERCHANT_ID || '').trim(),
+    hashKey: String(process.env.ECPAY_HASH_KEY || '').trim(),
+    hashIV: String(process.env.ECPAY_HASH_IV || '').trim(),
+  };
+}
+
+function getAioCredentials() {
+  if (!paymentAllowed()) {
+    const err = new Error('ECPay checkout is not enabled.');
+    err.code = 'PAYMENT_NOT_ENABLED';
+    throw err;
+  }
+  const mode = paymentMode() === 'live' ? 'live' : 'stage';
+  const creds = credentialsFromEnv();
+  if (!creds.merchantID || !creds.hashKey || !creds.hashIV) {
+    const err = new Error('ECPay keys are missing.');
+    err.code = 'PAYMENT_NOT_ENABLED';
+    throw err;
+  }
+  return {
+    mode,
+    merchantID: creds.merchantID,
+    hashKey: creds.hashKey,
+    hashIV: creds.hashIV,
+    checkoutUrl: mode === 'live' ? LIVE_AIO_CHECKOUT : STAGE_AIO_CHECKOUT,
+  };
 }
 
 module.exports = {
@@ -97,7 +136,9 @@ module.exports = {
   timingSafeEqualHex,
   parseRequestBody,
   formatTaipeiDate,
-  makeMerchantTradeNo,
   getBaseUrl,
   autoSubmitForm,
+  getAioCredentials,
+  LIVE_AIO_CHECKOUT,
+  STAGE_AIO_CHECKOUT,
 };

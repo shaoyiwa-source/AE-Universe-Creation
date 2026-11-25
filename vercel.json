@@ -1,7 +1,12 @@
 {
+  "outputDirectory": "src",
   "rewrites": [
     {
       "source": "/shop",
+      "destination": "/shop.html"
+    },
+    {
+      "source": "/shop/:category",
       "destination": "/shop.html"
     },
     {
@@ -10,11 +15,27 @@
     },
     {
       "source": "/experience",
+      "destination": "/experience-portal.html"
+    },
+    {
+      "source": "/touch-moment",
       "destination": "/experience.html"
+    },
+    {
+      "source": "/together",
+      "destination": "/together.html"
     },
     {
       "source": "/checkout-stage",
       "destination": "/checkout-stage.html"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/checkout.html"
+    },
+    {
+      "source": "/cart",
+      "destination": "/cart.html"
     },
     {
       "source": "/collections",
@@ -35,6 +56,80 @@
     {
       "source": "/index",
       "destination": "/index.html"
+    },
+    {
+      "source": "/color-moment",
+      "destination": "/color-moment.html"
+    },
+    {
+      "source": "/feel",
+      "destination": "/feel.html"
+    },
+    {
+      "source": "/feel-admin",
+      "destination": "/feel-admin.html"
+    },
+    {
+      "source": "/dream-giver",
+      "destination": "/dream-giver.html"
+    },
+    {
+      "source": "/free-heart-layers",
+      "destination": "/free-heart-layers.html"
+    },
+    {
+      "source": "/art-wall",
+      "destination": "/works.html"
+    },
+    {
+      "source": "/works-classic",
+      "destination": "/works-classic.html"
+    },
+    {
+      "source": "/curate",
+      "destination": "/curate/index.html"
+    },
+    {
+      "source": "/curate/apply",
+      "destination": "/curate/apply.html"
+    },
+    {
+      "source": "/curate/login",
+      "destination": "/curate/login.html"
+    },
+    {
+      "source": "/curate/admin",
+      "destination": "/curate/admin.html"
+    },
+    {
+      "source": "/ex",
+      "destination": "/api/ex"
+    },
+    {
+      "source": "/ex/:slug",
+      "destination": "/api/ex?slug=:slug"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/art-wall.html",
+      "destination": "/art-wall",
+      "permanent": false
+    },
+    {
+      "source": "/soul-cards",
+      "destination": "/color-moment",
+      "permanent": false
+    },
+    {
+      "source": "/soul-cards.html",
+      "destination": "/color-moment",
+      "permanent": false
+    },
+    {
+      "source": "/game",
+      "destination": "/game/",
+      "permanent": false
     }
   ]
 }

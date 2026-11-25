@@ -1,0 +1,22 @@
+/* AE experience unified result ending — additive; free wallpaper never gated. */
+.ae-end{margin-top:14px;display:flex;flex-direction:column;gap:10px;max-width:420px}
+.ae-end-primary,.ae-end-btn{appearance:none;border:1px solid rgba(231,189,103,.45);background:linear-gradient(180deg,#f0d48a,#d4a84a);color:#1a1408;font:600 15px/1.3 system-ui,-apple-system,sans-serif;border-radius:999px;padding:13px 18px;cursor:pointer;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;width:100%;box-sizing:border-box}
+.ae-end-btn{background:transparent;color:inherit;border-color:rgba(127,127,127,.35);font-weight:500}
+.ae-end-btn:hover,.ae-end-primary:hover{filter:brightness(1.04)}
+.ae-end-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ae-end-more-wrap{position:relative}
+.ae-end-more-panel{display:none;flex-direction:column;gap:8px;margin-top:8px;padding:10px;border:1px solid rgba(127,127,127,.28);border-radius:14px;background:rgba(0,0,0,.04)}
+html[data-theme=dark] .ae-end-more-panel{background:rgba(255,255,255,.04)}
+.ae-end-more-wrap.open .ae-end-more-panel{display:flex}
+.ae-end-more-panel .ae-end-btn,.ae-end-more-panel a.ae-end-btn{width:100%}
+.ae-end-bonus{margin-top:6px;padding:14px 14px 12px;border:1px dashed rgba(231,189,103,.5);border-radius:16px;background:linear-gradient(145deg,rgba(231,189,103,.1),rgba(255,255,255,.02))}
+.ae-end-bonus h4{margin:0 0 6px;font:500 16px/1.35 Georgia,"Cormorant Garamond",serif}
+.ae-end-bonus p{margin:0 0 10px;font-size:13.5px;line-height:1.55;opacity:.9}
+.ae-end-bonus-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ae-end-bonus-actions .ae-end-btn{width:auto;min-height:40px;padding:8px 14px;font-size:13px}
+.ae-end-bonus-reward{margin-top:12px;padding-top:10px;border-top:1px solid rgba(127,127,127,.2)}
+.ae-end-bonus-reward[hidden]{display:none!important}
+.ae-end-bonus-reward .ae-end-line{font-family:Georgia,"Cormorant Garamond","Noto Serif TC",serif;font-size:15px;line-height:1.55;margin:8px 0 12px;font-style:italic}
+.ae-end-status{margin:4px 0 0;font-size:12.5px;line-height:1.45;opacity:.85;min-height:1.2em}
+.ae-end a.ae-end-kofi{color:inherit}
+@media(max-width:420px){.ae-end-row{grid-template-columns:1fr}}

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>盛明 Eternal Sun · 聲光體驗 · AE Universe Creation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/premium.css?v=2.6-entry4">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500&text=%E7%9B%9B%E6%98%8E%E8%81%B2%E5%85%89%E5%B1%95%E6%BC%94%E7%B3%BB%E7%B5%B1&display=block" rel="stylesheet">
+<link rel="stylesheet" href="/assets/ae-visitor-entry.css?v=3">
+<script>
+(function(){try{
+  var q=new URLSearchParams(location.search);
+  var lang=q.get('lang')==='en'?'en':q.get('lang')==='zh'?'zh':((localStorage.getItem('ae-language-home')||localStorage.getItem('ae-language'))==='en'?'en':'zh');
+  document.documentElement.lang=lang==='en'?'en':'zh-Hant';
+  /* 2026-11-19: no first-visit text panel; name as a watermark on the art, a 3 s note, help only from 「說明」 */
+  document.documentElement.classList.add('ae-intro-seen');
+}catch(e){}})();
+</script>
+<style id="ae-premium-version-20261119">/* 11/19 16:03: the v2.6 label sat on the top bar's outline — tuck it into the bottom-left corner, small and quiet, clear of every line and control */.ae-site-version-footer{position:fixed!important;left:calc(10px + env(safe-area-inset-left));bottom:calc(4px + env(safe-area-inset-bottom));z-index:5;padding:0!important;pointer-events:none}.ae-site-version-footer .ae-site-version{margin:0!important;font-size:9.5px!important;opacity:.38!important;color:#d9cfb4!important;letter-spacing:.06em}</style>
+</head>
+<body>
+<div id="stage" aria-label="盛明 Eternal Sun 聲光體驗">
+  <canvas id="back" aria-hidden="true"></canvas>
+  <div id="art">
+    <img id="painting" src="/assets/eternal-sun-canonical-1110x1536.jpg" alt="盛明 Eternal Sun — original painting" draggable="false">
+    <canvas id="look" aria-hidden="true"></canvas>
+    <canvas id="rgb" aria-hidden="true"></canvas>
+    <div id="homeveil" aria-hidden="true"></div>
+  </div>
+  <canvas id="front" aria-hidden="true"></canvas><canvas id="homefx" aria-hidden="true"></canvas><canvas id="coin" aria-hidden="true"></canvas>
+</div>
+<!-- v2476.89 經典首頁 / Classic Home: Production homepage (1de42af) logo + hero text + effects button; shown only in this mode -->
+<div id="hp89">
+  <a class="hp89-logo" href="/" aria-label="AE Universe Creation — home"><img class="brand-mark" src="/assets/ae-three-rings-transparent.webp" alt="AE Universe Creation three-ring logo"></a>
+  <div class="hp89-copy"><p class="kicker">AE Universe Creation</p><h1>Hand-painted art<br>Digital sensation</h1></div>
+  <div class="ae-fx-dock"><button type="button" id="aeFxButton" class="fx-toggle" aria-label="特效" aria-expanded="false" aria-controls="aeFxTray"><svg class="ae-fx-spark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.2l1.9 6.9 6.9 1.9-6.9 1.9L12 20.8l-1.9-6.9L3.2 12l6.9-1.9z"/><path class="s" d="M18.6 3.8l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z"/></svg></button><div id="aeFxTray" class="ae-fx-tray" role="group" aria-label="畫面特效" hidden></div></div>
+</div>
+
+<div id="aeIntro" hidden role="dialog" aria-modal="true" aria-labelledby="aeIntroTitle">
+  <div class="aeIntro-card">
+    <button type="button" id="aeIntroLang" aria-label="Switch language">EN</button>
+    <p class="aeIntro-kicker">AE Universe Creation</p>
+    <h1 id="aeIntroTitle"><span lang="zh-Hant">盛明精裝畫作 · 聲光互動體驗</span><span lang="en">Eternal Sun premium painting<br>Interactive light &amp; sound experience</span></h1>
+    <p class="aeIntro-what"><span lang="zh-Hant">這是一幅你可以觸碰的精裝手繪畫作。</span><span lang="en">This is a premium hand-painted work you can touch.</span></p>
+    <p class="aeIntro-body"><span lang="zh-Hant">觸碰畫面，光會隨你的手流動，音樂會響起。請打開聲音或戴上耳機。</span><span lang="en">Touch the canvas and light follows your hand; music plays. Please turn the sound on, or use headphones.</span></p>
+    <button type="button" id="aeIntroStart"><span lang="zh-Hant">關閉</span><span lang="en">Close</span></button>
+    <button type="button" id="aeIntroHow" aria-expanded="false" aria-controls="aeIntroTips"><span lang="zh-Hant">使用方式</span><span lang="en">How it works</span></button>
+    <ul id="aeIntroTips" hidden>
+      <li><span lang="zh-Hant">點畫作，開始播放音樂</span><span lang="en">Tap the painting to play the music</span></li>
+      <li><span lang="zh-Hant">跟著節拍輕觸畫面</span><span lang="en">Tap on the beat</span></li>
+      <li><span lang="zh-Hant">雙指縮放；左右滑動可換畫</span><span lang="en">Pinch to zoom; swipe left or right to change the painting</span></li>
+      <li><span lang="zh-Hant">畫面下方可以點選不同光效</span><span lang="en">Tap a mode at the bottom to change the lights</span></li>
+    </ul>
+  </div>
+</div>
+<script>(function(){var b=document.getElementById('aeIntroLang');if(!b)return;var en=document.documentElement.lang==='en';b.textContent=en?'中文':'EN';b.setAttribute('aria-label',en?'切換為中文':'Switch to English');b.addEventListener('click',function(){var next=document.documentElement.lang!=='en';document.documentElement.lang=next?'en':'zh-Hant';b.textContent=next?'中文':'EN';b.setAttribute('aria-label',next?'切換為中文':'Switch to English');});})();</script>
+<div id="hint" data-zh="點畫作播放 · 跟著節拍點擊 · 雙指縮放" data-en="Tap the art to play · tap on the beat · pinch to zoom"></div>
+<button id="open" aria-label="settings" title="設定 / Settings">⚙</button>
+<button id="openhint" type="button" data-zh="⚙ 點這裡自訂光效與鼓聲" data-en="Tap to customize lights &amp; sound"></button>
+<div id="artplay" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/><path d="M41 33 L69 50 L41 67 Z"/></svg></div>
+<div id="glowbar" aria-label="光繪"><span data-zh="光繪 · 用手指在畫上作畫" data-en="Light painting · draw on the art"></span><button id="glowclear" data-zh="清除" data-en="Clear"></button><button id="glowsave" data-zh="存成光繪卡" data-en="Save card"></button><button id="glowdone" data-zh="完成" data-en="Done"></button></div>
+<div id="cardview" role="dialog" aria-label="光繪卡"><img id="cardimg" alt="光繪卡"><p data-zh="長按圖片即可儲存到相簿" data-en="Long-press the image to save it"></p><button id="cardclose" data-zh="關閉" data-en="Close"></button></div>
+<button id="zreset" hidden aria-label="reset zoom" data-zh="⟲ 還原大小" data-en="⟲ Reset zoom"></button>
+<header id="brand"><a href="/" data-zh="AE UNIVERSE CREATION" data-en="AE UNIVERSE CREATION"></a><span id="title" data-zh="盛明 · 聲光體驗" data-en="Eternal Sun · Light &amp; sound"></span></header>
+<nav id="panel" aria-label="controls" hidden>
+  <button id="close" aria-label="close" title="關閉 / Close">✕</button>
+  <div class="row presets">
+    <span class="lab" data-zh="模式" data-en="Preset"></span>
+    <button class="pr on day" data-p="calm" data-zh="原畫風情 ✧" data-en="Pure art ✧"></button>
+    <button class="pr day" data-p="home" data-zh="經典首頁 ☀" data-en="Classic Home ☀"></button>
+    <button class="pr night" data-p="club" data-zh="沈浸夜店 ☾" data-en="Immersive club ☾"></button>
+    <button class="pr night" data-p="breath" data-zh="柔光呼吸 ☾" data-en="Soft breathing ☾"></button>
+    <button class="pr day" data-p="gem" data-zh="尊榮寶石 ☀" data-en="Royal gem ☀"></button>
+    <button id="partybtn" class="pr partybtn" aria-pressed="false" data-zh="彩帶粒子" data-en="Confetti"></button>
+    <button id="glowbtn" class="pr glowbtn" data-zh="光繪" data-en="Light painting"></button>
+    <button id="adv" class="advbtn" aria-expanded="false" data-zh="進階 ›" data-en="Advanced ›"></button>
+  </div>
+  <div class="row prog"><span id="tcur">0:00</span><input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="song position"><span id="tdur">0:00</span></div>
+  <div class="row keeprow">
+    <button id="play" class="keep" data-zh="▶ 播放音樂" data-en="▶ Play music"></button>
+    <div class="seg" role="group"><button id="mNat" class="on" data-zh="自然" data-en="Natural"></button><button id="mRgb" data-zh="三色照畫" data-en="RGB light"></button></div>
+    <button id="lang">EN</button>
+  </div>
+  <div class="row lamps" id="lamps" hidden>
+    <span class="lab" data-zh="燈色" data-en="Lamp"></span>
+    <button class="lp on" data-c="auto" data-zh="自動輪替" data-en="Auto cycle"></button>
+    <button class="lp" data-c="red" data-zh="紅" data-en="Red"></button>
+    <button class="lp" data-c="green" data-zh="綠" data-en="Green"></button>
+    <button class="lp" data-c="blue" data-zh="藍紫" data-en="Blue-violet"></button>
+  </div>
+  <div class="row lamps" id="styles">
+    <span class="lab" data-zh="燈具" data-en="Fixture"></span>
+    <button class="st on" data-s="bar" data-zh="畫燈條" data-en="Light bar"></button>
+    <button class="st" data-s="spot" data-zh="三盞射燈" data-en="3 spots"></button>
+    <button class="st" data-s="wash" data-zh="柔光" data-en="Soft wash"></button>
+    <button class="st" data-s="even" data-zh="全幅柔光" data-en="Even glow"></button>
+  </div>
+  <div class="row">
+    <label><span data-zh="強度" data-en="Intensity"></span><input id="int" type="range" min="0" max="1" step="0.01" value="0.7"></label>
+  </div>
+  <div class="row sync">
+    <label><span data-zh="對拍微調" data-en="Beat sync"></span><input id="syncoff" type="range" min="-200" max="200" step="5" value="0" aria-label="beat sync offset ms"><output id="syncval">0 ms</output></label>
+  </div>
+  <div class="row tapsnd" role="group">
+    <span class="lab" data-zh="點擊音效" data-en="Tap sound"></span>
+    <button class="ts on" data-s="scale" data-zh="音階" data-en="Scale"></button>
+    <button class="ts" data-s="k1" data-zh="輕鼓" data-en="Light kick"></button>
+    <button class="ts" data-s="k2" data-zh="中鼓" data-en="Mid kick"></button>
+    <button class="ts" data-s="k3" data-zh="重鼓" data-en="Heavy kick"></button>
+  </div>
+  <div class="row lwrow" role="group">
+    <span class="lab" data-zh="雷射粗細" data-en="Laser width"></span>
+    <button class="lw" data-w="xthin" data-zh="極細" data-en="Fine"></button>
+    <button class="lw on" data-w="thin" data-zh="細" data-en="Thin"></button>
+    <button class="lw" data-w="mid" data-zh="中" data-en="Medium"></button>
+    <button class="lw" data-w="thick" data-zh="粗" data-en="Thick"></button>
+  </div>
+  <div class="row toggles">
+    <button class="tg" data-k="laser" data-zh="雷射光" data-en="Laser"></button>
+    <button class="tg" data-k="search" data-zh="探照燈" data-en="Searchlights"></button>
+    <button class="tg on" data-k="dip" data-zh="節拍暗閃" data-en="Beat dip"></button>
+    <button class="tg on" data-k="frame" data-zh="畫框" data-en="Frame"></button>
+    <button class="tg on" data-k="led" data-zh="燈帶" data-en="LED"></button>
+    <button class="tg on" data-k="aura" data-zh="光環" data-en="Aura"></button>
+    <button class="tg on" data-k="glint" data-zh="閃光" data-en="Strobe"></button>
+    <button class="tg" data-k="spots3" data-zh="三光點" data-en="Three lights"></button>
+    <button class="tg" data-k="idle" data-zh="待機漣漪" data-en="Idle ripples"></button>
+    <button id="burst" class="tg2 on" aria-pressed="true" data-zh="✦ 綻放" data-en="✦ Bloom"></button>
+    <button id="orig" aria-pressed="false" data-zh="原畫" data-en="Original art"></button>
+  </div>
+  <p class="note" id="engine"></p>
+</nav>
+<audio id="music" src="/player/eternal-sun/assets/ae-eternal-stream.m4a" preload="metadata" crossorigin="anonymous"></audio>
+<script src="/player/eternal-sun/assets/ae-home-light-energy.js"></script>
+<script src="/player/eternal-sun/assets/ae-home-beats.js"></script>
+<script src="./assets/looks.js"></script>
+<script src="./assets/onsets.js"></script>
+<script src="/ae-chime.js"></script>
+<script type="module" src="./assets/premium.js?v=2.6-entry3"></script>
+<script src="/assets/ae-visitor-entry.js?v=3" defer></script>
+<script src="./assets/visitor-ui.js?v=2.6-entry6" defer></script>
+<script src="./assets/home-replica.js?v=2476.95"></script>
+
+</body>
+</html>
