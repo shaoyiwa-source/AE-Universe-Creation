@@ -1,4 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.more-art{display:flex;justify-content:center;margin-top:clamp(24px,4vw,40px)}
+@media(max-width:860px){.essay figure{max-width:240px}}
+</style></head><body>
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -297,8 +299,8 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
     <li><a href="#about"><i style="color:var(--leaf)">萌</i>關於</a></li>
     <li><a href="#essay"><i>思</i>隨筆</a></li>
     <li><a href="#wall"><i style="color:var(--gold)">盛</i>作品牆</a></li>
-    <li><a href="#create"><i style="color:var(--water)">創</i>接案</a></li>
-    <li class="keep"><a class="cta" href="#contact">聊聊你的想法</a></li>
+    <li><a href="work/"><i style="color:var(--water)">創</i>合作</a></li>
+    <li class="keep"><a class="cta" href="wall/">進入作品牆</a></li>
   </ul>
 </div>
 
@@ -309,10 +311,10 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
       <h1>萌創</h1>
       <div class="en">AE OneCreator</div>
       <div class="tagline" aria-label="藝萌盛創"><span>藝</span><span>萌</span><span>盛</span><span>創</span></div>
-      <p class="lead">在懵懂中萌芽，在創作中盛開。把手繪的能量帶進數位世界，也幫你把想法做出來。</p>
+      <p class="lead">在懵懂中萌芽，在創作中盛開。</p>
       <div class="acts">
         <a class="btn solid" href="#art">看作品</a>
-        <a class="btn" href="#create">找萌創做事</a>
+        <a class="btn" href="wall/">進入作品牆</a>
       </div>
     </div>
     <div class="art-hero reveal-hero d2 hang">
@@ -348,6 +350,7 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
       <button class="zoom" data-src="img/hero-d2.jpg" aria-label="放大局部：盛創"><img src="img/hero-d2-s.jpg" alt="《藝萌盛創》局部" loading="lazy"></button>
     </div>
     <div class="masonry" id="masonry"></div>
+    <div class="more-art rv"><a class="btn" href="wall/">看全部作品</a></div>
   </div>
 </section>
 
@@ -427,58 +430,12 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
   </div>
 </section>
 
-<section class="ch c-water" id="create">
-  <div class="wrap">
-    <div class="ch-head rv"><div class="glyph" aria-hidden="true">創</div><div><h2>找萌創一起做</h2><p>小而用心的接案。每件事都當成自己的作品來做，答應五項，盡量做到十項。</p></div></div>
-    <div class="svc rv">
-      <article class="card k-sun"><div class="pic"><img src="img/pixel.jpg" alt="畫作轉成點陣燈牆的數位效果" style="object-position:50% 30%"></div><div class="body"><h3>數位藝術</h3><div class="en">Digital Art</div>
-        <ul><li>原創手繪轉成高解析數位檔</li><li>手機桌布、動態桌布</li><li>聲光互動展演、療癒互動小程式</li><li>品牌、空間用的藝術視覺授權</li></ul>
-        <div class="ask"><button data-svc="數位藝術">詢問數位藝術</button></div></div></article>
-      <article class="card k-leaf"><div class="pic"><img src="img/w07.jpg" alt="" style="object-position:50% 50%"></div><div class="body"><h3>網站</h3><div class="en">Websites</div>
-        <ul><li>品牌形象官網、一頁式網站</li><li>作品集、線上展覽網站</li><li>手機好看、好讀、好操作</li><li>上線、網域設定一起處理</li></ul>
-        <div class="ask"><button data-svc="網站">詢問網站</button></div></div></article>
-      <article class="card k-water"><div class="pic"><img src="img/w14.jpg" alt="" style="object-position:50% 40%"></div><div class="body"><h3>AI 與自動化</h3><div class="en">AI &amp; Automation</div>
-        <ul><li>Google 表單、試算表自動化</li><li>自動寄信、自動整理報表</li><li>ChatGPT、Claude 的設定與提示詞</li><li>交付程式碼和看得懂的說明</li></ul>
-        <div class="ask"><button data-svc="AI 自動化">詢問 AI 自動化</button></div></div></article>
-    </div>
-    <ol class="flow rv">
-      <li><b>聊聊需求</b><span>留言或私訊，說說你想做什麼。</span></li>
-      <li><b>提案報價</b><span>給你清楚的內容、時程和價格。</span></li>
-      <li><b>製作</b><span>過程中隨時讓你看進度。</span></li>
-      <li><b>交付</b><span>交付後 30 天內小修改免費。</span></li>
-    </ol>
-    <div class="cases rv">
-      <h3>做過的事</h3>
-      <div class="clist">
-        <a class="case" href="https://ae-universe-creation.vercel.app" target="_blank" rel="noopener"><div><b>藝術品牌官網</b><span>AE Universe Creation 中英雙語官網</span></div><em>看網站</em></a>
-        <a class="case" href="https://ae-kaleidoscope.vercel.app" target="_blank" rel="noopener"><div><b>聲控療癒萬花筒</b><span>用聲音和手機傾斜操控的網頁小程式</span></div><em>玩玩看</em></a>
-        <div class="case"><div><b>夢境水晶球</b><span>畫作互動藝術，一筆一個音</span></div><em>即將開放</em></div>
-        <div class="case"><div><b>表單自動寄信</b><span>Google 表單送出後自動回信、通知</span></div><em>示範</em></div>
-      </div>
-    </div>
-  </div>
-</section>
 
-<section class="ch" id="contact" style="padding-top:0">
-  <div class="wrap">
-    <div class="contact rv">
-      <div><div class="glyph" aria-hidden="true" style="font-size:clamp(70px,9vw,110px)">聊</div><h2>說說你的想法</h2><p>不用想得很完整，一兩句話也可以。我們會在兩個工作天內回覆你。</p></div>
-      <form id="f" novalidate>
-        <div><label>想聊哪一類</label><div class="chips" id="chips"><button type="button" aria-pressed="false">數位藝術</button><button type="button" aria-pressed="false">網站</button><button type="button" aria-pressed="false">AI 自動化</button><button type="button" aria-pressed="false">其他</button></div></div>
-        <div><label for="nm">怎麼稱呼你</label><input id="nm" maxlength="60" autocomplete="name"></div>
-        <div><label for="ct">聯絡方式（Email 或 LINE ID）</label><input id="ct" maxlength="200" required autocomplete="email"></div>
-        <div><label for="ms">想做什麼</label><textarea id="ms" maxlength="3000" required></textarea></div>
-        <div class="msg" id="msg" role="status"></div>
-        <button class="btn" type="submit" id="go">送出</button>
-      </form>
-    </div>
-  </div>
-</section>
 </main>
 
 <footer>
   <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg>
-  <p>萌創 AE OneCreator · 13th Aurelia · AE Universe Creation 旗下 · <a href="https://instagram.com/aeuniversecreation" target="_blank" rel="noopener">Instagram</a></p>
+  <p>萌創 AE OneCreator · 13th Aurelia · AE Universe Creation 旗下 · <a href="work/">合作與接案</a> · <a href="https://instagram.com/aeuniversecreation" target="_blank" rel="noopener">Instagram</a></p>
 </footer>
 
 <button class="snd" id="snd" aria-pressed="false"><span class="bars"><i></i><i></i><i></i></span><span id="sndt">自然聲</span></button>
@@ -587,7 +544,7 @@ document.addEventListener('pointerdown',e=>{
 <script>
 const SB='https://dmpakormfqazmjferaqs.supabase.co',KEY='sb_publishable_2oTHk8viJNv8grnLMcbVKg_E8c4ASIG';
 const $=id=>document.getElementById(id);
-const works=['w01','w12','infinite-tree','w05','w10','w02','w08','w15','w03','w11','w06','w13','w04','w07','w14','w09'];
+const works=['w01','w12','w05','w10','w02','w08','w15','w03'];
 $('masonry').innerHTML=works.map(w=>`<button class="zoom" data-src="img/${w}.jpg" aria-label="放大作品"><img src="img/${w}-s.jpg" alt="${w==='infinite-tree'?'Infinite Tree':'作品'}" loading="lazy">${w==='infinite-tree'?'<span class="tag">Infinite Tree</span>':''}</button>`).join('');
 
 document.querySelectorAll('.zoom').forEach(b=>b.addEventListener('click',()=>{const im=$('lb').querySelector('img');im.onerror=()=>{im.onerror=null;if(b.dataset.small)im.src=b.dataset.small};im.src=b.dataset.src;$('lb').classList.add('on')}));
@@ -599,7 +556,7 @@ document.querySelectorAll('.rv').forEach(el=>io.observe(el));
 /* contact */
 let svc='';
 function pick(name){svc=name;document.querySelectorAll('#chips button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===name))}
-document.querySelectorAll('#chips button').forEach(b=>b.onclick=()=>pick(b.textContent));
+if($('f')){document.querySelectorAll('#chips button').forEach(b=>b.onclick=()=>pick(b.textContent));
 document.querySelectorAll('[data-svc]').forEach(b=>b.onclick=()=>{pick(b.dataset.svc);$('contact').scrollIntoView({behavior:'smooth'});setTimeout(()=>$('ms').focus(),700)});
 $('f').onsubmit=async e=>{
   e.preventDefault();const m=$('msg');m.className='msg';
@@ -613,7 +570,7 @@ $('f').onsubmit=async e=>{
     const b=$('go').getBoundingClientRect();FX.burst(b.left+b.width/2,b.top,26);
   }catch(x){m.className='msg err';m.textContent='網路好像不太順，請稍後再送一次。'}
   $('go').disabled=false;$('go').textContent='送出';
-};
+};}
 const sb=$('snd');sb.addEventListener('click',()=>setTimeout(()=>{$('sndt').textContent=Nature.isOn()?'自然聲 開':'自然聲'},0));
 /* 掛軸：展開（快→慢）→停留→捲起→綁上金色緞帶；框隨捲軸收合 */
 (function(){const sc=document.getElementById('scroll2'),box=document.getElementById('sbox'),btn=document.getElementById('unroll'),rb=box&&box.querySelector('.ribbon');if(!sc||!btn)return;

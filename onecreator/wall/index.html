@@ -132,7 +132,7 @@
   #viewer{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 45%,#2b2e33,var(--stone) 70%);z-index:50;display:none;flex-direction:column}
   #viewer.open{display:flex}
   #stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;touch-action:pan-y;perspective:1400px}
-  #card{will-change:transform;transform-origin:50% 120%}
+  #card{will-change:transform,opacity}
   #frame{position:relative;overflow:hidden;background:var(--basalt);box-shadow:0 26px 60px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4)}
   #frame img{width:100%;height:100%;display:block;transition:filter .4s}
   #frame img.lo{filter:blur(1.5px)}
@@ -286,6 +286,18 @@
   .ownernote{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
   .ownernote code{font:12px ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--sfg) 7%,transparent);padding:2px 6px;border-radius:5px;word-break:break-all}
   .ownernote button{font-size:12px;padding:3px 10px;border-color:var(--srule);color:var(--sfg)}
+  #whead [contenteditable=true],#wabout [contenteditable=true]{outline:1px dashed var(--mute);outline-offset:4px;border-radius:2px;cursor:text}
+  #whead [contenteditable=true]:empty::before,#wabout [contenteditable=true]:empty::before{content:attr(data-ph);color:var(--mute)}
+  #whead .r .ico svg{width:15px;height:15px}
+  #whead .r button.editing{background:var(--birch);border-color:var(--birch);color:var(--stone)}
+  .pw{position:relative}
+  .pw input{padding-right:46px!important}
+  .pw .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin-top:-5px;width:36px;height:36px;padding:0;border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--mute)}
+  .pw .eye:hover{color:var(--text)}
+  .pw .eye svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  #lg .tabs{display:flex;gap:2px;background:rgba(255,255,255,.06);padding:3px;border-radius:10px;margin:0 0 14px}
+  #lg .tabs button{flex:1;border:none;padding:8px;font-size:14px}
+  #lg .tabs button.on{background:var(--birch);color:var(--stone)}
 </style>
 </head>
 <body>
@@ -307,10 +319,10 @@
     <path d="M32.3 33.2 C32.3 27.4 36.8 22.6 44.2 22.2 C43.2 28.7 38.5 33.4 32.3 33.2 Z" fill="url(#wl)"/>
     <path d="M33 32.4 C36.2 29.4 39.1 26.3 42.6 23.6" fill="none" stroke="#B9F5A0" stroke-width=".9" stroke-linecap="round"/>
     <path d="M40.6 28.4 C40.6 28.4 38.7 31 38.7 32.3 A1.9 1.9 0 0 0 42.5 32.3 C42.5 31 40.6 28.4 40.6 28.4 Z" fill="url(#ww)"/>
-    <circle cx="39.95" cy="32.2" r=".55" fill="#fff" opacity=".9"/></svg><h1>萌創 作品牆<small>THE WALL · 藝萌盛創</small></h1></div>
-  <div class="r"><span id="wcount"></span><button id="waboutBtn" aria-expanded="false">關於這面牆</button></div>
+    <circle cx="39.95" cy="32.2" r=".55" fill="#fff" opacity=".9"/></svg><h1><span id="wTitle" data-ph="作品牆標題">萌創 作品牆</span><small id="wSub" data-ph="副標">THE WALL · 藝萌盛創</small></h1></div>
+  <div class="r"><span id="wcount"></span><button id="waboutBtn" aria-expanded="false">關於這面牆</button><button id="wEdit" class="ico" style="display:none"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>編輯文字</button></div>
 </header>
-<div id="wabout">這裡收著萌創所有的畫作，像一面電視牆一樣排開。<b>點任何一張</b>可以看大圖、左右翻頁，下方可以替每幅畫寫上名字和說明。右下角的<b>選單按鈕</b>可以換格數（3×3 到 6×6）、換形狀、依色調分類，也能<b>挑幾張做成一場線上展覽</b>。同一張畫的不同版本會自動收在一起，重複的照片會被找出來。</div>
+<div id="wabout"><div id="wAboutTxt" data-ph="寫一段介紹這面牆的文字">這裡收著萌創所有的畫作，像一面電視牆一樣排開。<b>點任何一張</b>可以看大圖、左右翻頁，下方可以替每幅畫寫上名字和說明。右下角的<b>選單按鈕</b>可以換格數（3×3 到 6×6）、換形狀、依色調分類，也能<b>挑幾張做成一場線上展覽</b>。同一張畫的不同版本會自動收在一起，重複的照片會被找出來。</div></div>
 <div id="wall"></div>
 <div id="empty">
   <div class="h">把畫作<br>掛上牆。</div>
@@ -394,9 +406,11 @@
   <button class="x" id="lgX" aria-label="關閉"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <h3 id="lgT">登入萌創</h3>
   <p id="lgP">登入後才能上傳、整理和編輯。來看展的朋友不用登入。</p>
+  <div class="tabs" id="lgTabs"><button class="on" data-m="in" type="button">登入</button><button data-m="up" type="button">註冊</button></div>
   <input id="lgE" type="email" autocomplete="email" placeholder="Email">
-  <input id="lgW" type="password" autocomplete="current-password" placeholder="密碼（至少 6 碼）">
-  <div class="row2" id="lgBtns"><button class="primary" id="lgIn">登入</button><button id="lgUp">第一次使用？註冊</button></div><div class="row2" id="lgNew" style="display:none"><button class="primary" id="lgSet">設定新密碼</button></div>
+  <div class="pw"><input id="lgW" type="password" autocomplete="current-password" placeholder="密碼（至少 6 碼）"><button class="eye" type="button" data-for="lgW" aria-label="顯示密碼"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+  <div class="pw" id="lgW2box" style="display:none"><input id="lgW2" type="password" autocomplete="new-password" placeholder="再輸入一次密碼"><button class="eye" type="button" data-for="lgW2" aria-label="顯示密碼"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+  <div class="row2" id="lgBtns"><button class="primary" id="lgIn">登入</button><button class="primary" id="lgUp" style="display:none">註冊</button></div><div class="row2" id="lgNew" style="display:none"><button class="primary" id="lgSet">設定新密碼</button></div>
   <div class="msg" id="lgM" role="status"></div>
   <div class="links"><button id="lgF" type="button">忘記密碼？</button></div>
 </div></div>
@@ -516,6 +530,16 @@ function renderWall(){
   });
   wall.appendChild(frag);
 }
+let wallText={}, wEditing=false;
+function applyWallText(){ if(wEditing) return; const d={title:'萌創 作品牆',sub:'THE WALL · 藝萌盛創',...wallText}; $('#wTitle').textContent=d.title; $('#wSub').textContent=d.sub; if(wallText.about!=null) $('#wAboutTxt').innerText=wallText.about; document.title=d.title+' · AE OneCreator'; }
+$('#wEdit').onclick=async()=>{
+  const b=$('#wEdit'), els=['#wTitle','#wSub','#wAboutTxt'].map(x=>$(x));
+  if(!wEditing){ wEditing=true; $('#wabout').classList.add('open'); els.forEach(e=>e.contentEditable='true'); b.classList.add('editing'); b.lastChild.textContent='完成'; $('#wTitle').focus(); toast('點虛線框直接修改，改好按「完成」'); return; }
+  const v={title:$('#wTitle').innerText.trim().slice(0,40), sub:$('#wSub').innerText.trim().slice(0,80), about:$('#wAboutTxt').innerText.trim().slice(0,1200)};
+  els.forEach(e=>e.contentEditable='false'); b.classList.remove('editing'); b.lastChild.textContent='編輯文字'; wEditing=false;
+  try{ await db.collection('site').doc('wall').set(v); wallText=v; applyWallText(); toast('已儲存'); }catch(e){ toast('沒有存到，請再試一次'); }
+};
+['#wTitle','#wSub'].forEach(x=>$(x).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } }));
 $('#waboutBtn').onclick=()=>{ const o=$('#wabout').classList.toggle('open'); $('#waboutBtn').setAttribute('aria-expanded',o); };
 ['#vtitle','#vdesc'].forEach(sel=>{ const el=$(sel);
   el.addEventListener('keydown',e=>{ if(e.key==='Enter'&&sel==='#vtitle'){ e.preventDefault(); el.blur(); } e.stopPropagation(); });
@@ -1029,20 +1053,20 @@ function layoutFrame(){
 }
 /* paper-like page turn */
 const card=$('#card'); let anim=false;
-function resetCard(){ card.style.transition='none'; card.style.transform='none'; }
-function setCard(dx,t){ const r=dx/28; card.style.transition=t||'none'; card.style.transform=`translateX(${dx}px) rotate(${r}deg) rotateY(${-dx/40}deg)`; }
+function resetCard(){ card.style.transition='none'; card.style.transform='none'; card.style.opacity='1'; }
+function setCard(dx,t){ card.style.transition=t?t+', opacity .34s ease':'none'; card.style.transform=`translateX(${dx}px)`; card.style.opacity=String(Math.max(.35,1-Math.abs(dx)/(innerWidth*1.4))); }
 function go(d, fromDx){
   if(anim||list.length<2) return; anim=true;
-  const W=window.innerWidth*1.15, out=d>0?-W:W;
+  const W=window.innerWidth*.6, out=d>0?-W:W;
   if(fromDx!=null) setCard(fromDx);
   requestAnimationFrame(()=>{
-    setCard(out,'transform .34s cubic-bezier(.5,0,.75,0)');
+    setCard(out,'transform .26s cubic-bezier(.4,0,1,1)');
     setTimeout(()=>{
       vGroup=null; vIdx=(vIdx+d+list.length)%list.length; showV();
       setCard(-out*.9); card.offsetWidth;
-      setCard(0,'transform .46s cubic-bezier(.16,.84,.32,1)');
-      setTimeout(()=>{ anim=false; resetCard(); },470);
-    },340);
+      setCard(0,'transform .38s cubic-bezier(.16,.84,.32,1)');
+      setTimeout(()=>{ anim=false; resetCard(); },400);
+    },260);
   });
 }
 function closeV(){ $('#viewer').classList.remove('open'); }
@@ -1361,10 +1385,16 @@ async function openMembers(){
 }
 function lgMsg(t){ $('#lgM').textContent=t; }
 $('#lgX').onclick=()=>$('#lg').classList.remove('open');
+let lgMode='in';
+function lgSetMode(m){ lgMode=m; document.querySelectorAll('#lgTabs button').forEach(b=>b.classList.toggle('on',b.dataset.m===m)); const up=m==='up';
+  $('#lgIn').style.display=up?'none':''; $('#lgUp').style.display=up?'':'none'; $('#lgW2box').style.display=up?'':'none'; $('#lgF').style.display=up?'none':'';
+  $('#lgW').autocomplete=up?'new-password':'current-password'; $('#lgT').textContent=up?'註冊萌創帳號':'登入萌創'; $('#lgP').textContent=up?'註冊後會收到一封確認信，確認後由管理員核准，就能上傳和整理自己的作品。':'登入後才能上傳、整理和編輯。來看展的朋友不用登入。'; lgMsg(''); }
+document.querySelectorAll('#lgTabs button').forEach(b=>b.onclick=()=>lgSetMode(b.dataset.m));
+document.querySelectorAll('#lg .eye').forEach(b=>b.onclick=()=>{ const i=$('#'+b.dataset.for), show=i.type==='password'; i.type=show?'text':'password'; b.setAttribute('aria-label',show?'隱藏密碼':'顯示密碼'); b.style.color=show?'var(--birch)':''; });
 $('#lg').addEventListener('click',e=>{ if(e.target.id==='lg') $('#lg').classList.remove('open'); });
-['#lgE','#lgW'].forEach(s=>$(s).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); ($('#lgNew').style.display==='flex'?$('#lgSet'):$('#lgIn')).click(); } }));
+['#lgE','#lgW','#lgW2'].forEach(s=>$(s).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); ($('#lgNew').style.display==='flex'?$('#lgSet'):lgMode==='up'?$('#lgUp'):$('#lgIn')).click(); } }));
 addEventListener('keydown',e=>{ if(e.key==='Escape') $('#lg').classList.remove('open'); });
-function lgResetMode(){ $('#lgT').textContent='設定新密碼'; $('#lgP').textContent='輸入你想用的新密碼（至少 6 碼），設定好就會直接登入。'; $('#lgE').style.display='none'; $('#lgW').placeholder='新密碼（至少 6 碼）'; $('#lgW').autocomplete='new-password'; $('#lgBtns').style.display='none'; $('#lgNew').style.display='flex'; $('#lgF').style.display='none'; lgMsg(''); $('#lg').classList.add('open'); setTimeout(()=>$('#lgW').focus(),50); }
+function lgResetMode(){ $('#lgT').textContent='設定新密碼'; $('#lgP').textContent='輸入你想用的新密碼（至少 6 碼），設定好就會直接登入。'; $('#lgE').style.display='none'; $('#lgW').placeholder='新密碼（至少 6 碼）'; $('#lgW').autocomplete='new-password'; $('#lgBtns').style.display='none'; $('#lgTabs').style.display='none'; $('#lgW2box').style.display='none'; $('#lgNew').style.display='flex'; $('#lgF').style.display='none'; lgMsg(''); $('#lg').classList.add('open'); setTimeout(()=>$('#lgW').focus(),50); }
 $('#lgSet').onclick=async()=>{ const p=$('#lgW').value; if(p.length<6){ lgMsg('密碼至少 6 碼'); return; } const { error }=await window.ocSupabase.auth.updateUser({ password:p }); if(error){ lgMsg('密碼沒有改成功，請重新點一次信裡的連結'); return; } lgMsg('密碼已更新'); setTimeout(()=>location.replace(location.pathname),800); };
 $('#lgIn').onclick=async()=>{ const sb=window.ocSupabase; const e=$('#lgE').value.trim(), p=$('#lgW').value;
   if(!e||!p){ lgMsg('請輸入 Email 和密碼'); return; } lgMsg('登入中…');
@@ -1372,7 +1402,7 @@ $('#lgIn').onclick=async()=>{ const sb=window.ocSupabase; const e=$('#lgE').valu
   if(error){ lgMsg(/confirm/i.test(error.message)?'這個 Email 還沒驗證，請先到信箱點驗證信':'Email 或密碼不對，再試一次'); return; }
   location.reload(); };
 $('#lgUp').onclick=async()=>{ const sb=window.ocSupabase; const e=$('#lgE').value.trim(), p=$('#lgW').value;
-  if(!e||p.length<6){ lgMsg('請輸入 Email，密碼至少 6 碼'); return; } lgMsg('註冊中…');
+  if(!e||p.length<6){ lgMsg('請輸入 Email，密碼至少 6 碼'); return; } if(p!==$('#lgW2').value){ lgMsg('兩次輸入的密碼不一樣，請再確認'); $('#lgW2').focus(); return; } lgMsg('註冊中…');
   const { data, error } = await sb.auth.signUp({ email:e, password:p, options:{ emailRedirectTo: location.origin+location.pathname } });
   if(error){ lgMsg(/registered/i.test(error.message)?'這個 Email 已經註冊過，直接登入就好':/rate|limit/i.test(error.message)?'寄信太頻繁了，請過幾分鐘再試':/invalid/i.test(error.message)?'Email 格式不對，請再檢查一次':'註冊沒有成功，請稍後再試'); return; }
   if(data?.session){ location.reload(); return; }
@@ -1407,6 +1437,8 @@ renderBars(); renderWall();
     if($('#viewer').classList.contains('open')){ list=computeList(); if(vIdx>=list.length) vIdx=list.length-1; showV(); }
     if(curShow) renderShow();
   },err=>{ clearTimeout(timer); toast('作品沒有載入成功，請重新整理頁面'); });
+  $('#wEdit').style.display=isAdm?'':'none';
+  db.collection('site').onSnapshot(snap=>{ const d=snap.docs.find(x=>x.id==='wall'); if(d){ const v=d.data(); delete v._owner; wallText=v; applyWallText(); } },()=>{});
   db.collection('shows').onSnapshot(snap=>{
     shows=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.t-a.t);
     renderBars(); route();
