@@ -2,6 +2,10 @@
   "outputDirectory": "src",
   "rewrites": [
     {
+      "source": "/api/lumina",
+      "destination": "/api/artwall?__ae=lumina"
+    },
+    {
       "source": "/gallery",
       "destination": "/gallery.html"
     },
