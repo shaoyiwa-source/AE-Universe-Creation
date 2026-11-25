@@ -6,8 +6,32 @@
       "destination": "/shop.html"
     },
     {
-      "source": "/shop/:category",
+      "source": "/shop/:category([^./]+)",
       "destination": "/shop.html"
+    },
+    {
+      "source": "/shop/:category([^./]+)/",
+      "destination": "/shop.html"
+    },
+    {
+      "source": "/product",
+      "destination": "/product.html"
+    },
+    {
+      "source": "/collection-holy-name",
+      "destination": "/collection-holy-name.html"
+    },
+    {
+      "source": "/collection-infinite-eye",
+      "destination": "/collection-infinite-eye.html"
+    },
+    {
+      "source": "/collection-sheng-ming",
+      "destination": "/collection-sheng-ming.html"
+    },
+    {
+      "source": "/ecpay-result",
+      "destination": "/ecpay-result.html"
     },
     {
       "source": "/today",
