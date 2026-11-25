@@ -1,0 +1,19 @@
+{
+  "name": "AE動態桌布",
+  "short_name": "AE動態桌布",
+  "description": "匯入照片，加上會動的可愛元件、濾鏡與動態主題，做出你的 iPhone 動態桌布。",
+  "lang": "zh-Hant",
+  "start_url": "/wallpaper/",
+  "scope": "/wallpaper/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fcfcfa",
+  "theme_color": "#fcfcfa",
+  "icons": [
+    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "互動模式", "url": "/wallpaper/?mode=play" }
+  ]
+}

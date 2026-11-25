@@ -116,6 +116,10 @@
     {
       "source": "/ex/:slug",
       "destination": "/api/ex?slug=:slug"
+    },
+    {
+      "source": "/wallpaper",
+      "destination": "/wallpaper/index.html"
     }
   ],
   "redirects": [
