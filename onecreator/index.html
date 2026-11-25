@@ -21,7 +21,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--paper);scroll-behavior:smooth;overflow-x:hidden}
 body{position:relative;color:var(--ink);font:400 17px/1.75 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-img{display:block;max-width:100%}
+img{display:block;max-width:100%;height:auto}
 a{color:inherit}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--water);outline-offset:3px}
@@ -201,7 +201,7 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
 .hang{display:flex;flex-direction:column;align-items:center}
 .unroll{all:unset;cursor:pointer;font:600 13px var(--sans);color:var(--ink);border-bottom:1.5px solid var(--leaf);padding-bottom:1px}
 .hang .cap{display:flex;justify-content:space-between;gap:12px;width:100%;max-width:520px;margin-top:14px;font-size:13px;color:var(--mute)}
-.about-art{margin-top:28px;max-width:360px}
+.ymsc{margin:0 auto clamp(40px,6vw,72px);max-width:1100px}.ymsc button{all:unset;cursor:zoom-in;display:block;border-radius:6px;overflow:hidden;box-shadow:0 26px 60px rgba(30,33,36,.16)}.ymsc img{width:100%;height:auto}.ymsc figcaption{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font-size:13px;color:var(--mute)}.about-art{margin-top:28px;max-width:360px}
 .about-art button{all:unset;cursor:zoom-in;display:block;border-radius:6px;overflow:hidden;box-shadow:0 20px 50px rgba(30,33,36,.14)}
 .about-art img{width:100%}
 .about-art figcaption{margin-top:10px;font-size:13px;color:var(--mute)}
@@ -353,11 +353,13 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
 </section>
 
 <section class="ch c-leaf" id="about">
+  <div class="wrap"><figure class="ymsc rv"><button class="zoom" data-src="img/ymsc.jpg" aria-label="放大畫作《藝萌盛創》"><img src="img/ymsc.jpg" alt="畫作《藝萌盛創》，藏著藝、萌、盛、創四個字" width="1800" height="1272" loading="lazy"></button><figcaption><span>《藝萌盛創》· 13th Aurelia</span><span>畫裡藏著四個字，找找看</span></figcaption></figure>
+</div>
   <div class="wrap about">
     <div class="rv">
       <div class="ch-head" style="margin-bottom:24px"><div class="glyph" aria-hidden="true">萌</div><div><h2>關於萌創</h2></div></div>
       <p class="quote">不必成熟，才開始；<br>開始了，就有意義。<small>萌創是 AE Universe Creation 旗下的個人工作室，是一塊讓創作自由長出來的園地。畫作署名 13th Aurelia。</small></p>
-      <figure class="about-art"><button class="zoom" data-src="img/ymsc-close.jpg" aria-label="放大畫作《藝萌盛創》近拍"><img src="img/ymsc-close.jpg" alt="畫作《藝萌盛創》近拍，藏著藝、萌、盛、創四個字" width="900" height="1598" loading="lazy"></button><figcaption>《藝萌盛創》近拍・畫裡藏著四個字，找找看</figcaption></figure>
+      
     </div>
     <div class="facts rv">
       <div class="fact"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 38 C18 30 22 18 38 10" fill="none" stroke="#E5483B" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="10" r="4" fill="#E9A52B"/></svg><div><h3>一筆成形</h3><p>不打草稿、不重來，畫下去的那一刻就是作品。</p></div></div>
