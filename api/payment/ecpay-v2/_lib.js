@@ -295,9 +295,24 @@ function validateQueryData(queryData, expected) {
 }
 
 
+function blobWriteToken() {
+  return String(process.env.BLOB_READ_WRITE_TOKEN || '').trim();
+}
+
+function blobAuthOptions() {
+  // Prefer an explicit token. On Vercel, VERCEL_OIDC_TOKEN is often present and
+  // the Blob SDK then ignores the default BLOB_READ_WRITE_TOKEN unless we pass
+  // the token ourselves. BLOB_STORE_ID is not set on this project.
+  const token = blobWriteToken();
+  if (token) return { token };
+  const storeId = String(process.env.BLOB_STORE_ID || '').trim();
+  if (process.env.VERCEL_OIDC_TOKEN && storeId) return { storeId };
+  return {};
+}
+
 function privateBlobReady() {
   if (String(process.env.AE_ORDER_STORE || '') === 'memory') return true;
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID));
+  return Boolean(blobWriteToken() || (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID));
 }
 
 const memoryOrders = new Map();
@@ -339,6 +354,7 @@ async function writeOrderState(state) {
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    ...blobAuthOptions(),
   });
   return pathname;
 }
@@ -350,7 +366,7 @@ async function readPrivateBlobText(pathname) {
     throw err;
   }
   const { get } = await blobSdk();
-  const result = await get(pathname, { access: 'private', useCache: false });
+  const result = await get(pathname, { access: 'private', useCache: false, ...blobAuthOptions() });
   if (!result || result.statusCode !== 200) return null;
   return new Response(result.stream).text();
 }
@@ -380,7 +396,7 @@ async function headPrivateAsset(sku) {
   const asset = getAssetRecord(sku);
   if (!asset) return null;
   const { head } = await blobSdk();
-  const meta = await head(asset.blob_path);
+  const meta = await head(asset.blob_path, { access: 'private', ...blobAuthOptions() });
   return { asset, meta };
 }
 
@@ -401,7 +417,7 @@ async function getPrivateAsset(sku) {
   const asset = getAssetRecord(sku);
   if (!asset) return null;
   const { get } = await blobSdk();
-  const result = await get(asset.blob_path, { access: 'private', useCache: false });
+  const result = await get(asset.blob_path, { access: 'private', useCache: false, ...blobAuthOptions() });
   if (!result || result.statusCode !== 200) return null;
   return { asset, result };
 }

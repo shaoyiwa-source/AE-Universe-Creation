@@ -81,7 +81,7 @@ module.exports = async function handler(req, res) {
         created_at: now,
       });
     } catch (error) {
-      console.error('Order create persist failed', error && error.code);
+      console.error('Order create persist failed', error && (error.code || error.name), error && error.message);
       return res.status(503).json({ ok: false, error: 'ORDER_PERSIST_FAILED' });
     }
   }
