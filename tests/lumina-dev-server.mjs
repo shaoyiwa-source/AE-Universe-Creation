@@ -1,4 +1,4 @@
-// Local dev/test server for AE Shinity: serves ./src (the site output directory) and runs api/lumina.js with a
+// Local dev/test server for AE Shinity: serves ./src (the site output directory) and runs server/lumina.js (not deployed; see the note in that file) with a
 // Vercel-like req/res, storing data in LUMINA_FS_DIR instead of Vercel Blob.
 // Usage: LUMINA_FS_DIR=/tmp/lumina LUMINA_STUDIO_PASSWORD=... node tests/lumina-dev-server.mjs [port]
 import http from 'http';
@@ -10,7 +10,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pub = path.join(root, 'src');
-const handler = require(path.join(root, 'api', 'lumina.js'));
+const handler = require(path.join(root, 'server', 'lumina.js'));
 const port = Number(process.argv[2] || 8766);
 if (!process.env.LUMINA_FS_DIR) { console.error('Set LUMINA_FS_DIR'); process.exit(1); }
 

@@ -1,3 +1,10 @@
+// Deployment note (2026-11-25): this file is the /api/lumina handler, but it is
+// kept outside api/ on purpose. Production already uses the Hobby plan limit of
+// 12 Serverless Functions. Putting this file at api/lumina.js makes the whole
+// git Preview fail with exceeded_serverless_functions_per_deployment, so nothing
+// else on the branch can be reviewed. Move it back to api/lumina.js when the
+// Owner upgrades the plan or frees one existing function. Do not remove a
+// payment function to make room. The public URL stays /api/lumina.
 // AE Shinity — cloud library API (single Vercel function; routes by ?a=)
 //
 // Environment (Vercel → Project → Settings → Environment Variables):
