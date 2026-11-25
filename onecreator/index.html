@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>萌創 AE OneCreator｜藝萌盛創</title>
+<meta name="description" content="萌創 AE OneCreator：原創手繪轉成數位藝術、品牌網站、AI 自動化。AE Universe Creation 旗下工作室。">
+<meta property="og:title" content="萌創 AE OneCreator">
+<meta property="og:description" content="在懵懂中萌芽，在創作中盛開。數位藝術・網站・AI。">
+<meta property="og:image" content="https://ae-onecreator.vercel.app/img/hero.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+ --paper:#ECEDEA;--raised:#F7F7F4;--ink:#1E2124;--mute:#5E646C;--rule:#D3D5CF;
+ --sun:#E5483B;--leaf:#22A447;--water:#2B8BD6;--gold:#E9A52B;
+ --sans:"Albert Sans","Noto Sans TC",system-ui,sans-serif;--serif:"Noto Serif TC",serif;
+ --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--paper);scroll-behavior:smooth;overflow-x:hidden}
+body{position:relative;color:var(--ink);font:400 17px/1.75 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--water);outline-offset:3px}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+header,main,footer{position:relative;z-index:1}
+.wrap{max-width:1200px;margin:0 auto;padding:0 clamp(18px,5vw,56px)}
+
+/* nav */
+.bar{position:fixed;inset:0 0 auto;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px clamp(16px,4vw,40px);background:rgba(236,237,234,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .4s}
+.bar.scrolled{border-color:var(--rule)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo svg{width:34px;height:34px}
+.logo b{font:900 19px var(--serif);letter-spacing:.08em}
+.logo small{font:600 12px var(--sans);color:var(--mute);letter-spacing:.04em}
+.nav{display:flex;gap:4px;list-style:none}
+.nav a{display:flex;align-items:baseline;gap:6px;text-decoration:none;padding:8px 12px;border-radius:999px;font-size:15px}
+.nav a i{font:900 18px var(--serif);font-style:normal}
+.nav a:hover{background:#fff}
+.nav .cta{background:var(--ink);color:#fff;font-weight:600}
+.nav .cta:hover{background:#000}
+@media(max-width:860px){.nav li:not(.keep){display:none}.logo small{display:none}}
+
+/* hero */
+.hero{padding:96px 0 40px;min-height:100svh;display:flex;align-items:center}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.25fr);gap:clamp(24px,5vw,72px);align-items:center;width:100%}
+.mark{width:72px;height:72px}
+.hero h1{font:900 clamp(64px,10vw,132px)/1 var(--serif);letter-spacing:.06em;margin:18px 0 10px}
+.hero .en{font:600 clamp(18px,2vw,24px) var(--sans);letter-spacing:.02em}
+.tagline{display:flex;gap:0;margin:28px 0 0;font:900 clamp(26px,3vw,36px) var(--serif);letter-spacing:.18em}
+.tagline span:nth-child(1){color:var(--sun)}.tagline span:nth-child(2){color:var(--leaf)}.tagline span:nth-child(3){color:var(--gold)}.tagline span:nth-child(4){color:var(--water)}
+.hero p.lead{margin-top:14px;color:var(--mute);font-size:clamp(16px,1.6vw,19px);max-width:24em}
+.hero .acts{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:14px 24px;font:600 16px var(--sans);text-decoration:none;border:1.5px solid var(--ink);cursor:pointer;background:none}
+.btn.solid{background:var(--ink);color:#fff}
+.btn.solid:hover{background:#000}
+.btn:not(.solid):hover{background:#fff}
+.art-hero{position:relative}
+.art-hero figure{position:relative;border-radius:6px;overflow:hidden;box-shadow:0 30px 70px rgba(30,33,36,.18);background:#fff}
+.art-hero figure img{width:100%;height:auto}
+.art-hero figcaption{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;color:var(--mute)}
+.art-hero .halo{position:absolute;inset:-8%;background:url(img/hero-s.jpg) center/cover;filter:blur(50px) saturate(1.6);opacity:.45;z-index:-1;border-radius:40px;animation:breathe 8s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.7;transform:scale(1.03)}}
+.reveal-hero{animation:rise 1.4s cubic-bezier(.2,.7,.2,1) both}
+.reveal-hero.d2{animation-delay:.25s}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}.art-hero{order:-1}.hero{padding-top:84px}}
+
+/* chapters */
+.ch{padding:clamp(70px,10vw,130px) 0;position:relative}
+.ch-head{display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,3vw,36px);align-items:end;margin-bottom:clamp(30px,5vw,56px)}
+.glyph{font:900 clamp(96px,14vw,180px)/.8 var(--serif)}
+.ch-head h2{font:900 clamp(30px,4vw,48px)/1.2 var(--serif);letter-spacing:.04em}
+.ch-head p{color:var(--mute);margin-top:8px;max-width:34em}
+.c-sun .glyph{color:var(--sun)}.c-leaf .glyph{color:var(--leaf)}.c-gold .glyph{color:var(--gold)}.c-water .glyph{color:var(--water)}
+
+/* works */
+.details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.details button{all:unset;cursor:zoom-in;border-radius:var(--r);overflow:hidden;aspect-ratio:3/4;display:block}
+.details img{width:100%;height:100%;object-fit:cover;transition:transform 1s}
+.details button:hover img{transform:scale(1.04)}
+.masonry{columns:4 220px;column-gap:14px}
+.masonry button{all:unset;cursor:zoom-in;display:block;margin-bottom:14px;border-radius:var(--r);overflow:hidden;break-inside:avoid;position:relative}
+.masonry img{width:100%;transition:transform 1s}
+.masonry button:hover img{transform:scale(1.04)}
+.masonry .tag{position:absolute;left:10px;bottom:10px;background:rgba(255,255,255,.9);border-radius:999px;padding:3px 12px;font-size:13px;font-weight:600}
+@media(max-width:600px){.masonry{columns:2;column-gap:10px}.masonry button{margin-bottom:10px}.details{gap:8px}}
+
+/* about */
+.about{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(24px,5vw,64px);align-items:center}
+.quote{font:900 clamp(30px,4.2vw,52px)/1.45 var(--serif);letter-spacing:.06em}
+.quote small{display:block;margin-top:18px;font:600 clamp(17px,1.8vw,21px)/1.7 var(--serif);color:var(--mute);letter-spacing:.1em}
+.facts{display:grid;gap:12px}
+.fact{background:var(--raised);border:1px solid var(--rule);border-radius:var(--r);padding:20px 22px;display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+.fact svg{width:44px;height:44px}
+.fact h3{font:700 18px var(--serif)}
+.fact p{font-size:15px;color:var(--mute)}
+@media(max-width:860px){.about{grid-template-columns:1fr}}
+
+/* wall */
+.doors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.door{position:relative;display:block;text-decoration:none;border-radius:20px;overflow:hidden;min-height:360px;color:#fff;isolation:isolate}
+.door img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform 1.4s}
+.door::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.66));z-index:-1}
+.door:hover img{transform:scale(1.05)}
+.door .in{position:absolute;left:24px;right:24px;bottom:22px}
+.door h3{font:900 clamp(26px,3vw,34px) var(--serif);letter-spacing:.04em}
+.door p{font-size:15px;opacity:.9;margin-top:4px;max-width:30em}
+.door .go{display:inline-block;margin-top:14px;font:600 14px var(--sans);border:1px solid rgba(255,255,255,.7);border-radius:999px;padding:7px 16px}
+.door.grid4{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;background:#111}
+.door.grid4 img{position:static;width:100%;height:100%;object-fit:cover;z-index:auto}
+.door.grid4 .in,.door.grid4::after{position:absolute}
+.door.grid4::after{z-index:1}.door.grid4 .in{z-index:2}
+.play{margin-top:18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.mini{display:flex;gap:16px;align-items:center;background:var(--raised);border:1px solid var(--rule);border-radius:var(--r);padding:14px;text-decoration:none}
+.mini img{width:84px;height:84px;border-radius:50%;object-fit:cover;flex:none}
+.mini h4{font:700 17px var(--serif)}
+.mini p{font-size:14px;color:var(--mute)}
+@media(max-width:760px){.doors,.play{grid-template-columns:1fr}.door{min-height:300px}}
+
+/* services */
+.svc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.card{background:var(--raised);border:1px solid var(--rule);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.card .pic{height:170px;position:relative;overflow:hidden}
+.card .pic img{width:100%;height:100%;object-fit:cover}
+.card .body{padding:22px 22px 24px;display:flex;flex-direction:column;gap:10px;flex:1}
+.card h3{font:900 24px var(--serif);letter-spacing:.04em}
+.card .en{font:600 13px var(--sans);color:var(--mute);margin-top:-6px}
+.card ul{list-style:none;display:grid;gap:6px;font-size:15px}
+.card li{padding-left:18px;position:relative}
+.card li::before{content:"";position:absolute;left:0;top:.7em;width:8px;height:8px;border-radius:50%;background:var(--dot)}
+.card .ask{margin-top:auto;padding-top:10px}
+.card .ask button{all:unset;cursor:pointer;font:600 15px var(--sans);border-bottom:2px solid var(--dot);padding-bottom:2px}
+.k-sun{--dot:var(--sun)}.k-leaf{--dot:var(--leaf)}.k-water{--dot:var(--water)}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:22px;counter-reset:s;list-style:none}
+.flow li{counter-increment:s;background:#fff;border-radius:var(--r);padding:18px;border:1px solid var(--rule)}
+.flow li::before{content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;font:700 14px var(--sans);margin-bottom:10px}
+.flow b{display:block;font:700 17px var(--serif)}
+.flow span{font-size:14px;color:var(--mute)}
+.cases{margin-top:56px}
+.cases h3{font:900 26px var(--serif);margin-bottom:16px}
+.clist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.case{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;border-radius:var(--r);background:#fff;border:1px solid var(--rule);text-decoration:none}
+.case b{font:700 17px var(--serif);display:block}
+.case span{font-size:14px;color:var(--mute)}
+.case em{font-style:normal;font-size:13px;white-space:nowrap;border:1px solid var(--rule);border-radius:999px;padding:4px 12px}
+a.case:hover{border-color:var(--ink)}
+@media(max-width:860px){.svc,.clist{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}}
+
+/* contact */
+.contact{background:var(--ink);color:#EDEDEA;border-radius:28px;padding:clamp(28px,5vw,60px);display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,4vw,56px)}
+.contact h2{font:900 clamp(32px,4vw,50px)/1.25 var(--serif);letter-spacing:.04em}
+.contact p{color:#A7ABB0;margin-top:12px}
+.contact .glyph{color:var(--water)}
+form{display:grid;gap:14px}
+label{font-size:14px;color:#C9CCD0}
+input,textarea{width:100%;font:16px var(--sans);padding:13px 15px;border-radius:12px;border:1px solid #3A3E43;background:#2A2D31;color:#fff}
+textarea{min-height:130px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1px solid #4A4F55;background:none;color:#EDEDEA;border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer}
+.chips button[aria-pressed=true]{background:#fff;color:var(--ink);border-color:#fff}
+form .btn{border-color:#fff;background:#fff;color:var(--ink);justify-content:center}
+.msg{min-height:22px;font-size:14px}
+.msg.ok{color:#8FE3A6}.msg.err{color:#FF9C8E}
+@media(max-width:860px){.contact{grid-template-columns:1fr}}
+
+footer{padding:60px 0 100px;text-align:center;color:var(--mute);font-size:14px}
+footer svg{width:40px;height:40px;margin:0 auto 10px}
+
+.lb{position:fixed;inset:0;z-index:60;background:rgba(18,19,21,.95);display:none;place-items:center;padding:14px;cursor:zoom-out}
+.lb.on{display:grid}
+.lb img{max-width:96vw;max-height:92svh;object-fit:contain}
+.snd{position:fixed;right:clamp(12px,3vw,26px);bottom:clamp(12px,3vw,26px);z-index:40;display:flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border-radius:999px;border:1px solid var(--rule);background:rgba(247,247,244,.92);backdrop-filter:blur(10px);font:600 14px var(--sans);cursor:pointer}
+.snd .bars{display:flex;gap:2px;align-items:flex-end;height:14px}
+.snd .bars i{width:3px;height:4px;border-radius:2px;background:var(--leaf)}
+.snd.on .bars i{animation:eq 1s ease-in-out infinite}
+.snd.on .bars i:nth-child(2){animation-delay:-.3s;background:var(--water)}.snd.on .bars i:nth-child(3){animation-delay:-.6s;background:var(--sun)}
+@keyframes eq{50%{height:14px}}
+.rv{opacity:0;transform:translateY(22px);transition:opacity 1.1s ease,transform 1.1s ease}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="mark" viewBox="0 0 64 64"><defs>
+      <linearGradient id="ms" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F26B4E"/><stop offset="1" stop-color="#D93A30"/></linearGradient>
+      <linearGradient id="ml" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3CC266"/><stop offset="1" stop-color="#1C8F3E"/></linearGradient>
+      <linearGradient id="mw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5BB3F0"/><stop offset="1" stop-color="#2479C9"/></linearGradient>
+    </defs>
+    <path d="M46.67 28.12 A15 15 0 1 1 39.5 12.01" fill="none" stroke="url(#ms)" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M39.5 12.01 A15 15 0 0 1 46.27 20.36" fill="none" stroke="url(#ms)" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M51 4.5 Q51.6 8.4 55.5 9 Q51.6 9.6 51 13.5 Q50.4 9.6 46.5 9 Q50.4 8.4 51 4.5 Z" fill="#F2B33D"/>
+    <path d="M8 44.6 C18 43.4 26 45 34 44.2 C42 43.4 50 44.6 56 43.8" fill="none" stroke="#23262A" stroke-width="2.3" stroke-linecap="round"/>
+    <path d="M18 50 C22.5 49.1 26 50.6 30.5 49.8 C35 49 38.5 50.4 43 49.7" fill="none" stroke="url(#mw)" stroke-width="2.1" stroke-linecap="round"/>
+    <path d="M25.5 55 C28.5 54.4 31.5 55.4 34.5 54.8 C36 54.5 37.4 54.7 38.5 54.6" fill="none" stroke="url(#mw)" stroke-width="2.1" stroke-linecap="round"/>
+    <path d="M32 44.5 C32.5 39.5 31.2 35 32.3 29.5" fill="none" stroke="#1C8F3E" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M31.9 37.6 C28 38.6 22.6 36.8 20.2 30.4 C25.8 29 30.7 31.9 31.9 37.6 Z" fill="url(#ml)"/>
+    <path d="M31.2 36.9 C27.8 35 25 33 22.3 31.1" fill="none" stroke="#A6EE8C" stroke-width=".9" stroke-linecap="round"/>
+    <path d="M32.3 33.2 C32.3 27.4 36.8 22.6 44.2 22.2 C43.2 28.7 38.5 33.4 32.3 33.2 Z" fill="url(#ml)"/>
+    <path d="M33 32.4 C36.2 29.4 39.1 26.3 42.6 23.6" fill="none" stroke="#A6EE8C" stroke-width=".9" stroke-linecap="round"/>
+    <path d="M40.6 28.4 C40.6 28.4 38.7 31 38.7 32.3 A1.9 1.9 0 0 0 42.5 32.3 C42.5 31 40.6 28.4 40.6 28.4 Z" fill="url(#mw)"/>
+    <circle cx="39.95" cy="32.2" r=".55" fill="#fff" opacity=".9"/></symbol></svg>
+
+<div class="bar" id="bar">
+  <a class="logo" href="#top" aria-label="萌創 回到最上方"><svg viewBox="0 0 64 64"><use href="#mark"/></svg><span><b>萌創</b><br><small>AE OneCreator</small></span></a>
+  <ul class="nav">
+    <li><a href="#art"><i style="color:var(--sun)">藝</i>作品</a></li>
+    <li><a href="#about"><i style="color:var(--leaf)">萌</i>關於</a></li>
+    <li><a href="#wall"><i style="color:var(--gold)">盛</i>作品牆</a></li>
+    <li><a href="#create"><i style="color:var(--water)">創</i>接案</a></li>
+    <li class="keep"><a class="cta" href="#contact">聊聊你的想法</a></li>
+  </ul>
+</div>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="reveal-hero">
+      <svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg>
+      <h1>萌創</h1>
+      <div class="en">AE OneCreator</div>
+      <div class="tagline" aria-label="藝萌盛創"><span>藝</span><span>萌</span><span>盛</span><span>創</span></div>
+      <p class="lead">在懵懂中萌芽，在創作中盛開。把手繪的能量帶進數位世界，也幫你把想法做出來。</p>
+      <div class="acts">
+        <a class="btn solid" href="#art">看作品</a>
+        <a class="btn" href="#create">找萌創做事</a>
+      </div>
+    </div>
+    <div class="art-hero reveal-hero d2">
+      <div class="halo" aria-hidden="true"></div>
+      <figure><button class="zoom" data-src="img/hero.jpg" style="all:unset;cursor:zoom-in;display:block"><img src="img/hero.jpg" alt="畫作《藝萌盛創》，畫面中藏著藝、萌、盛、創四個字" width="1800" height="1295"></button></figure>
+      <div class="art-hero figcaption" style="display:flex;justify-content:space-between;margin-top:12px;font-size:13px;color:var(--mute)"><span>《藝萌盛創》· 13th Aurelia</span><span>畫裡藏著四個字，找找看</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="ch c-sun" id="art">
+  <div class="wrap">
+    <div class="ch-head rv"><div class="glyph" aria-hidden="true">藝</div><div><h2>作品</h2><p>一筆成形，不打草稿。螢光、金銀、亮粉和厚厚的顏料，湊近看每一處都在流動。點任何一張可以放大。</p></div></div>
+    <div class="details rv">
+      <button class="zoom" data-src="img/hero-d1.jpg" aria-label="放大局部：藝萌"><img src="img/hero-d1-s.jpg" alt="《藝萌盛創》局部" loading="lazy"></button>
+      <button class="zoom" data-src="img/w09.jpg" aria-label="放大局部"><img src="img/w09-s.jpg" alt="螢光同心圓局部" loading="lazy"></button>
+      <button class="zoom" data-src="img/hero-d2.jpg" aria-label="放大局部：盛創"><img src="img/hero-d2-s.jpg" alt="《藝萌盛創》局部" loading="lazy"></button>
+    </div>
+    <div class="masonry" id="masonry"></div>
+  </div>
+</section>
+
+<section class="ch c-leaf" id="about">
+  <div class="wrap about">
+    <div class="rv">
+      <div class="ch-head" style="margin-bottom:24px"><div class="glyph" aria-hidden="true">萌</div><div><h2>關於萌創</h2></div></div>
+      <p class="quote">不必成熟，才開始；<br>開始了，就有意義。<small>萌創是 AE Universe Creation 旗下的個人工作室，是一塊讓創作自由長出來的園地。畫作署名 13th Aurelia。</small></p>
+    </div>
+    <div class="facts rv">
+      <div class="fact"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 38 C18 30 22 18 38 10" fill="none" stroke="#E5483B" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="10" r="4" fill="#E9A52B"/></svg><div><h3>一筆成形</h3><p>不打草稿、不重來，畫下去的那一刻就是作品。</p></div></div>
+      <div class="fact"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 40 C24.6 32 23.4 26 24.4 19" fill="none" stroke="#1C8F3E" stroke-width="3" stroke-linecap="round"/><path d="M24 29 C18 30.4 11 27.6 8.4 19 C16 17.2 22.4 21.4 24 29 Z" fill="#3CC266"/><path d="M24.4 23 C24.4 15 30.4 8.6 40 8.2 C38.6 17 32.2 23.2 24.4 23 Z" fill="#3CC266"/></svg><div><h3>自學長出來的</h3><p>沒有學院的框架，只有一直動手、一直嘗試。</p></div></div>
+      <div class="fact"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="24" rx="4" fill="none" stroke="#2B8BD6" stroke-width="3"/><path d="M18 40 h12" stroke="#2B8BD6" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="22" r="5" fill="#E9A52B"/></svg><div><h3>手繪 × 數位 × AI</h3><p>原畫是根，數位和 AI 是讓它被更多人看見的翅膀。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch c-gold" id="wall">
+  <div class="wrap">
+    <div class="ch-head rv"><div class="glyph" aria-hidden="true">盛</div><div><h2>作品牆與展覽</h2><p>所有畫作都整理在作品牆上；挑出來的，會變成一場一場的線上展覽。</p></div></div>
+    <div class="doors rv">
+      <a class="door grid4" href="https://claude.ai/artifact/JkTjkjKXtVwL3h4QjZf2xz" target="_blank" rel="noopener">
+        <img src="img/w01-s.jpg" alt=""><img src="img/w05-s.jpg" alt=""><img src="img/w10-s.jpg" alt=""><img src="img/w03-s.jpg" alt=""><img src="img/w12-s.jpg" alt=""><img src="img/w07-s.jpg" alt=""><img src="img/w14-s.jpg" alt=""><img src="img/w09-s.jpg" alt=""><img src="img/w15-s.jpg" alt="">
+        <div class="in"><h3>作品牆</h3><p>電視牆一樣排開，3×3 到 6×6，點進去慢慢看每一張。</p><span class="go">進入作品牆</span></div>
+      </a>
+      <a class="door" href="https://claude.ai/artifact/JkTjkjKXtVwL3h4QjZf2xz" target="_blank" rel="noopener">
+        <img src="img/w13.jpg" alt="">
+        <div class="in"><h3>第13道光</h3><p>隨手挑出的 13 幅畫，剛好連成一道光的流動。</p><span class="go">看展覽</span></div>
+      </a>
+    </div>
+    <div class="play rv">
+      <a class="mini" href="https://ae-kaleidoscope.vercel.app" target="_blank" rel="noopener"><img src="img/w09-s.jpg" alt=""><div><h4>夢幻萬花筒</h4><p>對它說話、搖一搖手機，畫會跟著你轉起來。</p></div></a>
+      <div class="mini"><img src="img/w12-s.jpg" alt=""><div><h4>夢境水晶球</h4><p>用手指在畫上點亮光，每一筆都是一個音。即將開放。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch c-water" id="create">
+  <div class="wrap">
+    <div class="ch-head rv"><div class="glyph" aria-hidden="true">創</div><div><h2>找萌創一起做</h2><p>小而用心的接案。每件事都當成自己的作品來做，答應五項，盡量做到十項。</p></div></div>
+    <div class="svc rv">
+      <article class="card k-sun"><div class="pic"><img src="img/pixel.jpg" alt="畫作轉成點陣燈牆的數位效果" style="object-position:50% 30%"></div><div class="body"><h3>數位藝術</h3><div class="en">Digital Art</div>
+        <ul><li>原創手繪轉成高解析數位檔</li><li>手機桌布、動態桌布</li><li>聲光互動展演、療癒互動小程式</li><li>品牌、空間用的藝術視覺授權</li></ul>
+        <div class="ask"><button data-svc="數位藝術">詢問數位藝術</button></div></div></article>
+      <article class="card k-leaf"><div class="pic"><img src="img/w07.jpg" alt="" style="object-position:50% 50%"></div><div class="body"><h3>網站</h3><div class="en">Websites</div>
+        <ul><li>品牌形象官網、一頁式網站</li><li>作品集、線上展覽網站</li><li>手機好看、好讀、好操作</li><li>上線、網域設定一起處理</li></ul>
+        <div class="ask"><button data-svc="網站">詢問網站</button></div></div></article>
+      <article class="card k-water"><div class="pic"><img src="img/w14.jpg" alt="" style="object-position:50% 40%"></div><div class="body"><h3>AI 與自動化</h3><div class="en">AI &amp; Automation</div>
+        <ul><li>Google 表單、試算表自動化</li><li>自動寄信、自動整理報表</li><li>ChatGPT、Claude 的設定與提示詞</li><li>交付程式碼和看得懂的說明</li></ul>
+        <div class="ask"><button data-svc="AI 自動化">詢問 AI 自動化</button></div></div></article>
+    </div>
+    <ol class="flow rv">
+      <li><b>聊聊需求</b><span>留言或私訊，說說你想做什麼。</span></li>
+      <li><b>提案報價</b><span>給你清楚的內容、時程和價格。</span></li>
+      <li><b>製作</b><span>過程中隨時讓你看進度。</span></li>
+      <li><b>交付</b><span>交付後 30 天內小修改免費。</span></li>
+    </ol>
+    <div class="cases rv">
+      <h3>做過的事</h3>
+      <div class="clist">
+        <a class="case" href="https://ae-universe-creation.vercel.app" target="_blank" rel="noopener"><div><b>藝術品牌官網</b><span>AE Universe Creation 中英雙語官網</span></div><em>看網站</em></a>
+        <a class="case" href="https://ae-kaleidoscope.vercel.app" target="_blank" rel="noopener"><div><b>聲控療癒萬花筒</b><span>用聲音和手機傾斜操控的網頁小程式</span></div><em>玩玩看</em></a>
+        <div class="case"><div><b>夢境水晶球</b><span>畫作互動藝術，一筆一個音</span></div><em>即將開放</em></div>
+        <div class="case"><div><b>表單自動寄信</b><span>Google 表單送出後自動回信、通知</span></div><em>示範</em></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="contact" style="padding-top:0">
+  <div class="wrap">
+    <div class="contact rv">
+      <div><div class="glyph" aria-hidden="true" style="font-size:clamp(70px,9vw,110px)">聊</div><h2>說說你的想法</h2><p>不用想得很完整，一兩句話也可以。我們會在兩個工作天內回覆你。</p></div>
+      <form id="f" novalidate>
+        <div><label>想聊哪一類</label><div class="chips" id="chips"><button type="button" aria-pressed="false">數位藝術</button><button type="button" aria-pressed="false">網站</button><button type="button" aria-pressed="false">AI 自動化</button><button type="button" aria-pressed="false">其他</button></div></div>
+        <div><label for="nm">怎麼稱呼你</label><input id="nm" maxlength="60" autocomplete="name"></div>
+        <div><label for="ct">聯絡方式（Email 或 LINE ID）</label><input id="ct" maxlength="200" required autocomplete="email"></div>
+        <div><label for="ms">想做什麼</label><textarea id="ms" maxlength="3000" required></textarea></div>
+        <div class="msg" id="msg" role="status"></div>
+        <button class="btn" type="submit" id="go">送出</button>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg>
+  <p>萌創 AE OneCreator · 13th Aurelia · AE Universe Creation 旗下 · <a href="https://instagram.com/aeuniversecreation" target="_blank" rel="noopener">Instagram</a></p>
+</footer>
+
+<button class="snd" id="snd" aria-pressed="false"><span class="bars"><i></i><i></i><i></i></span><span id="sndt">自然聲</span></button>
+<div class="lb" id="lb" role="dialog" aria-label="放大檢視"><img alt=""></div>
+
+<script>/* ---------- 光紋、風、點擊漣漪 ---------- */
+const FX=(()=>{
+  const cv=document.getElementById('fx'),cx=cv.getContext('2d');
+  let W,H,dpr,t=0,energy=0,hue=0;
+  const motes=[],rings=[],sparks=[],leaves=[];
+  const PAL=['#3CC266','#5BB3F0','#F26B4E','#F5C451','#A6EE8C'];
+  function size(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0)}
+  size();addEventListener('resize',size);
+  for(let i=0;i<46;i++)motes.push({x:Math.random()*W,y:Math.random()*H,r:.8+Math.random()*2.2,c:PAL[i%5],p:Math.random()*6.3});
+  function wind(x,y){return Math.sin(y*.004+t*.25)*.6+Math.cos(x*.003-t*.18)*.4}
+  function leaf(x,y,big){leaves.push({x,y,vx:.6+Math.random(),vy:.3+Math.random()*.5,a:Math.random()*6,va:(Math.random()-.5)*.05,s:big?14:9+Math.random()*5,c:Math.random()<.7?'#3CC266':'#F5C451',life:1})}
+  function ring(x,y,c){rings.push({x,y,r:4,a:.55,c:c||'#5BB3F0'})}
+  function burst(x,y,n,c){for(let i=0;i<n;i++){const a=Math.random()*6.3,v=.6+Math.random()*2.2;sparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-.4,a:1,c:c||PAL[i%5]})}}
+  function ribbon(i){
+    const base=H*(.22+i*.28),amp=26+energy*60,col=['rgba(60,194,102,','rgba(91,179,240,','rgba(242,107,78,'][i];
+    cx.beginPath();
+    for(let x=-20;x<=W+20;x+=16){const y=base+Math.sin(x*.0042+t*(.22+i*.07)+i*2)*amp+Math.sin(x*.011-t*.4)*amp*.25;x<0?cx.moveTo(x,y):cx.lineTo(x,y)}
+    cx.strokeStyle=col+(.07+energy*.12)+')';cx.lineWidth=18+energy*20;cx.lineCap='round';cx.stroke();
+    cx.strokeStyle=col+(.16+energy*.2)+')';cx.lineWidth=1.2;cx.stroke();
+  }
+  function frame(){
+    t+=1/60;const lv=window.Nature?Nature.level():0;energy+=(lv-energy)*.08;
+    cx.clearRect(0,0,W,H);
+    cx.globalCompositeOperation='multiply';for(let i=0;i<3;i++)ribbon(i);cx.globalCompositeOperation='source-over';
+    for(const m of motes){const w=wind(m.x,m.y);m.x+=.25+w*.5+energy*1.2;m.y+=Math.sin(t*.6+m.p)*.25+w*.15;if(m.x>W+10)m.x=-10;if(m.y<-10)m.y=H+10;if(m.y>H+10)m.y=-10;
+      cx.globalAlpha=.25+.3*Math.sin(t*1.3+m.p)**2+energy*.4;cx.fillStyle=m.c;cx.beginPath();cx.arc(m.x,m.y,m.r*(1+energy),0,6.3);cx.fill()}
+    cx.globalAlpha=1;
+    for(let i=rings.length;i--;){const r=rings[i];r.r+=1.6+energy*2;r.a*=.965;cx.strokeStyle=r.c;cx.globalAlpha=r.a;cx.lineWidth=1.4;cx.beginPath();cx.arc(r.x,r.y,r.r,0,6.3);cx.stroke();cx.globalAlpha=r.a*.5;cx.beginPath();cx.arc(r.x,r.y,r.r*.62,0,6.3);cx.stroke();if(r.a<.02)rings.splice(i,1)}
+    for(let i=sparks.length;i--;){const s=sparks[i];s.x+=s.vx;s.y+=s.vy;s.vy+=.015;s.vx*=.985;s.a*=.97;cx.globalAlpha=s.a;cx.fillStyle=s.c;cx.beginPath();cx.arc(s.x,s.y,1.8,0,6.3);cx.fill();if(s.a<.03)sparks.splice(i,1)}
+    for(let i=leaves.length;i--;){const l=leaves[i];const w=wind(l.x,l.y);l.x+=l.vx+w*.8;l.y+=l.vy+Math.sin(t+l.a)*.4;l.a+=l.va+w*.01;if(l.x>W+30||l.y>H+30)l.life-=.05;
+      cx.save();cx.translate(l.x,l.y);cx.rotate(l.a);cx.globalAlpha=Math.min(.85,l.life);cx.fillStyle=l.c;cx.beginPath();cx.moveTo(-l.s,0);cx.quadraticCurveTo(0,-l.s*.55,l.s,0);cx.quadraticCurveTo(0,l.s*.55,-l.s,0);cx.fill();cx.strokeStyle='rgba(255,255,255,.6)';cx.lineWidth=.8;cx.beginPath();cx.moveTo(-l.s*.8,0);cx.lineTo(l.s*.8,0);cx.stroke();cx.restore();if(l.life<=0)leaves.splice(i,1)}
+    cx.globalAlpha=1;
+    if(Math.random()<.0025&&leaves.length<3)leaf(-20,Math.random()*H*.7);
+    if(!document.hidden)requestAnimationFrame(frame);
+  }
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){requestAnimationFrame(frame);document.addEventListener('visibilitychange',()=>{if(!document.hidden)requestAnimationFrame(frame)})}
+  return{ring,burst,leaf,W:()=>W,H:()=>H};
+})();
+
+/* ---------- 大自然的聲音（全部即時生成） ---------- */
+const Nature=(()=>{
+  let ac,master,an,rev,buf,on=false,timers=[];
+  const data=new Uint8Array(256);
+  function noise(sec,brown){const b=ac.createBuffer(1,ac.sampleRate*sec,ac.sampleRate),d=b.getChannelData(0);let last=0;for(let i=0;i<d.length;i++){const w=Math.random()*2-1;if(brown){last=(last+.02*w)/1.02;d[i]=last*3.5}else d[i]=w}return b}
+  function loop(b){const s=ac.createBufferSource();s.buffer=b;s.loop=true;s.start();return s}
+  function init(){
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    const comp=ac.createDynamicsCompressor();master=ac.createGain();master.gain.value=0;an=ac.createAnalyser();an.fftSize=512;
+    master.connect(comp);comp.connect(an);an.connect(ac.destination);
+    rev=ac.createConvolver();const ir=ac.createBuffer(2,ac.sampleRate*3.2,ac.sampleRate);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.6)}rev.buffer=ir;
+    const rg=ac.createGain();rg.gain.value=.55;rev.connect(rg);rg.connect(master);
+    // 風
+    const wn=loop(noise(4)),bp=ac.createBiquadFilter();bp.type='bandpass';bp.Q.value=.7;bp.frequency.value=500;
+    const wg=ac.createGain();wg.gain.value=.035;wn.connect(bp);bp.connect(wg);wg.connect(master);
+    const l1=ac.createOscillator(),l1g=ac.createGain();l1.frequency.value=.07;l1g.gain.value=260;l1.connect(l1g);l1g.connect(bp.frequency);l1.start();
+    const l2=ac.createOscillator(),l2g=ac.createGain();l2.frequency.value=.05;l2g.gain.value=.022;l2.connect(l2g);l2g.connect(wg.gain);l2.start();
+    // 溪水
+    const st=loop(noise(5,true)),lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;const hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=180;
+    const sg=ac.createGain();sg.gain.value=.05;st.connect(lp);lp.connect(hp);hp.connect(sg);sg.connect(master);
+    // 和聲墊
+    const chords=[[146.83,220,369.99],[123.47,246.94,293.66],[98,196,293.66,493.88],[110,220,329.63,554.37]];
+    const padF=ac.createBiquadFilter();padF.type='lowpass';padF.frequency.value=900;const padG=ac.createGain();padG.gain.value=.05;padF.connect(padG);padG.connect(master);padG.connect(rev);
+    let ci=0;function chord(){const now=ac.currentTime;chords[ci++%4].forEach((f,k)=>{const o=ac.createOscillator(),g=ac.createGain();o.type=k?'sine':'triangle';o.frequency.value=f;o.detune.value=(Math.random()-.5)*8;g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(.26,now+3);g.gain.setValueAtTime(.26,now+7);g.gain.linearRampToValueAtTime(0,now+11);o.connect(g);g.connect(padF);o.start(now);o.stop(now+11.2)});}
+    chord();timers.push(setInterval(()=>on&&chord(),8000));
+    // 鳥鳴
+    function bird(){if(!on)return;const now=ac.currentTime,n=3+Math.floor(Math.random()*4),base=2300+Math.random()*1300,pan=ac.createStereoPanner();pan.pan.value=Math.random()*1.6-.8;pan.connect(master);pan.connect(rev);
+      for(let i=0;i<n;i++){const o=ac.createOscillator(),g=ac.createGain(),t0=now+i*(.11+Math.random()*.06);o.frequency.setValueAtTime(base,t0);o.frequency.exponentialRampToValueAtTime(base*1.45,t0+.05);o.frequency.exponentialRampToValueAtTime(base*.9,t0+.09);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(.05,t0+.012);g.gain.exponentialRampToValueAtTime(.0005,t0+.1);o.connect(g);g.connect(pan);o.start(t0);o.stop(t0+.12)}
+      FX.burst(FX.W()*(.15+Math.random()*.7),FX.H()*(.1+Math.random()*.25),10,'#F5C451');
+      timers.push(setTimeout(bird,6000+Math.random()*9000));}
+    timers.push(setTimeout(bird,3500));
+    // 水滴
+    function drop(){if(!on)return;const now=ac.currentTime,o=ac.createOscillator(),g=ac.createGain(),f=900+Math.random()*900;o.frequency.setValueAtTime(f*1.8,now);o.frequency.exponentialRampToValueAtTime(f,now+.08);g.gain.setValueAtTime(.06,now);g.gain.exponentialRampToValueAtTime(.0005,now+.25);o.connect(g);g.connect(rev);g.connect(master);o.start(now);o.stop(now+.3);
+      FX.ring(FX.W()*Math.random(),FX.H()*(.4+Math.random()*.5),'#5BB3F0');
+      timers.push(setTimeout(drop,2500+Math.random()*5000));}
+    timers.push(setTimeout(drop,2000));
+  }
+  const PENTA=[587.33,659.25,739.99,880,987.77,1174.66,1318.51];
+  function chime(xr){if(!on)return;const now=ac.currentTime,f=PENTA[Math.min(6,Math.floor(xr*7))];
+    [[1,'sine',.09],[2.76,'sine',.025],[1,'triangle',.03]].forEach(([m,ty,v])=>{const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=f*m;g.gain.setValueAtTime(v,now);g.gain.exponentialRampToValueAtTime(.0004,now+2.8);o.connect(g);g.connect(master);g.connect(rev);o.start(now);o.stop(now+3)})}
+  function toggle(){
+    if(!ac)init();on=!on;if(ac.state==='suspended')ac.resume();
+    const now=ac.currentTime;master.gain.cancelScheduledValues(now);master.gain.setValueAtTime(master.gain.value,now);master.gain.linearRampToValueAtTime(on?.9:0,now+1.5);
+    if(on){timers.push(setTimeout(()=>{},0));}
+    return on;
+  }
+  function level(){if(!ac||!on)return 0;an.getByteTimeDomainData(data);let s=0;for(let i=0;i<data.length;i++){const v=(data[i]-128)/128;s+=v*v}return Math.min(1,Math.sqrt(s/data.length)*6)}
+  return{toggle,chime,level,isOn:()=>on};
+})();
+
+/* ---------- 互動：輕觸 ---------- */
+const sndBtn=document.getElementById('snd'),sndT=document.getElementById('sndt');
+sndBtn.addEventListener('click',e=>{e.stopPropagation();const on=Nature.toggle();sndBtn.classList.toggle('on',on);sndBtn.setAttribute('aria-pressed',on);sndT.textContent=on?'自然聲 開':'自然聲';});
+document.addEventListener('pointerdown',e=>{
+  if(e.target.closest('.snd'))return;
+  const c=['#5BB3F0','#3CC266','#F26B4E','#F5C451'][Math.floor(Math.random()*4)];
+  FX.ring(e.clientX,e.clientY,c);FX.burst(e.clientX,e.clientY,8);
+  if(Math.random()<.35)FX.leaf(e.clientX,e.clientY,true);
+  Nature.chime(e.clientX/innerWidth);
+});
+</script>
+<script>
+const SB='https://dmpakormfqazmjferaqs.supabase.co',KEY='sb_publishable_2oTHk8viJNv8grnLMcbVKg_E8c4ASIG';
+const $=id=>document.getElementById(id);
+const works=['w01','w12','infinite-tree','w05','w10','w02','w08','w15','w03','w11','w06','w13','w04','w07','w14','w09'];
+$('masonry').innerHTML=works.map(w=>`<button class="zoom" data-src="img/${w}.jpg" aria-label="放大作品"><img src="img/${w}-s.jpg" alt="${w==='infinite-tree'?'Infinite Tree':'作品'}" loading="lazy">${w==='infinite-tree'?'<span class="tag">Infinite Tree</span>':''}</button>`).join('');
+document.querySelectorAll('.zoom').forEach(b=>b.addEventListener('click',()=>{$('lb').querySelector('img').src=b.dataset.src;$('lb').classList.add('on')}));
+$('lb').onclick=()=>$('lb').classList.remove('on');
+addEventListener('keydown',e=>{if(e.key==='Escape')$('lb').classList.remove('on')});
+addEventListener('scroll',()=>$('bar').classList.toggle('scrolled',scrollY>20),{passive:true});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+/* contact */
+let svc='';
+function pick(name){svc=name;document.querySelectorAll('#chips button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===name))}
+document.querySelectorAll('#chips button').forEach(b=>b.onclick=()=>pick(b.textContent));
+document.querySelectorAll('[data-svc]').forEach(b=>b.onclick=()=>{pick(b.dataset.svc);$('contact').scrollIntoView({behavior:'smooth'});setTimeout(()=>$('ms').focus(),700)});
+$('f').onsubmit=async e=>{
+  e.preventDefault();const m=$('msg');m.className='msg';
+  const ct=$('ct').value.trim(),ms=$('ms').value.trim();
+  if(ct.length<3){m.className='msg err';m.textContent='請留下 Email 或 LINE ID，我們才能回覆你。';$('ct').focus();return}
+  if(ms.length<2){m.className='msg err';m.textContent='寫一兩句你想做什麼就好。';$('ms').focus();return}
+  $('go').disabled=true;$('go').textContent='送出中…';
+  try{const r=await fetch(SB+'/rest/v1/onecreator_inquiries',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({name:$('nm').value.trim()||null,contact:ct,service:svc||null,message:ms})});
+    if(!r.ok)throw 0;
+    m.className='msg ok';m.textContent='收到了，謝謝你！兩個工作天內會回覆你。';$('f').reset();pick('');
+    const b=$('go').getBoundingClientRect();FX.burst(b.left+b.width/2,b.top,26);
+  }catch(x){m.className='msg err';m.textContent='網路好像不太順，請稍後再送一次。'}
+  $('go').disabled=false;$('go').textContent='送出';
+};
+const sb=$('snd');sb.addEventListener('click',()=>setTimeout(()=>{$('sndt').textContent=Nature.isOn()?'自然聲 開':'自然聲'},0));
+</script>
+</body>
+</html>
