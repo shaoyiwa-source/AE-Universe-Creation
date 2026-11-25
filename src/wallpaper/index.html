@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>AE動態桌布 · AE Live Wallpaper</title>
+<meta name="description" content="匯入照片，加上會動的可愛元件、濾鏡與動態主題，做出你的 iPhone 動態桌布。Make your own live iPhone wallpaper.">
+<meta name="theme-color" content="#fcfcfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141c18" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AE動態桌布">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/wallpaper/manifest.webmanifest">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Zen+Maru+Gothic:wght@900&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('ae-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/wallpaper/style.css?v=21">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <button class="icon-btn menu-trigger" id="btnMenu" aria-expanded="false" aria-controls="menu" type="button">
+      <span class="hamburger" aria-hidden="true"><i></i><i></i></span><span class="vh" data-i18n="menu"></span>
+    </button>
+    <a class="wordmark" href="/" data-i18n-aria="home">
+      <img src="/wallpaper/icons/ae-rings.webp" alt="" width="54" height="27">
+      <span class="wm-name">AE Universe<span>LIVE WALLPAPER</span></span>
+    </a>
+    <div class="header-actions">
+      <button class="lang-btn" id="btnLang" type="button"></button>
+      <button class="theme-btn" id="btnThemeTop" type="button" data-i18n-aria="themeToggle">◐</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="stage-tools">
+      <div class="tool-group">
+        <button class="icon-btn" id="btnUndo" data-i18n-aria="undo" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H4v5"/><path d="M4 12c1.6-3.6 5-5.5 9-5 4 .5 7 4 7 8"/></svg>
+        </button>
+        <button class="icon-btn" id="btnRedo" data-i18n-aria="redo" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7h5v5"/><path d="M20 12c-1.6-3.6-5-5.5-9-5-4 .5-7 4-7 8"/></svg>
+        </button>
+      </div>
+      <button class="pill" id="btnPlay" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span data-i18n="preview"></span>
+      </button>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="canvas" width="1080" height="2340"></canvas>
+    </div>
+    <div class="sel-float" id="selFloat" hidden></div>
+  </main>
+
+  <section class="sheet" id="sheet" hidden></section>
+
+  <nav class="dock" id="dock" aria-label="tools"></nav>
+</div>
+
+<!-- 選單（與官網相同的樣式） -->
+<div class="menu" id="menu" hidden>
+  <nav class="menu-list" id="menuList"></nav>
+  <p class="menu-note">Aurelia &amp; Elion · AE Universe Creation</p>
+  <button class="btn" id="btnDark" type="button"></button>
+</div>
+
+<!-- 互動模式（全螢幕播放） -->
+<div class="player" id="player" hidden>
+  <canvas id="playerCanvas" width="1080" height="2340"></canvas>
+  <div class="lock-clock" id="lockClock"><div class="lc-date" id="lcDate"></div><div class="lc-time" id="lcTime"></div></div>
+  <button class="player-back" id="playerBack" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span data-i18n="backToEdit"></span>
+  </button>
+  <button class="fab" id="fab" data-i18n-aria="fab"><img src="/wallpaper/icons/ae-rings.webp" alt=""></button>
+  <div class="fab-menu" id="fabMenu" hidden>
+    <button type="button" data-fab="theme" data-tip-key="fabTheme"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/></svg></button>
+    <button type="button" data-fab="music" data-tip-key="fabMusic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg></button>
+    <button type="button" data-fab="clock" data-tip-key="fabClock"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></button>
+    <button type="button" data-fab="hide" data-tip-key="fabHide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.5"/><path d="M4 4l16 16"/></svg></button>
+  </div>
+  <div class="toast" id="playerToast"></div>
+</div>
+
+<!-- 通用對話框 -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <button class="modal-x" id="modalX" data-i18n-aria="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<input type="file" id="fileBase" accept="image/*" hidden>
+<input type="file" id="fileSticker" accept="image/*" hidden>
+<input type="file" id="fileMusic" accept="audio/*" hidden>
+
+<script type="module" src="/wallpaper/js/app.js?v=21"></script>
+</body>
+</html>
