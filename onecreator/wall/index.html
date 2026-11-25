@@ -339,7 +339,8 @@ let st = {n:4, shape:'fill', cat:'全部', ori:'all', reps:true, vshape:'origina
 try{ Object.assign(st, JSON.parse(localStorage.getItem('wallPrefs')||'{}')); }catch(e){}
 const savePrefs = () => { try{ localStorage.setItem('wallPrefs', JSON.stringify(st)); }catch(e){} };
 
-let db=null, assets=null, canEdit=false;
+let db=null, assets=null, canEdit=false, isAdm=false, myUid=null;
+const mine = it => canEdit && (isAdm || (it && it._owner && it._owner===myUid));
 let items=[], byId=new Map(), shows=[];
 let groupOf=new Map(), groups=new Map();
 let list=[], vIdx=-1, vGroup=null;
@@ -927,13 +928,13 @@ function showV(){
   const g=groups.get(groupOf.get(it.id))||[it];
   $('#vinfo').textContent=`${vIdx+1} / ${list.length}`+(g.length>1?` · 這組 ${g.length} 個版本`:'')+` · ${it.cat}`;
   const vt=$('#vtitle'), vd=$('#vdesc');
-  vt.textContent=it.title||''; vd.textContent=it.desc||''; vt.contentEditable=vd.contentEditable=canEdit?'true':'false';
-  vt.dataset.id=vd.dataset.id=it.id; $('#vcap').style.display=(canEdit||it.title||it.desc)?'':'none';
+  vt.textContent=it.title||''; vd.textContent=it.desc||''; vt.contentEditable=vd.contentEditable=mine(it)?'true':'false';
+  vt.dataset.id=vd.dataset.id=it.id; $('#vcap').style.display=(mine(it)||it.title||it.desc)?'':'none';
   const vers=$('#vers'); vers.innerHTML='';
   if(g.length>1) g.forEach((x,k)=>{ const t=new Image(); t.src=blob(x.thumb); if(x.id===it.id) t.className='cur'; t.onclick=()=>{ vGroup={items:g,i:k}; showV(); }; vers.appendChild(t); });
   const vb=$('#vshapes'); vb.innerHTML='';
   VSHAPES.forEach(([v,t])=>{ const b=document.createElement('button'); b.textContent=t; if(st.vshape===v) b.className='on'; b.onclick=()=>{ st.vshape=v; savePrefs(); showV(); }; vb.appendChild(b); });
-  $('#vdel').style.display=$('#vcrop').style.display=canEdit?'':'none';
+  $('#vdel').style.display=$('#vcrop').style.display=mine(it)?'':'none';
 }
 function layoutFrame(){
   const it=curItem(); if(!it||!$('#viewer').classList.contains('open')) return;
@@ -1080,8 +1081,25 @@ $('#file').onchange=async e=>{
 async function renderAcct(){
   const el=$('#acct'); if(!el) return; const sb=window.ocSupabase; if(!sb){ el.textContent=''; return; }
   const { data } = await sb.auth.getSession(); const u=data?.session?.user;
-  if(u){ el.innerHTML=`<span class="meta" style="margin:0">${esc(u.email||'')}${canEdit?'':'（只能看）'}</span> <button id="lgOut">登出</button>`; $('#lgOut').onclick=async()=>{ await sb.auth.signOut(); location.reload(); }; }
+  if(u){ const st=isAdm?'管理員':(canEdit?'已核准':(window._ocStatus==='blocked'?'已停用':'等待管理員核准'));
+    el.innerHTML=`<span class="meta" style="margin:0">${esc(u.email||'')}・${st}</span> ${isAdm?'<button id="mbBtn">成員管理</button> ':''}<button id="lgOut">登出</button>`;
+    $('#lgOut').onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
+    if(isAdm) $('#mbBtn').onclick=openMembers; }
   else { el.innerHTML='<button id="lgOpen">登入／註冊</button>'; $('#lgOpen').onclick=()=>{ $('#sheet').classList.remove('open'); $('#lg').classList.add('open'); setTimeout(()=>$('#lgE').focus(),50); }; }
+}
+
+async function openMembers(){
+  const sb=window.ocSupabase; $('#sheet').classList.remove('open');
+  const { data, error } = await sb.from('oc_members').select('user_id,email,status,created_at').order('created_at',{ascending:false});
+  if(error){ toast('讀不到成員名單'); return; }
+  const lab={pending:'等待核准',approved:'已核准',blocked:'已停用'};
+  const rows=(data||[]).map(m=>`<div class="mrow" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--rule)">
+    <div style="min-width:0"><div style="overflow:hidden;text-overflow:ellipsis">${esc(m.email)}</div><div class="meta" style="margin:0">${lab[m.status]||m.status} · ${new Date(m.created_at).toLocaleDateString()}</div></div>
+    <div style="display:flex;gap:6px;flex:none">${m.status!=='approved'?`<button class="primary" data-ok="${m.user_id}">核准</button>`:''}${m.status!=='blocked'?`<button data-no="${m.user_id}">${m.status==='approved'?'停用':'不核准'}</button>`:''}</div></div>`).join('')||'<div class="meta">還沒有人註冊。</div>';
+  ask(`<h3>成員管理</h3><div class="meta">別人用 Email 註冊並點完驗證信後，會出現在這裡。核准後，他可以上傳和編輯自己的作品，看得到所有作品，但改不了別人的。</div><div id="mlist" style="max-height:50vh;overflow:auto;margin-top:8px">${rows}</div>`,'關閉',()=>{});
+  const set=async(id,status)=>{ const { error } = await sb.from('oc_members').update({status,decided_at:new Date().toISOString()}).eq('user_id',id); if(error){ toast('沒改成功'); return; } toast(status==='approved'?'已核准':'已更新'); openMembers(); };
+  document.querySelectorAll('#mlist [data-ok]').forEach(b=>b.onclick=()=>set(b.dataset.ok,'approved'));
+  document.querySelectorAll('#mlist [data-no]').forEach(b=>b.onclick=()=>set(b.dataset.no,'blocked'));
 }
 function lgMsg(t){ $('#lgM').textContent=t; }
 $('#lgX').onclick=()=>$('#lg').classList.remove('open');
@@ -1095,7 +1113,7 @@ $('#lgUp').onclick=async()=>{ const sb=window.ocSupabase; const e=$('#lgE').valu
   const { data, error } = await sb.auth.signUp({ email:e, password:p, options:{ emailRedirectTo: location.origin+location.pathname } });
   if(error){ lgMsg(/registered/i.test(error.message)?'這個 Email 已經註冊過，直接登入就好':'註冊沒成功：'+error.message); return; }
   if(data?.session){ location.reload(); return; }
-  lgMsg('已寄出驗證信，點信裡的連結後回來這裡登入。'); };
+  lgMsg('已寄出驗證信。點信裡的連結完成驗證後回來登入；管理員核准後就能上傳作品。'); };
 $('#lgF').onclick=async()=>{ const sb=window.ocSupabase; const e=$('#lgE').value.trim();
   if(!e){ lgMsg('先填 Email，再按忘記密碼'); return; }
   const { error } = await sb.auth.resetPasswordForEmail(e,{ redirectTo: location.origin+location.pathname+'#reset' });
@@ -1108,6 +1126,7 @@ renderBars(); renderWall();
   await new Promise(r=>window.claude?r():addEventListener('oc-ready',r,{once:true}));
   const user=await claude.use('user');
   canEdit=!!(user && (await user.canEdit()));
+  try{ const r=await window.ocRole(); isAdm=r.admin; myUid=r.user?r.user.id:null; window._ocStatus=r.status; }catch(e){}
   try{ myId = user ? await user.id() : null; }catch(e){ myId=null; }
   db=await claude.use('db');
   assets=await claude.use('assets');

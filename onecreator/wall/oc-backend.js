@@ -19,7 +19,7 @@ function deepMerge(a, b) {
   }
   return out;
 }
-const snapOf = rows => ({ metadata: { fromCache: false }, docs: rows.map(r => ({ id: r.id, data: () => r.data })) });
+const snapOf = rows => ({ metadata: { fromCache: false }, docs: rows.map(r => ({ id: r.id, data: () => ({ ...r.data, _owner: r.owner || null }) })) });
 
 let chanSeq = 0;
 function collection(col, filters = []) {
@@ -28,7 +28,7 @@ function collection(col, filters = []) {
     onSnapshot(cb, err) {
       let alive = true;
       const load = async () => {
-        let q = sb.from('oc_docs').select('id,data').eq('col', col);
+        let q = sb.from('oc_docs').select('id,data,owner').eq('col', col);
         for (const [f, , v] of filters) q = q.eq('data->>' + f, String(v));
         const { data, error } = await q;
         if (!alive) return;
@@ -49,11 +49,13 @@ function collection(col, filters = []) {
       return {
         id,
         async set(data) {
+          data = { ...data }; delete data._owner;
           const { data: u } = await sb.auth.getUser();
           const { error } = await sb.from('oc_docs').upsert({ col, id, data, owner: u?.user?.id || null, updated_at: new Date().toISOString() });
           if (error) throw error;
         },
         async update(patch) {
+          patch = { ...patch }; delete patch._owner;
           const { data: cur, error: e1 } = await sb.from('oc_docs').select('data').eq('col', col).eq('id', id).maybeSingle();
           if (e1) throw e1;
           const { error } = await sb.from('oc_docs').update({ data: deepMerge(cur?.data, patch), updated_at: new Date().toISOString() }).eq('col', col).eq('id', id);
@@ -87,15 +89,23 @@ const assets = {
   }
 };
 
-async function isAdmin() {
+async function rpcBool(fn) {
   const { data } = await sb.auth.getSession();
   if (!data?.session) return false;
-  const { data: ok } = await sb.rpc('oc_is_admin');
+  const { data: ok } = await sb.rpc(fn);
   return !!ok;
 }
+const isAdmin = () => rpcBool('oc_is_admin');
+window.ocRole = async () => {
+  const { data } = await sb.auth.getSession(); const u = data?.session?.user;
+  if (!u) return { user: null, admin: false, write: false, status: null };
+  const [admin, write] = await Promise.all([rpcBool('oc_is_admin'), rpcBool('oc_can_write')]);
+  const { data: m } = await sb.from('oc_members').select('status').eq('user_id', u.id).maybeSingle();
+  return { user: u, admin, write, status: m?.status || null };
+};
 
 const user = {
-  async canEdit() { return isAdmin(); },
+  async canEdit() { return rpcBool('oc_can_write'); },
   async id() { const { data } = await sb.auth.getSession(); return data?.session?.user?.id || guestId(); }
 };
 
