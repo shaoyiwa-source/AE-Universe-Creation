@@ -2,6 +2,18 @@
   "outputDirectory": "src",
   "rewrites": [
     {
+      "source": "/api/lumina",
+      "destination": "/api/artwall?__ae=lumina"
+    },
+    {
+      "source": "/gallery",
+      "destination": "/gallery.html"
+    },
+    {
+      "source": "/showcase",
+      "destination": "/gallery.html?showcase=eternal"
+    },
+    {
       "source": "/shop",
       "destination": "/shop.html"
     },
@@ -108,6 +120,10 @@
     {
       "source": "/ex/:slug",
       "destination": "/api/ex?slug=:slug"
+    },
+    {
+      "source": "/wallpaper",
+      "destination": "/wallpaper/index.html"
     }
   ],
   "redirects": [
@@ -129,6 +145,11 @@
     {
       "source": "/game",
       "destination": "/game/",
+      "permanent": false
+    },
+    {
+      "source": "/13th-light",
+      "destination": "/13th-light/",
       "permanent": false
     }
   ]

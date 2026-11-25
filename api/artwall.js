@@ -102,6 +102,12 @@ module.exports = async (req, res) => {
   try {
     const url = new URL(req.url, 'http://x');
     const q = Object.fromEntries(url.searchParams);
+    // AE Shinity shares this function so the project stays within the 12-function limit.
+    // Only the rewritten /api/lumina route sets __ae=lumina. Artwall requests never do.
+    if (q.__ae === 'lumina') {
+      req.query = Object.assign({}, req.query, q);
+      return require('./_lumina')(req, res);
+    }
     const method = req.method || 'GET';
     if (method === 'GET' && q.img) {
       const items = await readIndex();
