@@ -7,6 +7,9 @@
 <meta name="theme-color" content="#1f2124">
 <meta name="description" content="萌創 AE OneCreator 的作品牆：13th Aurelia 的畫作與線上展覽。">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://dmpakormfqazmjferaqs.supabase.co" crossorigin>
+<link rel="preconnect" href="https://esm.sh" crossorigin>
+<link rel="modulepreload" href="https://esm.sh/@supabase/supabase-js@2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@700&display=swap" rel="stylesheet">
 <style>
@@ -298,6 +301,8 @@
   #lg .tabs{display:flex;gap:2px;background:rgba(255,255,255,.06);padding:3px;border-radius:10px;margin:0 0 14px}
   #lg .tabs button{flex:1;border:none;padding:8px;font-size:14px}
   #lg .tabs button.on{background:var(--birch);color:var(--stone)}
+  body:not(.can-edit) .edonly{display:none!important}
+  #wabout .edtip{margin-top:10px;font-size:13px;color:var(--mute)}
 </style>
 </head>
 <body>
@@ -322,7 +327,7 @@
     <circle cx="39.95" cy="32.2" r=".55" fill="#fff" opacity=".9"/></svg><h1><span id="wTitle" data-ph="作品牆標題">萌創 作品牆</span><small id="wSub" data-ph="副標">THE WALL · 藝萌盛創</small></h1></div>
   <div class="r"><span id="wcount"></span><button id="waboutBtn" aria-expanded="false">關於這面牆</button><button id="wEdit" class="ico" style="display:none"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>編輯文字</button></div>
 </header>
-<div id="wabout"><div id="wAboutTxt" data-ph="寫一段介紹這面牆的文字">這裡收著萌創所有的畫作，像一面電視牆一樣排開。<b>點任何一張</b>可以看大圖、左右翻頁，下方可以替每幅畫寫上名字和說明。右下角的<b>選單按鈕</b>可以換格數（3×3 到 6×6）、換形狀、依色調分類，也能<b>挑幾張做成一場線上展覽</b>。同一張畫的不同版本會自動收在一起，重複的照片會被找出來。</div></div>
+<div id="wabout"><div id="wAboutTxt" data-ph="寫一段介紹這面牆的文字">這裡收著 13th Aurelia 的手繪作品。每一幅都是一筆成形、不打草稿：螢光、金銀、亮粉和厚厚的顏料，畫下去的那一刻就是作品。點任何一張可以看大圖，左右滑動慢慢欣賞。</div><div class="edtip edonly">管理小提示（只有你看得到）：右下角選單可以換格數和形狀、依色調分類、匯入新畫作、挑幾張做成線上展覽；點進單張可以替畫寫名字和說明。</div></div>
 <div id="wall"></div>
 <div id="empty">
   <div class="h">把畫作<br>掛上牆。</div>
@@ -334,10 +339,10 @@
 <div id="sheet">
   <div class="sheet-h"><b>萌創 作品牆</b><span class="meta" style="margin:0;letter-spacing:.2em">藝萌盛創</span></div>
   <div class="row"><span class="lbl">格數</span><span id="nBtns"></span></div>
-  <div class="row"><span class="lbl">形狀</span><span id="shapeBtns"></span></div>
+  <div class="row edonly"><span class="lbl">形狀</span><span id="shapeBtns"></span></div>
   <div class="row"><span class="lbl">分類</span><span id="catBtns"></span></div>
-  <div class="row"><span class="lbl">方向</span><span id="oriBtns"></span></div>
-  <div class="row"><span class="lbl">版本</span><span id="verBtns"></span></div>
+  <div class="row edonly"><span class="lbl">方向</span><span id="oriBtns"></span></div>
+  <div class="row edonly"><span class="lbl">版本</span><span id="verBtns"></span></div>
   <div class="row"><span class="lbl">展覽</span><span id="showBtns"></span></div>
   <div class="row actions">
     <button class="primary" id="upBtn">匯入畫作</button>
@@ -1037,7 +1042,7 @@ function showV(){
   vt.dataset.id=vd.dataset.id=it.id; $('#vcap').style.display=(mine(it)||it.title||it.desc)?'':'none';
   const vers=$('#vers'); vers.innerHTML='';
   if(g.length>1) g.forEach((x,k)=>{ const t=new Image(); t.src=blob(x.thumb); if(x.id===it.id) t.className='cur'; t.onclick=()=>{ vGroup={items:g,i:k}; showV(); }; vers.appendChild(t); });
-  const vb=$('#vshapes'); vb.innerHTML='';
+  const vb=$('#vshapes'); vb.innerHTML=''; vb.style.display=canEdit?'':'none'; if(!canEdit) st.vshape='orig';
   VSHAPES.forEach(([v,t])=>{ const b=document.createElement('button'); b.textContent=t; if(st.vshape===v) b.className='on'; b.onclick=()=>{ st.vshape=v; savePrefs(); showV(); }; vb.appendChild(b); });
   $('#vdel').style.display=$('#vcrop').style.display=mine(it)?'':'none';
 }
@@ -1414,7 +1419,11 @@ $('#lgF').onclick=async()=>{ const sb=window.ocSupabase; const e=$('#lgE').value
 
 
 /* ---------- boot ---------- */
-renderBars(); renderWall();
+function useArt(rows){ items=rows.filter(x=>x.hash&&x.full); byId=new Map(items.map(i=>[i.id,i])); regroup(); renderBars(); if(!selecting) renderWall(); }
+try{ const c=JSON.parse(localStorage.getItem('oc_art_cache')||'null'); if(c&&c.length) useArt(c); }catch(e){}
+renderBars(); if(!items.length) renderWall();
+fetch('https://dmpakormfqazmjferaqs.supabase.co/rest/v1/oc_docs?select=id,data,owner&col=eq.art',{headers:{apikey:'sb_publishable_2oTHk8viJNv8grnLMcbVKg_E8c4ASIG'}})
+  .then(r=>r.ok?r.json():null).then(rows=>{ if(!rows||db) return; const a=rows.map(r=>({id:r.id,...r.data,_owner:r.owner||null})); useArt(a); try{ localStorage.setItem('oc_art_cache',JSON.stringify(a)); }catch(e){} }).catch(()=>{});
 (async()=>{
   await new Promise(r=>window.claude?r():addEventListener('oc-ready',r,{once:true}));
   const user=await claude.use('user');
@@ -1424,6 +1433,7 @@ renderBars(); renderWall();
   db=await claude.use('db');
   assets=await claude.use('assets');
   if(!assets) canEdit=false;
+  document.body.classList.toggle('can-edit',!!canEdit);
   renderBars(); renderAcct();
   window.ocSupabase && window.ocSupabase.auth.onAuthStateChange(ev=>{ if(ev==='PASSWORD_RECOVERY') lgResetMode(); });
   if(/type=recovery/.test(location.hash)) lgResetMode();
@@ -1431,9 +1441,7 @@ renderBars(); renderWall();
   const timer=setTimeout(()=>toast('作品還在載入，網路可能比較慢'),10000);
   db.collection('art').onSnapshot(snap=>{
     if(!snap.metadata.fromCache) clearTimeout(timer);
-    items=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.hash&&x.full);
-    byId=new Map(items.map(i=>[i.id,i]));
-    regroup(); renderBars(); if(!selecting) renderWall();
+    const all=snap.docs.map(d=>({id:d.id,...d.data()})); useArt(all); try{ localStorage.setItem('oc_art_cache',JSON.stringify(all)); }catch(e){}
     if($('#viewer').classList.contains('open')){ list=computeList(); if(vIdx>=list.length) vIdx=list.length-1; showV(); }
     if(curShow) renderShow();
   },err=>{ clearTimeout(timer); toast('作品沒有載入成功，請重新整理頁面'); });
