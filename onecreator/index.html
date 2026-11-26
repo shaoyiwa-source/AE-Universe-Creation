@@ -1,5 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.more-art{display:flex;justify-content:center;margin-top:clamp(24px,4vw,40px)}
 @media(max-width:860px){.essay figure{max-width:240px}}
+.ch-head.plain h2{font-size:clamp(28px,3.4vw,40px)}
+[id]{scroll-margin-top:84px}
 </style></head><body>
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -297,9 +299,9 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
   <ul class="nav">
     <li><a href="#art"><i style="color:var(--sun)">藝</i>作品</a></li>
     <li><a href="#about"><i style="color:var(--leaf)">萌</i>關於</a></li>
-    <li><a href="#essay"><i>思</i>隨筆</a></li>
     <li><a href="#wall"><i style="color:var(--gold)">盛</i>作品牆</a></li>
-    <li><a href="work/"><i style="color:var(--water)">創</i>合作</a></li>
+    <li><a href="#create"><i style="color:var(--water)">創</i>合作</a></li>
+    <li><a href="#essay">隨筆</a></li>
     <li class="keep"><a class="cta" href="wall/">進入作品牆</a></li>
   </ul>
 </div>
@@ -371,9 +373,33 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
   </div>
 </section>
 
+
+<section class="ch c-gold" id="wall">
+  <div class="wrap">
+    <div class="ch-head rv"><div class="glyph" aria-hidden="true">盛</div><div><h2>作品牆</h2><p>所有畫作都整理在這裡，像電視牆一樣一次看很多張。</p></div></div>
+    <div class="doors one rv">
+      <a class="door grid4" href="wall/">
+        <img src="img/w01-s.jpg" alt=""><img src="img/w05-s.jpg" alt=""><img src="img/w10-s.jpg" alt=""><img src="img/w03-s.jpg" alt=""><img src="img/w12-s.jpg" alt=""><img src="img/w07-s.jpg" alt=""><img src="img/w14-s.jpg" alt=""><img src="img/w09-s.jpg" alt=""><img src="img/w15-s.jpg" alt=""><img src="img/w02-s.jpg" alt=""><img src="img/w13-s.jpg" alt=""><img src="img/w06-s.jpg" alt="">
+        <div class="in"><h3>進入作品牆</h3><p>3×3 到 6×6 自由排開，點任何一張可以放大，慢慢看。</p><span class="go">進入作品牆</span></div>
+      </a>
+    </div>
+    <div class="play rv">
+      <a class="mini" href="https://ae-kaleidoscope.vercel.app" target="_blank" rel="noopener"><img src="img/w09-s.jpg" alt=""><div><h4>夢幻萬花筒</h4><p>對它說話、搖一搖手機，畫會跟著你轉起來。</p></div></a>
+      <a class="mini" href="globe/" target="_blank" rel="noopener"><img src="img/w12-s.jpg" alt=""><div><h4>夢境水晶球</h4><p>用手指在畫上點亮光，每一筆都是一個音。戴上耳機更好聽。</p></div></a>
+    </div>
+  </div>
+</section>
+
+<section class="ch c-water" id="create">
+  <div class="wrap">
+    <div class="ch-head rv"><div class="glyph" aria-hidden="true">創</div><div><h2>一起創作</h2><p>萌創也接一些小而用心的案子：數位藝術、網站，和 AI 自動化。</p></div></div>
+    <div class="rv"><a class="btn" href="work/">看合作方式</a></div>
+  </div>
+</section>
+
 <section class="ch c-ink" id="essay">
   <div class="wrap">
-    <div class="ch-head rv"><div class="glyph" aria-hidden="true">思</div><div><h2>隨筆</h2><p>創作之外的一些想法，想到就寫下來。</p></div></div>
+    <div class="ch-head plain rv"><div><h2>隨筆</h2><p>創作之外的一些想法，想到就寫下來。</p></div></div>
     <div class="essay">
       <figure class="rv">
         <button class="zoom" data-src="img/infinite-tree.jpg" aria-label="放大畫作 Infinite Tree"><img src="img/infinite-tree-s.jpg" alt="畫作 Infinite Tree" loading="lazy"></button>
@@ -410,22 +436,6 @@ footer svg{width:40px;height:40px;margin:0 auto 10px}
         <p class="end">有些事，靠的不是勞心勞力，而是對環境的信任：你是否願意完全地交託給宇宙，讓它帶著我們，走前面的路。</p>
         </details>
       </article>
-    </div>
-  </div>
-</section>
-
-<section class="ch c-gold" id="wall">
-  <div class="wrap">
-    <div class="ch-head rv"><div class="glyph" aria-hidden="true">盛</div><div><h2>作品牆</h2><p>所有畫作都整理在這裡，像電視牆一樣一次看很多張。</p></div></div>
-    <div class="doors one rv">
-      <a class="door grid4" href="wall/">
-        <img src="img/w01-s.jpg" alt=""><img src="img/w05-s.jpg" alt=""><img src="img/w10-s.jpg" alt=""><img src="img/w03-s.jpg" alt=""><img src="img/w12-s.jpg" alt=""><img src="img/w07-s.jpg" alt=""><img src="img/w14-s.jpg" alt=""><img src="img/w09-s.jpg" alt=""><img src="img/w15-s.jpg" alt=""><img src="img/w02-s.jpg" alt=""><img src="img/w13-s.jpg" alt=""><img src="img/w06-s.jpg" alt="">
-        <div class="in"><h3>進入作品牆</h3><p>3×3 到 6×6 自由排開，點任何一張可以放大，慢慢看。</p><span class="go">進入作品牆</span></div>
-      </a>
-    </div>
-    <div class="play rv">
-      <a class="mini" href="https://ae-kaleidoscope.vercel.app" target="_blank" rel="noopener"><img src="img/w09-s.jpg" alt=""><div><h4>夢幻萬花筒</h4><p>對它說話、搖一搖手機，畫會跟著你轉起來。</p></div></a>
-      <a class="mini" href="globe/" target="_blank" rel="noopener"><img src="img/w12-s.jpg" alt=""><div><h4>夢境水晶球</h4><p>用手指在畫上點亮光，每一筆都是一個音。戴上耳機更好聽。</p></div></a>
     </div>
   </div>
 </section>
@@ -586,6 +596,14 @@ if(rm){tie(true)}else{t=setTimeout(()=>set(true),500);setTimeout(()=>{if(!touche
 const toggle=()=>{touched=true;open?closeIt():openIt()};sc.onclick=toggle;btn.onclick=toggle;
 addEventListener('resize',()=>{box.style.transition='none';size();box.offsetHeight;box.style.transition=''});
 })();
+</script>
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
+  const id=a.getAttribute('href').slice(1), el=document.getElementById(id); if(!el) return;
+  e.preventDefault(); if(id==='essay'){ const d=el.querySelector('details.more'); if(d) d.open=true; }
+  el.querySelectorAll('.rv').forEach(x=>x.classList.add('in'));
+  const go=()=>el.scrollIntoView({behavior:'smooth',block:'start'}); go(); setTimeout(()=>{ if(Math.abs(el.getBoundingClientRect().top-84)>40) go(); },700); history.replaceState(null,'','#'+id);
+}));
 </script>
 </body>
 </html>
