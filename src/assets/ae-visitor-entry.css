@@ -25,8 +25,8 @@ html.ae-cover-on,html.ae-cover-on body{overflow:hidden!important;overscroll-beha
 /* gold glints (anchors positioned by JS inside the painting)
    v2476.99 (Owner 11/27 21:11 「快要從那個畫面跳出來了」, 21:12 「改成會移動的…不要太明顯，稍微有一點」; 外在沉靜，內在綻放 as a
    reference, not timid): the four parked, pulsing dots with rings are gone. Each anchor now carries a small soft glint (12–14 px white-gold core, ~14 px glow, thin 4-point sparkle)
-   that drifts slowly across the painting (~±50 px curved path, 17–23 s), fades in, travels, fades out; at most two are
-   clearly visible at once. No outline, no expanding ring, no flash. (First tries — a 14 px pale dot at .6, then a 20 px gold blob — vanished into the saturated painting; the white core is what reads.) Taps still go straight to the painting
+   that drifts slowly across the painting (~80 px curved path in ~9–12 s), fades in, travels, fades out, rests unseen,
+   then reappears; phases are spread so usually one or two are showing. No outline, no expanding ring, no flash. (First tries — a 14 px pale dot at .6, then a 20 px gold blob — vanished into the saturated painting; the white core is what reads.) Taps still go straight to the painting
    (pointer-events none); a tap near a glint only brightens it a little. */
 #aeCues{position:absolute;inset:0;z-index:18;pointer-events:none;transition:opacity .8s ease}
 #aeCues .ae-cue{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;opacity:0;
@@ -34,18 +34,23 @@ html.ae-cover-on,html.ae-cover-on body{overflow:hidden!important;overscroll-beha
   box-shadow:0 0 4px 2px rgba(255,250,232,.95),0 0 12px 5px rgba(255,170,40,.62);
   transition:filter .35s ease;
   animation:ae-glint-a 17s ease-in-out infinite}
-#aeCues .ae-cue:nth-child(1){width:14px;height:14px;margin:-7px 0 0 -7px;animation:ae-glint-a 17s ease-in-out -2s infinite}
-#aeCues .ae-cue:nth-child(2){animation:ae-glint-b 21s ease-in-out -9s infinite}
-#aeCues .ae-cue:nth-child(3){animation:ae-glint-c 19s ease-in-out -14s infinite}
-#aeCues .ae-cue:nth-child(4){animation:ae-glint-d 23s ease-in-out -5s infinite}
+#aeCues .ae-cue:nth-child(1){width:14px;height:14px;margin:-7px 0 0 -7px;animation:ae-glint-a 17s ease-in-out infinite}
+#aeCues .ae-cue:nth-child(2){animation:ae-glint-b 21s ease-in-out infinite}
+#aeCues .ae-cue:nth-child(3){animation:ae-glint-c 19s ease-in-out infinite}
+#aeCues .ae-cue:nth-child(4){animation:ae-glint-d 23s ease-in-out infinite}
+/* phases spread a quarter cycle apart; !important beats the inline animation-delay the JS writes */
+#aeCues .ae-cue:nth-child(1){animation-delay:0s!important}
+#aeCues .ae-cue:nth-child(2){animation-delay:-5.3s!important}
+#aeCues .ae-cue:nth-child(3){animation-delay:-9.5s!important}
+#aeCues .ae-cue:nth-child(4){animation-delay:-17.3s!important}
 /* thin 4-point sparkle so the glint reads on the bright painting without being big */
 #aeCues .ae-cue::after{content:"";position:absolute;inset:-9px;border-radius:0;
   background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,244,200,1) 50%,rgba(255,255,255,0)) center/100% 2px no-repeat,
              linear-gradient(0deg,rgba(255,255,255,0),rgba(255,244,200,1) 50%,rgba(255,255,255,0)) center/2px 100% no-repeat}
-@keyframes ae-glint-a{0%{transform:translate(-46px,24px) scale(.7);opacity:0}18%{opacity:1}40%{transform:translate(-8px,-26px) scale(1)}62%{transform:translate(30px,-10px) scale(1);opacity:1}82%{opacity:.55}100%{transform:translate(50px,26px) scale(.7);opacity:0}}
-@keyframes ae-glint-b{0%{transform:translate(40px,-30px) scale(.7);opacity:0}20%{opacity:1}45%{transform:translate(6px,12px) scale(1)}70%{transform:translate(-30px,30px) scale(1);opacity:.95}100%{transform:translate(-52px,-6px) scale(.7);opacity:0}}
-@keyframes ae-glint-c{0%{transform:translate(-20px,-40px) scale(.7);opacity:0}22%{opacity:1}50%{transform:translate(24px,-6px) scale(1)}75%{transform:translate(10px,30px) scale(1);opacity:.9}100%{transform:translate(-30px,44px) scale(.7);opacity:0}}
-@keyframes ae-glint-d{0%{transform:translate(36px,36px) scale(.7);opacity:0}20%{opacity:.95}48%{transform:translate(-14px,10px) scale(1)}72%{transform:translate(-36px,-22px) scale(1);opacity:.9}100%{transform:translate(-10px,-48px) scale(.7);opacity:0}}
+@keyframes ae-glint-a{0%{transform:translate(-46px,24px) scale(.7);opacity:0}10%{opacity:1}25%{transform:translate(-8px,-20px) scale(1)}40%{opacity:1}52%{transform:translate(34px,-8px) scale(.85);opacity:0}100%{transform:translate(-46px,24px) scale(.7);opacity:0}}
+@keyframes ae-glint-b{0%{transform:translate(40px,-30px) scale(.7);opacity:0}10%{opacity:1}26%{transform:translate(6px,10px) scale(1)}40%{opacity:.95}52%{transform:translate(-36px,26px) scale(.85);opacity:0}100%{transform:translate(40px,-30px) scale(.7);opacity:0}}
+@keyframes ae-glint-c{0%{transform:translate(-20px,-40px) scale(.7);opacity:0}10%{opacity:1}26%{transform:translate(22px,-8px) scale(1)}40%{opacity:.95}52%{transform:translate(4px,36px) scale(.85);opacity:0}100%{transform:translate(-20px,-40px) scale(.7);opacity:0}}
+@keyframes ae-glint-d{0%{transform:translate(36px,36px) scale(.7);opacity:0}10%{opacity:.95}26%{transform:translate(-12px,8px) scale(1)}40%{opacity:.9}52%{transform:translate(-30px,-34px) scale(.85);opacity:0}100%{transform:translate(36px,36px) scale(.7);opacity:0}}
 #aeCues.ae-cues-soft{opacity:.95}
 #aeCues .ae-cue.hit{filter:brightness(1.4) drop-shadow(0 0 3px rgba(255,230,160,.9))}
 @media(prefers-reduced-motion:reduce){#aeCues .ae-cue{animation:none!important;opacity:.55}}
