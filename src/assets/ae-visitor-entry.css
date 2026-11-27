@@ -22,21 +22,24 @@
 @keyframes aeCoverIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 html.ae-cover-on,html.ae-cover-on body{overflow:hidden!important;overscroll-behavior:none}
 
-/* gold dots (positioned by JS inside the host) */
+/* gold dots (positioned by JS inside the host)
+   v2476.98 (Owner 11/27 21:11 「快要從那個畫面跳出來了」; brand 外在沉靜，內在綻放): a faint glint that breathes from
+   within the painting — small core, short soft glow, no outline ring, no expanding ring, no flash on tap.
+   Taps still go straight to the painting underneath (pointer-events none), so the whole area stays tappable. */
 #aeCues{position:absolute;inset:0;z-index:18;pointer-events:none}
-#aeCues .ae-cue{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;
-  background:radial-gradient(circle at 50% 50%,#fff6c8 0 22%,rgba(255,220,120,.95) 36%,rgba(232,200,121,.45) 58%,rgba(232,200,121,0) 74%);
-  box-shadow:0 0 20px 7px rgba(232,200,121,.8),0 0 0 2px rgba(255,244,200,.85);
-  animation:ae-cue-pulse 2.2s ease-in-out infinite}
-#aeCues .ae-cue:nth-child(1){width:36px;height:36px;margin:-18px 0 0 -18px}
-#aeCues .ae-cue::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:1.5px solid rgba(255,236,180,.7);animation:ae-cue-ring 2.2s ease-out infinite}
-@keyframes ae-cue-pulse{0%,100%{transform:scale(.86);opacity:.72}50%{transform:scale(1.12);opacity:1}}
-@keyframes ae-cue-ring{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
-#aeCues.ae-cues-soft .ae-cue{opacity:.55;animation-duration:3.2s}
-#aeCues .ae-cue.hit{animation:ae-cue-hit .7s ease-out!important;opacity:1!important}
-#aeCues .ae-cue.hit::after{animation:ae-cue-hitring .7s ease-out!important}
-@keyframes ae-cue-hit{0%{transform:scale(1);filter:brightness(1)}25%{transform:scale(2.1);filter:brightness(1.8)}100%{transform:scale(1);filter:brightness(1)}}
-@keyframes ae-cue-hitring{0%{transform:scale(.8);opacity:1;border-width:3px}100%{transform:scale(3.4);opacity:0;border-width:1px}}
+#aeCues .ae-cue{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,rgba(255,248,222,.95) 0 20%,rgba(255,224,150,.5) 46%,rgba(255,224,150,0) 72%);
+  box-shadow:0 0 6px 1px rgba(232,200,121,.28);
+  animation:ae-cue-glint 5s ease-in-out infinite}
+#aeCues .ae-cue:nth-child(1){width:12px;height:12px;margin:-6px 0 0 -6px}
+#aeCues .ae-cue::after{content:none;display:none}
+@keyframes ae-cue-glint{0%,100%{transform:scale(.94);opacity:.24}50%{transform:scale(1.04);opacity:.46}}
+@keyframes ae-cue-glint-soft{0%,100%{transform:scale(.94);opacity:.12}50%{transform:scale(1);opacity:.26}}
+#aeCues.ae-cues-soft .ae-cue{animation:ae-cue-glint-soft 6.5s ease-in-out infinite}
+#aeCues .ae-cue.hit{animation:ae-cue-touch .7s ease-in-out!important}
+#aeCues .ae-cue.hit::after{content:none;display:none}
+@keyframes ae-cue-touch{0%{transform:scale(1);opacity:.3}40%{transform:scale(1.12);opacity:.6}100%{transform:scale(1);opacity:.2}}
+@media(prefers-reduced-motion:reduce){#aeCues .ae-cue,#aeCues .ae-cue.hit{animation:none!important;opacity:.32}}
 
 /* one faint hint line */
 #aeTapHint{position:absolute;z-index:19;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;

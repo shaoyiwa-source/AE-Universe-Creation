@@ -441,32 +441,7 @@ html:not(.ae-intro-seen) #aeHelp{opacity:.45}
 }
 
 #aeCues{position:absolute;inset:0;z-index:18;pointer-events:none}
-.ae-cue{
-  position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;
-  border-radius:50%;
-  background:radial-gradient(circle at 50% 50%,#fff6c8 0 22%,rgba(255,220,120,.95) 36%,rgba(232,200,121,.45) 58%,rgba(232,200,121,0) 74%);
-  box-shadow:0 0 20px 7px rgba(232,200,121,.8),0 0 0 2px rgba(255,244,200,.85);
-  animation:ae-cue-pulse 2.2s ease-in-out infinite;
-}
-.ae-cue:nth-child(1){width:36px;height:36px;margin:-18px 0 0 -18px}
-.ae-cue::after{
-  content:"";position:absolute;inset:-12px;border-radius:50%;
-  border:1.5px solid rgba(255,236,180,.7);
-  animation:ae-cue-ring 2.2s ease-out infinite;
-}
-@keyframes ae-cue-pulse{
-  0%,100%{transform:scale(.86);opacity:.72}
-  50%{transform:scale(1.12);opacity:1}
-}
-@keyframes ae-cue-ring{
-  0%{transform:scale(.6);opacity:.7}
-  100%{transform:scale(1.6);opacity:0}
-}
-#aeCues.ae-cues-soft .ae-cue{opacity:.55;animation-duration:3.2s}
-@media(prefers-reduced-motion:reduce){
-  .ae-cue,.ae-cue::after{animation:none}
-  .ae-cue{opacity:.9}
-}
+/* v2476.98: the gold-dot look now lives only in /assets/ae-visitor-entry.css (small faint glint, no rings) */
 body.glow-on #aeModes,body.glow-on #aeHelp{opacity:.25}
 
 body.ui #aeModes,html:not(.ae-intro-seen) #aeModes,html:not(.ae-intro-seen) #aeCues{opacity:0;pointer-events:none}
