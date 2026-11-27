@@ -30,8 +30,8 @@ html.ae-cover-on,html.ae-cover-on body{overflow:hidden!important;overscroll-beha
    (pointer-events none); a tap near a glint only brightens it a little. */
 #aeCues{position:absolute;inset:0;z-index:18;pointer-events:none;transition:opacity .8s ease}
 #aeCues .ae-cue{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;opacity:0;
-  background:radial-gradient(circle at 50% 50%,#fff 0 30%,rgba(255,236,180,.95) 50%,rgba(255,200,90,0) 100%);
-  box-shadow:0 0 5px 2px rgba(255,244,214,.85),0 0 14px 5px rgba(255,186,64,.5);
+  background:radial-gradient(circle at 50% 50%,#fff 0 38%,rgba(255,232,170,.95) 60%,rgba(255,200,90,.4) 100%);
+  box-shadow:0 0 4px 2px rgba(255,250,232,.95),0 0 12px 5px rgba(255,170,40,.62);
   transition:filter .35s ease;
   animation:ae-glint-a 17s ease-in-out infinite}
 #aeCues .ae-cue:nth-child(1){width:14px;height:14px;margin:-7px 0 0 -7px;animation:ae-glint-a 17s ease-in-out -2s infinite}
@@ -40,15 +40,15 @@ html.ae-cover-on,html.ae-cover-on body{overflow:hidden!important;overscroll-beha
 #aeCues .ae-cue:nth-child(4){animation:ae-glint-d 23s ease-in-out -5s infinite}
 /* thin 4-point sparkle so the glint reads on the bright painting without being big */
 #aeCues .ae-cue::after{content:"";position:absolute;inset:-9px;border-radius:0;
-  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,236,170,.95) 50%,rgba(255,255,255,0)) center/100% 2px no-repeat,
-             linear-gradient(0deg,rgba(255,255,255,0),rgba(255,236,170,.95) 50%,rgba(255,255,255,0)) center/2px 100% no-repeat}
-@keyframes ae-glint-a{0%{transform:translate(-46px,24px) scale(.7);opacity:0}18%{opacity:.9}40%{transform:translate(-8px,-26px) scale(1)}62%{transform:translate(30px,-10px) scale(1);opacity:.85}82%{opacity:.4}100%{transform:translate(50px,26px) scale(.7);opacity:0}}
-@keyframes ae-glint-b{0%{transform:translate(40px,-30px) scale(.7);opacity:0}20%{opacity:.85}45%{transform:translate(6px,12px) scale(1)}70%{transform:translate(-30px,30px) scale(1);opacity:.8}100%{transform:translate(-52px,-6px) scale(.7);opacity:0}}
-@keyframes ae-glint-c{0%{transform:translate(-20px,-40px) scale(.7);opacity:0}22%{opacity:.85}50%{transform:translate(24px,-6px) scale(1)}75%{transform:translate(10px,30px) scale(1);opacity:.75}100%{transform:translate(-30px,44px) scale(.7);opacity:0}}
-@keyframes ae-glint-d{0%{transform:translate(36px,36px) scale(.7);opacity:0}20%{opacity:.8}48%{transform:translate(-14px,10px) scale(1)}72%{transform:translate(-36px,-22px) scale(1);opacity:.75}100%{transform:translate(-10px,-48px) scale(.7);opacity:0}}
-#aeCues.ae-cues-soft{opacity:.8}
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,244,200,1) 50%,rgba(255,255,255,0)) center/100% 2px no-repeat,
+             linear-gradient(0deg,rgba(255,255,255,0),rgba(255,244,200,1) 50%,rgba(255,255,255,0)) center/2px 100% no-repeat}
+@keyframes ae-glint-a{0%{transform:translate(-46px,24px) scale(.7);opacity:0}18%{opacity:1}40%{transform:translate(-8px,-26px) scale(1)}62%{transform:translate(30px,-10px) scale(1);opacity:1}82%{opacity:.55}100%{transform:translate(50px,26px) scale(.7);opacity:0}}
+@keyframes ae-glint-b{0%{transform:translate(40px,-30px) scale(.7);opacity:0}20%{opacity:1}45%{transform:translate(6px,12px) scale(1)}70%{transform:translate(-30px,30px) scale(1);opacity:.95}100%{transform:translate(-52px,-6px) scale(.7);opacity:0}}
+@keyframes ae-glint-c{0%{transform:translate(-20px,-40px) scale(.7);opacity:0}22%{opacity:1}50%{transform:translate(24px,-6px) scale(1)}75%{transform:translate(10px,30px) scale(1);opacity:.9}100%{transform:translate(-30px,44px) scale(.7);opacity:0}}
+@keyframes ae-glint-d{0%{transform:translate(36px,36px) scale(.7);opacity:0}20%{opacity:.95}48%{transform:translate(-14px,10px) scale(1)}72%{transform:translate(-36px,-22px) scale(1);opacity:.9}100%{transform:translate(-10px,-48px) scale(.7);opacity:0}}
+#aeCues.ae-cues-soft{opacity:.95}
 #aeCues .ae-cue.hit{filter:brightness(1.4) drop-shadow(0 0 3px rgba(255,230,160,.9))}
-@media(prefers-reduced-motion:reduce){#aeCues .ae-cue{animation:none!important;opacity:.4}}
+@media(prefers-reduced-motion:reduce){#aeCues .ae-cue{animation:none!important;opacity:.55}}
 
 /* one faint hint line */
 #aeTapHint{position:absolute;z-index:19;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;
@@ -58,7 +58,7 @@ html.ae-cover-on,html.ae-cover-on body{overflow:hidden!important;overscroll-beha
   color:rgba(255,246,222,.88);text-shadow:0 1px 4px rgba(0,0,0,.7);opacity:0;transition:opacity .5s ease}
 #aeTapHint.on{opacity:1;animation:aeHintBreathe 3.2s ease-in-out .6s infinite}
 #aeTapHint.gone{opacity:0!important;animation:none;transition-duration:.25s}
-@keyframes aeHintBreathe{0%,100%{opacity:.8}50%{opacity:.9}}
+@keyframes aeHintBreathe{0%,100%{opacity:.95}50%{opacity:1}}
 html.ae-cover-on #aeTapHint,html.ae-cover-on #aeCues{opacity:0}
 
 /* mode row (visual style; each page positions it under its art) */
@@ -91,7 +91,7 @@ html.ae-help-on,html.ae-help-on body{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   #aeCover .aeCover-art,#aeCover .aeCover-title,#aeTapHint.on{animation:none}
   #aeCues .ae-cue.hit{animation:none!important}
-  #aeCues .ae-cue,#aeCues .ae-cue::after{animation:none}#aeCues .ae-cue{opacity:.9}
+  #aeCues .ae-cue,#aeCues .ae-cue::after{animation:none}#aeCues .ae-cue{opacity:1}
 }
 
 /* diagonal embossed watermark (system name) — light pressed into the paint; never takes taps */
