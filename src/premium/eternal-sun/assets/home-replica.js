@@ -63,34 +63,55 @@
     c.globalAlpha=Math.min(1,ah*1.3+.4);c.fillStyle='#ffffff';c.beginPath();c.arc(tx,ty,Math.max(4.2,w*2.6),0,6.2832);c.fill(); // crisp centre (v84: bigger)
     c.restore();}
   window.aeClubBeam=clubBeam;
-  /* v2476.95 (Owner 11/19 14:55 「雷射太疲軟、像幽靈在飄」): 沈浸夜店 gets its own laser show — crisp bright beams that
-     SNAP to new positions on each beat (fast ease-out, then hold), four patterns rotating every 8 beats:
-     0 fan from the top, 1 twin corner scanners, 2 strobe cross, 3 converging tunnel. 經典首頁 lasers are unchanged. */
+  /* v2476.96 (Owner 11/27 20:36 「雷射動得很奇怪，不是連續的」; 11/20 00:07 「一個一個節奏一個一個形狀…假的雷射光」):
+     v2476.95 (11/19) snapped every beam to a new position in the first quarter of each beat and then held it still
+     (79% of frames frozen, jumps up to ~145°/frame on pattern changes / strobe-cross reseed). Nobody asked for the snap.
+     Now: one smoothed beat clock (never jumps back or forward), every pattern is a continuous sweep of that clock,
+     patterns cross-fade over the last beat of each 8-beat block, the beat only drives brightness/width (flicker = light,
+     not position). Same four looks (top fan / twin corner scanners / crossing beams / converging tunnel), same colours.
+     經典首頁 lasers are unchanged. Debug: window.__aeClub (+ window.__aeClubBeams with ?lasertrace=1). */
   const hsh=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);};
-  const clubSeen={c:-1,t:0}; /* falls back to its own tempo clock if the music beat clock stalls (buffering, no beat map) */
-  function clubShow(c,beat,now,lite){
-    const iv=Math.max(.3,Math.min(.8,beat.interval||.42));let cnt,ph;
-    if(beat.count!==clubSeen.c){clubSeen.c=beat.count;clubSeen.t=now;}
-    if(playing&&beat.count>0&&now-clubSeen.t<iv*2500){cnt=beat.count;ph=Math.min(1,Math.max(0,beat.phase||0));}else{const t=now/1000/iv;cnt=Math.floor(t);ph=t-cnt;}
-    const kick=Math.max(playing?(beat.pulse||0):0,Math.exp(-ph*6)),pat=Math.floor(cnt/8)%4;
-    const X0=artX0,W=artW,H=artBottom,cx=X0+W/2,L=Math.hypot(W,H)*1.5,e=1-Math.pow(1-Math.min(1,ph/.26),4);
-    const mix=(a,b)=>a+(b-a)*e,beams=[];
-    if(pat===0){const sp=k=>k%2?.58:.24,ro=k=>Math.sin(k*1.7)*.22,spread=mix(sp(cnt-1),sp(cnt)),rot=mix(ro(cnt-1),ro(cnt));
+  const clubSeen={c:-1,t:0,bp:null,last:0}; /* own tempo clock if the music beat clock stalls (buffering, no beat map) */
+  const clubTrace=/[?&]lasertrace=1/.test(location.search);
+  function clubBeams(pat,bp,X0,W,H,cx){
+    const beams=[],TAU=Math.PI*2;
+    if(pat===0){const spread=.24+.34*(.5-.5*Math.cos(Math.PI*bp/2)),rot=.22*Math.sin(bp*Math.PI/8);
       for(let i=0;i<7;i++)beams.push([cx,-6,Math.PI/2+rot+(i/6-.5)*2*spread]);}
-    else if(pat===1){const s=cnt%2?e:1-e;
+    else if(pat===1){const s=.5-.5*Math.cos(Math.PI*bp/2);
       for(let k=0;k<2;k++)for(let j=0;j<4;j++){const a=-Math.PI/2+.12+s*(Math.PI/2-.34)+j*.075;beams.push([k?X0+W+4:X0-4,H+4,k?Math.PI-a:a]);}}
-    else if(pat===2){for(let i=0;i<6;i++){const left=i%2===0,oy=H*(.12+.76*hsh(cnt*13+i)),a=(hsh(cnt*7+i*3)-.5)*1.3;beams.push([left?X0-4:X0+W+4,oy,left?a:Math.PI-a]);}}
-    else{const ox=k=>(hsh(k*5)-.5)*W*.34,oy=k=>(hsh(k*9)-.5)*H*.2,tx=sunX+mix(ox(cnt-1),ox(cnt)),ty=Math.max(30,sunY)+mix(oy(cnt-1),oy(cnt));
+    else if(pat===2){for(let i=0;i<6;i++){const left=i%2===0,oy=H*(.12+.76*(.5+.5*Math.sin(bp*.5+i*1.31))),a=.65*Math.sin(bp*.7+i*2.09);beams.push([left?X0-4:X0+W+4,oy,left?a:Math.PI-a]);}}
+    else{const tx=sunX+W*.17*Math.sin(bp*.6),ty=Math.max(30,sunY)+H*.1*Math.sin(bp*.9+1);
       for(const [x,y] of [[X0-4,-4],[X0+W+4,-4],[X0-4,H+4],[X0+W+4,H+4],[cx,-6],[X0-4,H*.5],[X0+W+4,H*.5]])beams.push([x,y,Math.atan2(ty-y,tx-x)]);}
-    const power=Math.min(1,.6+kick*.4)*(pat===2?(ph<.14?1:.55):1);
+    return beams;
+  }
+  function clubShow(c,beat,now,lite){
+    const iv=Math.max(.3,Math.min(.8,beat.interval||.42));let target,ph;
+    if(beat.count!==clubSeen.c){clubSeen.c=beat.count;clubSeen.t=now;}
+    const live=playing&&beat.count>0&&now-clubSeen.t<iv*2500;
+    if(live){ph=Math.min(1,Math.max(0,beat.phase||0));target=beat.count+ph;}else{target=now/1000/iv;ph=target-Math.floor(target);}
+    const dt=clubSeen.last?Math.min(.5,Math.max(0,(now-clubSeen.last)/1000)):0;clubSeen.last=now;
+    if(clubSeen.bp===null||Math.abs(target-clubSeen.bp)>16)clubSeen.bp=target; /* first frame / long seek: no motion history to keep */
+    else{clubSeen.bp+=dt/iv;const err=target-clubSeen.bp;clubSeen.bp+=Math.max(-.02,Math.min(.02,err*.08));} /* glide toward the music clock, never jump */
+    const bp=clubSeen.bp;
+    const kick=Math.max(playing?(beat.pulse||0):0,Math.exp(-ph*6));
+    const blk=bp/8,pat=((Math.floor(blk)%4)+4)%4,inBlk=(blk-Math.floor(blk))*8,xf=Math.min(1,Math.max(0,inBlk-7)),w=xf*xf*(3-2*xf),nxt=(pat+1)%4;
+    const X0=artX0,W=artW,H=artBottom,cx=X0+W/2,L=Math.hypot(W,H)*1.5;
+    const sets=[[pat,1-w]];if(w>0)sets.push([nxt,w]);
+    const trace=clubTrace?[]:null;
     c.save();c.globalCompositeOperation='screen';
-    beams.forEach(([x,y,a],i)=>{const col=laserColors[(i+pat*2)%laserColors.length],ex=x+Math.cos(a)*L,ey=y+Math.sin(a)*L;
-      c.shadowBlur=0;c.strokeStyle=col;c.globalAlpha=power*.2;c.lineWidth=5+kick*5;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
-      c.shadowColor=col;c.shadowBlur=lite?0:8+kick*10;c.globalAlpha=power*.95;c.lineWidth=1.6+kick*1.6;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
-      c.shadowBlur=0;c.strokeStyle='#fffdf2';c.globalAlpha=power*.9;c.lineWidth=.8+kick*.5;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
-      c.fillStyle='#ffffff';c.globalAlpha=power;c.beginPath();c.arc(x,y,2.5+kick*2.5,0,6.2832);c.fill();});
+    for(const [p,wt] of sets){
+      const beams=clubBeams(p,bp,X0,W,H,cx);
+      const power=wt*Math.min(1,.62+kick*.38)*(p===2?(.7+.3*kick):1);
+      if(trace)trace.push({p,wt:+wt.toFixed(3),a:beams.map(b=>+b[2].toFixed(5))});
+      beams.forEach(([x,y,a],i)=>{const col=laserColors[(i+p*2)%laserColors.length],ex=x+Math.cos(a)*L,ey=y+Math.sin(a)*L;
+        c.shadowBlur=0;c.strokeStyle=col;c.globalAlpha=power*.2;c.lineWidth=5+kick*5;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
+        c.shadowColor=col;c.shadowBlur=lite?0:8+kick*10;c.globalAlpha=power*.95;c.lineWidth=1.6+kick*1.6;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
+        c.shadowBlur=0;c.strokeStyle='#fffdf2';c.globalAlpha=power*.9;c.lineWidth=.8+kick*.5;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
+        c.fillStyle='#ffffff';c.globalAlpha=power;c.beginPath();c.arc(x,y,2.5+kick*2.5,0,6.2832);c.fill();});
+    }
     c.restore();
-    window.__aeClub={pat,cnt,ph:+ph.toFixed(2),beams:beams.length,power:+power.toFixed(2),playing,count:beat.count,iv:beat.interval};
+    if(trace)window.__aeClubBeams=trace;
+    window.__aeClub={pat,xf:+w.toFixed(2),bp:+bp.toFixed(3),ph:+ph.toFixed(2),playing,count:beat.count,iv:beat.interval,live};
   }
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
