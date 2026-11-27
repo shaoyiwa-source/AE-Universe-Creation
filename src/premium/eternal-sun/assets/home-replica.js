@@ -63,38 +63,16 @@
     c.globalAlpha=Math.min(1,ah*1.3+.4);c.fillStyle='#ffffff';c.beginPath();c.arc(tx,ty,Math.max(4.2,w*2.6),0,6.2832);c.fill(); // crisp centre (v84: bigger)
     c.restore();}
   window.aeClubBeam=clubBeam;
-  /* v2476.95 (Owner 11/19 14:55 「雷射太疲軟、像幽靈在飄」): 沈浸夜店 gets its own laser show — crisp bright beams that
-     SNAP to new positions on each beat (fast ease-out, then hold), four patterns rotating every 8 beats:
-     0 fan from the top, 1 twin corner scanners, 2 strobe cross, 3 converging tunnel. 經典首頁 lasers are unchanged. */
-  const hsh=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);};
-  const clubSeen={c:-1,t:0}; /* falls back to its own tempo clock if the music beat clock stalls (buffering, no beat map) */
-  function clubShow(c,beat,now,lite){
-    const iv=Math.max(.3,Math.min(.8,beat.interval||.42));let cnt,ph;
-    if(beat.count!==clubSeen.c){clubSeen.c=beat.count;clubSeen.t=now;}
-    if(playing&&beat.count>0&&now-clubSeen.t<iv*2500){cnt=beat.count;ph=Math.min(1,Math.max(0,beat.phase||0));}else{const t=now/1000/iv;cnt=Math.floor(t);ph=t-cnt;}
-    const kick=Math.max(playing?(beat.pulse||0):0,Math.exp(-ph*6)),pat=Math.floor(cnt/8)%4;
-    const X0=artX0,W=artW,H=artBottom,cx=X0+W/2,L=Math.hypot(W,H)*1.5,e=1-Math.pow(1-Math.min(1,ph/.26),4);
-    const mix=(a,b)=>a+(b-a)*e,beams=[];
-    if(pat===0){const sp=k=>k%2?.58:.24,ro=k=>Math.sin(k*1.7)*.22,spread=mix(sp(cnt-1),sp(cnt)),rot=mix(ro(cnt-1),ro(cnt));
-      for(let i=0;i<7;i++)beams.push([cx,-6,Math.PI/2+rot+(i/6-.5)*2*spread]);}
-    else if(pat===1){const s=cnt%2?e:1-e;
-      for(let k=0;k<2;k++)for(let j=0;j<4;j++){const a=-Math.PI/2+.12+s*(Math.PI/2-.34)+j*.075;beams.push([k?X0+W+4:X0-4,H+4,k?Math.PI-a:a]);}}
-    else if(pat===2){for(let i=0;i<6;i++){const left=i%2===0,oy=H*(.12+.76*hsh(cnt*13+i)),a=(hsh(cnt*7+i*3)-.5)*1.3;beams.push([left?X0-4:X0+W+4,oy,left?a:Math.PI-a]);}}
-    else{const ox=k=>(hsh(k*5)-.5)*W*.34,oy=k=>(hsh(k*9)-.5)*H*.2,tx=sunX+mix(ox(cnt-1),ox(cnt)),ty=Math.max(30,sunY)+mix(oy(cnt-1),oy(cnt));
-      for(const [x,y] of [[X0-4,-4],[X0+W+4,-4],[X0-4,H+4],[X0+W+4,H+4],[cx,-6],[X0-4,H*.5],[X0+W+4,H*.5]])beams.push([x,y,Math.atan2(ty-y,tx-x)]);}
-    const power=Math.min(1,.6+kick*.4)*(pat===2?(ph<.14?1:.55):1);
-    c.save();c.globalCompositeOperation='screen';
-    beams.forEach(([x,y,a],i)=>{const col=laserColors[(i+pat*2)%laserColors.length],ex=x+Math.cos(a)*L,ey=y+Math.sin(a)*L;
-      c.shadowBlur=0;c.strokeStyle=col;c.globalAlpha=power*.2;c.lineWidth=5+kick*5;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
-      c.shadowColor=col;c.shadowBlur=lite?0:8+kick*10;c.globalAlpha=power*.95;c.lineWidth=1.6+kick*1.6;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
-      c.shadowBlur=0;c.strokeStyle='#fffdf2';c.globalAlpha=power*.9;c.lineWidth=.8+kick*.5;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
-      c.fillStyle='#ffffff';c.globalAlpha=power;c.beginPath();c.arc(x,y,2.5+kick*2.5,0,6.2832);c.fill();});
-    c.restore();
-    window.__aeClub={pat,cnt,ph:+ph.toFixed(2),beams:beams.length,power:+power.toFixed(2),playing,count:beat.count,iv:beat.interval};
-  }
+  /* v2476.97 (Owner 11/27 20:55 「首頁不是有一個版本嗎」): 沈浸夜店 = the homepage lasers again (as v2476.90, 11/05), the 11/19
+     v2476.95 snap-per-beat club show is removed. One fix only, club mode only: every 4 beats the homepage offset
+     variation(group+1) changed in a single frame (beam ends jumped up to ~230 px); in 夜店 it now glides to the next
+     value over the last 2 beats of the group. 經典首頁 is byte-for-byte the homepage formula. */
+  let beatPos97=0,club97=false;const trace97=/[?&]lasertrace=1/.test(location.search);
   function destination(i,phase,now){
     const group=Math.floor((Number(hero.dataset.beatCount)||0)/4);
-    const angle=i*Math.PI/3+phase*.24+variation(group+1)*1.7; /* v2476.87: Production homepage (1de42af) sweep restored; v84 club whip set aside on branch setaside/v84-club-laser-aeClubBeam */
+    let off=variation(group+1)*1.7;
+    if(club97){const k=Math.min(4,Math.max(0,beatPos97-group*4)),w0=Math.min(1,Math.max(0,(k-2)/2)),w=w0*w0*(3-2*w0);off=(variation(group+1)*(1-w)+variation(group+2)*w)*1.7;}
+    const angle=i*Math.PI/3+phase*.24+off; /* v2476.87: Production homepage (1de42af) sweep restored; v84 club whip set aside on branch setaside/v84-club-laser-aeClubBeam */
     const ambient={x:artX0+artW*(.16+.68*(.5+.5*Math.sin(angle))),y:Math.max(30,artBottom*(.20+.60*(.5+.5*Math.cos(angle*1.3))))};
     const remaining=focus?focus.until-now:0;
     const weight=remaining>0?Math.min(1,remaining/600):0;
@@ -153,13 +131,12 @@
       glow.addColorStop(0,`rgba(255,223,115,${energy*.16+beat.pulse*.35})`);glow.addColorStop(.45,`rgba(243,178,48,${energy*.08+beat.pulse*.18})`);glow.addColorStop(1,'rgba(240,170,45,0)');
       ctx.fillStyle=glow;ctx.fillRect(0,0,width,artBottom);}
       const colors=laserColors;
-      const sweep=playing?(beat.sweep||0):beat.count+beat.phase;
+      const sweep=playing?(beat.sweep||0):beat.count+beat.phase;beatPos97=(beat.count||0)+Math.min(1,Math.max(0,beat.phase||0));club97=clubL&&!ambient;if(trace97)window.__aeHeroData=hero.dataset;
       ctx.globalCompositeOperation='screen';
       const targets=[],group=Math.floor(beat.count/4),pattern=Math.floor(variation(group+3)*3);
       const beamCount=beat.stage==='build'?(beat.buildProgress>.7?5:3):6;
       hero.dataset.laserPattern=String(pattern);hero.dataset.musicBeams=String(beamCount);
-      if(clubL&&!ambient&&lasersOn)clubShow(ctx,beat,now,lite);
-      for(let i=0;i<(lasersOn&&!(clubL&&!ambient)?beamCount:0);i++){ // v71: 雷射 toggle hides the homepage ambient lasers (gold points stay)
+      for(let i=0;i<(lasersOn?beamCount:0);i++){ // v71: 雷射 toggle hides the homepage ambient lasers (gold points stay)
         const originX=i%3===0?artX0-artW*.08:i%3===1?artX0+artW*1.08:artX0+artW*(.15+i*.12),originY=i%3===2?-20:artBottom*(.15+(i%4)*.20);
         const target=destination(i,sweep,now),targetX=target.x,targetY=target.y;targets.push({x:Math.round(targetX),y:Math.round(targetY)});
         const sus91=playing?.34*Math.min(1,Math.max(0,((beat.interval||.405)-.42)/.5)):0; /* v91: slow songs keep the sweeping beams lit (the 0.12 s kick envelope alone left only blinks at ~50 BPM); tempo sets sweep + flash rate only */
