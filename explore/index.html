@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>讓原畫，活成光 · AE Universe Creation 光之作品</title>
+<meta name="description" content="AE 手繪原作化身的光之作品：為店家與展演空間的聲光系統與授權播放，為日常的夜光、桌布與互動之作，為創作者的線上展覽。每一件都能立即體驗。">
+<meta name="theme-color" content="#090b0a">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --near:#090b0a; --pearl:#f4f0e7; --gold:#edcd75; --gold-soft:rgba(237,205,117,.55);
+    --muted:rgba(244,240,231,.64); --line:rgba(244,240,231,.12); --card:rgba(244,240,231,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{background:var(--near);scroll-behavior:smooth}
+  body{background:var(--near);color:var(--pearl);font-family:'Noto Serif TC','Inter',serif;line-height:1.65;min-height:100vh;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+  .aura{position:fixed;inset:-20vh -20vw;z-index:0;pointer-events:none;
+    background:radial-gradient(40vmax 40vmax at 20% 10%,rgba(237,205,117,.10),transparent 60%),
+               radial-gradient(36vmax 36vmax at 85% 30%,rgba(148,168,214,.08),transparent 60%),
+               radial-gradient(44vmax 44vmax at 50% 100%,rgba(216,168,184,.07),transparent 60%);
+    animation:drift 24s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate3d(2vw,-2vh,0) scale(1.05)}}
+  header,main,footer{position:relative;z-index:1}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:calc(18px + env(safe-area-inset-top))}
+  .brand{font-family:'Cormorant Garamond',serif;letter-spacing:.18em;font-size:13px;text-transform:uppercase;color:var(--muted)}
+  .brand b{color:var(--pearl);font-weight:600}
+  .home{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 14px;min-height:36px;display:inline-flex;align-items:center}
+  .home:hover{color:var(--gold);border-color:var(--gold-soft)}
+  /* 主視覺 */
+  .hero{padding:64px 0 44px;text-align:center}
+  .eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold);font-size:17px;letter-spacing:.06em}
+  h1{font-weight:500;font-size:clamp(32px,7.4vw,56px);letter-spacing:.08em;margin:10px 0 14px}
+  .lede{color:var(--muted);font-size:16px;max-width:27em;margin:0 auto;text-wrap:balance}
+  .hero-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .btn{display:inline-flex;align-items:center;gap:6px;min-height:46px;padding:0 22px;border-radius:999px;font-size:14px;letter-spacing:.04em;transition:.25s}
+  .btn.solid{background:var(--gold);color:var(--near)}
+  .btn.solid:hover{filter:brightness(1.08)}
+  .btn.ghost{border:1px solid var(--gold-soft);color:var(--gold)}
+  .btn.ghost:hover{background:rgba(237,205,117,.1)}
+  /* 區塊 */
+  .sec{margin:0 0 22px;scroll-margin-top:20px}
+  h2{font-weight:500;font-size:clamp(23px,5vw,31px);letter-spacing:.06em;text-align:center}
+  h2 i{display:block;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:16px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+  .sub{text-align:center;color:var(--muted);font-size:15px;margin:8px auto 0;max-width:30em;text-wrap:balance}
+  /* 三種對象 */
+  .paths{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 64px}
+  .path{border:1px solid var(--line);border-radius:18px;padding:22px 20px;background:var(--card);transition:.3s}
+  .path:hover{border-color:var(--gold-soft)}
+  .path i{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold);font-size:15px;letter-spacing:.08em}
+  .path b{display:block;font-weight:500;font-size:20px;margin:4px 0 6px}
+  .path p{color:var(--muted);font-size:14px}
+  .path span{display:inline-block;margin-top:12px;font-family:'Inter',sans-serif;font-size:12px;letter-spacing:.1em;color:var(--gold)}
+  @media (max-width:720px){.paths{grid-template-columns:1fr}}
+  /* 篩選 */
+  .filters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:22px 0 26px}
+  .filters button{font:inherit;font-size:13px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 16px;min-height:42px;cursor:pointer;transition:.25s}
+  .filters button[aria-pressed="true"]{color:var(--near);background:var(--gold);border-color:var(--gold)}
+  /* 作品卡 */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;padding-bottom:30px}
+  .card{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);
+    transition:transform .5s cubic-bezier(.2,.7,.2,1),border-color .4s,box-shadow .5s;opacity:0;transform:translateY(14px)}
+  .card.in{opacity:1;transform:none}
+  .card:hover,.card:focus-visible{border-color:var(--gold-soft);box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 1px rgba(237,205,117,.15);transform:translateY(-3px)}
+  .card:focus-visible{outline:none}
+  .art{position:relative;aspect-ratio:4/3;overflow:hidden;background:#111}
+  .art img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter .6s;filter:saturate(.92) brightness(.88)}
+  .card:hover .art img{transform:scale(1.06);filter:saturate(1.05) brightness(1)}
+  .art::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(9,11,10,.85))}
+  .glow{position:absolute;inset:auto -20% -40% -20%;height:70%;border-radius:50%;filter:blur(30px);opacity:.55;z-index:1;transition:opacity .6s}
+  .card:hover .glow{opacity:.85}
+  .tag{position:absolute;top:14px;right:14px;z-index:2;font-family:'Inter',sans-serif;font-size:11px;letter-spacing:.08em;color:var(--pearl);background:rgba(9,11,10,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .name{font-size:19px;font-weight:500;letter-spacing:.04em}
+  .en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--muted);margin-top:-4px}
+  .desc{font-size:14px;color:var(--pearl);opacity:.86}
+  .for{font-size:12.5px;color:var(--muted)}
+  .for::before{content:"適合　";color:var(--gold)}
+  .go{margin-top:auto;padding-top:10px;font-family:'Inter',sans-serif;font-size:12px;letter-spacing:.1em;color:var(--gold);display:flex;align-items:center;gap:6px}
+  .go span{transition:transform .35s}
+  .card:hover .go span{transform:translateX(4px)}
+  @media (min-width:720px){.card.feature{grid-column:span 2}.card.feature .art{aspect-ratio:16/7}}
+  /* 合作方式 */
+  .offer{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0 0}
+  .offer div{border-top:1px solid var(--gold-soft);padding:18px 4px 0}
+  .offer b{font-weight:500;font-size:18px}
+  .offer p{color:var(--muted);font-size:14px;margin-top:6px}
+  @media (max-width:720px){.offer{grid-template-columns:1fr}}
+  .promise{margin:70px auto 0;max-width:640px;text-align:center}
+  .promise blockquote{font-size:clamp(19px,4.4vw,24px);font-weight:500;letter-spacing:.06em;line-height:1.7}
+  .promise cite{display:block;margin-top:10px;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold);font-size:15px}
+  .cta{text-align:center;margin:60px 0 54px}
+  .cta p{font-size:18px;margin-bottom:16px}
+  .cta-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  footer{border-top:1px solid var(--line);padding:26px 0 calc(26px + env(safe-area-inset-bottom));text-align:center;color:var(--muted);font-size:13px}
+  footer .sig{font-family:'Cormorant Garamond',serif;letter-spacing:.2em;text-transform:uppercase;font-size:12px;margin-top:6px}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.aura{animation:none}.card{opacity:1;transform:none;transition:none}.art img{transition:none}}
+</style>
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+<header class="wrap top">
+  <a class="brand" href="/"><b>AE</b> Universe Creation</a>
+  <a class="home" href="/">← 回官網</a>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="eyebrow">Hand-painted Art. Digital Sensation.</p>
+    <h1>讓原畫，活成光</h1>
+    <p class="lede">AE 的手繪原作，化身為會呼吸、會回應的光。點亮你的店、陪伴你的夜晚，也讓你的作品，被世界看見。</p>
+    <div class="hero-cta"><a class="btn solid" href="#works">探索作品 →</a><a class="btn ghost" href="#offer">合作與典藏</a></div>
+  </section>
+
+  <section class="paths" aria-label="為誰而作">
+    <a class="path" href="#works" data-jump="space"><i>For Spaces</i><b>為空間</b><p>咖啡館、飯店、展場與活動現場——讓原作化為整面會動的光，成為空間的記憶點。</p><span>看空間作品 →</span></a>
+    <a class="path" href="#works" data-jump="daily"><i>For Everyday</i><b>為日常</b><p>手機桌布、床邊夜光、片刻的互動——把一幅畫的溫度，留在每天的生活裡。</p><span>看日常作品 →</span></a>
+    <a class="path" href="#works" data-jump="maker"><i>For Creators</i><b>為創作者</b><p>一張照片就能開一場展。為藝術家與創作者，打造隨時能分享的線上展覽。</p><span>看創作者工具 →</span></a>
+  </section>
+
+  <section class="sec" id="works" aria-labelledby="t-works">
+    <h2 id="t-works"><i>Selected Works</i>光之作品</h2>
+    <p class="sub">每一件都能立即體驗——點開卡片，走進畫裡。</p>
+  </section>
+
+  <nav class="filters" aria-label="分類">
+    <button type="button" data-f="all" aria-pressed="true">全部</button>
+    <button type="button" data-f="space">為空間</button>
+    <button type="button" data-f="daily">為日常</button>
+    <button type="button" data-f="maker">為創作者</button>
+  </nav>
+
+  <div class="grid" id="grid"></div>
+
+  <section class="sec" id="offer" aria-labelledby="t-offer" style="margin-top:56px">
+    <h2 id="t-offer"><i>Work With Us</i>合作與典藏</h2>
+    <div class="offer">
+      <div><b>原作授權播放</b><p>將 AE 原作以光影形式，授權在店面、大廳與展場長期播放。從單一螢幕到整面牆，依空間規劃。</p></div>
+      <div><b>客製聲光展演</b><p>為品牌活動、派對與展覽量身打造聲光演出，讓原作隨音樂起舞，成為現場最難忘的一刻。</p></div>
+      <div><b>典藏原作</b><p>收藏手繪原作與限量數位版本，作為空間的焦點，或一份有溫度的心意。</p></div>
+    </div>
+  </section>
+
+  <section class="promise">
+    <blockquote>每一件作品，都始於一幅手繪原作。<br>數位只為光賦予動態，從不改寫一筆筆觸。</blockquote>
+    <cite>Aurelia &amp; Elion</cite>
+  </section>
+
+  <section class="cta">
+    <p>為你的空間、活動或收藏，找到屬於你的那道光。</p>
+    <div class="cta-row"><a class="btn solid" href="/shop">典藏作品</a><a class="btn ghost" href="/works">欣賞原作</a><a class="btn ghost" href="/about">認識藝術家</a></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>每一道光，都始於一筆手繪。</p>
+  <p class="sig">Aurelia &amp; Elion · AE Universe Creation</p>
+</footer>
+
+<script>
+(function(){
+  var A='/assets/';
+  var ART={
+    sun:A+'4e0991885a9649ea.webp', core:A+'b46ca2328e93f1f4.webp', abund:A+'cfda3a3a0f7fa43d.webp',
+    joy:A+'85b757c169e7afd6.webp', heart:A+'selected-works-v2/heart-fly.webp',
+    bloom:A+'selected-works-v2/flower-heart-bloom.webp', nature:A+'selected-works-v2/natures-strength.webp'
+  };
+  // 名稱｜英文｜一句話｜適合｜網址｜分類｜標籤｜畫｜光色｜大卡
+  var L=[
+    ['盛明聲光展演系統','Eternal Sun · Light & Sound','《盛明》原作隨音樂甦醒，化為整個空間的光與節奏。','品牌活動、展場、餐酒館','/premium/eternal-sun/','space','空間','sun','rgba(237,205,117,.55)',1],
+    ['AE 授權播放','Licensed Player','把原作的光，長期留在你的店裡。','咖啡館、飯店大廳、門市','https://ae-licensed-player.vercel.app','space','空間','abund','rgba(212,176,124,.5)'],
+    ['盛明在家派對光','Eternal Sun · Party Light','一台電視就是派對燈，朋友用手機一起點亮。','居家聚會、小型活動','https://ae-party-light.vercel.app/tv.html','space','空間','sun','rgba(237,180,90,.55)'],
+    ['盛明夜光小太陽','Eternal Sun · Night Light','關上燈，它會在暗處慢慢亮起，陪你入睡。','床邊、睡前時光、送禮','https://ae-shengming-night-sun.vercel.app','daily','日常','sun','rgba(237,205,117,.5)'],
+    ['動態桌布工作室','Live Wallpaper Studio','做一張會動、會出聲的手機桌布，還能錄成影片分享。','手機族、喜歡分享的人','/wallpaper/','daily','日常','joy','rgba(175,206,172,.5)'],
+    ['聽見畫作','Hear the Painting','對著畫說話或哼歌，它會隨你的聲音呼吸發光。','靜心片刻、親子、展場互動','https://ae-dream-sound.vercel.app','daily','日常','core','rgba(148,168,214,.5)'],
+    ['夢幻萬花筒','Dream Kaleidoscope','輕輕傾斜手機，原作綻放成無盡的萬花筒。','通勤片刻、放鬆、展場互動','https://ae-kaleidoscope.vercel.app','daily','日常','bloom','rgba(214,158,168,.5)'],
+    ['夢境水晶球','Dream Globe','搖一搖，看一場夢緩緩落進水晶球裡。','送禮、節日祝福','https://ae-onecreator.vercel.app/globe/','daily','日常','heart','rgba(216,168,184,.5)'],
+    ['病毒式喜悅','Viral Joy','一則會發光的祝福，打開就被溫暖感染。','傳給朋友的心意、節日問候','https://ae-viral-joy.vercel.app/','daily','日常','joy','rgba(175,206,172,.45)'],
+    ['宇宙心靈地圖','Universe Soul Map','在 AE 的宇宙裡旅行，遇見此刻的自己。','自我探索、療癒時光','https://ae-universe-game.vercel.app','daily','日常','core','rgba(148,168,214,.45)'],
+    ['拍完就開展','Shoot & Exhibit','拍下一幅畫，三十秒後，就是一場美術館展覽。','畫家、插畫家、藝術教室','https://ae-shoot.vercel.app','maker','創作者','abund','rgba(212,176,124,.5)'],
+    ['萌創作品牆','OneCreator Wall','把散落的作品整理成一面專屬的線上展牆。','創作者作品集、藝術社群','https://ae-onecreator.vercel.app','maker','創作者','nature','rgba(154,188,164,.5)']
+  ];
+  var g=document.getElementById('grid');
+  L.forEach(function(x,i){
+    var a=document.createElement('a');
+    a.className='card'+(x[9]?' feature':''); a.href=x[4]; a.dataset.f=x[5];
+    if(/^https?:/.test(x[4])){a.target='_blank';a.rel='noopener'}
+    a.setAttribute('aria-label',x[0]+'：'+x[2]);
+    a.innerHTML='<div class="art"><img src="'+ART[x[7]]+'" alt="" loading="'+(i<3?'eager':'lazy')+'" decoding="async">'+
+      '<div class="glow" style="background:'+x[8]+'"></div><span class="tag">'+x[6]+'</span></div>'+
+      '<div class="body"><div class="name">'+x[0]+'</div><div class="en">'+x[1]+'</div><p class="desc">'+x[2]+'</p>'+
+      '<p class="for">'+x[3]+'</p><div class="go">立即體驗 <span>→</span></div></div>';
+    g.appendChild(a);
+  });
+  var cards=[].slice.call(g.children);
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
+    cards.forEach(function(c,i){c.style.transitionDelay=(i%3*80)+'ms';io.observe(c)});
+  } else cards.forEach(function(c){c.classList.add('in')});
+  var bs=document.querySelectorAll('.filters button');
+  function pick(f){
+    bs.forEach(function(o){o.setAttribute('aria-pressed',o.dataset.f===f?'true':'false')});
+    cards.forEach(function(c){c.style.display=(f==='all'||c.dataset.f===f)?'':'none'});
+  }
+  bs.forEach(function(b){b.addEventListener('click',function(){pick(b.dataset.f)})});
+  document.querySelectorAll('[data-jump]').forEach(function(p){p.addEventListener('click',function(){pick(p.dataset.jump)})});
+})();
+</script>
+</body>
+</html>
