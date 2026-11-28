@@ -66,7 +66,7 @@ function layout() {
   const portrait = L.H > L.W, sa = safeInsets();
   // v80: reserve the top (painting switcher) and bottom (play dock) bands so the painting's tap area never sits under a control
   const top = sa.t + (portrait ? 96 : 118), bot = Math.max(14, sa.b) + 108 + 46 + 10, mx = portrait ? 0.12 : 0.1; // v2476.100: reserve dock 108 + mode row 46 + 8-10px gap (was 156/158, which let the row overlap the painting on landscape/desktop)
-  let w = L.W * (1 - mx), h = w / AR; const availH = Math.max(120, L.H - top - bot);
+  let w = L.W * (1 - mx), h = w / AR; const availH = Math.max(64, L.H - top - bot);
   if (h > availH) { h = availH; w = h * AR; }
   w = Math.round(w); h = Math.round(h);
   L.p = { x: Math.round((L.W - w) / 2), y: Math.round(top + (availH - h) / 2), w, h };
@@ -1712,7 +1712,7 @@ function gridRadius84(r, save) { GR84.r = Math.max(0, Math.min(24, Math.round(+r
 
 /* ---- IG-style sheet swipe: the exhibit follows the finger, the neighbour slides in, spring settle ---- */
 var SH84 = { g: null, drag: false, sheet: null, dir: 0, busy: false, frames: 0 };
-function fitRect84(ar) { const portrait = L.H > L.W, sa = safeInsets(), top = sa.t + (portrait ? 96 : 118), bot = sa.b + (portrait ? 156 : 158), mx = portrait ? 0.12 : 0.1; let w = L.W * (1 - mx), h = w / ar; const availH = Math.max(120, L.H - top - bot); if (h > availH) { h = availH; w = h * ar; } w = Math.round(w); h = Math.round(h); return { x: Math.round((L.W - w) / 2), y: Math.round(top + (availH - h) / 2), w, h }; }
+function fitRect84(ar) { const portrait = L.H > L.W, sa = safeInsets(), top = sa.t + (portrait ? 96 : 118), bot = Math.max(14, sa.b) + 108 + 46 + 10, mx = portrait ? 0.12 : 0.1; let w = L.W * (1 - mx), h = w / ar; const availH = Math.max(64, L.H - top - bot); if (h > availH) { h = availH; w = h * ar; } w = Math.round(w); h = Math.round(h); return { x: Math.round((L.W - w) / 2), y: Math.round(top + (availH - h) / 2), w, h }; }
 function mkSheet84(dir) { const n = ARTS.length, a = ARTS[(((ARTS.indexOf(ART) + dir) % n) + n) % n]; preload(a); const r = fitRect84((a.w || 1) / (a.h || 1)), s = document.createElement('div'); s.className = 'sheet84'; s.setAttribute('aria-hidden', 'true');
   Object.assign(s.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' }); s.style.setProperty('--f', Math.max(9, Math.round(r.w * 0.03)) + 'px'); const im = document.createElement('img'); im.src = a.src; im.alt = ''; im.draggable = false; s.appendChild(im); document.body.appendChild(s); return s; }
 function place84(dx) { const st = $('#stage'), W = L.W; st.style.translate = dx ? dx.toFixed(1) + 'px 0' : ''; const s = SH84.sheet; if (s) { const p = Math.min(1, Math.abs(dx) / W); s.style.translate = (dx + SH84.dir * W).toFixed(1) + 'px 0'; s.style.scale = String(0.94 + 0.06 * p); } SH84.frames++; }
