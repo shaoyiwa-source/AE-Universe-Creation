@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AE 宇宙・2026 秋季成果 · AE Universe Creation</title>
+<meta name="description" content="AE Universe Creation 2026 年 9–11 月成果：從手繪原畫出發的 69 個網頁實驗與 15 件精選作品——會呼吸的光、萬花筒、水晶球、派對光、動態桌布與更多。">
+<meta name="theme-color" content="#090b0a">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --near:#090b0a; --pearl:#f4f0e7; --gold:#edcd75; --gold-soft:rgba(237,205,117,.55);
+    --muted:rgba(244,240,231,.62); --line:rgba(244,240,231,.12); --card:rgba(244,240,231,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{background:var(--near)}
+  body{background:var(--near);color:var(--pearl);font-family:'Noto Serif TC','Inter',serif;line-height:1.6;min-height:100vh;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+  /* 背景光暈 */
+  .aura{position:fixed;inset:-20vh -20vw;z-index:0;pointer-events:none;
+    background:radial-gradient(40vmax 40vmax at 20% 10%,rgba(237,205,117,.10),transparent 60%),
+               radial-gradient(36vmax 36vmax at 85% 30%,rgba(148,168,214,.08),transparent 60%),
+               radial-gradient(44vmax 44vmax at 50% 100%,rgba(216,168,184,.07),transparent 60%);
+    animation:drift 24s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate3d(2vw,-2vh,0) scale(1.05)}}
+  header,main,footer{position:relative;z-index:1}
+  /* 頂列 */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:calc(18px + env(safe-area-inset-top))}
+  .brand{font-family:'Cormorant Garamond',serif;letter-spacing:.18em;font-size:13px;text-transform:uppercase;color:var(--muted)}
+  .brand b{color:var(--pearl);font-weight:600}
+  .home{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 14px;min-height:36px;display:inline-flex;align-items:center}
+  .home:hover{color:var(--gold);border-color:var(--gold-soft)}
+  /* 標題 */
+  .hero{padding:56px 0 34px;text-align:center}
+  .eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold);font-size:17px;letter-spacing:.06em}
+  h1{font-weight:500;font-size:clamp(30px,7vw,52px);letter-spacing:.08em;margin:8px 0 10px}
+  .lede{color:var(--muted);font-size:15px;max-width:34em;margin:0 auto}
+  .count{display:inline-block;margin-top:18px;font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:.2em;color:var(--gold);border-top:1px solid var(--gold-soft);border-bottom:1px solid var(--gold-soft);padding:4px 14px}
+  /* 篩選 */
+  .filters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 0 26px}
+  .filters button{font:inherit;font-size:13px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 16px;min-height:40px;cursor:pointer;transition:.25s}
+  .filters button[aria-pressed="true"]{color:var(--near);background:var(--gold);border-color:var(--gold)}
+  /* 卡片 */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;padding-bottom:40px}
+  .card{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);
+    transition:transform .5s cubic-bezier(.2,.7,.2,1),border-color .4s,box-shadow .5s;opacity:0;transform:translateY(14px)}
+  .card.in{opacity:1;transform:none}
+  .card:hover,.card:focus-visible{border-color:var(--gold-soft);box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 1px rgba(237,205,117,.15);transform:translateY(-3px)}
+  .card:focus-visible{outline:none}
+  .art{position:relative;aspect-ratio:4/3;overflow:hidden;background:#111}
+  .art img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter .6s;filter:saturate(.92) brightness(.88)}
+  .card:hover .art img{transform:scale(1.06);filter:saturate(1.05) brightness(1)}
+  .art::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(9,11,10,.85))}
+  .glow{position:absolute;inset:auto -20% -40% -20%;height:70%;border-radius:50%;filter:blur(30px);opacity:.55;z-index:1;transition:opacity .6s}
+  .card:hover .glow{opacity:.85}
+  .no{position:absolute;top:12px;left:14px;z-index:2;font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);letter-spacing:.05em;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+  .tag{position:absolute;top:14px;right:14px;z-index:2;font-family:'Inter',sans-serif;font-size:11px;letter-spacing:.08em;color:var(--pearl);background:rgba(9,11,10,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .name{font-size:19px;font-weight:500;letter-spacing:.04em}
+  .en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--muted);margin-top:-4px}
+  .desc{font-size:14px;color:var(--muted)}
+  .go{margin-top:auto;padding-top:10px;font-family:'Inter',sans-serif;font-size:12px;letter-spacing:.1em;color:var(--gold);display:flex;align-items:center;gap:6px}
+  .go span{transition:transform .35s}
+  .card:hover .go span{transform:translateX(4px)}
+  /* 首張大卡 */
+  @media (min-width:720px){.card.feature{grid-column:span 2}.card.feature .art{aspect-ratio:16/7}}
+  /* 數字 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 56px}
+  .stat{border:1px solid var(--line);border-radius:16px;padding:18px 14px;text-align:center;background:var(--card)}
+  .stat b{display:block;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(38px,8vw,54px);line-height:1;color:var(--gold)}
+  .stat span{display:block;font-size:15px;margin-top:6px}
+  .stat em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:4px}
+  @media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+  /* 區塊標題 */
+  .sec{margin:0 0 26px}
+  h2{font-weight:500;font-size:clamp(22px,5vw,30px);letter-spacing:.06em;text-align:center;margin-bottom:8px}
+  h2 i{display:block;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:16px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+  .sub{text-align:center;color:var(--muted);font-size:14px}
+  /* 時間軸 */
+  .tl{list-style:none;max-width:720px;margin:26px auto 60px;position:relative}
+  .tl::before{content:"";position:absolute;left:78px;top:6px;bottom:6px;width:1px;background:linear-gradient(var(--gold-soft),var(--line))}
+  .tl li{display:grid;grid-template-columns:66px 1fr;gap:26px;padding:0 0 26px;position:relative}
+  .tl li::before{content:"";position:absolute;left:74px;top:8px;width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+  .tl time{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--gold);text-align:right;padding-top:1px;white-space:nowrap}
+  .tl b{font-weight:500;font-size:17px;letter-spacing:.03em}
+  .tl p{color:var(--muted);font-size:14px;margin-top:2px}
+  @media (max-width:520px){.tl::before{left:70px}.tl li{grid-template-columns:60px 1fr;gap:22px}.tl li::before{left:66px}.tl time{font-size:14px;white-space:normal;line-height:1.3}}
+  /* 做法 */
+  .how{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+  .how div{border-top:1px solid var(--gold-soft);padding:16px 4px 0}
+  .how b{font-weight:500;font-size:17px}
+  .how p{color:var(--muted);font-size:14px;margin-top:6px}
+  @media (max-width:720px){.how{grid-template-columns:1fr}}
+  .cta{text-align:center;margin:60px 0 50px}
+  .cta p{font-size:17px;margin-bottom:14px}
+  .cta-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .cta-row a{border:1px solid var(--gold-soft);color:var(--gold);border-radius:999px;padding:10px 20px;min-height:44px;display:inline-flex;align-items:center;font-size:14px;transition:.25s}
+  .cta-row a:hover{background:var(--gold);color:var(--near)}
+  footer{border-top:1px solid var(--line);padding:26px 0 calc(26px + env(safe-area-inset-bottom));text-align:center;color:var(--muted);font-size:13px}
+  footer .sig{font-family:'Cormorant Garamond',serif;letter-spacing:.2em;text-transform:uppercase;font-size:12px;margin-top:6px}
+  @media (prefers-reduced-motion:reduce){.aura{animation:none}.card{opacity:1;transform:none;transition:none}.art img{transition:none}}
+</style>
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+<header class="wrap top">
+  <a class="brand" href="/"><b>AE</b> Universe Creation</a>
+  <a class="home" href="/">← 回官網</a>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="eyebrow">Hand-painted Art. Digital Sensation.</p>
+    <h1>AE 宇宙・2026 秋季成果</h1>
+    <p class="lede">2026 年 9 月到 11 月，我們從幾幅手繪原畫出發，把它們變成會呼吸的光、會回應你的互動、帶得走的展覽。這一頁是這段時間的成果總覽。</p>
+    <span class="count">SEP – NOV 2026</span>
+  </section>
+
+  <section class="stats" aria-label="成果數字">
+    <div class="stat"><b>78</b><span>天</span><em>9/12 官網上線 → 11/28</em></div>
+    <div class="stat"><b>69</b><span>個網頁實驗</span><em>每個想法都先做出來試</em></div>
+    <div class="stat"><b>15</b><span>件精選作品</span><em>從實驗中挑出、打磨完成</em></div>
+    <div class="stat"><b>7</b><span>幅核心原畫</span><em>所有作品的源頭</em></div>
+  </section>
+
+  <section class="sec" aria-labelledby="t-time">
+    <h2 id="t-time"><i>Timeline</i>這段時間做了什麼</h2>
+    <ol class="tl">
+      <li><time>09</time><div><b>官網誕生</b><p>AE Universe Creation 官網上線，原作、故事與商店有了家。九月下旬開始做第一批心靈卡片實驗。</p></div></li>
+      <li><time>10</time><div><b>光紋、聲音與觸控實驗</b><p>光紋（Lightprint）、聲音工作室、觸控光痕等數十個小實驗，找出「讓畫活起來」的方法。10/18《盛明》第一次變成會隨時刻與指尖呼吸的「活的畫」。</p></div></li>
+      <li><time>11 上</time><div><b>從實驗走向作品</b><p>盛明展示頁、AE 授權播放（讓原畫在店裡播放）、展覽牆陸續完成，開始面向真正的觀眾與合作夥伴。</p></div></li>
+      <li><time>11/22–24</time><div><b>互動作品集中誕生</b><p>宇宙心靈地圖、聽見畫作、夢幻萬花筒、動態桌布 App 在同一週完成第一版。</p></div></li>
+      <li><time>11/25–27</time><div><b>平台與展覽</b><p>病毒式喜悅、萌創作品牆、拍完就開展（一張照片變一場美術館展覽）、盛明派對光、夜光小太陽上線；團隊協作平台與任務系統也在這週建好。</p></div></li>
+      <li><time>11/28</time><div><b>整理與收斂</b><p>動態桌布正式版上線（錄影、音樂、互動音效），所有作品登記成冊，挑出十五件精選，就是下面這些。</p></div></li>
+    </ol>
+  </section>
+
+  <section class="sec" aria-labelledby="t-works">
+    <h2 id="t-works"><i>Selected Works</i>十五件精選作品</h2>
+    <p class="sub">點任何一張卡片，直接進入作品。</p>
+  </section>
+
+  <nav class="filters" aria-label="分類">
+    <button type="button" data-f="all" aria-pressed="true">全部</button>
+    <button type="button" data-f="light">光與原畫</button>
+    <button type="button" data-f="play">互動玩樂</button>
+    <button type="button" data-f="make">創作工具</button>
+    <button type="button" data-f="biz">展覽與合作</button>
+  </nav>
+
+  <div class="grid" id="grid"></div>
+
+  <section class="sec" aria-labelledby="t-how">
+    <h2 id="t-how"><i>How We Work</i>我們怎麼做</h2>
+    <div class="how">
+      <div><b>原畫是一切的起點</b><p>每件作品都從 AE 的手繪原作出發。數位只負責讓光動起來，不改動原作本身。</p></div>
+      <div><b>先做出來，再挑最好的</b><p>想法不停在紙上：先做成可以打開的網頁，實際試過，再把最好的留下來、打磨。</p></div>
+      <div><b>把好的合在一起</b><p>功能相近的小實驗，優點會被收進最好的那件作品裡，讓每個入口都更完整。</p></div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <p>想合作、授權原畫，或收藏作品？</p>
+    <div class="cta-row"><a href="/works">看原作</a><a href="/shop">收藏作品</a><a href="/about">認識藝術家</a></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>每一個入口都從 AE 的手繪原作開始。</p>
+  <p class="sig">Aurelia &amp; Elion · AE Universe Creation</p>
+</footer>
+
+<script>
+(function(){
+  var A='/assets/';
+  var ART={
+    sun:A+'4e0991885a9649ea.webp', core:A+'b46ca2328e93f1f4.webp', abund:A+'cfda3a3a0f7fa43d.webp',
+    joy:A+'85b757c169e7afd6.webp', heart:A+'selected-works-v2/heart-fly.webp',
+    bloom:A+'selected-works-v2/flower-heart-bloom.webp', nature:A+'selected-works-v2/natures-strength.webp'
+  };
+  // 名稱｜英文｜介紹｜網址｜分類｜標籤｜畫｜光色
+  var L=[
+    ['AE 官網','AE Universe Creation','手繪原作，數位感動','/','biz','官網','sun','rgba(218,178,115,.5)',1],
+    ['盛明夜光小太陽','Eternal Sun · Night Light','暗房裡，它自己會慢慢亮起來','https://ae-shengming-night-sun.vercel.app','light','原畫之光','sun','rgba(237,205,117,.55)'],
+    ['病毒式喜悅','Viral Joy','點開，讓光感染你','https://ae-viral-joy.vercel.app/','light','原畫之光','joy','rgba(175,206,172,.5)'],
+    ['拍完就開展','Shoot & Exhibit','一張照片，一場美術館展覽','https://ae-shoot.vercel.app','make','創作工具','abund','rgba(212,176,124,.5)'],
+    ['夢幻萬花筒','Dream Kaleidoscope','傾斜手機，畫作化成萬花筒','https://ae-kaleidoscope.vercel.app','play','互動玩樂','bloom','rgba(214,158,168,.5)'],
+    ['聽見畫作','Hear the Painting','畫作隨你的聲音呼吸發光','https://ae-dream-sound.vercel.app','light','原畫之光','core','rgba(148,168,214,.5)'],
+    ['夢境水晶球','Dream Globe','搖一搖，看夢落進水晶球','https://ae-onecreator.vercel.app/globe/','play','互動玩樂','heart','rgba(216,168,184,.5)'],
+    ['AE 授權播放','Licensed Player','原畫，授權在你店裡播放','https://ae-licensed-player.vercel.app','biz','展覽與合作','abund','rgba(212,176,124,.45)'],
+    ['動態桌布工作室','Live Wallpaper Studio','做出會動、會出聲的桌布','/wallpaper/','make','創作工具','joy','rgba(175,206,172,.45)'],
+    ['盛明在家派對光','Eternal Sun · Party Light','電視變派對燈，手機一起玩','https://ae-party-light.vercel.app/tv.html','play','互動玩樂','sun','rgba(237,180,90,.55)'],
+    ['宇宙心靈地圖','Universe Soul Map','探索 AE 宇宙的心靈遊戲','https://ae-universe-game.vercel.app','play','互動玩樂','core','rgba(148,168,214,.45)'],
+    ['盛明活的畫','Eternal Sun · Living Light','光隨時刻與指尖呼吸','https://ae-living-wallpaper.vercel.app','light','原畫之光','sun','rgba(237,205,117,.45)'],
+    ['萌創作品牆','OneCreator Wall','畫作整理成你的線上展覽','https://ae-onecreator.vercel.app','make','創作工具','nature','rgba(154,188,164,.5)'],
+    ['一畫一世界・睡前點亮','One Painting, One World','睡前點亮一筆，收下今天的光','https://ae-m2-night.vercel.app','light','原畫之光','nature','rgba(154,188,164,.45)'],
+    ['光的展覽牆','Wall of Light','原畫展覽牆，錄一段光帶走','https://ae-paintings-wall.vercel.app','biz','展覽與合作','bloom','rgba(214,158,168,.45)']
+  ];
+  var g=document.getElementById('grid');
+  var roman=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV'];
+  L.forEach(function(x,i){
+    var a=document.createElement('a');
+    a.className='card'+(x[8]?' feature':''); a.href=x[3]; a.dataset.f=x[4];
+    if(/^https?:/.test(x[3])){a.target='_blank';a.rel='noopener'}
+    a.setAttribute('aria-label',x[0]+'：'+x[2]);
+    a.innerHTML='<div class="art"><img src="'+ART[x[6]]+'" alt="" loading="'+(i<3?'eager':'lazy')+'" decoding="async">'+
+      '<div class="glow" style="background:'+x[7]+'"></div><span class="no">'+roman[i]+'</span><span class="tag">'+x[5]+'</span></div>'+
+      '<div class="body"><div class="name">'+x[0]+'</div><div class="en">'+x[1]+'</div><p class="desc">'+x[2]+'</p>'+
+      '<div class="go">ENTER <span>→</span></div></div>';
+    g.appendChild(a);
+  });
+  // 淡入
+  var cards=[].slice.call(g.children);
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
+    cards.forEach(function(c,i){c.style.transitionDelay=(i%3*80)+'ms';io.observe(c)});
+  } else cards.forEach(function(c){c.classList.add('in')});
+  // 篩選
+  var bs=document.querySelectorAll('.filters button');
+  bs.forEach(function(b){b.addEventListener('click',function(){
+    bs.forEach(function(o){o.setAttribute('aria-pressed',o===b?'true':'false')});
+    var f=b.dataset.f;
+    cards.forEach(function(c){c.style.display=(f==='all'||c.dataset.f===f)?'':'none'});
+  })});
+})();
+</script>
+</body>
+</html>
