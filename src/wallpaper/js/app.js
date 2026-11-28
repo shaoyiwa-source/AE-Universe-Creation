@@ -5,7 +5,7 @@ import {
 import { SOUNDS, playSound, audio, music, setSfxVolume, recordingDestination, setCustomSound, hasCustomSound } from './sound.js';
 import {
   createScene, setBase, setFilter, coverCanvas, hitTest, renderScene, images, serializeScene,
-  deserializeScene, serializeObjects, loadImage, canvasToBlob, textFont, hasStrokes,
+  deserializeScene, serializeObjects, loadImage, canvasToBlob, textFont, hasStrokes, objHalfSize,
 } from './scene.js';
 import { kvGet, kvSet, galleryAll, galleryPut, galleryDel, loadSettings, saveSettings } from './store.js';
 import { t, nm, getLang, setLang, SYMBOLS, symLabel } from './i18n.js';
@@ -68,6 +68,7 @@ const ICON_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'
 // ======================================================================
 let toastTimer;
 function toast(msg, el = $('#toast'), ms = 2200) {
+  el.classList.remove('act');
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
@@ -1407,7 +1408,7 @@ function setRecFocus(on, stop, left) {
 // ======================================================================
 // 互動模式（全螢幕）
 // ======================================================================
-const player = { open: false, scene: null, rotIndex: -1, pressTimer: null, fabMenu: false, dimTimer: null, drag: null, tipsShown: false };
+const player = { open: false, scene: null, rotIndex: -1, pressTimer: null, fabMenu: false, dimTimer: null, drag: null, tipsShown: false, delObj: null, delTimer: null };
 
 async function sceneForPlayer() {
   const rot = rotationInfo();
@@ -1446,6 +1447,7 @@ function exitPlayer() {
   player.open = false;
   setFabMenu(false);
   player.drag = null;
+  hideDel();
   $('#player').hidden = true;
   if (location.search.includes('mode=play')) history.replaceState?.(null, '', location.pathname);
 }
@@ -1507,8 +1509,79 @@ function endPlayerPointer() {
   const g = player.drag; player.drag = null;
   if (!g) return;
   if (g.moved) { pushHistory(g.snap); autosave(); }
-  else if (S.componentTap) triggerTap(g.o);
+  else {
+    if (S.componentTap) triggerTap(g.o);
+    if (g.editable) showDel(g.o);
+  }
 }
+
+// ---------------- 預覽中點一下物件 → 右上角浮出「×」刪除 ----------------
+function objScreenTopRight(o) {
+  const r = pCanvas.getBoundingClientRect();
+  const s = Math.max(r.width / W, r.height / H);
+  const ox = r.left + (r.width - W * s) / 2, oy = r.top + (r.height - H * s) / 2;
+  let right, top;
+  if (o.type === 'stroke') {
+    const pad = (o.size || 16) / 2;
+    right = Math.max(...o.points.map((pt) => pt[0])) + pad;
+    top = Math.min(...o.points.map((pt) => pt[1])) - pad;
+  } else {
+    const [hw, hh] = objHalfSize(o);
+    const c = Math.abs(Math.cos(o.rot || 0)), sn = Math.abs(Math.sin(o.rot || 0));
+    const ex = (hw * c + hh * sn) * o.scale, ey = (hw * sn + hh * c) * o.scale;
+    right = o.x + ex; top = o.y - ey;
+  }
+  return { x: ox + right * s, y: oy + top * s };
+}
+function showDel(o) {
+  if (!player.open || player.scene !== scene || ui.recording || !scene.objects.includes(o)) return hideDel();
+  const b = $('#playerDel');
+  const pr = $('#player').getBoundingClientRect();
+  const size = 44;
+  const p = objScreenTopRight(o);
+  let x = p.x - pr.left - size / 2, y = p.y - pr.top - size / 2;
+  x = Math.min(Math.max(x, 8), pr.width - size - 8);
+  y = Math.min(Math.max(y, 8), pr.height - size - 8);
+  // 不擋時鐘：會疊到時鐘就移到時鐘下方
+  const clock = $('#lockClock');
+  if (!clock.hidden) {
+    const cr = clock.getBoundingClientRect();
+    const cTop = cr.top - pr.top, cBot = cr.bottom - pr.top;
+    if (y + size > cTop && y < cBot) y = Math.min(cBot + 6, pr.height - size - 8);
+  }
+  b.style.left = x + 'px'; b.style.top = y + 'px';
+  b.hidden = false;
+  player.delObj = o;
+  clearTimeout(player.delTimer);
+  player.delTimer = setTimeout(hideDel, 3000);
+}
+function hideDel() {
+  clearTimeout(player.delTimer);
+  player.delObj = null;
+  const b = $('#playerDel'); if (b) b.hidden = true;
+}
+$('#player').addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#playerDel')) hideDel();
+}, true);
+$('#playerDel').onclick = (e) => {
+  e.stopPropagation();
+  const o = player.delObj;
+  hideDel();
+  if (!o || player.scene !== scene || ui.recording) return;
+  const i = scene.objects.indexOf(o);
+  if (i < 0) return;
+  pushHistory(snapshot());
+  scene.objects.splice(i, 1);
+  if (ui.selected === o) select(null);
+  autosave();
+  const el = $('#playerToast');
+  toast(t('deletedShort'), el, 4000);
+  const ub = document.createElement('button');
+  ub.type = 'button'; ub.className = 'toast-undo'; ub.textContent = t('undo');
+  ub.onclick = (ev) => { ev.stopPropagation(); undo(); el.classList.remove('show', 'act'); };
+  el.appendChild(ub);
+  el.classList.add('act');
+};
 ['pointerup', 'pointercancel'].forEach((ev) => pCanvas.addEventListener(ev, endPlayerPointer));
 
 function setFabMenu(open) {

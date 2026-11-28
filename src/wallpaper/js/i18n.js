@@ -243,6 +243,8 @@ const T = {
   fUp: ['上移', 'Up'],
   fDown: ['下移', 'Down'],
   deleted: ['已刪除・可按復原找回', 'Deleted — tap undo to bring it back'],
+  delThis: ['刪除這個物件', 'Delete this item'],
+  deletedShort: ['已刪除', 'Deleted'],
   newText: ['新增另一段文字', 'Add another text'],
   recReveal: ['重播手繪過程', 'Replay the drawing'],
   recRevealSub: ['影片開頭會把你畫的光紋一筆一筆畫出來', 'Your strokes are drawn in, one by one, at the start of the video'],
