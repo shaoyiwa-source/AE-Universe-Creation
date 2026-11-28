@@ -23,7 +23,8 @@ export function audio() {
     // iOS：讓聲音在靜音開關打開時仍可播放（Safari 16.4+）
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* ignore */ }
   }
-  if (ac.state === 'suspended') ac.resume();
+  if (ac.state !== 'running') { ac.resume().catch(() => {}); }
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   return ac;
 }
 
@@ -210,3 +211,6 @@ export const music = {
     if (bass > this._avg * 1.25 && bass > 0.35) this.beat = 1; else this.beat *= 0.86;
   },
 };
+
+// iOS：回到前景時喚醒被暫停/中斷的音訊
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && ac && ac.state !== 'running') ac.resume().catch(() => {}); });

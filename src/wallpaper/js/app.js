@@ -1364,6 +1364,7 @@ function startRecording(root, opts = {}) {
     const blob = new Blob(chunks, { type });
     const ext = type.includes('mp4') ? 'mp4' : 'webm';
     btn.disabled = false;
+    setRecFocus(false);
     if (opts.onDone) {
       out.textContent = t('processing');
       stillP.then((still) => opts.onDone(blob, still))
@@ -1383,11 +1384,24 @@ function startRecording(root, opts = {}) {
   if (S.voiceInVideo && hasCustomSound('voice')) setTimeout(() => playSound('voice'), 400);
   let left = seconds;
   out.innerHTML = `<span class="rec">${t('recording', left)}</span>`;
+  setRecFocus(true, () => { if (rec.state === 'recording') rec.stop(); }, left);
   const iv = setInterval(() => {
     left -= 1;
     if (left <= 0 || rec.state !== 'recording') { clearInterval(iv); if (rec.state === 'recording') rec.stop(); return; }
     out.innerHTML = `<span class="rec">${t('recording', left)}</span>`;
+    setRecFocus(true, null, left);
   }, 1000);
+}
+
+// 錄影時收起面板與工具列，畫布放到最大，方便點元件互動
+function setRecFocus(on, stop, left) {
+  const app = $('#app'), bar = $('#recBar');
+  app.classList.toggle('rec-focus', on);
+  bar.hidden = !on;
+  if (!on) { panel.hidden = !ui.sheet; return; }
+  panel.hidden = true;
+  if (stop) $('#recStop').onclick = stop;
+  $('#recLeft').textContent = t('recording', left);
 }
 
 // ======================================================================

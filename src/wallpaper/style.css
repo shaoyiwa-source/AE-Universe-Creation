@@ -423,3 +423,13 @@ textarea { width: 100%; resize: none; }
 /* 錄音 */
 .voice-rec { align-items: center; }
 .voice-rec .rec-on { background: #b3412f; border-color: #b3412f; }
+
+/* 錄影中：收起面板、工具列，畫布放到最大 */
+#app.rec-focus .dock, #app.rec-focus .stage-tools, #app.rec-focus .sheet { display: none !important; }
+#app.rec-focus .stage { padding-top: 56px; }
+.rec-bar {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 4; display: flex; align-items: center; gap: 12px;
+  background: var(--bg); border: 1px solid var(--line); padding: 4px 4px 4px 14px; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,.12);
+}
+.rec-bar[hidden] { display: none; }
+.rec-bar .btn { min-height: 38px; padding: 6px 14px; font-size: 13px; }
