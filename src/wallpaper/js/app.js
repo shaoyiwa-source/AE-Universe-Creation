@@ -2,7 +2,7 @@
 import {
   W, H, FILTERS, THEMES, COMPONENTS, burst, applyFilterPixels, drawComponentIcon, defaultBackground,
 } from './effects.js';
-import { SOUNDS, playSound, audio, ensureAudio, music, setSfxVolume, recordingDestination, setCustomSound, hasCustomSound } from './sound.js';
+import { SOUNDS, playSound, audio, ensureAudio, music, setSfxVolume, recordingDestination, setCustomSound, hasCustomSound, onAudioRebuild } from './sound.js';
 import {
   createScene, setBase, setFilter, coverCanvas, hitTest, renderScene, images, serializeScene,
   deserializeScene, serializeObjects, loadImage, canvasToBlob, textFont, hasStrokes, objHalfSize,
@@ -40,7 +40,7 @@ const ui = {
   sheet: null, afterProps: null, tool: 'select', drawMode: 'glow',
   color: '#FF7EB6', size: 16, textColor: '#FF7EB6', textFont: 'round', textOutline: '#fff', removeBg: false,
   selected: null, draft: null,
-  recording: false, gallery: [], recDur: 10, recReveal: true, reveal: null, liveRec: null,
+  recording: false, gallery: [], recDur: 15, recMusic: true, recStop: null, recReveal: true, reveal: null, liveRec: null,
 };
 const undoStack = [];
 const redoStack = [];
@@ -966,7 +966,10 @@ const SHEETS = {
         <div class="row"><button type="button" class="btn" id="fPng">${t('saveImage')}</button><span id="pngOut"></span></div>
         <div class="section-title" style="margin-top:6px"><h4>${t('recTitle')}</h4></div>
         ${canRec ? `
-          <div class="row">${[5, 10, 15].map((s) => `<button type="button" class="chip ${ui.recDur === s ? 'on' : ''}" data-dur="${s}">${t('sec', s)}</button>`).join('')}</div>
+          <div class="row">${[10, 15, 30, 60].map((s) => `<button type="button" class="chip ${ui.recDur === s ? 'on' : ''}" data-dur="${s}">${t('sec', s)}</button>`).join('')}</div>
+          ${music.el ? `<label class="set-item"><div><b>${t('recMusic')}</b><small id="recMusicNote">${ui.recMusic ? t('recMusicOn', esc(music.name)) : t('recMusicOff')}</small></div>
+            <span class="switch"><input type="checkbox" id="recMusic" ${ui.recMusic ? 'checked' : ''}><span></span></span></label>`
+          : `<div class="row"><small class="hint" id="recMusicNote">${t('recMusicNone')}</small><button type="button" class="btn quiet" id="recGoMusic">${t('tMusic')}</button></div>`}
           ${hasStrokes(scene) ? `<label class="set-item"><div><b>${t('recReveal')}</b><small>${t('recRevealSub')}</small></div>
             <span class="switch"><input type="checkbox" id="recReveal" ${ui.recReveal ? 'checked' : ''}><span></span></span></label>` : ''}
           <div class="row"><button type="button" class="btn" id="fVid">● ${t('recStart')}</button><span id="vidOut"></span></div>`
@@ -990,6 +993,11 @@ const SHEETS = {
         p.querySelectorAll('[data-dur]').forEach((x) => x.classList.toggle('on', x === b));
       });
       $('#recReveal', p)?.addEventListener('change', (e) => { ui.recReveal = e.target.checked; });
+      $('#recMusic', p)?.addEventListener('change', (e) => {
+        ui.recMusic = e.target.checked;
+        $('#recMusicNote', p).innerHTML = ui.recMusic ? t('recMusicOn', esc(music.name)) : t('recMusicOff');
+      });
+      $('#recGoMusic', p)?.addEventListener('click', () => openSheet('music'));
       $('#fVid', p)?.addEventListener('click', () => startRecording(p, { reveal: ui.recReveal && hasStrokes(scene) }));
       $('#fLive', p)?.addEventListener('click', () => startRecording(p, {
         seconds: 3, out: '#liveOut', btn: '#fLive', withStill: true,
@@ -1313,7 +1321,7 @@ function toggleLiveRec() {
   const stream = canvas.captureStream(30);
   try { recordingDestination().stream.getAudioTracks().forEach((tr) => stream.addTrack(tr)); } catch (e) { /* 無音訊 */ }
   let rec;
-  try { rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined); } catch (e) { rec = new MediaRecorder(stream); }
+  try { rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: recBitrate(120) } : undefined); } catch (e) { rec = new MediaRecorder(stream); }
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
   select(null, true);
@@ -1343,15 +1351,27 @@ function toggleLiveRec() {
   toast(t('liveRecOn'));
 }
 
+// 30 秒以上降低畫質位元率，避免 60 秒影片太大
+export const recBitrate = (seconds) => (seconds >= 30 ? 5_000_000 : 8_000_000);
+
 function startRecording(root, opts = {}) {
   if (ui.recording) return;
   const seconds = opts.seconds || ui.recDur;
   const stillP = opts.withStill ? renderStillBlob() : null;
   const mime = pickMime();
+  ensureAudio().catch(() => {});
+  // 有匯入音樂且開關打開：從頭播放，錄完自動暫停（在點擊當下呼叫 play，iOS 才允許）
+  const withMusic = !opts.withStill && ui.recMusic && !!music.el;
+  if (withMusic) {
+    try { music.el.currentTime = 0; } catch (e) { /* ignore */ }
+    music.el.play().catch(() => {});
+  }
   const stream = canvas.captureStream(30);
   try { recordingDestination().stream.getAudioTracks().forEach((tr) => stream.addTrack(tr)); } catch (e) { /* 無音訊 */ }
   let rec;
-  try { rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined); } catch (e) { rec = new MediaRecorder(stream); }
+  const bits = recBitrate(seconds);
+  try { rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: bits } : { videoBitsPerSecond: bits }); } catch (e) { rec = new MediaRecorder(stream); }
+  ui.lastRec = { seconds, bits, opts: { mimeType: mime, videoBitsPerSecond: bits }, audioTracks: stream.getAudioTracks().length, withMusic, recorder: rec };
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
   const out = $(opts.out || '#vidOut', root);
@@ -1359,7 +1379,10 @@ function startRecording(root, opts = {}) {
   btn.disabled = true;
   rec.onstop = () => {
     ui.recording = false;
+    ui.recStop = null;
     ui.reveal = null;
+    if (withMusic && music.el) music.el.pause();
+    if (ui.sheet === 'music') renderPanel();
     stream.getVideoTracks().forEach((tr) => tr.stop());
     const type = (rec.mimeType || mime || 'video/webm').split(';')[0];
     const blob = new Blob(chunks, { type });
@@ -1376,9 +1399,12 @@ function startRecording(root, opts = {}) {
     btn.textContent = `● ${t('recAgain')}`;
     out.innerHTML = `<button type="button" class="btn solid" id="saveVid">${t('saveVideo')}</button>`;
     $('#saveVid', root).onclick = () => shareOrDownload(blob, `AE-Live-Wallpaper-${Date.now()}.${ext}`);
-    toast(t('recDone'));
+    ui.lastRec.blob = blob;
+    const why = ui.recStopReason; ui.recStopReason = null;
+    toast(why ? t('recAutoStop') : t('recDone'));
   };
   ui.recording = true;
+  ui.recStop = (why) => { if (rec.state === 'recording') { ui.recStopReason = why; rec.stop(); } };
   select(null);
   if (opts.reveal) ui.reveal = { start: performance.now(), dur: seconds * 1000 * 0.6 };
   rec.start(250);
@@ -1393,6 +1419,16 @@ function startRecording(root, opts = {}) {
     setRecFocus(true, null, left);
   }, 1000);
 }
+
+// 錄影中切到背景（或音效環境被重建）就自動停止，保留已錄好的影片，不會錄出沒聲音的片段
+// 用 window capture，比 sound.js 的 suspend 先執行
+function autoStopRecording(why) {
+  if (ui.recStop) ui.recStop(why);
+  if (ui.liveRec) ui.liveRec.stop();
+}
+window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') autoStopRecording('hidden'); }, true);
+window.addEventListener('pagehide', () => autoStopRecording('hidden'), true);
+onAudioRebuild(() => autoStopRecording('rebuild'));
 
 // 錄影時收起面板與工具列，畫布放到最大，方便點元件互動
 function setRecFocus(on, stop, left) {
