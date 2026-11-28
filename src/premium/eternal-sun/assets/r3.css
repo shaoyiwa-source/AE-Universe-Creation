@@ -1,0 +1,24 @@
+/* R3 11/28 林星宇 — 盛明聲光 for first-time visitors: Chinese everyday line, only the 5 modes, take-away light card.
+   The ⚙ console and the ✦ effects tray stay available only with ?advanced=1 (or ?exhibitor=1). */
+html:not(.es-adv) #open,html:not(.es-adv) #openhint,html:not(.es-adv) #panel,html:not(.es-adv) #hp89 .ae-fx-dock{display:none!important}
+.es-en{display:none}html[lang=en] .es-en{display:inline}html[lang=en] .es-zh{display:none}
+#hp89 .es-r3-copy .kicker{font-family:"PingFang TC","Noto Sans TC","Noto Serif TC",sans-serif;letter-spacing:.32em;font-weight:400}
+html[lang=en] #hp89 .es-r3-copy .kicker{font-family:"Cormorant Garamond",Georgia,serif;letter-spacing:.2em}
+#hp89 .es-r3-copy h1{font-family:"Noto Serif TC","PingFang TC","Noto Sans TC",serif;font-weight:500;letter-spacing:.04em;line-height:1.25;font-size:clamp(22px,calc(var(--hp-w,360px) * .075),44px)}
+html[lang=en] #hp89 .es-r3-copy h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;letter-spacing:-.01em;font-size:clamp(24px,calc(var(--hp-w,360px) * .085),52px)}
+#hp89 .es-r3-copy .es-sub{margin:.55em 0 0;font-size:clamp(12px,calc(var(--hp-w,360px) * .04),18px);letter-spacing:.08em;color:#f3e6c4;opacity:.92;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+#esCardBtn{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(max(14px,env(safe-area-inset-bottom)) + 16px);z-index:26;display:flex;align-items:center;gap:5px;height:38px;padding:0 12px 0 10px;border-radius:999px;background:rgba(10,8,5,.66);color:#f0d999;border:1px solid rgba(214,178,106,.6);font:inherit;font-size:13px;letter-spacing:.06em;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:0 0 18px rgba(240,200,120,.12)}
+#esCardBtn .es-ic{font-size:14px;line-height:1}
+#esCardBtn.pulse{animation:esPulse 1.6s ease-in-out 3}
+@keyframes esPulse{50%{box-shadow:0 0 22px rgba(255,214,140,.55);transform:scale(1.05)}}
+body.glow-on #esCardBtn,body.card-open #esCardBtn{opacity:0;pointer-events:none}
+#esFirst{position:fixed;left:50%;transform:translateX(-50%);z-index:24;margin:0;max-width:calc(100vw - 24px);padding:5px 12px;border-radius:999px;background:rgba(10,8,5,.55);color:#f1e2b8;font-size:12px;letter-spacing:.05em;line-height:1.35;text-align:center;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .35s}
+#esFirst.on{opacity:1}
+body.glow-on #esFirst,body.card-open #esFirst{opacity:0}
+#glowmsg{opacity:.95!important;max-width:44vw;overflow:hidden;text-overflow:ellipsis}
+#glowmsg.flash{color:#fff2c8}
+#cardview .es-cardline{display:none}
+#cardview .es-cardbtns{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+#cardview .es-btn{font:inherit;font-size:13px;color:#1a1208;background:#e9cf86;border:1px solid #e9cf86;border-radius:999px;padding:7px 18px;text-decoration:none;letter-spacing:.06em}
+#cardview .es-btn[hidden]{display:none}
+#cardview img{max-height:64vh!important}

@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="robots" content="noindex">
-<title>盛明 Eternal Sun · 聲光體驗 · AE Universe Creation</title>
+<title>盛明・會發光、會唱歌的畫 · AE Universe Creation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./assets/premium.css?v=2.6-entry6">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500&text=%E7%9B%9B%E6%98%8E%E8%81%B2%E5%85%89%E5%B1%95%E6%BC%94%E7%B3%BB%E7%B5%B1&display=block" rel="stylesheet">
 <link rel="stylesheet" href="/assets/ae-visitor-entry.css?v=8">
+<link rel="stylesheet" href="./assets/r3.css?v=2.7-r3">
 <script>
 (function(){try{
   var q=new URLSearchParams(location.search);
@@ -37,7 +38,7 @@
 <!-- v2476.89 經典首頁 / Classic Home: Production homepage (1de42af) logo + hero text + effects button; shown only in this mode -->
 <div id="hp89">
   <a class="hp89-logo" href="/" aria-label="AE Universe Creation — home"><img class="brand-mark" src="/assets/ae-three-rings-transparent.webp" alt="AE Universe Creation three-ring logo"></a>
-  <div class="hp89-copy"><p class="kicker">AE Universe Creation</p><h1>Hand-painted art<br>Digital sensation</h1></div>
+  <div class="hp89-copy es-r3-copy"><p class="kicker"><span class="es-zh">外在沉靜，內在綻放</span><span class="es-en">Outer Calm, Inner Bloom</span></p><h1><span class="es-zh">一幅會發光、<br>會唱歌的畫</span><span class="es-en">A painting that glows and sings</span></h1><p class="es-sub"><span class="es-zh">點一下，讓光和音樂陪你放鬆一會兒</span><span class="es-en">Tap once and let the light and music keep you company</span></p></div>
   <div class="ae-fx-dock"><button type="button" id="aeFxButton" class="fx-toggle" aria-label="特效" aria-expanded="false" aria-controls="aeFxTray"><svg class="ae-fx-spark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.2l1.9 6.9 6.9 1.9-6.9 1.9L12 20.8l-1.9-6.9L3.2 12l6.9-1.9z"/><path class="s" d="M18.6 3.8l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z"/></svg></button><div id="aeFxTray" class="ae-fx-tray" role="group" aria-label="畫面特效" hidden></div></div>
 </div>
 
@@ -63,8 +64,10 @@
 <button id="open" aria-label="settings" title="設定 / Settings">⚙</button>
 <button id="openhint" type="button" data-zh="⚙ 點這裡自訂光效與鼓聲" data-en="Tap to customize lights &amp; sound"></button>
 <div id="artplay" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/><path d="M41 33 L69 50 L41 67 Z"/></svg></div>
-<div id="glowbar" aria-label="光繪"><span data-zh="光繪 · 用手指在畫上作畫" data-en="Light painting · draw on the art"></span><button id="glowclear" data-zh="清除" data-en="Clear"></button><button id="glowsave" data-zh="存成光繪卡" data-en="Save card"></button><button id="glowdone" data-zh="完成" data-en="Done"></button></div>
-<div id="cardview" role="dialog" aria-label="光繪卡"><img id="cardimg" alt="光繪卡"><p data-zh="長按圖片即可儲存到相簿" data-en="Long-press the image to save it"></p><button id="cardclose" data-zh="關閉" data-en="Close"></button></div>
+<div id="glowbar" aria-label="光繪"><span id="glowmsg" data-zh="用手指在畫上畫一道光" data-en="Draw a line of light on the art"></span><button id="glowclear" data-zh="清除" data-en="Clear"></button><button id="glowsave" data-zh="做成卡" data-en="Make card"></button><button id="glowdone" data-zh="離開" data-en="Exit"></button></div>
+<div id="cardview" role="dialog" aria-label="光繪卡"><img id="cardimg" alt="光繪卡"><p id="cardline" class="es-cardline"></p><p data-zh="長按圖片可存到相簿，或按下載" data-en="Long-press the image to save, or download it"></p><div class="es-cardbtns"><a id="carddl" class="es-btn" href="#" download="AE-光繪卡.png" data-zh="下載圖片" data-en="Download"></a><button id="cardshare" class="es-btn" type="button" hidden data-zh="分享" data-en="Share"></button><button id="cardclose" data-zh="關閉" data-en="Close"></button></div></div>
+<button id="esCardBtn" type="button" aria-label="光繪卡：在畫上畫光，做成你的卡"><span class="es-ic" aria-hidden="true">✦</span><span class="es-lb" data-zh="光繪卡" data-en="Light card"></span></button>
+<p id="esFirst" hidden></p>
 <button id="zreset" hidden aria-label="reset zoom" data-zh="⟲ 還原大小" data-en="⟲ Reset zoom"></button>
 <header id="brand"><a href="/" data-zh="AE UNIVERSE CREATION" data-en="AE UNIVERSE CREATION"></a><span id="title" data-zh="盛明 · 聲光體驗" data-en="Eternal Sun · Light &amp; sound"></span></header>
 <nav id="panel" aria-label="controls" hidden>
@@ -141,9 +144,9 @@
 <script src="./assets/looks.js"></script>
 <script src="./assets/onsets.js"></script>
 <script src="/ae-chime.js"></script>
-<script type="module" src="./assets/premium.js?v=2.6-entry8"></script>
+<script type="module" src="./assets/premium.js?v=2.7-r3"></script>
 <script src="/assets/ae-visitor-entry.js?v=3" defer></script>
-<script src="./assets/visitor-ui.js?v=2.6-entry7" defer></script>
+<script src="./assets/visitor-ui.js?v=2.7-r3" defer></script>
 <script src="./assets/home-replica.js?v=2476.99e"></script>
 
 </body>

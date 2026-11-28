@@ -664,29 +664,47 @@ function strokeGlow(c, p, ox, oy, sc, now, breath) {
   c.restore();
 }
 function drawGlow(c, now) { if (!GLOW.strokes.length) return; const breath = S.playing ? 0.62 + 0.38 * A.kick : 0.72 + 0.12 * Math.sin(now / 900); strokeGlow(c, L.p, L.p.x, L.p.y, 1, now, breath); }
+/* R3 11/28 林星宇: 可帶走的光繪卡 — the whole painting + the visitor's own light strokes + the current mode + a short
+   line read from how the strokes move (outward / inward / around the sun / long flow / dots). Always opens the card
+   viewer: long-press to save (iOS), 「下載圖片」 (blob download), 「分享」 when the browser can share files. The page's artwork
+   itself is never altered; the card is a new image. Phrases come from window.__esCard (visitor-ui.js). */
 function saveGlowCard() {
-  const img = $('#painting'); if (!img || !img.naturalWidth || !GLOW.strokes.length) return null;
-  let u0 = 1, v0 = 1, u1 = 0, v1 = 0; for (const st of GLOW.strokes) for (const q of st.pts) { u0 = Math.min(u0, q.u); v0 = Math.min(v0, q.v); u1 = Math.max(u1, q.u); v1 = Math.max(v1, q.v); }
-  const NW = img.naturalWidth, NH = img.naturalHeight, pad = .06; let cw = Math.max(.35, u1 - u0 + 2 * pad) * NW, ch = Math.max(.35, v1 - v0 + 2 * pad) * NH;
-  if (cw / ch > .8) ch = cw / .8; else cw = ch * .8; cw = Math.min(NW, cw); ch = Math.min(NH, ch);
-  let cx = ((u0 + u1) / 2) * NW - cw / 2, cy = ((v0 + v1) / 2) * NH - ch / 2; cx = Math.max(0, Math.min(NW - cw, cx)); cy = Math.max(0, Math.min(NH - ch, cy));
-  const OW = 1080, sc = OW / cw, OH = Math.round(ch * sc), M = 70, FOOT = 120, cv = document.createElement('canvas'); cv.width = OW + 2 * M; cv.height = OH + 2 * M + FOOT;
-  const c = cv.getContext('2d'); c.fillStyle = '#0b0907'; c.fillRect(0, 0, cv.width, cv.height);
-  c.drawImage(img, cx, cy, cw, ch, M, M, OW, OH); // painting crop, untouched
-  c.save(); c.beginPath(); c.rect(M, M, OW, OH); c.clip(); strokeGlow(c, { w: NW * sc, h: NH * sc }, M - cx * sc, M - cy * sc, sc * NW / Math.max(1, L.p.w), performance.now(), 1); c.restore();
-  c.strokeStyle = 'rgba(214,178,106,.65)'; c.lineWidth = 2; c.strokeRect(M - 10, M - 10, OW + 20, OH + 20);
-  c.fillStyle = '#e9d7a6'; c.textAlign = 'center'; c.font = '300 34px "Cormorant Garamond", Georgia, serif'; c.fillText('光繪  ·  盛明 Eternal Sun', cv.width / 2, OH + 2 * M + 40);
-  c.globalAlpha = .6; c.font = '300 20px "Cormorant Garamond", Georgia, serif'; const d = new Date(); c.fillText('AE UNIVERSE CREATION  ·  ' + d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0'), cv.width / 2, OH + 2 * M + 78);
-  GLOW.saved++; GLOW.last = { w: cv.width, h: cv.height };
-  // v2476.67: iOS Safari ignores <a download> -> build the file synchronously (keeps the tap's user activation) and use the
-  // share sheet (保存影像); if sharing is unavailable/declined, show the card full-screen with a long-press-to-save hint.
-  const url = cv.toDataURL('image/png'); GLOW.url = url; let file = null;
-  try { const bin = atob(url.split(',')[1]), arr = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k); file = new File([arr], 'AE-光繪卡-EternalSun.png', { type: 'image/png' }); } catch (e) {}
-  const show = () => { GLOW.method = GLOW.method || 'view'; $('#cardimg').src = url; document.body.classList.add('card-open'); };
-  const touch = matchMedia('(pointer: coarse)').matches;
-  if (file && navigator.canShare && navigator.canShare({ files: [file] }) && touch) { GLOW.method = 'share'; navigator.share({ files: [file], title: '光繪卡 · 盛明 Eternal Sun' }).catch(err => { if (!err || err.name !== 'AbortError') { GLOW.method = 'view'; show(); } }); }
-  else if (touch) { GLOW.method = 'view'; show(); }
-  else { GLOW.method = 'download'; const a = document.createElement('a'); a.href = url; a.download = 'AE-光繪卡-EternalSun.png'; document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 1000); show(); }
+  const img = $('#painting'); if (!img || !img.naturalWidth) return null;
+  if (!GLOW.strokes.some(st => st.pts.length > 1)) { document.dispatchEvent(new CustomEvent('es-card-empty')); return null; }
+  const NW = img.naturalWidth, NH = img.naturalHeight, OW = 1080, OH = 1500, TOP = 120, FOOT = 330, SIDE = 60;
+  const sc = Math.min((OW - 2 * SIDE) / NW, (OH - TOP - FOOT) / NH), PW = Math.round(NW * sc), PH = Math.round(NH * sc), PX = Math.round((OW - PW) / 2), PY = TOP;
+  const cv = document.createElement('canvas'); cv.width = OW; cv.height = OH; const c = cv.getContext('2d');
+  const bg = c.createLinearGradient(0, 0, 0, OH); bg.addColorStop(0, '#0d0b08'); bg.addColorStop(1, '#050403'); c.fillStyle = bg; c.fillRect(0, 0, OW, OH);
+  const preset = S.preset || 'home', info = (window.__esCard && window.__esCard.info(GLOW.strokes, preset)) || { mode: '', modeLine: '', line: '', n: GLOW.strokes.length };
+  const ZH = '"PingFang TC","Noto Sans TC","Noto Serif CJK TC","Noto Sans CJK TC","Heiti TC",sans-serif';
+  c.textAlign = 'center'; c.fillStyle = '#e9d7a6'; c.globalAlpha = .82; c.font = '400 30px ' + ZH; c.fillText('外在沉靜，內在綻放', OW / 2, 62);
+  c.globalAlpha = .45; c.font = '400 17px "Cormorant Garamond", Georgia, serif'; c.fillText('OUTER CALM · INNER BLOOM', OW / 2, 94); c.globalAlpha = 1;
+  c.save(); c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 30; c.fillStyle = '#000'; c.fillRect(PX, PY, PW, PH); c.restore();
+  c.drawImage(img, 0, 0, NW, NH, PX, PY, PW, PH); // the painting, untouched
+  c.save(); c.beginPath(); c.rect(PX, PY, PW, PH); c.clip();
+  // the mode's light, painted over the copy only (a gentle tint so the card remembers which mood was on)
+  const sx = PX + PW * ((ART && ART.sun) ? ART.sun[0] : .5), sy = PY + PH * ((ART && ART.sun) ? ART.sun[1] : .5);
+  if (preset === 'home') { c.globalCompositeOperation = 'screen'; const g = c.createRadialGradient(sx, sy, 0, sx, sy, PW * .55); g.addColorStop(0, 'rgba(255,214,140,.38)'); g.addColorStop(1, 'rgba(255,214,140,0)'); c.fillStyle = g; c.fillRect(PX, PY, PW, PH); }
+  else if (preset === 'club') { c.globalCompositeOperation = 'screen'; let g = c.createLinearGradient(PX, PY, PX + PW, PY + PH); g.addColorStop(0, 'rgba(255,60,170,.22)'); g.addColorStop(.5, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(70,120,255,.26)'); c.fillStyle = g; c.fillRect(PX, PY, PW, PH); }
+  else if (preset === 'breath') { c.globalCompositeOperation = 'source-over'; const g = c.createRadialGradient(sx, sy, PW * .2, sx, sy, PW * .9); g.addColorStop(0, 'rgba(255,236,200,.10)'); g.addColorStop(1, 'rgba(10,8,5,.42)'); c.fillStyle = g; c.fillRect(PX, PY, PW, PH); }
+  else if (preset === 'gem') { c.globalCompositeOperation = 'screen'; for (let k = 0; k < 26; k++) { const a = k * 2.399, r = PW * (.12 + .4 * ((k * 37) % 26) / 26), x = sx + Math.cos(a) * r, y = sy + Math.sin(a) * r * 1.2, R = 6 + (k % 4) * 4; const g = c.createRadialGradient(x, y, 0, x, y, R * 3); g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(.3, 'rgba(255,230,170,.5)'); g.addColorStop(1, 'rgba(255,230,170,0)'); c.fillStyle = g; c.fillRect(x - R * 3, y - R * 3, R * 6, R * 6); } }
+  c.globalCompositeOperation = 'source-over';
+  strokeGlow(c, { w: PW, h: PH }, PX, PY, Math.max(1, PW / Math.max(1, L.p.w)), performance.now(), 1);
+  c.restore();
+  c.strokeStyle = 'rgba(214,178,106,.65)'; c.lineWidth = 2; c.strokeRect(PX - 10, PY - 10, PW + 20, PH + 20);
+  const fy = PY + PH + 78; c.fillStyle = '#f1e2b8'; c.font = '500 44px ' + ZH; c.fillText(info.line || '你畫下的光', OW / 2, fy);
+  c.globalAlpha = .78; c.font = '400 28px ' + ZH; c.fillText(info.modeLine || '', OW / 2, fy + 58);
+  const d = new Date(), p2 = n => String(n).padStart(2, '0'), no = d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '-' + p2(d.getHours()) + p2(d.getMinutes());
+  const artName = ART ? ((ART.zh ? ART.zh + ' ' : '') + ART.en) : '盛明 Eternal Sun';
+  c.globalAlpha = .6; c.font = '400 22px ' + ZH; c.fillText((info.mode ? info.mode + '模式 · ' : '') + '《' + artName + '》 · ' + info.n + ' 道光', OW / 2, fy + 112);
+  c.globalAlpha = .45; c.font = '400 19px "Cormorant Garamond", Georgia, serif'; c.fillText('AE UNIVERSE CREATION  ·  No. ' + no, OW / 2, fy + 150); c.globalAlpha = 1;
+  GLOW.saved++; GLOW.last = { w: cv.width, h: cv.height, line: info.line, mode: preset, no };
+  const url = cv.toDataURL('image/png'); GLOW.url = url; const fname = 'AE-光繪卡-' + no + '.png'; let file = null, blobUrl = '';
+  try { const bin = atob(url.split(',')[1]), arr = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k); const blob = new Blob([arr], { type: 'image/png' }); blobUrl = URL.createObjectURL(blob); file = new File([blob], fname, { type: 'image/png' }); } catch (e) {}
+  GLOW.method = 'view'; $('#cardimg').src = url; const dl = $('#carddl'); if (dl) { dl.href = blobUrl || url; dl.download = fname; }
+  const sh = $('#cardshare'); if (sh) { const ok = !!(file && navigator.canShare && navigator.canShare({ files: [file] })); sh.hidden = !ok; sh.onclick = e => { e.stopPropagation(); GLOW.method = 'share'; navigator.share({ files: [file], title: '光繪卡 · ' + artName }).catch(() => {}); }; }
+  const ln = $('#cardline'); if (ln) ln.textContent = info.line || '';
+  document.body.classList.add('card-open'); document.dispatchEvent(new CustomEvent('es-card-made', { detail: GLOW.last }));
   return cv;
 }
 function setGlow(on) { GLOW.on = on; if (!on) { GLOW.strokes.length = 0; GLOW.cur = null; } document.body.classList.toggle('glow-on', on); $('#glowbtn') && $('#glowbtn').classList.toggle('on', on); frontVis(); }
