@@ -65,7 +65,7 @@ function layout() {
   L.W = innerWidth; L.H = innerHeight; L.dpr = Math.min(devicePixelRatio || 1, 2);
   const portrait = L.H > L.W, sa = safeInsets();
   // v80: reserve the top (painting switcher) and bottom (play dock) bands so the painting's tap area never sits under a control
-  const top = sa.t + (portrait ? 96 : 118), bot = sa.b + (portrait ? 156 : 158), mx = portrait ? 0.12 : 0.1; // v91: 經典首頁 uses the same painting size as every other mode
+  const top = sa.t + (portrait ? 96 : 118), bot = Math.max(14, sa.b) + 108 + 46 + 10, mx = portrait ? 0.12 : 0.1; // v2476.100: reserve dock 108 + mode row 46 + 8-10px gap (was 156/158, which let the row overlap the painting on landscape/desktop)
   let w = L.W * (1 - mx), h = w / AR; const availH = Math.max(120, L.H - top - bot);
   if (h > availH) { h = availH; w = h * AR; }
   w = Math.round(w); h = Math.round(h);
@@ -1094,14 +1094,14 @@ function bindUI() {
 
 /* ---------- 7 curated presets (模式), each with its own tuned motion speed (no speed slider) ---------- */
 const BASE = { tapfx: true, search: false, dip: true, party: false, frame: true, led: false, aura: false, glint: false, bloom: false, laser: false, look: '', impact: false, rgbStyle: 'bar', lamp: 'auto' };
-const PRESETS = { // v83: 原畫風情 (calm, default) first; then the v72 four modes
+const PRESETS = { // v2476.100: default is 聲光/Show (home). 原畫/Art last in the visitor row.
   calm:   { ...BASE, mode: 'natural', frame: true, dip: false, laser: false, search: false, spots3: false, idle: false, tapfx: true, look: '', intensity: 0.6, speed: 0.5, night: false }, // 原畫風情 ✧: soft backlight + visible tap cues / burst (2026-11-17 visitor cue)
   home:   { ...BASE, mode: 'natural', frame: true, laser: true, search: false, dip: false, spots3: true, idle: true, look: '', intensity: 0.7, speed: 1, night: false },                        // 歡樂派對 ☀: homepage sound-light replica
   club:   { ...BASE, mode: 'rgb', rgbStyle: 'bar', lamp: 'auto', frame: true, laser: true, led: true, spots3: false, idle: false, intensity: 0.85, speed: 1.1, night: true }, // 沈浸夜店 ☾: dark club, clean lasers + RGB light bar on beat
   breath: { ...BASE, mode: 'rgb', rgbStyle: 'even', lamp: 'blue', frame: true, aura: true, spots3: false, idle: false, intensity: 0.55, speed: 0.45, night: true },   // 柔光呼吸 ☾: calm dark, soft breathing wash + aura, gentle frame light, no lasers
   gem:    { ...BASE, mode: 'natural', look: 'gem', frame: true, led: true, glint: true, impact: true, spots3: false, idle: false, intensity: 0.75, speed: 1, night: false } // 尊榮寶石 ☀: bright, gold frame + gem/pearl sparkle + gallery light, no lasers
 };
-function applyPreset(k) { if (!PRESETS[k]) k = 'calm'; saved = null; Object.assign(S, PRESETS[k]); S.preset = k; S.home = k === 'home'; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
+function applyPreset(k) { if (!PRESETS[k]) k = 'home'; saved = null; Object.assign(S, PRESETS[k]); S.preset = k; S.home = k === 'home'; // v70: 歡樂派對 is a base layer that stays on under every other preset/toggle; 只留燈光 turns it off
   $('#int').value = S.intensity; syncButtons(); }
 function homeSync() { const orig = document.body.dataset.original === '1', on = S.home && !orig; if (document.body.classList.contains('home-mode') !== on) { document.body.classList.toggle('home-mode', on); setTimeout(() => { layout(); dispatchEvent(new Event('resize')); }, 0); } /* v72: 三光點/待機漣漪 work in every mode */ const R = window.aeHomeReplica; if (!R) return; if (R.active === orig) R.setActive(!orig); if (R.ambient !== on) R.setAmbient(on); if (R.setLasers && R.lasers !== !!S.laser) R.setLasers(!!S.laser); if (R.setClubLasers) R.setClubLasers(!orig && S.preset === 'club' && !!S.laser); if (R.setSpots && R.spots3 !== !!S.spots3) R.setSpots(!!S.spots3); if (R.setIdle && R.idle !== !!S.idle) R.setIdle(!!S.idle); if (R.setTapBeams && R.tapBeams !== (S.tapfx !== false)) R.setTapBeams(S.tapfx !== false); if (!R.ready83) R.ready83 = R.setReady && R.setReady(true); document.body.classList.toggle('look-night', !orig && !!S.night); document.body.classList.toggle('look-day', !orig && !S.night); } // v70: tap-beam layer global in every mode; homepage ambient show only while 歡樂派對 is on
 
@@ -1125,7 +1125,7 @@ function loop(now) {
 }
 
 async function start() {
-  bindUI(); applyLang(); if (Q.get('fx') !== '0') { const qp = Q.get('preset'); applyPreset(PRESETS[qp] ? qp : 'calm'); } syncButtons();
+  bindUI(); applyLang(); if (Q.get('fx') !== '0') { const qp = Q.get('preset'); applyPreset(PRESETS[qp] ? qp : 'home'); } syncButtons();
   if (weakDevice()) { S.engine = 'lite'; initLite(); }
   else { try { await initWebGL(); } catch (e) { console.warn('WebGL unavailable, using Canvas 2D', e && e.message); swapToLite(); } }
   layout(); updateEngineNote();

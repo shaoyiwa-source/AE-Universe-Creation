@@ -5,12 +5,12 @@
   const $ = (s, r) => (r || document).querySelector(s);
   const Q = new URLSearchParams(location.search);
   const MODES = [
-    { id: 'calm', zh: '原畫', en: 'Art' },
     { id: 'home', zh: '聲光', en: 'Show' },
     { id: 'club', zh: '夜店', en: 'Club' },
     { id: 'breath', zh: '柔光', en: 'Soft' },
-    { id: 'gem', zh: '寶石', en: 'Gem' }
-  ];
+    { id: 'gem', zh: '寶石', en: 'Gem' },
+    { id: 'calm', zh: '原畫', en: 'Art' }
+  ]; /* 11/28 Owner: Show (聲光) first, Art last; others shift. Labels unchanged. */
   const HELP = {
     zh: [
       '這是可以互動的聲光畫作：碰畫面會發光，並播放音樂。',
@@ -78,7 +78,7 @@
       modes: MODES,
       help: HELP,
       hintY: 0.845,
-      current: () => (P.S && P.S.preset) || 'calm',
+      current: () => (P.S && P.S.preset) || 'home',
       setMode: id => { if (typeof P.applyPreset === 'function') P.applyPreset(id); },
       start: () => {
         /* same path as a real tap on the painting: starts the music in this gesture and shows a burst */
