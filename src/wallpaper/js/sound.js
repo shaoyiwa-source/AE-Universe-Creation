@@ -12,22 +12,86 @@ export const SOUNDS = [
 let ac = null;
 let master = null;     // 所有聲音的總出口
 let recDest = null;    // 錄影時的音訊出口
+let needsCheck = false; // 從背景回來後，下一次點擊要確認音訊真的在跑
+let ensuring = null;    // 進行中的 ensureAudio（避免同時多次重建）
 
+function setPlayback() {
+  // iOS：讓聲音在靜音開關打開時仍可播放（Safari 16.4+）
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* ignore */ }
+}
+
+function create() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  ac = new AC();
+  master = ac.createGain();
+  master.gain.value = 1;
+  master.connect(ac.destination);
+  setPlayback();
+}
+
+// 同步取得 AudioContext（不在這裡 resume；resume 只在點擊時由 ensureAudio 處理）
 export function audio() {
-  if (!ac) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    ac = new AC();
-    master = ac.createGain();
-    master.gain.value = 1;
-    master.connect(ac.destination);
-    // iOS：讓聲音在靜音開關打開時仍可播放（Safari 16.4+）
-    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* ignore */ }
-  }
-  if (ac.state !== 'running') { ac.resume().catch(() => {}); }
-  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  if (!ac) create();
+  setPlayback();
   return ac;
 }
 
+// iOS 從背景回來時，舊的 AudioContext 可能停在 interrupted，或顯示 running 卻沒有聲音：整個重建
+const rebuildListeners = new Set();
+export function onAudioRebuild(cb) { rebuildListeners.add(cb); return () => rebuildListeners.delete(cb); }
+export const rebuildCount = { n: 0 };
+
+export function rebuild() {
+  const old = ac;
+  const hadRec = !!recDest;
+  ac = null; master = null; recDest = null;
+  if (old) { try { old.close().catch(() => {}); } catch (e) { /* ignore */ } }
+  create();
+  // 錄影出口重新接上新的 master（下一次錄影直接用新的）
+  if (hadRec) { recDest = ac.createMediaStreamDestination(); master.connect(recDest); }
+  music._reattach();
+  needsCheck = false;
+  rebuildCount.n += 1;
+  rebuildListeners.forEach((cb) => { try { cb(ac); } catch (e) { /* ignore */ } });
+  return ac;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function unlockBlip(a) {
+  // 播一個 1 sample 的靜音 buffer，讓 iOS 在使用者手勢中解鎖輸出
+  try {
+    const b = a.createBuffer(1, 1, a.sampleRate || 44100);
+    const s = a.createBufferSource();
+    s.buffer = b; s.connect(a.destination); s.start(0);
+  } catch (e) { /* ignore */ }
+}
+
+// 在點擊（pointerdown/touchend）中呼叫，播放前 await
+export function ensureAudio() {
+  if (ensuring) return ensuring;
+  ensuring = (async () => {
+    let a = audio();
+    if (a.state !== 'running') { try { await a.resume(); } catch (e) { /* ignore */ } }
+    unlockBlip(a);
+    let dead = a.state !== 'running';
+    if (!dead && needsCheck) {
+      const t0 = a.currentTime;
+      await sleep(60);
+      dead = !(a.currentTime > t0);
+    }
+    if (dead) {
+      a = rebuild();
+      try { await a.resume(); } catch (e) { /* ignore */ }
+      unlockBlip(a);
+    }
+    needsCheck = false;
+    return a;
+  })().finally(() => { ensuring = null; });
+  return ensuring;
+}
+
+export const recordingMaster = () => master;
 export function recordingDestination() {
   audio();
   if (!recDest) {
@@ -51,10 +115,27 @@ const custom = new Map();
 export function setCustomSound(id, buffer) { if (buffer) custom.set(id, buffer); else custom.delete(id); }
 export const hasCustomSound = (id) => custom.has(id);
 export const soundOutput = () => { audio(); return master; };
+export const audioState = () => ({ state: ac ? ac.state : 'none', time: ac ? ac.currentTime : 0, ctx: ac });
 
-export function playSound(id) {
+export async function playSound(id, retry = true) {
   if (!id || id === 'none') return;
-  const a = audio();
+  let a;
+  try { a = await ensureAudio(); } catch (e) { a = audio(); }
+  synth(a, id);
+  // 150ms 後確認時間有在走；沒走代表這個 context 已經沒聲音 → 重建並重播這一聲
+  const t0 = a.currentTime;
+  setTimeout(() => {
+    if (a !== ac || document.visibilityState !== 'visible') return;
+    if (!(a.currentTime > t0) && retry) {
+      const b = rebuild();
+      b.resume().catch(() => {});
+      unlockBlip(b);
+      synth(b, id);
+    }
+  }, 150);
+}
+
+function synth(a, id) {
   const t = a.currentTime + 0.01;
   const out = a.createGain();
   out.gain.value = sfxVolume;
@@ -167,21 +248,41 @@ export const music = {
   _avg: 0,
   get playing() { return !!(this.el && !this.el.paused); },
 
+  _volume: 1,
+  _make() {
+    // MediaElementSource 綁死在建立它的 AudioContext 上，所以每個 context 都要新的 <audio>
+    this.el = new Audio();
+    this.el.loop = true;
+    this.el.playsInline = true;
+    this.el.crossOrigin = 'anonymous';
+    this.el.volume = this._volume;
+    const src = ac.createMediaElementSource(this.el);
+    this.analyser = ac.createAnalyser();
+    this.analyser.fftSize = 256;
+    this.analyser.smoothingTimeConstant = 0.6;
+    this.data = new Uint8Array(this.analyser.frequencyBinCount);
+    src.connect(this.analyser);
+    this.analyser.connect(master);
+  },
+  // rebuild() 後呼叫：用保存的 _url 重新載入，保留播放狀態、位置與音量
+  _reattach() {
+    const old = this.el;
+    if (!old) return;
+    const wasPlaying = !old.paused;
+    const pos = old.currentTime || 0;
+    try { old.pause(); old.removeAttribute('src'); old.load(); } catch (e) { /* ignore */ }
+    this.el = null; this.analyser = null; this.data = null;
+    if (!this._url) return;
+    this._make();
+    this.el.src = this._url;
+    const el = this.el;
+    const seek = () => { try { el.currentTime = pos; } catch (e) { /* ignore */ } };
+    if (el.readyState >= 1) seek(); else el.addEventListener('loadedmetadata', seek, { once: true });
+    if (wasPlaying) el.play().catch(() => {});
+  },
   load(file) {
     audio();
-    if (!this.el) {
-      this.el = new Audio();
-      this.el.loop = true;
-      this.el.playsInline = true;
-      this.el.crossOrigin = 'anonymous';
-      const src = ac.createMediaElementSource(this.el);
-      this.analyser = ac.createAnalyser();
-      this.analyser.fftSize = 256;
-      this.analyser.smoothingTimeConstant = 0.6;
-      this.data = new Uint8Array(this.analyser.frequencyBinCount);
-      src.connect(this.analyser);
-      this.analyser.connect(master);
-    }
+    if (!this.el) this._make();
     if (this._url) URL.revokeObjectURL(this._url);
     this._url = URL.createObjectURL(file);
     this.el.src = this._url;
@@ -190,11 +291,11 @@ export const music = {
   },
   toggle() {
     if (!this.el) return false;
-    audio();
+    ensureAudio().catch(() => {});
     if (this.el.paused) this.el.play().catch(() => {}); else this.el.pause();
     return this.playing;
   },
-  setVolume(v) { if (this.el) this.el.volume = v; },
+  setVolume(v) { this._volume = v; if (this.el) this.el.volume = v; },
   update() {
     if (!this.playing || !this.analyser) {
       this.level *= 0.9; this.beat *= 0.85; return;
@@ -212,5 +313,11 @@ export const music = {
   },
 };
 
-// iOS：回到前景時喚醒被暫停/中斷的音訊
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && ac && ac.state !== 'running') ac.resume().catch(() => {}); });
+// iOS：進背景時主動 suspend；回前景時「不」在這裡 resume（不在手勢內 iOS 會卡住），只標記下一次點擊要檢查
+document.addEventListener('visibilitychange', () => {
+  if (!ac) return;
+  if (document.visibilityState === 'hidden') { ac.suspend().catch(() => {}); }
+  else { needsCheck = true; }
+});
+// 任何點擊（pointerdown / touchend）都順手喚醒音訊；touchend 是 iOS 最可靠的解鎖手勢
+['pointerdown', 'touchend'].forEach((ev) => document.addEventListener(ev, () => { if (ac) ensureAudio().catch(() => {}); }, { capture: true, passive: true }));

@@ -2,7 +2,7 @@
 import {
   W, H, FILTERS, THEMES, COMPONENTS, burst, applyFilterPixels, drawComponentIcon, defaultBackground,
 } from './effects.js';
-import { SOUNDS, playSound, audio, music, setSfxVolume, recordingDestination, setCustomSound, hasCustomSound } from './sound.js';
+import { SOUNDS, playSound, audio, ensureAudio, music, setSfxVolume, recordingDestination, setCustomSound, hasCustomSound } from './sound.js';
 import {
   createScene, setBase, setFilter, coverCanvas, hitTest, renderScene, images, serializeScene,
   deserializeScene, serializeObjects, loadImage, canvasToBlob, textFont, hasStrokes, objHalfSize,
@@ -247,7 +247,7 @@ const pointers = new Map();
 let gesture = null;
 
 canvas.addEventListener('pointerdown', (e) => {
-  audio();
+  ensureAudio().catch(() => {});
   $('#toast').classList.remove('show');
   canvas.setPointerCapture(e.pointerId);
   const p = toCanvas(e);
@@ -1483,7 +1483,7 @@ function toPlayer(e) {
 }
 
 pCanvas.addEventListener('pointerdown', (e) => {
-  audio();
+  ensureAudio().catch(() => {});
   wakeBack();
   pCanvas.setPointerCapture?.(e.pointerId);
   const p = toPlayer(e);
