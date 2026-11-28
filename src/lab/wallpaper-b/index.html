@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AE 自己佈展・手機畫展桌布｜Curate Your Wallpaper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Noto+Serif+TC:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ui-bg: #121214;
+    --ui-surface: #1B1B1F;
+    --ui-text: #EDEAE4;
+    --ui-muted: #98938B;
+    --ui-accent: #C7B28E;
+    --ui-border: rgba(237, 234, 228, 0.12);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%; width: 100%;
+    background: var(--ui-bg); color: var(--ui-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+  }
+  .app {
+    min-height: 100dvh;
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top, 10px) 14px env(safe-area-inset-bottom, 16px);
+    max-width: 540px; margin: 0 auto; gap: 10px;
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 2px 2px;
+  }
+  .brand {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ui-muted);
+  }
+  .header-right { display: flex; gap: 6px; }
+  .pill-btn {
+    background: var(--ui-surface); color: var(--ui-text); border: 1px solid var(--ui-border);
+    border-radius: 999px; padding: 5px 10px; font-size: 11px; cursor: pointer;
+  }
+  .pill-btn.active { border-color: var(--ui-accent); color: var(--ui-accent); }
+
+  /* Preview Phone Stage */
+  .stage-wrap {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .phone-canvas {
+    position: relative;
+    width: min(74vw, 286px);
+    aspect-ratio: 9 / 19.5;
+    border-radius: 34px;
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.48);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none;
+    user-select: none;
+  }
+  .bg-layer {
+    position: absolute; inset: 0; transition: background 0.4s ease;
+  }
+  .sparkles-layer {
+    position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+  }
+  .sparkle-dot {
+    position: absolute; border-radius: 50%; background: rgba(255, 245, 224, 0.72);
+    box-shadow: 0 0 8px rgba(255, 238, 196, 0.8);
+    animation: twinkle 5s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; transform: scale(0.8); }
+    50% { opacity: 0.85; transform: scale(1.2); }
+  }
+  .lockscreen-overlay {
+    position: absolute; top: 18px; left: 0; right: 0; text-align: center;
+    pointer-events: none; z-index: 10; transition: opacity 0.3s;
+  }
+  .lockscreen-overlay.hidden { opacity: 0; }
+  .lockscreen-overlay .date {
+    font-size: 10px; letter-spacing: 0.1em; opacity: 0.72;
+  }
+  .lockscreen-overlay .time {
+    font-family: 'Cormorant Garamond', serif; font-size: 38px; line-height: 1; opacity: 0.85;
+  }
+
+  /* Artwork Transform Container */
+  .art-stage {
+    position: relative; z-index: 5;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: grab; will-change: transform;
+  }
+  .art-stage:active { cursor: grabbing; }
+  .art-backlight {
+    position: absolute; inset: -24px; border-radius: 16px;
+    filter: blur(22px); pointer-events: none;
+    animation: breathe 7s ease-in-out infinite;
+  }
+  .art-backlight.off { display: none; }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.25; transform: scale(0.94); }
+    50% { opacity: 0.92; transform: scale(1.06); }
+  }
+  .art-frame {
+    position: relative; z-index: 1; transition: padding 0.3s, background 0.3s, border 0.3s, box-shadow 0.3s;
+  }
+  .art-frame.frame-none {
+    padding: 0; box-shadow: 0 14px 34px rgba(0,0,0,0.34);
+  }
+  .art-frame.frame-oak {
+    padding: 7px; background: #EFE9DF; border: 4px solid #B59267;
+    box-shadow: 0 16px 38px rgba(0,0,0,0.38);
+  }
+  .art-frame.frame-walnut {
+    padding: 7px; background: #ECE6DC; border: 4px solid #4A3728;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.42);
+  }
+  .art-frame.frame-gold {
+    padding: 8px; background: #F5F1E8; border: 2px solid #C9AE7A;
+    box-shadow: 0 16px 38px rgba(0,0,0,0.38);
+  }
+  .art-frame img {
+    display: block; width: 170px; height: auto; pointer-events: none;
+  }
+  .museum-label {
+    margin-top: 8px; text-align: center; z-index: 2; pointer-events: none;
+  }
+  .museum-label.off { display: none; }
+  .museum-label .title {
+    font-family: 'Noto Serif TC', serif; font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  }
+  .museum-label .sub {
+    font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; margin-top: 2px;
+  }
+  .stage-hint {
+    font-size: 10px; color: var(--ui-muted); margin-top: 6px; text-align: center;
+  }
+
+  /* Controls */
+  .panel {
+    background: var(--ui-surface); border: 1px solid var(--ui-border);
+    border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .tabs {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  }
+  .tab-btn {
+    background: transparent; color: var(--ui-muted); border: 1px solid transparent;
+    border-radius: 10px; padding: 7px 4px; font-size: 12px; cursor: pointer;
+  }
+  .tab-btn.active {
+    background: rgba(199, 178, 142, 0.14); color: var(--ui-accent); border-color: rgba(199, 178, 142, 0.35);
+  }
+  .tab-pane { display: none; flex-direction: column; gap: 10px; }
+  .tab-pane.active { display: flex; }
+
+  .art-strip {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+  }
+  .art-thumb {
+    flex: 0 0 auto; width: 66px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: transparent; border: 1px solid var(--ui-border); border-radius: 10px;
+    padding: 4px; cursor: pointer; color: var(--ui-text);
+  }
+  .art-thumb.active { border-color: var(--ui-accent); }
+  .art-thumb img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; }
+  .art-thumb span { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 58px; }
+
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .chip {
+    background: #141417; color: var(--ui-text); border: 1px solid var(--ui-border);
+    border-radius: 9px; padding: 6px 10px; font-size: 11px; cursor: pointer;
+  }
+  .chip.active { border-color: var(--ui-accent); color: var(--ui-accent); }
+
+  .slider-row {
+    display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--ui-muted);
+  }
+  .slider-row label { min-width: 62px; }
+  .slider-row input[type="range"] { flex: 1; accent-color: var(--ui-accent); }
+  .slider-row span { min-width: 38px; text-align: right; color: var(--ui-text); }
+
+  .swatch {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+  }
+  .swatch.active { border-color: var(--ui-accent); transform: scale(1.08); }
+
+  .export-bar {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .btn-main {
+    border-radius: 12px; padding: 12px 10px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--ui-border); background: var(--ui-surface); color: var(--ui-text);
+  }
+  .btn-main.primary {
+    background: var(--ui-text); color: #141416; border-color: var(--ui-text);
+  }
+  .status-line {
+    font-size: 11px; color: var(--ui-muted); text-align: center; min-height: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">AE Universe · 自己佈展桌布</div>
+    <div class="header-right">
+      <button class="pill-btn active" id="clockToggle" onclick="toggleClock()">鎖屏時鐘</button>
+      <button class="pill-btn" onclick="resetPose()">重設位置</button>
+    </div>
+  </header>
+
+  <div class="stage-wrap">
+    <div class="phone-canvas" id="phoneCanvas">
+      <div class="bg-layer" id="bgLayer"></div>
+      <div class="sparkles-layer" id="sparklesLayer"></div>
+
+      <div class="lockscreen-overlay" id="lockOverlay">
+        <div class="date" id="clockDate">11月27日 星期五</div>
+        <div class="time" id="clockTime">15:40</div>
+      </div>
+
+      <div class="art-stage" id="artStage">
+        <div class="art-backlight" id="artBacklight"></div>
+        <div class="art-frame frame-none" id="artFrame">
+          <img id="artImg" crossorigin="anonymous" src="" alt="AE Artwork">
+        </div>
+        <div class="museum-label" id="museumLabel">
+          <div class="title" id="labelTitle"></div>
+          <div class="sub">AE UNIVERSE CREATION</div>
+        </div>
+      </div>
+    </div>
+    <div class="stage-hint">可直接拖曳畫作調整位置 · 點下方微調大小、斜擺與襯底</div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('art', this)">1. 選畫</button>
+      <button class="tab-btn" onclick="switchTab('pose', this)">2. 大小角度</button>
+      <button class="tab-btn" onclick="switchTab('bg', this)">3. 襯底元素</button>
+      <button class="tab-btn" onclick="switchTab('ratio', this)">4. 比例分享</button>
+    </div>
+
+    <!-- Tab 1: Artworks -->
+    <div class="tab-pane active" id="tab-art">
+      <div class="art-strip" id="artStrip"></div>
+    </div>
+
+    <!-- Tab 2: Size & Angle -->
+    <div class="tab-pane" id="tab-pose">
+      <div class="chip-row">
+        <button class="chip" onclick="setSizePreset('small', this)">小畫模式</button>
+        <button class="chip active" onclick="setSizePreset('medium', this)">置中中等</button>
+        <button class="chip" onclick="setSizePreset('full', this)">滿版</button>
+      </div>
+      <div class="slider-row">
+        <label>自由縮放</label>
+        <input type="range" id="scaleRange" min="0.35" max="1.9" step="0.02" value="1.0" oninput="onScaleInput(this.value)">
+        <span id="scaleVal">1.00x</span>
+      </div>
+      <div class="chip-row">
+        <button class="chip" onclick="setAngle(-10)">左斜 -10°</button>
+        <button class="chip active" onclick="setAngle(0)">擺正 0°</button>
+        <button class="chip" onclick="setAngle(10)">右斜 +10°</button>
+        <button class="chip" onclick="setAngle(18)">斜展 +18°</button>
+      </div>
+      <div class="slider-row">
+        <label>旋轉角度</label>
+        <input type="range" id="angleRange" min="-35" max="35" step="1" value="0" oninput="onAngleInput(this.value)">
+        <span id="angleVal">0°</span>
+      </div>
+    </div>
+
+    <!-- Tab 3: Backdrop & Elements -->
+    <div class="tab-pane" id="tab-bg">
+      <div class="chip-row" id="bgSwatches"></div>
+      <div class="chip-row">
+        <button class="chip active" onclick="setFrame('none', this)">無框投影</button>
+        <button class="chip" onclick="setFrame('oak', this)">白橡木框</button>
+        <button class="chip" onclick="setFrame('walnut', this)">胡桃木框</button>
+        <button class="chip" onclick="setFrame('gold', this)">細金框</button>
+      </div>
+      <div class="chip-row">
+        <button class="chip active" id="btnBacklight" onclick="toggleElement('backlight', this)">呼吸背光</button>
+        <button class="chip active" id="btnLabel" onclick="toggleElement('label', this)">博物館標籤</button>
+        <button class="chip" id="btnSparkles" onclick="toggleElement('sparkles', this)">微塵光點</button>
+      </div>
+    </div>
+
+    <!-- Tab 4: Ratio & Share -->
+    <div class="tab-pane" id="tab-ratio">
+      <div class="chip-row">
+        <button class="chip active" onclick="setRatio(1170, 2532, 'iPhone 19.5:9', this)">iPhone 19.5:9</button>
+        <button class="chip" onclick="setRatio(1080, 1920, '通用 16:9', this)">通用 16:9</button>
+        <button class="chip" onclick="setRatio(1290, 2796, 'Pro Max', this)">Pro Max</button>
+      </div>
+      <div class="chip-row">
+        <button class="chip" onclick="copyShareUrl()">複製我的佈展連結</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="export-bar">
+    <button class="btn-main primary" onclick="exportWallpaper(false)">存成手機桌布 PNG</button>
+    <button class="btn-main" onclick="exportWallpaper(true)">匯出「我的手機畫展」分享圖</button>
+  </div>
+  <div class="status-line" id="statusLine">挑一幅畫、調出專屬你的角度與留白，一鍵存成桌布</div>
+</div>
+
+<canvas id="exportCanvas" style="display:none;"></canvas>
+
+<script>
+window.track = window.track || function(eventName) {
+  try {
+    window.dispatchEvent(new CustomEvent('ae_m3_track', { detail: { event: eventName, ts: Date.now() } }));
+  } catch (_) {}
+};
+
+const ASSET_BASE = (location.hostname && location.hostname.includes('ae-m3-sleep'))
+  ? '/assets/'
+  : 'https://ae-universe-creation.vercel.app/assets/';
+
+const ARTWORKS = [
+  { id: 'eternal-sun', title: '《盛明 Eternal Sun》', file: '4e0991885a9649ea.webp', glow: 'rgba(218,178,115,0.45)' },
+  { id: 'infinity-core', title: '《Infinity Core》', file: 'b46ca2328e93f1f4.webp', glow: 'rgba(148,168,214,0.42)' },
+  { id: 'universe-abundance', title: '《Universe Abundance》', file: 'cfda3a3a0f7fa43d.webp', glow: 'rgba(212,176,124,0.42)' },
+  { id: 'joyful-world', title: '《Joyful World》', file: '85b757c169e7afd6.webp', glow: 'rgba(175,206,172,0.40)' },
+  { id: 'heart-fly', title: '《Heart Fly》', file: 'selected-works-v2/heart-fly.webp', glow: 'rgba(216,168,184,0.42)' },
+  { id: 'flower-heart', title: '《Flower Heart Bloom》', file: 'selected-works-v2/flower-heart-bloom.webp', glow: 'rgba(214,158,168,0.42)' },
+  { id: 'natures-strength', title: '《Nature’s Strength》', file: 'selected-works-v2/natures-strength.webp', glow: 'rgba(154,188,164,0.42)' }
+];
+
+const BACKGROUNDS = [
+  { name: '極夜石墨', css: 'linear-gradient(165deg, #16161A 0%, #0E0E10 100%)', c1: '#16161A', c2: '#0E0E10', dark: true },
+  { name: '暖紙白', css: 'linear-gradient(165deg, #F7F4ED 0%, #EAE3D5 100%)', c1: '#F7F4ED', c2: '#EAE3D5', dark: false },
+  { name: '暮光霧紫', css: 'linear-gradient(165deg, #241F2E 0%, #14121B 100%)', c1: '#241F2E', c2: '#14121B', dark: true },
+  { name: '深海靜藍', css: 'linear-gradient(165deg, #132232 0%, #0B121B 100%)', c1: '#132232', c2: '#0B121B', dark: true },
+  { name: '森林苔綠', css: 'linear-gradient(165deg, #192620 0%, #0F1612 100%)', c1: '#192620', c2: '#0F1612', dark: true },
+  { name: '柔霧杏灰', css: 'linear-gradient(165deg, #DFD9CE 0%, #CEC6B8 100%)', c1: '#DFD9CE', c2: '#CEC6B8', dark: false }
+];
+
+let state = {
+  artIdx: 0,
+  scale: 1.0,
+  angle: 0,
+  offsetX: 0,
+  offsetY: 16,
+  bgIdx: 0,
+  frame: 'none',
+  backlight: true,
+  label: true,
+  sparkles: false,
+  showClock: true,
+  outW: 1170,
+  outH: 2532
+};
+
+function loadFromUrl() {
+  const p = new URLSearchParams(location.search);
+  if (p.has('art')) state.artIdx = Math.max(0, Math.min(ARTWORKS.length - 1, parseInt(p.get('art'), 10) || 0));
+  if (p.has('scale')) state.scale = parseFloat(p.get('scale')) || 1.0;
+  if (p.has('angle')) state.angle = parseFloat(p.get('angle')) || 0;
+  if (p.has('bg')) state.bgIdx = Math.max(0, Math.min(BACKGROUNDS.length - 1, parseInt(p.get('bg'), 10) || 0));
+  if (p.has('frame')) state.frame = p.get('frame');
+}
+
+function buildUI() {
+  const strip = document.getElementById('artStrip');
+  ARTWORKS.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'art-thumb' + (i === state.artIdx ? ' active' : '');
+    btn.innerHTML = `<img src="${ASSET_BASE + a.file}" alt="${a.title}"><span>${a.title.replace(/[《》]/g, '')}</span>`;
+    btn.onclick = () => {
+      state.artIdx = i;
+      document.querySelectorAll('.art-thumb').forEach((el, idx) => el.classList.toggle('active', idx === i));
+      renderStage();
+    };
+    strip.appendChild(btn);
+  });
+
+  const sw = document.getElementById('bgSwatches');
+  BACKGROUNDS.forEach((b, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'swatch' + (i === state.bgIdx ? ' active' : '');
+    btn.style.background = b.css;
+    btn.title = b.name;
+    btn.onclick = () => {
+      state.bgIdx = i;
+      document.querySelectorAll('.swatch').forEach((el, idx) => el.classList.toggle('active', idx === i));
+      renderStage();
+    };
+    sw.appendChild(btn);
+  });
+
+  const sp = document.getElementById('sparklesLayer');
+  for (let i = 0; i < 18; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'sparkle-dot';
+    const sz = 2 + (i % 3);
+    dot.style.width = sz + 'px';
+    dot.style.height = sz + 'px';
+    dot.style.left = ((i * 37) % 94 + 3) + '%';
+    dot.style.top = ((i * 53) % 92 + 4) + '%';
+    dot.style.animationDelay = (i * 0.35) + 's';
+    sp.appendChild(dot);
+  }
+}
+
+function renderStage() {
+  const art = ARTWORKS[state.artIdx];
+  const bg = BACKGROUNDS[state.bgIdx];
+  document.getElementById('artImg').src = ASSET_BASE + art.file;
+  document.getElementById('labelTitle').textContent = art.title;
+  document.getElementById('bgLayer').style.background = bg.css;
+
+  const textCol = bg.dark ? '#EDEAE4' : '#22201D';
+  document.getElementById('lockOverlay').style.color = textCol;
+  document.getElementById('museumLabel').style.color = textCol;
+
+  const bl = document.getElementById('artBacklight');
+  bl.style.background = `radial-gradient(circle, ${art.glow} 0%, transparent 72%)`;
+  bl.classList.toggle('off', !state.backlight);
+
+  document.getElementById('artFrame').className = 'art-frame frame-' + state.frame;
+  document.getElementById('museumLabel').classList.toggle('off', !state.label);
+  document.getElementById('sparklesLayer').style.display = state.sparkles ? 'block' : 'none';
+
+  const stage = document.getElementById('artStage');
+  stage.style.transform = `translate(${state.offsetX}px, ${state.offsetY}px) rotate(${state.angle}deg) scale(${state.scale})`;
+
+  document.getElementById('scaleRange').value = state.scale;
+  document.getElementById('scaleVal').textContent = state.scale.toFixed(2) + 'x';
+  document.getElementById('angleRange').value = state.angle;
+  document.getElementById('angleVal').textContent = state.angle + '°';
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+function setSizePreset(preset, btn) {
+  document.querySelectorAll('#tab-pose .chip-row:first-child .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  if (preset === 'small') { state.scale = 0.62; state.offsetX = 0; state.offsetY = 24; }
+  else if (preset === 'medium') { state.scale = 1.0; state.offsetX = 0; state.offsetY = 16; }
+  else if (preset === 'full') { state.scale = 1.68; state.offsetX = 0; state.offsetY = 0; }
+  renderStage();
+}
+
+function onScaleInput(val) { state.scale = parseFloat(val); renderStage(); }
+function setAngle(deg) { state.angle = deg; renderStage(); }
+function onAngleInput(val) { state.angle = parseInt(val, 10); renderStage(); }
+
+function setFrame(f, btn) {
+  state.frame = f;
+  btn.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderStage();
+}
+
+function toggleElement(key, btn) {
+  state[key] = !state[key];
+  btn.classList.toggle('active', state[key]);
+  renderStage();
+}
+
+function toggleClock() {
+  state.showClock = !state.showClock;
+  document.getElementById('lockOverlay').classList.toggle('hidden', !state.showClock);
+  document.getElementById('clockToggle').classList.toggle('active', state.showClock);
+}
+
+function resetPose() {
+  state.scale = 1.0; state.angle = 0; state.offsetX = 0; state.offsetY = 16;
+  renderStage();
+}
+
+function setRatio(w, h, label, btn) {
+  state.outW = w; state.outH = h;
+  btn.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('phoneCanvas').style.aspectRatio = `${w} / ${h}`;
+  document.getElementById('statusLine').textContent = `輸出比例已設為 ${label}（${w}×${h}）`;
+}
+
+// Drag to reposition artwork
+(function setupDrag() {
+  const el = document.getElementById('artStage');
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  el.addEventListener('pointerdown', e => {
+    dragging = true; sx = e.clientX; sy = e.clientY; ox = state.offsetX; oy = state.offsetY;
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    state.offsetX = Math.max(-110, Math.min(110, ox + (e.clientX - sx)));
+    state.offsetY = Math.max(-180, Math.min(180, oy + (e.clientY - sy)));
+    renderStage();
+  });
+  el.addEventListener('pointerup', () => { dragging = false; });
+})();
+
+function exportWallpaper(isShareCard) {
+  track(isShareCard ? 'export_card' : 'download');
+  const note = document.getElementById('statusLine');
+  note.textContent = isShareCard ? '正在產生「我的手機畫展」分享圖...' : `正在匯出 ${state.outW}×${state.outH} 手機桌布...`;
+
+  const canvas = document.getElementById('exportCanvas');
+  const W = state.outW, H = state.outH;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const bg = BACKGROUNDS[state.bgIdx];
+  const gradBg = ctx.createLinearGradient(0, 0, W * 0.25, H);
+  gradBg.addColorStop(0, bg.c1);
+  gradBg.addColorStop(1, bg.c2);
+  ctx.fillStyle = gradBg;
+  ctx.fillRect(0, 0, W, H);
+
+  if (state.sparkles) {
+    for (let i = 0; i < 24; i++) {
+      const rx = ((i * 37) % 94 + 3) / 100 * W;
+      const ry = ((i * 53) % 92 + 4) / 100 * H;
+      const r = (2 + (i % 3)) * (W / 286);
+      ctx.fillStyle = 'rgba(255, 245, 224, 0.55)';
+      ctx.beginPath(); ctx.arc(rx, ry, r * 0.45, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  const art = ARTWORKS[state.artIdx];
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const ratioScale = W / 286;
+    const baseDrawW = 170 * ratioScale;
+    const drawW = baseDrawW;
+    const drawH = drawW * (img.height / img.width);
+
+    ctx.save();
+    ctx.translate(W / 2 + state.offsetX * ratioScale, H / 2 + state.offsetY * ratioScale);
+    ctx.rotate((state.angle * Math.PI) / 180);
+    ctx.scale(state.scale, state.scale);
+
+    if (state.backlight) {
+      const g = ctx.createRadialGradient(0, 0, drawW * 0.12, 0, 0, drawW * 0.95);
+      g.addColorStop(0, art.glow);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.fillRect(-drawW, -drawH, drawW * 2, drawH * 2);
+    }
+
+    ctx.shadowColor = 'rgba(0,0,0,0.42)';
+    ctx.shadowBlur = 45 * ratioScale / state.scale;
+    ctx.shadowOffsetY = 18 * ratioScale / state.scale;
+
+    if (state.frame !== 'none') {
+      const mat = 7 * ratioScale;
+      const fw = (state.frame === 'gold' ? 2 : 4) * ratioScale;
+      const fc = state.frame === 'oak' ? '#B59267' : (state.frame === 'walnut' ? '#4A3728' : '#C9AE7A');
+      ctx.fillStyle = fc;
+      ctx.fillRect(-drawW/2 - mat - fw, -drawH/2 - mat - fw, drawW + (mat+fw)*2, drawH + (mat+fw)*2);
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = '#EFE9DF';
+      ctx.fillRect(-drawW/2 - mat, -drawH/2 - mat, drawW + mat*2, drawH + mat*2);
+    }
+
+    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.shadowColor = 'transparent';
+
+    if (state.label) {
+      ctx.fillStyle = bg.dark ? '#EDEAE4' : '#22201D';
+      ctx.font = `500 ${Math.round(11 * ratioScale)}px "Noto Serif TC", serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(art.title, 0, drawH / 2 + 24 * ratioScale);
+      ctx.globalAlpha = 0.65;
+      ctx.font = `400 ${Math.round(8 * ratioScale)}px Inter, sans-serif`;
+      ctx.fillText('AE UNIVERSE CREATION', 0, drawH / 2 + 38 * ratioScale);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+
+    if (isShareCard) {
+      ctx.fillStyle = bg.dark ? 'rgba(237,234,228,0.75)' : 'rgba(34,32,29,0.75)';
+      ctx.font = `400 ${Math.round(11 * ratioScale)}px "Noto Serif TC", serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('我的手機畫展 · Curated on AE Universe', W / 2, H - 48 * ratioScale);
+    }
+
+    const a = document.createElement('a');
+    a.download = isShareCard ? `AE-My-Exhibition-${art.id}.png` : `AE-Wallpaper-${art.id}-${W}x${H}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    note.textContent = isShareCard ? '已下載「我的手機畫展」分享圖！' : `已下載 ${W}×${H} 手機桌布，可直接設為鎖屏或主畫面`;
+  };
+  img.onerror = () => {
+    note.textContent = '圖片跨域載入受限，請透過同網域部署網址匯出 PNG';
+  };
+  img.src = ASSET_BASE + art.file;
+}
+
+function copyShareUrl() {
+  track('share');
+  const u = new URL(location.href);
+  u.searchParams.set('art', state.artIdx);
+  u.searchParams.set('scale', state.scale.toFixed(2));
+  u.searchParams.set('angle', state.angle);
+  u.searchParams.set('bg', state.bgIdx);
+  u.searchParams.set('frame', state.frame);
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(u.toString()).then(() => {
+      document.getElementById('statusLine').textContent = '已複製你的專屬佈展連結，朋友打開就能看到相同擺設！';
+    });
+  }
+}
+
+loadFromUrl();
+buildUI();
+renderStage();
+</script>
+</body>
+</html>
